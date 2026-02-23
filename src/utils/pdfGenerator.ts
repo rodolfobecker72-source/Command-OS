@@ -85,6 +85,14 @@ export async function generateProposalPDF({
   } catch (error) {
     console.warn('Could not load logo:', error);
   }
+
+  let footerLogoData: { base64: string; width: number; height: number } | null = null;
+  try {
+    const { default: commandLogoUrl } = await import('@/assets/command-logo.png');
+    footerLogoData = await loadImageAsBase64(commandLogoUrl);
+  } catch (error) {
+    console.warn('Could not load footer logo:', error);
+  }
   
   let y = margin;
 
@@ -100,13 +108,20 @@ export async function generateProposalPDF({
   };
 
   const addFooter = () => {
-    doc.setFontSize(8);
+    // Logo discreto no rodapé
+    if (footerLogoData) {
+      const fLogoH = 6;
+      const fAspect = footerLogoData.width / footerLogoData.height;
+      const fLogoW = fLogoH * fAspect;
+      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - fLogoW / 2, pageHeight - 18, fLogoW, fLogoH);
+    }
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     setColor(lightGray);
     doc.text(
       'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br',
       pageWidth / 2,
-      pageHeight - 10,
+      pageHeight - 8,
       { align: 'center' }
     );
   };
