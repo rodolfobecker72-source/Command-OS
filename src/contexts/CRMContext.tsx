@@ -37,17 +37,20 @@ import { budgetService } from '@/services/budgetService';
 import { settingsService } from '@/services/settingsService';
 import { assetService } from '@/services/assetService';
 import { storageService } from '@/services/storageService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CRMContextType {
   // Clients
   clients: Client[];
-  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Client;
-  updateClient: (id: string, updates: Partial<Client>) => void;
-  deleteClient: (id: string) => void;
+  clientsLoading: boolean;
+  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Client>;
+  updateClient: (id: string, updates: Partial<Client>) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
   getClient: (id: string) => Client | undefined;
   getClientScoreBreakdown: (clientId: string) => ScoreBreakdown;
+  refreshClients: () => Promise<void>;
 
-  // Budgets
+  // Budgets (still localStorage for now)
   budgets: Budget[];
   addBudget: (budget: Omit<Budget, 'id' | 'proposalId' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>) => Budget;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
@@ -131,8 +134,13 @@ interface CRMContextType {
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
 export function CRMProvider({ children }: { children: ReactNode }) {
-  // Initialize state from services
-  const [clients, setClients] = useState<Client[]>(() => clientService.getAll());
+  const { workspace } = useAuth();
+
+  // Clients - now from Supabase
+  const [clients, setClients] = useState<Client[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+
+  // Still localStorage-based
   const [budgets, setBudgets] = useState<Budget[]>(() => budgetService.getAll());
   const [kanbanColumns, setKanbanColumns] = useState<KanbanColumn[]>(() => settingsService.getKanbanColumns());
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(() => settingsService.getServiceCategories());
@@ -156,8 +164,24 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const [projectColumns, setProjectColumns] = useState<ProjectColumn[]>(() => settingsService.getProjectColumns());
 
-  // Persist via services
-  useEffect(() => { clientService.persist(clients); }, [clients]);
+  // Load clients from Supabase
+  const refreshClients = useCallback(async () => {
+    if (!workspace?.id) return;
+    try {
+      const data = await clientService.getAll(workspace.id);
+      setClients(data);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    } finally {
+      setClientsLoading(false);
+    }
+  }, [workspace?.id]);
+
+  useEffect(() => {
+    refreshClients();
+  }, [refreshClients]);
+
+  // Persist localStorage-based data
   useEffect(() => { budgetService.persist(budgets); }, [budgets]);
   useEffect(() => { settingsService.persistKanbanColumns(kanbanColumns); }, [kanbanColumns]);
   useEffect(() => { settingsService.persistServiceCategories(serviceCategories); }, [serviceCategories]);
@@ -172,11 +196,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Kanban column functions =============
   const addKanbanColumn = (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
     const maxOrder = Math.max(...kanbanColumns.map(c => c.order), -1);
-    const newColumn: KanbanColumn = {
-      ...columnData,
-      id: uuidv4(),
-      order: maxOrder + 1,
-    };
+    const newColumn: KanbanColumn = { ...columnData, id: uuidv4(), order: maxOrder + 1 };
     setKanbanColumns(prev => [...prev, newColumn]);
   };
 
@@ -348,25 +368,28 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     setProjectColumns(prev => prev.filter(c => c.id !== id));
   };
 
-  // ============= Client functions =============
-  const addClient = (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Client => {
-    const newClient: Client = { ...clientData, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
-    setClients((prev) => [...prev, newClient]);
+  // ============= Client functions (now async) =============
+  const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> => {
+    if (!workspace?.id) throw new Error('No workspace');
+    const newClient = await clientService.create(workspace.id, clientData);
+    setClients(prev => [newClient, ...prev]);
     return newClient;
   };
 
-  const updateClient = (id: string, updates: Partial<Client>) => {
-    setClients((prev) => prev.map((client) =>
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    await clientService.update(id, updates);
+    setClients(prev => prev.map(client =>
       client.id === id ? { ...client, ...updates, updatedAt: new Date() } : client
     ));
   };
 
-  const deleteClient = (id: string) => {
-    setClients((prev) => prev.filter((client) => client.id !== id));
+  const deleteClient = async (id: string) => {
+    await clientService.delete(id);
+    setClients(prev => prev.filter(client => client.id !== id));
   };
 
   const getClient = (id: string) => {
-    return clients.find((client) => client.id === id);
+    return clients.find(client => client.id === id);
   };
 
   const getClientScoreBreakdown = useCallback((clientId: string): ScoreBreakdown => {
@@ -392,6 +415,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // Recalculate all client scores when budgets change
   useEffect(() => {
+    if (clients.length === 0) return;
     const clientsToUpdate = new Set<string>();
     budgets.forEach(b => clientsToUpdate.add(b.clientId));
     clientsToUpdate.forEach(clientId => {
@@ -408,13 +432,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             timestamp: new Date(),
           };
           setScoreHistory(prev => [...prev, historyEntry]);
+          // Update score in DB
+          clientService.update(clientId, { score: scoreBreakdown.finalScore }).catch(console.error);
           setClients(prev => prev.map(c =>
             c.id === clientId ? { ...c, score: scoreBreakdown.finalScore, updatedAt: new Date() } : c
           ));
         }
       }
     });
-  }, [budgets]);
+  }, [budgets, clients.length]);
 
   // ============= Budget functions =============
   const generateNextProposalId = (): string => {
@@ -448,12 +474,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    setBudgets((prev) => [...prev, newBudget]);
+    setBudgets(prev => [...prev, newBudget]);
     return newBudget;
   };
 
   const updateBudget = (id: string, updates: Partial<Budget>) => {
-    setBudgets((prev) => prev.map((budget) =>
+    setBudgets(prev => prev.map(budget =>
       budget.id === id ? { ...budget, ...updates, updatedAt: new Date() } : budget
     ));
   };
@@ -463,16 +489,16 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteBudget = (id: string) => {
-    setBudgets((prev) => prev.filter((budget) => budget.id !== id));
+    setBudgets(prev => prev.filter(budget => budget.id !== id));
   };
 
   const getBudget = (id: string) => {
-    return budgets.find((budget) => budget.id === id);
+    return budgets.find(budget => budget.id === id);
   };
 
   // Budget Version functions
   const addBudgetVersion = (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId) {
         const newVersion: BudgetVersion = {
           ...versionData, id: uuidv4(), budgetId, version: budget.currentVersion + 1, createdAt: new Date(),
@@ -484,11 +510,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const updateBudgetVersion = (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId) {
         return {
           ...budget,
-          versions: budget.versions.map((version) => version.id === versionId ? { ...version, ...updates } : version),
+          versions: budget.versions.map(version => version.id === versionId ? { ...version, ...updates } : version),
           updatedAt: new Date(),
         };
       }
@@ -497,9 +523,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const approveBudget = (budgetId: string, versionNumber: number) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId) {
-        const approvedVersion = budget.versions.find((v) => v.version === versionNumber);
+        const approvedVersion = budget.versions.find(v => v.version === versionNumber);
         let execution: ProjectExecution | null = null;
         if (approvedVersion && approvedVersion.services && approvedVersion.services.length > 0) {
           const opCosts = approvedVersion.operationalCosts || [];
@@ -554,7 +580,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Execution functions =============
   const updateExecution = (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         const updatedExecution = { ...budget.execution, ...executionUpdates, updatedAt: new Date() };
         if (executionUpdates.nfTaxValue !== undefined) {
@@ -564,7 +590,6 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
           }));
         }
-        // Recalculate realTotal including operational costs
         if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
           const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
           const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
@@ -580,7 +605,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const updateExecutionCost = (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost = false) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         const updatedServices = budget.execution.services.map(service => {
           if (service.id === serviceId) {
@@ -607,7 +632,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addExtraCost = (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         const updatedServices = budget.execution.services.map(service => {
           if (service.id === serviceId) {
@@ -628,7 +653,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const removeExtraCost = (budgetId: string, serviceId: string, costId: string) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         const updatedServices = budget.execution.services.map(service => {
           if (service.id === serviceId) {
@@ -648,7 +673,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const finalizeExecution = (budgetId: string, finalReport?: string) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         return {
           ...budget,
@@ -661,7 +686,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addDeliveryLink = (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         const newLink: DeliveryLink = { ...link, id: uuidv4(), createdAt: new Date() };
         return {
@@ -675,7 +700,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const removeDeliveryLink = (budgetId: string, linkId: string) => {
-    setBudgets((prev) => prev.map((budget) => {
+    setBudgets(prev => prev.map(budget => {
       if (budget.id === budgetId && budget.execution) {
         return {
           ...budget,
@@ -689,9 +714,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= CRM Card functions =============
   const getCRMCards = (): CRMCard[] => {
-    return budgets.map((budget) => {
+    return budgets.map(budget => {
       const client = getClient(budget.clientId);
-      const currentVersionData = budget.versions.find((v) => v.version === budget.currentVersion);
+      const currentVersionData = budget.versions.find(v => v.version === budget.currentVersion);
       const serviceTypes: ServiceType[] = currentVersionData?.services
         ? [...new Set(currentVersionData.services.map(s => s.serviceType))]
         : [budget.serviceType];
@@ -707,7 +732,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const getCardsByStatus = (status: CRMStatus): CRMCard[] => {
-    return getCRMCards().filter((card) => card.status === status);
+    return getCRMCards().filter(card => card.status === status);
   };
 
   const moveCard = (cardId: string, newStatus: CRMStatus) => {
@@ -715,7 +740,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const value: CRMContextType = {
-    clients, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown,
+    clients, clientsLoading, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown, refreshClients,
     budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
     addBudgetVersion, updateBudgetVersion, approveBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,

@@ -10,13 +10,13 @@ A migracao sera feita em **fases**, priorizando os modulos mais criticos primeir
 
 ---
 
-## Fase 1 - Clientes
+## Fase 1 - Clientes ✅ CONCLUÍDA
 
-Tabela `clients` com os campos: company_name, cnpj, responsible_person, email, phone, lead_origin, score, workspace_id.
+Tabela `clients` criada com RLS por workspace_id. Services e contexts atualizados para usar Supabase.
 
-- RLS: apenas membros do mesmo workspace podem ler/escrever
-- Atualizar `clientService.ts` para usar Supabase em vez de localStorage
-- Atualizar `CRMContext.tsx` para buscar/salvar clientes via Supabase
+## Fase 2 - Prospeccao ✅ CONCLUÍDA
+
+Tabela `prospection_leads` criada com RLS por workspace_id. Services e contexts atualizados para usar Supabase.
 
 ## Fase 2 - Prospeccao
 
