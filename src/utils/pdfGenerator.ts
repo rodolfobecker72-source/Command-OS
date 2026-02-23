@@ -431,7 +431,7 @@ export async function generateProposalPDF({
     y = margin;
   }
 
-  // INVESTMENT BREAKDOWN (new formula)
+  // INVESTMENT BREAKDOWN - services with proportional fixed cost + margin
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
@@ -449,19 +449,29 @@ export async function generateProposalPDF({
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
 
+  // Total to distribute per service = production + fixed + margin
+  const totalToDistribute = totalProductionCost + fixedCostValue + marginValue;
+
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
 
-  // Custo de Produção
-  doc.text('Custo de Produção', margin, y);
-  doc.text(formatCurrency(totalProductionCost), pageWidth - margin, y, { align: 'right' });
-  y += 7;
+  // List each service with proportional value
+  version.services.forEach((service, idx) => {
+    if (y > pageHeight - 40) {
+      addFooter();
+      doc.addPage();
+      y = margin;
+    }
+    const serviceCost = service.costs.reduce((sum, c) => sum + c.value, 0);
+    const weight = totalProductionCost > 0 ? serviceCost / totalProductionCost : 0;
+    const serviceValue = weight * totalToDistribute;
 
-  // Custo Fixo
-  doc.text(`Custo Fixo (${versionFixedCostPct}%)`, margin, y);
-  doc.text(formatCurrency(fixedCostValue), pageWidth - margin, y, { align: 'right' });
-  y += 7;
+    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}`;
+    doc.text(label, margin, y);
+    doc.text(formatCurrency(serviceValue), pageWidth - margin, y, { align: 'right' });
+    y += 7;
+  });
 
   // Despesas Operacionais
   if (operationalTotal > 0) {
@@ -469,18 +479,6 @@ export async function generateProposalPDF({
     doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
     y += 7;
   }
-
-  // Total dos Custos
-  doc.setFont('helvetica', 'bold');
-  doc.text('Total dos Custos', margin, y);
-  doc.text(formatCurrency(totalCosts), pageWidth - margin, y, { align: 'right' });
-  y += 7;
-
-  // Margem
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Margem (${versionMarginPct}%)`, margin, y);
-  doc.text(formatCurrency(marginValue), pageWidth - margin, y, { align: 'right' });
-  y += 7;
 
   // NF
   doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
