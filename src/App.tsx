@@ -43,7 +43,7 @@ const App = () => (
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 {/* Redirect root to clients dashboard */}
-                <Route path="/" element={<Navigate to="/clientes" replace />} />
+                <Route path="/" element={<Navigate to="/crm" replace />} />
                 
                 {/* App routes with sidebar layout */}
                 <Route element={<AppLayout />}>

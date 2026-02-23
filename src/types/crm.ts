@@ -348,14 +348,6 @@ export function formatPhone(phone: string): string {
   return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
 }
 
-// Counter for sequential project IDs (starts at 800)
-let projectIdCounter = 800;
-
-export function generateProposalId(): string {
-  const id = projectIdCounter.toString().padStart(3, '0');
-  projectIdCounter++;
-  return id;
-}
 
 // Calculate service totals
 export function calculateServiceTotals(service: ServiceItem) {
