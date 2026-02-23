@@ -404,7 +404,6 @@ export async function generateProposalPDF({
       const descLines = doc.splitTextToSize(cost.description, maxDescWidth);
       doc.text(descLines, opCol2, y);
       
-      operationalTotal += cost.value;
       y += descLines.length * 5 + 3;
     });
     
