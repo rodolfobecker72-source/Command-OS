@@ -1,91 +1,51 @@
 
+# Despesas Operacionais no Orcamento
 
-# Fluxo Completo de Convites
+## O que sera feito
 
-## O que sera implementado
+Adicionar uma secao de **Despesas Operacionais** ao orcamento, separada dos servicos. Sao custos gerais do projeto como logistica, hospedagem, alimentacao, deslocamento, etc. Esses custos aparecerao em tres momentos:
 
-Quando o proprietario convidar alguem pelo email, o convidado podera criar uma conta (signup) e sera automaticamente vinculado ao workspace com o papel e permissoes definidos no convite. Alem disso, um link direto de convite tambem funcionara.
+1. **Criacao/edicao do orcamento** - secao dedicada abaixo dos servicos
+2. **Exportacao PDF** - secao propria no documento
+3. **Execucao do projeto** - acompanhamento de custos reais vs orcados
 
-## Fluxo do usuario
+## Como vai funcionar
 
-1. Proprietario cria convite na pagina /usuarios (ja funciona)
-2. Convidado acessa /signup ou /convite/:id
-3. Ao fazer signup, o sistema verifica se ha convites pendentes para aquele email
-4. Se houver, aceita o convite automaticamente (vincula ao workspace)
-5. Se nao houver, segue o fluxo normal de criar workspace proprio
-
-## Mudancas
-
-### 1. Nova pagina: `/convite/:id`
-- Pagina simples que mostra detalhes do convite (workspace, papel)
-- Se o usuario ja esta logado e o email bate, aceita o convite
-- Se nao esta logado, redireciona para signup com o invite_id como parametro
-
-### 2. Atualizar Signup (`src/pages/auth/Signup.tsx`)
-- Aceitar query param `?invite=<id>` 
-- Se tem invite, esconder campo "Nome da Empresa" (nao precisa criar workspace)
-- Apos signup, chamar `accept_invite` ao inves de `handle_signup_workspace`
-- Mostrar informacao do convite (nome do workspace, papel)
-
-### 3. Atualizar AuthContext (`src/contexts/AuthContext.tsx`)
-- Apos login, verificar se ha convites pendentes para o email do usuario
-- Se houver e o usuario nao tem workspace, aceitar automaticamente
-
-### 4. Atualizar Login (`src/pages/auth/Login.tsx`)
-- Aceitar query param `?invite=<id>`
-- Apos login com convite pendente, aceitar automaticamente
-
-### 5. Atualizar App.tsx (rotas)
-- Adicionar rota `/convite/:id` acessivel sem autenticacao
-
-### 6. Atualizar RLS do profiles
-- Permitir que membros do mesmo workspace vejam os perfis uns dos outros (necessario para a pagina de usuarios mostrar nomes)
-
----
+- Na tela de novo orcamento, apos os servicos, havera um card "Despesas Operacionais" com tabela de custos (mesma estrutura dos custos de servico: descricao, quantidade, valor unitario, total)
+- As despesas operacionais nao terao margem, custo fixo % ou NF % aplicados - sao custos diretos
+- No calculo do total do orcamento, as despesas operacionais serao somadas ao valor final
+- No PDF, aparecera uma secao "Despesas Operacionais" entre os servicos e o investimento total
+- Na execucao, havera uma secao separada para acompanhar os custos reais das despesas operacionais
 
 ## Detalhes tecnicos
 
-### Nova pagina `src/pages/auth/AcceptInvite.tsx`
-- Busca dados do convite via `supabase.from('workspace_invites').select('*').eq('id', inviteId).is('accepted_at', null)`
-- Se usuario logado: chama `supabase.rpc('accept_invite', { invite_id })` e redireciona para `/clientes`
-- Se nao logado: redireciona para `/signup?invite=<id>`
+### 1. Tipo `BudgetVersion` (src/types/crm.ts)
+- Adicionar campo `operationalCosts: CostItem[]` ao `BudgetVersion`
+- Adicionar campo `operationalCosts: ExecutionCostItem[]` e `extraOperationalCosts: ExecutionCostItem[]` ao `ProjectExecution`
 
-### Mudancas no Signup
-- Ler `searchParams.get('invite')`
-- Se tem invite, buscar dados do convite para mostrar contexto
-- Apos signup bem-sucedido com invite: chamar `accept_invite` ao inves de `handle_signup_workspace`
-- Apos signup sem invite: manter fluxo atual (criar workspace)
+### 2. NewBudget.tsx
+- Adicionar estado `operationalCosts: CostItem[]`
+- Adicionar card "Despesas Operacionais" com tabela de custos editavel (mesmo padrao dos custos de servico)
+- Incluir despesas operacionais no calculo do total geral (somadas apos os servicos)
+- Salvar no `addBudgetVersion` com o campo `operationalCosts`
 
-### Mudancas no AuthContext
-- No `loadUserData`, se nao encontrar membership, verificar convites pendentes para o email do usuario
-- Se encontrar, chamar `accept_invite` e recarregar dados
+### 3. BudgetDetail.tsx
+- Exibir card "Despesas Operacionais" na aba de orcamento (entre servicos e historico de versoes)
+- Na criacao de nova versao, incluir secao de despesas operacionais
+- Na aba de execucao, exibir secao de despesas operacionais com custos reais vs orcados
+- Suportar gastos extras nas despesas operacionais
 
-### Migracoes de banco de dados
-- Adicionar policy no `profiles` para membros do mesmo workspace poderem ver perfis:
-```sql
-CREATE POLICY "Workspace members can view profiles"
-ON public.profiles FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.workspace_members wm1
-    JOIN public.workspace_members wm2 ON wm1.workspace_id = wm2.workspace_id
-    WHERE wm1.user_id = auth.uid() AND wm2.user_id = profiles.id
-  )
-);
-```
-- Adicionar policy para convidados poderem ler convites pelo ID (para a pagina de convite):
-```sql
-CREATE POLICY "Anyone can read invite by id"
-ON public.workspace_invites FOR SELECT
-USING (true);
-```
-(Ja existe policy de SELECT para membros, mas convidados que ainda nao sao membros precisam ler o convite)
+### 4. pdfGenerator.ts
+- Adicionar secao "DESPESAS OPERACIONAIS" no PDF, listando os itens e o subtotal
+- Somar ao investimento total
+
+### 5. CRMContext.tsx
+- Atualizar `approveBudget` para incluir despesas operacionais na planilha de execucao
+- Atualizar funcoes de custo de execucao para suportar custos operacionais
 
 ### Arquivos modificados
-- `src/pages/auth/Signup.tsx` - suporte a convites
-- `src/pages/auth/Login.tsx` - suporte a convites  
-- `src/contexts/AuthContext.tsx` - auto-aceitar convites no login
-- `src/App.tsx` - nova rota /convite/:id
-- Novo: `src/pages/auth/AcceptInvite.tsx`
-- Migracao SQL para policies adicionais
-
+- `src/types/crm.ts` - novos campos nos tipos
+- `src/pages/crm/NewBudget.tsx` - secao de despesas operacionais no formulario
+- `src/pages/crm/BudgetDetail.tsx` - exibicao e execucao das despesas operacionais
+- `src/utils/pdfGenerator.ts` - secao no PDF
+- `src/contexts/CRMContext.tsx` - logica de aprovacao e execucao
