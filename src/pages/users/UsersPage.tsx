@@ -97,7 +97,7 @@ export function UsersPage() {
   });
 
   const pagesByGroup = getPagesByGroup();
-  const canManage = currentRole === 'owner' || currentRole === 'admin';
+  const canManage = currentRole === 'owner';
 
   const loadMembers = async () => {
     if (!workspace) return;
@@ -312,6 +312,14 @@ export function UsersPage() {
       </div>
     </div>
   );
+
+  if (currentRole !== 'owner') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Apenas o proprietário pode acessar esta página.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
