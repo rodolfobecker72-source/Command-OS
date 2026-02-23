@@ -210,6 +210,7 @@ export interface BudgetVersion {
   budgetId: string;
   version: number;
   services: ServiceItem[]; // Services with individual cost sheets
+  operationalCosts: CostItem[]; // Operational costs (logistics, accommodation, etc.)
   costs: CostItem[]; // Legacy: flat list of costs (deprecated)
   productionCost: number;
   fixedCostPercentage: number; // Default 20%
@@ -256,6 +257,8 @@ export interface ProjectExecution {
   executor: string; // Who executed the project
   nfTaxValue: number; // Invoice tax value distributed proportionally
   services: ExecutionServiceItem[];
+  operationalCosts: ExecutionCostItem[]; // Operational costs for execution
+  extraOperationalCosts: ExecutionCostItem[]; // Extra operational costs not in original budget
   budgetedTotal: number;
   realTotal: number;
   realMargin: number;

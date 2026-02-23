@@ -348,6 +348,72 @@ export async function generateProposalPDF({
     }
   });
 
+  // ============================================
+  // OPERATIONAL COSTS SECTION
+  // ============================================
+  const operationalCosts = version.operationalCosts || [];
+  if (operationalCosts.length > 0) {
+    y += 6;
+    
+    if (y > pageHeight - 60) {
+      addFooter();
+      doc.addPage();
+      y = margin;
+    }
+    
+    doc.setFontSize(subtitleSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(black);
+    doc.text('DESPESAS OPERACIONAIS', margin, y);
+    y += 10;
+    
+    const opCol1 = margin;
+    const opCol2 = margin + 10;
+    
+    doc.setFontSize(smallSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(black);
+    doc.text('#', opCol1, y);
+    doc.text('Descrição', opCol2, y);
+    y += 2;
+    
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 5;
+    
+    doc.setFont('helvetica', 'normal');
+    setColor(darkGray);
+    
+    let operationalTotal = 0;
+    operationalCosts.forEach((cost, costIndex) => {
+      if (y > pageHeight - 40) {
+        addFooter();
+        doc.addPage();
+        y = margin;
+      }
+      
+      doc.text(`${costIndex + 1}`, opCol1, y);
+      
+      const maxDescWidth = contentWidth - 15;
+      const descLines = doc.splitTextToSize(cost.description, maxDescWidth);
+      doc.text(descLines, opCol2, y);
+      
+      operationalTotal += cost.value;
+      y += descLines.length * 5 + 3;
+    });
+    
+    y += 4;
+    
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(black);
+    doc.text(`Subtotal: ${formatCurrency(operationalTotal)}`, pageWidth - margin, y, { align: 'right' });
+    
+    totalInvestment += operationalTotal;
+    y += 8;
+  }
+
   y += 10;
   drawLine(y);
   y += 12;

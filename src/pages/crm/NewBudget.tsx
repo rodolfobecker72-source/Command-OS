@@ -116,6 +116,7 @@ export function NewBudget() {
   });
 
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const [operationalCosts, setOperationalCosts] = useState<CostItem[]>([]);
   const [clientOpen, setClientOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
 
@@ -157,6 +158,10 @@ export function NewBudget() {
   };
 
   // Total geral
+  const operationalCostsTotal = useMemo(() => {
+    return operationalCosts.reduce((sum, cost) => sum + cost.value, 0);
+  }, [operationalCosts]);
+
   const totals = useMemo(() => {
     let totalCost = 0;
     let totalFinalValue = 0;
@@ -167,12 +172,15 @@ export function NewBudget() {
       totalFinalValue += calc.finalValue;
     });
 
+    // Add operational costs to totals
+    totalFinalValue += operationalCostsTotal;
+
     const totalMargin = totalFinalValue > 0 
-      ? ((totalFinalValue - totalCost) / totalFinalValue) * 100 
+      ? ((totalFinalValue - totalCost - operationalCostsTotal) / totalFinalValue) * 100 
       : 0;
 
     return { totalCost, totalFinalValue, totalMargin };
-  }, [services]);
+  }, [services, operationalCostsTotal]);
 
   // Adicionar serviço
   const addService = (serviceType: ServiceType) => {
@@ -313,6 +321,7 @@ export function NewBudget() {
         nfCostPercentage: s.nfCostPercentage,
         targetMargin: s.targetMargin,
       })),
+      operationalCosts: operationalCosts,
       costs: [],
       productionCost: totals.totalCost,
       fixedCostPercentage: 20,
@@ -1137,6 +1146,146 @@ export function NewBudget() {
               );
             })}
           </AnimatePresence>
+
+          {/* Operational Costs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className="card-elevated border-l-4 border-l-warning">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-warning/10">
+                      <DollarSign className="w-6 h-6 text-warning" />
+                    </div>
+                    <div>
+                      <CardTitle>Despesas Operacionais</CardTitle>
+                      <CardDescription>
+                        Custos gerais do projeto (logística, hospedagem, alimentação, etc.)
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setOperationalCosts([
+                        ...operationalCosts,
+                        {
+                          id: uuidv4(),
+                          description: '',
+                          quantity: 1,
+                          unitValue: 0,
+                          value: 0,
+                          paymentStatus: 'pendente' as PaymentStatus,
+                          paymentDate: null,
+                        },
+                      ]);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {operationalCosts.length > 0 ? (
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead className="w-[40%]">Descrição</TableHead>
+                          <TableHead className="w-[80px]">Qtd</TableHead>
+                          <TableHead>Valor Unit.</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead className="w-12"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {operationalCosts.map((cost) => (
+                          <TableRow key={cost.id}>
+                            <TableCell>
+                              <Input
+                                value={cost.description}
+                                onChange={(e) =>
+                                  setOperationalCosts(operationalCosts.map(c =>
+                                    c.id === cost.id ? { ...c, description: e.target.value } : c
+                                  ))
+                                }
+                                placeholder="Ex: Passagens aéreas, Hotel..."
+                                className="border-0 p-0 h-8 focus:ring-0"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={cost.quantity || 1}
+                                onChange={(e) => {
+                                  const qty = parseInt(e.target.value) || 1;
+                                  setOperationalCosts(operationalCosts.map(c =>
+                                    c.id === cost.id ? { ...c, quantity: qty, value: qty * (c.unitValue || 0) } : c
+                                  ));
+                                }}
+                                className="border-0 p-0 h-8 w-16 focus:ring-0"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={cost.unitValue || ''}
+                                onChange={(e) => {
+                                  const uv = parseFloat(e.target.value) || 0;
+                                  setOperationalCosts(operationalCosts.map(c =>
+                                    c.id === cost.id ? { ...c, unitValue: uv, value: (c.quantity || 1) * uv } : c
+                                  ));
+                                }}
+                                placeholder="0,00"
+                                className="border-0 p-0 h-8 w-28 focus:ring-0"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm font-medium">
+                                {formatCurrency(cost.value || 0)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setOperationalCosts(operationalCosts.filter(c => c.id !== cost.id))}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {/* Total row */}
+                        <TableRow className="bg-muted/30">
+                          <TableCell colSpan={3} className="font-semibold">
+                            Total Despesas Operacionais
+                          </TableCell>
+                          <TableCell className="font-bold">
+                            {formatCurrency(operationalCostsTotal)}
+                          </TableCell>
+                          <TableCell />
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground border rounded-lg">
+                    Clique em "Adicionar" para incluir despesas operacionais
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Grand Total */}
           {services.length > 0 && (
