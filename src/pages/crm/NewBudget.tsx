@@ -279,14 +279,14 @@ export function NewBudget() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     // Criar orçamento para cada serviço ou um orçamento com todos os serviços
     const firstService = services[0];
-    const newBudget = addBudget({
+    const newBudget = await addBudget({
       projectName: formData.projectName,
       projectDescription: formData.projectDescription,
       clientId: formData.clientId,
@@ -307,7 +307,7 @@ export function NewBudget() {
     });
 
     // Criar versão com todos os custos e serviços
-    addBudgetVersion(newBudget.id, {
+    await addBudgetVersion(newBudget.id, {
       services: services.map(s => ({
         id: s.id,
         serviceType: s.serviceType,
