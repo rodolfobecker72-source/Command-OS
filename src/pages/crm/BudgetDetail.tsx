@@ -113,6 +113,7 @@ export function BudgetDetail() {
   const [newVersionOpen, setNewVersionOpen] = useState(false);
   const [newVersionReason, setNewVersionReason] = useState('');
   const [newVersionServices, setNewVersionServices] = useState<ServiceItem[]>([]);
+  const [newVersionOperationalCosts, setNewVersionOperationalCosts] = useState<CostItem[]>([]);
   const [approveOpen, setApproveOpen] = useState(false);
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
@@ -187,9 +188,16 @@ export function BudgetDetail() {
     } else {
       setNewVersionServices([]);
     }
+    setNewVersionOperationalCosts(
+      (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
+    );
   };
 
   // Calculate totals for new version
+  const newVersionOperationalTotal = useMemo(() => {
+    return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
+  }, [newVersionOperationalCosts]);
+
   const newVersionTotals = useMemo(() => {
     let totalCost = 0;
     let totalFinalValue = 0;
@@ -200,12 +208,14 @@ export function BudgetDetail() {
       totalFinalValue += calc.finalValue;
     });
 
+    totalFinalValue += newVersionOperationalTotal;
+
     const totalMargin = totalFinalValue > 0 
-      ? ((totalFinalValue - totalCost) / totalFinalValue) * 100 
+      ? ((totalFinalValue - totalCost - newVersionOperationalTotal) / totalFinalValue) * 100 
       : 0;
 
     return { totalCost, totalFinalValue, totalMargin };
-  }, [newVersionServices]);
+  }, [newVersionServices, newVersionOperationalTotal]);
 
   // Update service in new version
   const updateNewVersionService = (serviceId: string, updates: Partial<ServiceItem>) => {
@@ -299,6 +309,7 @@ export function BudgetDetail() {
 
     addBudgetVersion(budget.id, {
       services: newVersionServices,
+      operationalCosts: newVersionOperationalCosts,
       costs: [],
       productionCost: newVersionTotals.totalCost,
       fixedCostPercentage: 20,
@@ -748,6 +759,67 @@ export function BudgetDetail() {
                   </AnimatePresence>
                 )}
 
+                {/* Operational Costs in Budget View */}
+                {currentVersionData && (currentVersionData.operationalCosts || []).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                  >
+                    <Card className="card-elevated border-l-4 border-l-warning">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-xl bg-warning/10">
+                            <DollarSign className="w-6 h-6 text-warning" />
+                          </div>
+                          <div>
+                            <CardTitle>Despesas Operacionais</CardTitle>
+                            <CardDescription>
+                              Custos gerais do projeto
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="rounded-lg border overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-muted/50">
+                                <TableHead>Descrição</TableHead>
+                                <TableHead className="text-right w-[60px]">Qtd</TableHead>
+                                <TableHead className="text-right">V. Unit.</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {currentVersionData.operationalCosts.map((cost) => (
+                                <TableRow key={cost.id}>
+                                  <TableCell>{cost.description}</TableCell>
+                                  <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                  <TableCell className="text-right text-muted-foreground">
+                                    {formatCurrency(cost.unitValue || cost.value)}
+                                  </TableCell>
+                                  <TableCell className="text-right font-medium">
+                                    {formatCurrency(cost.value)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <TableRow className="bg-muted/30">
+                                <TableCell colSpan={3} className="font-semibold">
+                                  Total Despesas Operacionais
+                                </TableCell>
+                                <TableCell className="text-right font-bold">
+                                  {formatCurrency(currentVersionData.operationalCosts.reduce((sum, c) => sum + c.value, 0))}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
                 {/* Version History */}
                 {budget.versions.length > 0 && (
                   <motion.div
@@ -1035,6 +1107,120 @@ export function BudgetDetail() {
                                           </Card>
                                         );
                                       })}
+
+                                      {/* Operational Costs in New Version */}
+                                      <Card className="border-l-4 border-l-warning">
+                                        <CardHeader className="pb-3">
+                                          <div className="flex items-center justify-between">
+                                            <CardTitle className="text-base flex items-center gap-2">
+                                              <DollarSign className="w-4 h-4 text-warning" />
+                                              Despesas Operacionais
+                                            </CardTitle>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                setNewVersionOperationalCosts(prev => [...prev, {
+                                                  id: uuidv4(),
+                                                  description: '',
+                                                  quantity: 1,
+                                                  unitValue: 0,
+                                                  value: 0,
+                                                  paymentStatus: 'pendente' as PaymentStatus,
+                                                  paymentDate: null,
+                                                }]);
+                                              }}
+                                            >
+                                              <Plus className="w-3 h-3 mr-1" />
+                                              Adicionar
+                                            </Button>
+                                          </div>
+                                        </CardHeader>
+                                        <CardContent>
+                                          {newVersionOperationalCosts.length > 0 ? (
+                                            <Table>
+                                              <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                  <TableHead>Descrição</TableHead>
+                                                  <TableHead className="w-[70px]">Qtd</TableHead>
+                                                  <TableHead>V. Unit.</TableHead>
+                                                  <TableHead>Total</TableHead>
+                                                  <TableHead className="w-10"></TableHead>
+                                                </TableRow>
+                                              </TableHeader>
+                                              <TableBody>
+                                                {newVersionOperationalCosts.map((cost) => (
+                                                  <TableRow key={cost.id}>
+                                                    <TableCell>
+                                                      <Input
+                                                        value={cost.description}
+                                                        onChange={(e) =>
+                                                          setNewVersionOperationalCosts(prev => prev.map(c =>
+                                                            c.id === cost.id ? { ...c, description: e.target.value } : c
+                                                          ))
+                                                        }
+                                                        placeholder="Ex: Passagens, Hotel..."
+                                                        className="h-8"
+                                                      />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                      <Input
+                                                        type="number"
+                                                        min="1"
+                                                        value={cost.quantity || 1}
+                                                        onChange={(e) => {
+                                                          const qty = parseInt(e.target.value) || 1;
+                                                          setNewVersionOperationalCosts(prev => prev.map(c =>
+                                                            c.id === cost.id ? { ...c, quantity: qty, value: qty * (c.unitValue || 0) } : c
+                                                          ));
+                                                        }}
+                                                        className="h-8 w-16"
+                                                      />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                      <Input
+                                                        type="number"
+                                                        value={cost.unitValue || ''}
+                                                        onChange={(e) => {
+                                                          const uv = parseFloat(e.target.value) || 0;
+                                                          setNewVersionOperationalCosts(prev => prev.map(c =>
+                                                            c.id === cost.id ? { ...c, unitValue: uv, value: (c.quantity || 1) * uv } : c
+                                                          ));
+                                                        }}
+                                                        placeholder="0,00"
+                                                        className="h-8 w-28"
+                                                      />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                      <span className="text-sm font-medium">
+                                                        {formatCurrency(cost.value || 0)}
+                                                      </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                      <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setNewVersionOperationalCosts(prev => prev.filter(c => c.id !== cost.id))}
+                                                      >
+                                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                                      </Button>
+                                                    </TableCell>
+                                                  </TableRow>
+                                                ))}
+                                                <TableRow className="bg-muted/30">
+                                                  <TableCell colSpan={3} className="font-semibold">Total</TableCell>
+                                                  <TableCell className="font-bold">{formatCurrency(newVersionOperationalTotal)}</TableCell>
+                                                  <TableCell />
+                                                </TableRow>
+                                              </TableBody>
+                                            </Table>
+                                          ) : (
+                                            <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa operacional</p>
+                                          )}
+                                        </CardContent>
+                                      </Card>
 
                                       {/* Total Summary */}
                                       {newVersionServices.length > 0 && (
@@ -1534,6 +1720,122 @@ export function BudgetDetail() {
                         </div>
                       );
                     })}
+
+                    {/* Operational Costs in Execution */}
+                    {(() => {
+                      const opCosts = budget.execution.operationalCosts || [];
+                      const extraOpCosts = budget.execution.extraOperationalCosts || [];
+                      if (opCosts.length === 0 && extraOpCosts.length === 0) return null;
+                      const opTotal = opCosts.reduce((sum, c) => sum + c.realValue, 0) + extraOpCosts.reduce((sum, c) => sum + c.realValue, 0);
+                      const opBudgeted = opCosts.reduce((sum, c) => sum + c.budgetedValue, 0);
+                      
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center mb-3 p-3 bg-warning/5 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-warning/20 text-warning rounded-lg">
+                                <DollarSign className="w-4 h-4" />
+                              </div>
+                              <span className="font-bold">Despesas Operacionais</span>
+                            </div>
+                          </div>
+                          
+                          <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Descrição</TableHead>
+                                  <TableHead className="text-right">Orçado</TableHead>
+                                  <TableHead className="text-right">Real</TableHead>
+                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Data Pgto</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {opCosts.map((cost) => (
+                                  <TableRow key={cost.id}>
+                                    <TableCell>{cost.description}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                      {formatCurrency(cost.budgetedValue)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <Input
+                                        type="number"
+                                        value={cost.realValue}
+                                        onChange={(e) => {
+                                          const val = parseFloat(e.target.value) || 0;
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, realValue: val } : c
+                                            ),
+                                          });
+                                        }}
+                                        className="w-28 text-right h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="text"
+                                        value={cost.supplier || ''}
+                                        onChange={(e) => {
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, supplier: e.target.value } : c
+                                            ),
+                                          });
+                                        }}
+                                        placeholder="Quem executou"
+                                        className="w-32 h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Select
+                                        value={cost.paymentStatus}
+                                        onValueChange={(value) => {
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, paymentStatus: value as PaymentStatusType, paymentDate: value === 'pago' ? new Date() : null } : c
+                                            ),
+                                          });
+                                        }}
+                                      >
+                                        <SelectTrigger className="w-28 h-8">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                              {label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                      {cost.paymentDate
+                                        ? new Date(cost.paymentDate).toLocaleDateString('pt-BR')
+                                        : '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          
+                          <div className="mt-3 grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-lg text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Orçado</p>
+                              <p className="font-semibold text-orange-500">{formatCurrency(opBudgeted)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Real</p>
+                              <p className="font-semibold text-destructive">{formatCurrency(opTotal)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Project Management Shortcut */}
                     <div className="mt-8 pt-6 border-t">

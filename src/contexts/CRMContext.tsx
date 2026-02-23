@@ -494,6 +494,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const approvedVersion = budget.versions.find((v) => v.version === versionNumber);
         let execution: ProjectExecution | null = null;
         if (approvedVersion && approvedVersion.services && approvedVersion.services.length > 0) {
+          const opCosts = approvedVersion.operationalCosts || [];
+          const opCostsTotal = opCosts.reduce((sum, c) => sum + c.value, 0);
           execution = {
             id: uuidv4(), budgetId, approvedVersionId: approvedVersion.id, executor: '', nfTaxValue: 0,
             services: approvedVersion.services.map(service => {
@@ -506,7 +508,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                 budgetedFinalValue: serviceCalc.finalValue, finalValue: serviceCalc.finalValue, nfTaxProportion: 0,
               };
             }),
-            budgetedTotal: approvedVersion.totalCost, realTotal: approvedVersion.totalCost, realMargin: approvedVersion.margin,
+            operationalCosts: opCosts.map(cost => ({ ...cost, budgetedValue: cost.value, realValue: cost.value, supplier: '' })),
+            extraOperationalCosts: [],
+            budgetedTotal: approvedVersion.totalCost + opCostsTotal, realTotal: approvedVersion.totalCost + opCostsTotal, realMargin: approvedVersion.margin,
             isFinalized: false, finalizedAt: null, deliveryLinks: [], createdAt: new Date(), updatedAt: new Date(),
           };
         }
@@ -551,6 +555,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             ...service,
             nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
           }));
+        }
+        // Recalculate realTotal including operational costs
+        if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
+          const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
+          const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+          const extraOpTotal = (updatedExecution.extraOperationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+          updatedExecution.realTotal = serviceTotal + opTotal + extraOpTotal;
+          const finalValue = budget.finalValue || updatedExecution.budgetedTotal;
+          updatedExecution.realMargin = finalValue > 0 ? ((finalValue - updatedExecution.realTotal) / finalValue) * 100 : 0;
         }
         return { ...budget, execution: updatedExecution, updatedAt: new Date() };
       }
