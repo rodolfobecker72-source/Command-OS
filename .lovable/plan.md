@@ -1,30 +1,74 @@
 
 
-# Custo Fixo e NF como configuracao geral do projeto
+# Reformular Composicao do Orcamento
 
-## O que muda
+## Nova Formula
 
-Atualmente, **Custo Fixo (%)** e **Custo NF (%)** sao configurados individualmente em cada servico. O usuario quer que esses percentuais sejam **gerais do projeto** (assim como as despesas operacionais), e somente a **margem** continue sendo por servico.
+A composicao do orcamento passa a seguir esta logica:
 
-## Como vai ficar
+```text
+Custo de Producao          = soma dos custos de todos os servicos
+Custo Fixo da Produtora    = X% sobre o Custo de Producao
+Despesas Operacionais      = soma das despesas operacionais
+---------------------------------------------------------
+Total dos Custos           = Custo de Producao + Custo Fixo + Despesas Operacionais
 
-1. **No formulario de orcamento**: Os campos "Custo Fixo (%)" e "Custo NF (%)" serao movidos para o card de "Dados do Orcamento" (ou um card proprio de configuracoes gerais), removidos de dentro de cada servico
-2. **Dentro de cada servico**: Ficara apenas o campo "Margem Desejada (%)" e o resumo de custos (que usara os percentuais gerais)
-3. **No calculo**: A funcao `calculateService` passara a receber os percentuais gerais como parametro em vez de usar os do servico
-4. **No submit**: Os percentuais gerais serao salvos na versao do orcamento (campos `fixedCostPercentage` e `nfCostPercentage` do `BudgetVersion`), e cada servico mantara apenas `targetMargin`
+Margem Desejada (%)        = definida pelo usuario (agora geral do projeto)
+Valor da Margem            = Total dos Custos * (Margem / (100 - Margem - NF))
+                             (derivado da formula abaixo)
+
+Valor Total do Projeto     = (Total dos Custos) / (1 - Margem/100 - NF/100)
+
+Onde NF% incide sobre o Valor Total do Projeto:
+NF = Valor Total * NF%
+```
+
+A formula fechada fica:
+**Valor Total = Total dos Custos / (1 - Margem%/100 - NF%/100)**
+
+Assim, o valor total ja inclui a margem e o NF calculado sobre si mesmo.
+
+## O que muda na interface
+
+### Dentro de cada servico
+- **Remove**: Margem Desejada e Valor Final (que estavam por servico)
+- **Mantem**: Apenas os custos de producao do servico e o resumo (Custo de Producao do servico, Custo Fixo proporcional, Total)
+
+### Secao de totais (card escuro no final)
+- **Custo de Producao total** (soma de todos os servicos)
+- **Custo Fixo** (X% do custo de producao)
+- **Despesas Operacionais** (soma)
+- **Total dos Custos**
+- **Margem Desejada** (input % - agora unico, geral)
+- **NF** (X% sobre o valor total)
+- **Valor Total do Projeto**
+
+### Campo de NF% no formulario
+- O input de NF% continua na secao de configuracoes gerais do orcamento (junto com Custo Fixo%)
 
 ## Detalhes tecnicos
 
 ### Arquivo: `src/pages/crm/NewBudget.tsx`
 
-1. **Adicionar ao `formData`** os campos `fixedCostPercentage: 0` e `nfCostPercentage: 0`
-2. **Remover** `fixedCostPercentage` e `nfCostPercentage` do estado inicial de cada servico em `addService` (zerar ou remover)
-3. **Mover os inputs** de Custo Fixo e Custo NF para o card de dados gerais do orcamento (ou criar uma secao "Configuracoes de Custo" acima dos servicos)
-4. **Atualizar `calculateService`** para receber `fixedCostPercentage` e `nfCostPercentage` como parametros (vindos do `formData`)
-5. **Remover** os inputs de Custo Fixo e Custo NF de dentro de cada card de servico (linhas ~1044-1076), mantendo apenas Margem Desejada e Valor Final
-6. **Atualizar o resumo** de cada servico para usar os percentuais gerais
-7. **Atualizar `handleSubmit`** para salvar os percentuais gerais no `addBudgetVersion` e nos servicos
+1. **Mover `targetMargin` para `formData`**: Adicionar `targetMargin: 0` ao estado `formData` (remover do `ServiceItem`)
 
-### Arquivos modificados
-- `src/pages/crm/NewBudget.tsx` - mover campos de percentual para nivel do projeto
+2. **Reformular `calculateService`**: Retornar apenas `productionCost` e `fixedCost` por servico (sem NF e sem margem por servico)
+
+3. **Reformular `totals` (useMemo)**: Nova logica:
+   - `productionCost` = soma dos custos de producao de todos os servicos
+   - `fixedCost` = productionCost * fixedCostPercentage / 100
+   - `operationalCosts` = soma das despesas operacionais
+   - `totalCosts` = productionCost + fixedCost + operationalCosts
+   - `totalProjectValue` = totalCosts / (1 - targetMargin/100 - nfCostPercentage/100)
+   - `nfValue` = totalProjectValue * nfCostPercentage / 100
+   - `marginValue` = totalProjectValue - totalCosts - nfValue
+
+4. **UI dos cards de servico**: Remover bloco "Margin and Final Value" (linhas 1117-1147). Remover "Custo NF" do resumo do servico. Manter apenas: Custo de Producao, Custo Fixo, Total.
+
+5. **UI do Grand Total**: Reformular o card escuro final para mostrar a composicao completa com input de Margem Desejada e os valores calculados.
+
+6. **handleSubmit**: Salvar `targetMargin` no nivel da versao do orcamento (campo `margin` do `BudgetVersion`), nao mais por servico.
+
+### Arquivo: `src/utils/pdfGenerator.ts`
+- Ajustar a composicao do investimento no PDF para refletir a nova formula (Custo de Producao + Custo Fixo + Despesas + Margem + NF = Total).
 
