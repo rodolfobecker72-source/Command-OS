@@ -8,7 +8,8 @@ import {
   Layers,
   ChevronDown,
   Briefcase,
-  Target } from
+  Target,
+  Info } from
 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -134,17 +135,22 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      {showUsuarios &&
-      <div className="px-4 py-4 border-t border-sidebar-border">
+      <div className="px-4 py-4 border-t border-sidebar-border space-y-1">
+        {showUsuarios &&
           <NavLink
-          to="/usuarios"
-          className={`nav-link w-full ${location.pathname === '/usuarios' ? 'active' : ''}`}>
-
+            to="/usuarios"
+            className={`nav-link w-full ${location.pathname === '/usuarios' ? 'active' : ''}`}>
             <UserCog className="w-5 h-5" />
             <span className="text-sm font-medium">Usuários</span>
           </NavLink>
-        </div>
-      }
+        }
+        <NavLink
+          to="/sobre"
+          className={`nav-link w-full ${location.pathname === '/sobre' ? 'active' : ''}`}>
+          <Info className="w-5 h-5" />
+          <span className="text-sm font-medium">Sobre</span>
+        </NavLink>
+      </div>
     </aside>);
 
 }
