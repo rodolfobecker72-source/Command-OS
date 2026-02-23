@@ -1,49 +1,68 @@
 
 
-# Ajustar PDF: Unificar Custos por Servico
+# Ajustar Nova Versao para Formula Global (igual ao cadastro)
+
+## Problema
+
+O dialog de "Nova Versao" em `BudgetDetail.tsx` ainda usa a formula antiga: cada servico tem seu proprio Custo Fixo %, NF % e Margem %. O cadastro (`NewBudget.tsx`) ja foi atualizado para usar a formula global:
+
+```text
+Valor Total = (Custo Producao + Custo Fixo + Despesas Operacionais) / (1 - Margem%/100 - NF%/100)
+```
 
 ## O que muda
 
-Na secao "COMPOSICAO DO INVESTIMENTO" do PDF, em vez de mostrar linhas separadas para Custo de Producao, Custo Fixo e Margem, o documento vai:
+### 1. Novos estados para percentuais globais
 
-1. **Mostrar cada servico individualmente** com seu valor ja incluindo custo fixo e margem distribuidos proporcionalmente
-2. **Tudo apresentado como "Custo de Producao"** - sem expor custo fixo e margem separadamente ao cliente
+Adicionar estados no componente `BudgetDetail.tsx`:
+- `newVersionFixedCostPct` (default: valor da versao atual ou 20)
+- `newVersionNfPct` (default: valor da versao atual ou 13)
+- `newVersionTargetMargin` (default: valor da versao atual ou 0)
 
-### Exemplo visual no PDF
+Inicializar esses valores no `initNewVersionServices()` a partir da versao corrente.
 
-```text
-COMPOSICAO DO INVESTIMENTO
+### 2. Remover campos por servico
 
-1. Captacao de Video                    R$ 12.500,00
-2. Edicao e Pos-producao               R$  8.300,00
-3. Motion Graphics                     R$  4.200,00
-Despesas Operacionais                   R$  2.000,00
-Nota Fiscal (13%)                       R$  3.510,00
--------------------------------------------------
-INVESTIMENTO TOTAL                      R$ 30.510,00
-```
+Nos cards de servico dentro do dialog de nova versao:
+- **Remover**: inputs de Custo Fixo %, NF % e Margem % por servico (linhas 959-999)
+- **Remover**: "Valor Final" e "Margem" do resumo do servico (linhas 1091-1105)
+- **Manter**: apenas Custo de Producao no resumo do servico
 
-Cada servico recebe proporcionalmente o custo fixo e a margem com base no seu peso no custo de producao total. Assim o cliente ve apenas o valor final de cada servico sem saber a composicao interna.
+### 3. Reformular `newVersionTotals`
 
-### Calculo proporcional
+Nova logica (identica ao `NewBudget`):
+- `productionCost` = soma dos custos de producao de todos os servicos
+- `fixedCost` = productionCost * fixedCostPct / 100
+- `operationalTotal` = soma das despesas operacionais
+- `totalCosts` = productionCost + fixedCost + operationalTotal
+- `totalProjectValue` = totalCosts / (1 - margin/100 - nf/100)
+- `nfValue` = totalProjectValue * nf / 100
+- `marginValue` = totalProjectValue - totalCosts - nfValue
 
-Para cada servico:
-- `peso = custoProdServico / custoProdTotal`
-- `valorServico = (custoProdServico + custoFixo * peso + margem * peso)`
+### 4. Secao de Composicao do Investimento
 
-Ou seja: `valorServico = custoProdServico / custoProdTotal * (custoProdTotal + custoFixo + margem)`
+Substituir o card escuro de resumo (linhas 1225-1243) por uma secao completa com:
+- Inputs para Custo Fixo %, NF % e Margem Desejada %
+- Breakdown: Custo de Producao, Custo Fixo, Despesas Operacionais, Total dos Custos, Margem, NF, Valor Total
+
+### 5. Ajustar `handleCreateNewVersion`
+
+Salvar os valores globais na versao:
+- `fixedCostPercentage`: do estado global
+- `nfCostPercentage`: do estado global
+- `margin`: margem global
+- `fullPrice`: valor total do projeto calculado
+- `productionCost` e `totalCost` com os valores corretos
 
 ## Detalhes tecnicos
 
-### Arquivo: `src/utils/pdfGenerator.ts`
+### Arquivo: `src/pages/crm/BudgetDetail.tsx`
 
-Na secao "COMPOSICAO DO INVESTIMENTO" (linhas 434-500):
-
-1. Calcular o valor proporcional de cada servico (producao + fixo + margem distribuidos)
-2. Listar cada servico com nome e valor final
-3. Listar Despesas Operacionais (se houver)
-4. Listar NF
-5. Mostrar total
-
-Remover as linhas que exibiam separadamente: Custo de Producao, Custo Fixo, Total dos Custos, e Margem.
+1. Adicionar 3 novos `useState` para os percentuais globais da nova versao
+2. Atualizar `initNewVersionServices` para inicializar os percentuais da versao atual
+3. Remover grid de percentuais (Custo Fixo / NF / Margem) dos cards de servico
+4. Simplificar resumo do servico para mostrar apenas Custo de Producao
+5. Reformular `newVersionTotals` com a formula global
+6. Substituir card escuro de totais por composicao detalhada com inputs
+7. Atualizar `handleCreateNewVersion` para usar valores globais
 
