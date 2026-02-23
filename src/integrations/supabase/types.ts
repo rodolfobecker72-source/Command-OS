@@ -14,6 +14,244 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          assigned_to: string
+          created_at: string
+          description: string
+          hero_asset_number: string
+          id: string
+          name: string
+          photo: string
+          reference_link: string
+          serial_number: string
+          updated_at: string
+          value: number
+          workspace_id: string
+        }
+        Insert: {
+          assigned_to?: string
+          created_at?: string
+          description?: string
+          hero_asset_number?: string
+          id?: string
+          name?: string
+          photo?: string
+          reference_link?: string
+          serial_number?: string
+          updated_at?: string
+          value?: number
+          workspace_id: string
+        }
+        Update: {
+          assigned_to?: string
+          created_at?: string
+          description?: string
+          hero_asset_number?: string
+          id?: string
+          name?: string
+          photo?: string
+          reference_link?: string
+          serial_number?: string
+          updated_at?: string
+          value?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_versions: {
+        Row: {
+          budget_id: string
+          costs: Json
+          created_at: string
+          discount4_price: number
+          discount5_price: number
+          fixed_cost_percentage: number
+          full_price: number
+          id: string
+          is_rejected: boolean
+          margin: number
+          nf_cost_percentage: number
+          operational_costs: Json
+          production_cost: number
+          reason: string
+          rejection_reason: string | null
+          services: Json
+          total_cost: number
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          budget_id: string
+          costs?: Json
+          created_at?: string
+          discount4_price?: number
+          discount5_price?: number
+          fixed_cost_percentage?: number
+          full_price?: number
+          id?: string
+          is_rejected?: boolean
+          margin?: number
+          nf_cost_percentage?: number
+          operational_costs?: Json
+          production_cost?: number
+          reason?: string
+          rejection_reason?: string | null
+          services?: Json
+          total_cost?: number
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          budget_id?: string
+          costs?: Json
+          created_at?: string
+          discount4_price?: number
+          discount5_price?: number
+          fixed_cost_percentage?: number
+          full_price?: number
+          id?: string
+          is_rejected?: boolean
+          margin?: number
+          nf_cost_percentage?: number
+          operational_costs?: Json
+          production_cost?: number
+          reason?: string
+          rejection_reason?: string | null
+          services?: Json
+          total_cost?: number
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_versions_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          approval_date: string | null
+          approved_version: number | null
+          client_id: string
+          contract_url: string | null
+          created_at: string
+          current_version: number
+          description: string
+          execution: Json | null
+          execution_end_date: string | null
+          execution_start_date: string | null
+          final_value: number | null
+          has_execution_date: boolean
+          id: string
+          includes_accommodation: boolean
+          includes_logistics: boolean
+          includes_meals: boolean
+          includes_raw_material: boolean
+          includes_tax: boolean
+          location: string
+          nf_url: string | null
+          objective: string
+          payment_terms: string
+          project_description: string
+          project_name: string
+          proposal_id: string
+          service_type: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          approval_date?: string | null
+          approved_version?: number | null
+          client_id: string
+          contract_url?: string | null
+          created_at?: string
+          current_version?: number
+          description?: string
+          execution?: Json | null
+          execution_end_date?: string | null
+          execution_start_date?: string | null
+          final_value?: number | null
+          has_execution_date?: boolean
+          id?: string
+          includes_accommodation?: boolean
+          includes_logistics?: boolean
+          includes_meals?: boolean
+          includes_raw_material?: boolean
+          includes_tax?: boolean
+          location?: string
+          nf_url?: string | null
+          objective?: string
+          payment_terms?: string
+          project_description?: string
+          project_name?: string
+          proposal_id?: string
+          service_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          approval_date?: string | null
+          approved_version?: number | null
+          client_id?: string
+          contract_url?: string | null
+          created_at?: string
+          current_version?: number
+          description?: string
+          execution?: Json | null
+          execution_end_date?: string | null
+          execution_start_date?: string | null
+          final_value?: number | null
+          has_execution_date?: boolean
+          id?: string
+          includes_accommodation?: boolean
+          includes_logistics?: boolean
+          includes_meals?: boolean
+          includes_raw_material?: boolean
+          includes_tax?: boolean
+          location?: string
+          nf_url?: string | null
+          objective?: string
+          payment_terms?: string
+          project_description?: string
+          project_name?: string
+          proposal_id?: string
+          service_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           cnpj: string
@@ -64,6 +302,117 @@ export type Database = {
           },
         ]
       }
+      hard_drives: {
+        Row: {
+          capacity_gb: number
+          created_at: string
+          id: string
+          label: string
+          projects: Json
+          workspace_id: string
+        }
+        Insert: {
+          capacity_gb?: number
+          created_at?: string
+          id?: string
+          label?: string
+          projects?: Json
+          workspace_id: string
+        }
+        Update: {
+          capacity_gb?: number
+          created_at?: string
+          id?: string
+          label?: string
+          projects?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hard_drives_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kanban_columns: {
+        Row: {
+          color: string
+          id: string
+          is_default: boolean
+          key: string
+          label: string
+          order: number
+          workspace_id: string
+        }
+        Insert: {
+          color?: string
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id: string
+        }
+        Update: {
+          color?: string
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_columns_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_projects: {
+        Row: {
+          client_id: string
+          client_name: string
+          created_at: string
+          id: string
+          project_number: string
+          size_gb: number
+          workspace_id: string
+        }
+        Insert: {
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          project_number?: string
+          size_gb?: number
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          project_number?: string
+          size_gb?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -84,6 +433,121 @@ export type Database = {
           photo_url?: string | null
         }
         Relationships: []
+      }
+      project_cards: {
+        Row: {
+          budget_id: string
+          client_id: string
+          client_name: string
+          comments: Json
+          created_at: string
+          end_date: string | null
+          id: string
+          links: Json
+          material_link: string
+          notes: string
+          objective: string
+          progress: number
+          project_name: string
+          proposal_id: string
+          service_types: Json
+          start_date: string | null
+          status: string
+          tasks: Json
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          budget_id: string
+          client_id?: string
+          client_name?: string
+          comments?: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          links?: Json
+          material_link?: string
+          notes?: string
+          objective?: string
+          progress?: number
+          project_name?: string
+          proposal_id?: string
+          service_types?: Json
+          start_date?: string | null
+          status?: string
+          tasks?: Json
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          budget_id?: string
+          client_id?: string
+          client_name?: string
+          comments?: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          links?: Json
+          material_link?: string
+          notes?: string
+          objective?: string
+          progress?: number
+          project_name?: string
+          proposal_id?: string
+          service_types?: Json
+          start_date?: string | null
+          status?: string
+          tasks?: Json
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_columns: {
+        Row: {
+          color: string
+          id: string
+          is_default: boolean
+          key: string
+          label: string
+          order: number
+          workspace_id: string
+        }
+        Insert: {
+          color?: string
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id: string
+        }
+        Update: {
+          color?: string
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_columns_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prospection_leads: {
         Row: {
@@ -164,6 +628,114 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "prospection_leads_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_history: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          previous_score: number
+          reason: string
+          score: number
+          workspace_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          previous_score?: number
+          reason?: string
+          score?: number
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          previous_score?: number
+          reason?: string
+          score?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_history_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_categories: {
+        Row: {
+          id: string
+          is_default: boolean
+          key: string
+          label: string
+          order: number
+          workspace_id: string
+        }
+        Insert: {
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id: string
+        }
+        Update: {
+          id?: string
+          is_default?: boolean
+          key?: string
+          label?: string
+          order?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_objectives: {
+        Row: {
+          category_key: string
+          id: string
+          key: string
+          label: string
+          order: number
+          workspace_id: string
+        }
+        Insert: {
+          category_key?: string
+          id?: string
+          key?: string
+          label?: string
+          order?: number
+          workspace_id: string
+        }
+        Update: {
+          category_key?: string
+          id?: string
+          key?: string
+          label?: string
+          order?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_objectives_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
