@@ -113,6 +113,8 @@ export function NewBudget() {
     executionStartDate: null as Date | null,
     executionEndDate: null as Date | null,
     location: '',
+    fixedCostPercentage: 0,
+    nfCostPercentage: 0,
   });
 
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -133,16 +135,13 @@ export function NewBudget() {
   // Cliente selecionado
   const selectedClient = clients.find(c => c.id === formData.clientId);
 
-  // Cálculos por serviço
+  // Cálculos por serviço (usando percentuais gerais do projeto)
   const calculateService = (service: ServiceItem) => {
     const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
-    const fixedCost = productionCost * (service.fixedCostPercentage / 100);
-    const nfCost = productionCost * (service.nfCostPercentage / 100);
+    const fixedCost = productionCost * (formData.fixedCostPercentage / 100);
+    const nfCost = productionCost * (formData.nfCostPercentage / 100);
     const totalCost = productionCost + fixedCost + nfCost;
     
-    // Calcular valor final baseado na margem desejada
-    // Margem = (ValorFinal - TotalCost) / ValorFinal * 100
-    // ValorFinal = TotalCost / (1 - Margem/100)
     const finalValue = service.targetMargin > 0 && service.targetMargin < 100
       ? totalCost / (1 - service.targetMargin / 100)
       : totalCost;
@@ -192,8 +191,8 @@ export function NewBudget() {
         objective: '',
         description: '',
         costs: [],
-        fixedCostPercentage: 0,
-        nfCostPercentage: 0,
+        fixedCostPercentage: 0, // kept for type compat, not used
+        nfCostPercentage: 0, // kept for type compat, not used
         targetMargin: 0,
       },
     ]);
@@ -317,15 +316,15 @@ export function NewBudget() {
         objective: s.objective,
         description: s.description,
         costs: s.costs,
-        fixedCostPercentage: s.fixedCostPercentage,
-        nfCostPercentage: s.nfCostPercentage,
+        fixedCostPercentage: formData.fixedCostPercentage,
+        nfCostPercentage: formData.nfCostPercentage,
         targetMargin: s.targetMargin,
       })),
       operationalCosts: operationalCosts,
       costs: [],
       productionCost: totals.totalCost,
-      fixedCostPercentage: 20,
-      nfCostPercentage: 13,
+      fixedCostPercentage: formData.fixedCostPercentage,
+      nfCostPercentage: formData.nfCostPercentage,
       totalCost: totals.totalCost,
       fullPrice: totals.totalFinalValue,
       discount4Price: totals.totalFinalValue * 0.96,
@@ -740,9 +739,47 @@ export function NewBudget() {
                     </div>
                   </div>
 
-                  {/* Raw Material */}
-                  <div className="space-y-2">
-                    <Label>Material Bruto na Entrega</Label>
+                  {/* Cost Configuration - Project Level */}
+                  <div className="space-y-3 md:col-span-2">
+                    <Label className="flex items-center gap-1 font-semibold">
+                      <Calculator className="w-4 h-4" />
+                      Configurações de Custo (gerais do projeto)
+                    </Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Custo Fixo (%)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={formData.fixedCostPercentage}
+                            onChange={(e) =>
+                              setFormData({ ...formData, fixedCostPercentage: parseFloat(e.target.value) || 0 })
+                            }
+                            className="w-24"
+                          />
+                          <span className="text-muted-foreground">%</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Custo NF (%)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={formData.nfCostPercentage}
+                            onChange={(e) =>
+                              setFormData({ ...formData, nfCostPercentage: parseFloat(e.target.value) || 0 })
+                            }
+                            className="w-24"
+                          />
+                          <span className="text-muted-foreground">%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                   {/* Raw Material */}
+                   <div className="space-y-2">
+                     <Label>Material Bruto na Entrega</Label>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -1041,40 +1078,8 @@ export function NewBudget() {
                         )}
                       </div>
 
-                      {/* Percentages and Margin */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="space-y-2">
-                          <Label>Custo Fixo (%)</Label>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              value={service.fixedCostPercentage}
-                              onChange={(e) =>
-                                updateService(service.id, {
-                                  fixedCostPercentage: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              className="w-20"
-                            />
-                            <span className="text-muted-foreground">%</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Custo NF (%)</Label>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              value={service.nfCostPercentage}
-                              onChange={(e) =>
-                                updateService(service.id, {
-                                  nfCostPercentage: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              className="w-20"
-                            />
-                            <span className="text-muted-foreground">%</span>
-                          </div>
-                        </div>
+                      {/* Margin and Final Value */}
+                      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="flex items-center gap-1">
                             <Percent className="w-3 h-3" />
@@ -1117,7 +1122,7 @@ export function NewBudget() {
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
-                            Custo Fixo ({service.fixedCostPercentage}%)
+                            Custo Fixo ({formData.fixedCostPercentage}%)
                           </p>
                           <p className="font-semibold">
                             {formatCurrency(calc.fixedCost)}
@@ -1125,7 +1130,7 @@ export function NewBudget() {
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
-                            Custo NF ({service.nfCostPercentage}%)
+                            Custo NF ({formData.nfCostPercentage}%)
                           </p>
                           <p className="font-semibold">
                             {formatCurrency(calc.nfCost)}
