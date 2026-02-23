@@ -1,32 +1,81 @@
 
-# Adicionar pagina "Sobre" ao menu
 
-## O que sera feito
+# Migrar dados do localStorage para o banco de dados
 
-Adicionar um item "Sobre" no rodape da sidebar (abaixo de "Usuarios" ou no mesmo nivel), acessivel por todos os usuarios. Ao clicar, abre a rota `/sobre` com a logo do sistema e o texto descritivo fornecido.
+## Visao geral
 
-## Nova pagina: Sobre
+Atualmente todos os dados operacionais (Clientes, Orcamentos, Prospeccao, Equipamentos, Configuracoes) estao em localStorage. Isso significa que os dados sao perdidos ao limpar o cache e nao sao compartilhados entre membros da equipe.
 
-A pagina exibira:
-- Logo do Command CRM (centralizada)
-- Texto descritivo em 3 paragrafos, com tipografia elegante e espaçamento adequado
-- Layout limpo, centralizado verticalmente
+A migracao sera feita em **fases**, priorizando os modulos mais criticos primeiro. Cada registro sera vinculado ao `workspace_id` do proprietario para garantir isolamento total entre organizacoes.
+
+---
+
+## Fase 1 - Clientes
+
+Tabela `clients` com os campos: company_name, cnpj, responsible_person, email, phone, lead_origin, score, workspace_id.
+
+- RLS: apenas membros do mesmo workspace podem ler/escrever
+- Atualizar `clientService.ts` para usar Supabase em vez de localStorage
+- Atualizar `CRMContext.tsx` para buscar/salvar clientes via Supabase
+
+## Fase 2 - Prospeccao
+
+Tabela `prospection_leads` com todos os campos do tipo `ProspectionLead`, mais workspace_id.
+
+- RLS por workspace_id
+- Atualizar `prospectionService.ts` e `ProspectionContext.tsx`
+
+## Fase 3 - Orcamentos (Budgets)
+
+Esta e a entidade mais complexa. Sera dividida em:
+
+- Tabela `budgets` com dados principais (project_name, client_id, status, etc.)
+- Tabela `budget_versions` com os dados de cada versao (custos como JSONB para manter flexibilidade)
+- Tabela `budget_executions` para dados de execucao (JSONB para custos detalhados)
+
+Todos com workspace_id e RLS.
+
+## Fase 4 - Configuracoes e Dados Secundarios
+
+- Tabela `kanban_columns` (colunas do Kanban por workspace)
+- Tabela `service_categories` (categorias de servico por workspace)
+- Tabela `service_objectives` (objetivos por categoria/workspace)
+- Tabela `assets` (patrimonio por workspace)
+- Tabela `hard_drives` (HDs e alocacoes como JSONB, por workspace)
+- Tabela `legacy_projects` (projetos legado por workspace)
+- Tabela `project_columns` (colunas de gestao de projetos por workspace)
+- Tabela `project_cards` (cards de projetos por workspace)
+
+---
 
 ## Detalhes tecnicos
 
-### 1. Novo arquivo: `src/pages/about/AboutPage.tsx`
-- Componente simples com a logo (`command-logo.png`) e os 3 paragrafos do texto fornecido
-- Estilizado com Tailwind: centralizado, max-width contido, texto em cinza escuro
+### Estrutura das tabelas principais
 
-### 2. Arquivo: `src/components/layout/Sidebar.tsx`
-- Adicionar import do icone `Info` do lucide-react
-- No rodape da sidebar (area do footer), adicionar um NavLink para `/sobre` com icone `Info` e texto "Sobre"
-- Esse item aparece para **todos os usuarios**, nao apenas owners (diferente de "Usuarios")
-- Reorganizar o footer para mostrar "Usuarios" (se owner) e "Sobre" (sempre)
+Todas as tabelas terao:
+- `id` UUID primary key
+- `workspace_id` UUID NOT NULL referenciando workspaces(id)
+- `created_at` / `updated_at` timestamps
+- RLS habilitado com politica usando `has_workspace_access(auth.uid(), workspace_id)`
 
-### 3. Arquivo: `src/App.tsx`
-- Adicionar import de `AboutPage`
-- Adicionar rota `/sobre` dentro do `AppLayout`, sem `PageGuard` (acessivel a todos)
+### Campos JSONB
 
-### 4. Arquivo: `src/config/pages.ts`
-- Nao sera adicionada a `APP_PAGES` pois a pagina "Sobre" nao precisa de controle de permissao
+Para manter flexibilidade em estruturas aninhadas complexas (custos, tarefas, links), usaremos colunas JSONB. Isso evita criar dezenas de tabelas para sub-entidades como `CostItem`, `ExecutionCostItem`, `ProjectTask`, etc.
+
+### Mudancas no codigo
+
+1. **Services** (`clientService.ts`, `budgetService.ts`, etc.): reescritos para usar `supabase.from('tabela')` em vez de `localStorage`
+2. **Contexts** (`CRMContext.tsx`, `ProspectionContext.tsx`): refatorados para usar React Query com Supabase, com loading states
+3. **AuthContext**: fornecera o `workspace_id` do usuario logado para todas as queries
+
+### Sequencia de implementacao
+
+Dado o tamanho da migracao, a implementacao sera feita fase por fase:
+1. Criar todas as tabelas e RLS via migracao SQL
+2. Atualizar os services e contexts fase por fase
+3. Remover referencias a localStorage conforme cada modulo for migrado
+
+### Observacao importante
+
+Dados existentes em localStorage nao serao migrados automaticamente. Apos a migracao, os dados deverao ser re-inseridos pelo sistema.
+
