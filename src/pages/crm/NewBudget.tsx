@@ -1078,38 +1078,6 @@ export function NewBudget() {
                         )}
                       </div>
 
-                      {/* Margin and Final Value */}
-                      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-1">
-                            <Percent className="w-3 h-3" />
-                            Margem Desejada
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              value={service.targetMargin}
-                              onChange={(e) =>
-                                updateService(service.id, {
-                                  targetMargin: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              className="w-20"
-                            />
-                            <span className="text-muted-foreground">%</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" />
-                            Valor Final
-                          </Label>
-                          <div className={`text-2xl font-bold ${getMarginColor(calc.margin)}`}>
-                            {formatCurrency(calc.finalValue)}
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Summary */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
                         <div>
@@ -1143,6 +1111,38 @@ export function NewBudget() {
                           <p className="font-bold">
                             {formatCurrency(calc.totalCost)}
                           </p>
+                        </div>
+                      </div>
+
+                      {/* Margin and Final Value */}
+                      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <Percent className="w-3 h-3" />
+                            Margem Desejada
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={service.targetMargin}
+                              onChange={(e) =>
+                                updateService(service.id, {
+                                  targetMargin: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20"
+                            />
+                            <span className="text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            Valor Final
+                          </Label>
+                          <div className={`text-2xl font-bold ${getMarginColor(calc.margin)}`}>
+                            {formatCurrency(calc.finalValue)}
+                          </div>
                         </div>
                       </div>
                     </CardContent>
