@@ -20,6 +20,7 @@ import { BudgetDetail } from "@/pages/crm/BudgetDetail";
 import { ServiceCategories } from "@/pages/crm/ServiceCategories";
 import { UsersPage } from "@/pages/users/UsersPage";
 import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
+import { AboutPage } from "@/pages/about/AboutPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import NotFound from "./pages/NotFound";
@@ -66,6 +67,9 @@ const App = () => (
                   
                   {/* Users */}
                   <Route path="/usuarios" element={<PageGuard pageKey="usuarios"><UsersPage /></PageGuard>} />
+                  
+                  {/* About */}
+                  <Route path="/sobre" element={<AboutPage />} />
                 </Route>
               </Route>
               
