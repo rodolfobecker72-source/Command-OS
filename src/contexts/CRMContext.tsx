@@ -27,7 +27,6 @@ import {
   ProjectColumn,
   ProjectCard,
   DEFAULT_PROJECT_COLUMNS,
-  generateProposalId,
   calculateServiceTotals,
   getObjectivesByService,
 } from '@/types/crm';
@@ -418,11 +417,20 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [budgets]);
 
   // ============= Budget functions =============
+  const generateNextProposalId = (): string => {
+    let maxId = 799;
+    budgets.forEach(b => {
+      const num = parseInt(b.proposalId, 10);
+      if (!isNaN(num) && num > maxId) maxId = num;
+    });
+    return (maxId + 1).toString().padStart(3, '0');
+  };
+
   const addBudget = (budgetData: Omit<Budget, 'id' | 'proposalId' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Budget => {
     const newBudget: Budget = {
       ...budgetData,
       id: uuidv4(),
-      proposalId: generateProposalId(),
+      proposalId: generateNextProposalId(),
       projectDescription: budgetData.projectDescription || '',
       includesRawMaterial: budgetData.includesRawMaterial ?? false,
       hasExecutionDate: budgetData.hasExecutionDate ?? false,
