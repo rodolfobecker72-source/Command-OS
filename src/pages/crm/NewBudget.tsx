@@ -1,0 +1,1199 @@
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
+import jsPDF from 'jspdf';
+import { Header } from '@/components/layout/Header';
+import { useCRM } from '@/contexts/CRMContext';
+import {
+  CRMStatus,
+  ServiceType,
+  CostItem,
+  PaymentStatus,
+  PAYMENT_STATUS_LABELS,
+  formatCurrency,
+} from '@/types/crm';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  ArrowLeft,
+  Save,
+  FileText,
+  Plus,
+  Trash2,
+  Calculator,
+  DollarSign,
+  Percent,
+  Check,
+  ChevronsUpDown,
+  Film,
+  Camera,
+  Smartphone,
+  CalendarIcon,
+  Download,
+  Layers,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+const SERVICE_ICONS: Record<string, typeof Film> = {
+  CINE: Film,
+  FOTO: Camera,
+  MOBILE: Smartphone,
+};
+
+// Tipo para serviço individual
+interface ServiceItem {
+  id: string;
+  serviceType: ServiceType;
+  objective: string;
+  description: string;
+  costs: CostItem[];
+  fixedCostPercentage: number;
+  nfCostPercentage: number;
+  targetMargin: number;
+}
+
+export function NewBudget() {
+  const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel } = useCRM();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    status: 'oportunidade_mapeada' as CRMStatus,
+    projectName: '',
+    projectDescription: '',
+    clientId: '',
+    paymentTerms: '',
+    includesTax: true,
+    includesLogistics: false,
+    includesAccommodation: false,
+    includesMeals: false,
+    includesRawMaterial: false,
+    hasExecutionDate: false,
+    executionStartDate: null as Date | null,
+    executionEndDate: null as Date | null,
+    location: '',
+  });
+
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [clientOpen, setClientOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Filtrar clientes pela busca
+  const filteredClients = useMemo(() => {
+    if (!clientSearch) return clients;
+    return clients.filter(client =>
+      client.companyName.toLowerCase().includes(clientSearch.toLowerCase())
+    );
+  }, [clients, clientSearch]);
+
+  // Cliente selecionado
+  const selectedClient = clients.find(c => c.id === formData.clientId);
+
+  // Cálculos por serviço
+  const calculateService = (service: ServiceItem) => {
+    const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
+    const fixedCost = productionCost * (service.fixedCostPercentage / 100);
+    const nfCost = productionCost * (service.nfCostPercentage / 100);
+    const totalCost = productionCost + fixedCost + nfCost;
+    
+    // Calcular valor final baseado na margem desejada
+    // Margem = (ValorFinal - TotalCost) / ValorFinal * 100
+    // ValorFinal = TotalCost / (1 - Margem/100)
+    const finalValue = service.targetMargin > 0 && service.targetMargin < 100
+      ? totalCost / (1 - service.targetMargin / 100)
+      : totalCost;
+
+    return {
+      productionCost,
+      fixedCost,
+      nfCost,
+      totalCost,
+      finalValue,
+      margin: service.targetMargin,
+    };
+  };
+
+  // Total geral
+  const totals = useMemo(() => {
+    let totalCost = 0;
+    let totalFinalValue = 0;
+
+    services.forEach(service => {
+      const calc = calculateService(service);
+      totalCost += calc.totalCost;
+      totalFinalValue += calc.finalValue;
+    });
+
+    const totalMargin = totalFinalValue > 0 
+      ? ((totalFinalValue - totalCost) / totalFinalValue) * 100 
+      : 0;
+
+    return { totalCost, totalFinalValue, totalMargin };
+  }, [services]);
+
+  // Adicionar serviço
+  const addService = (serviceType: ServiceType) => {
+    setServices([
+      ...services,
+      {
+        id: uuidv4(),
+        serviceType,
+        objective: '',
+        description: '',
+        costs: [],
+        fixedCostPercentage: 0,
+        nfCostPercentage: 0,
+        targetMargin: 0,
+      },
+    ]);
+  };
+
+  // Remover serviço
+  const removeService = (id: string) => {
+    setServices(services.filter(s => s.id !== id));
+  };
+
+  // Atualizar serviço
+  const updateService = (id: string, updates: Partial<ServiceItem>) => {
+    setServices(services.map(s => 
+      s.id === id ? { ...s, ...updates } : s
+    ));
+  };
+
+  // Adicionar item de custo
+  const addCostItem = (serviceId: string) => {
+    setServices(services.map(s => {
+      if (s.id === serviceId) {
+        return {
+          ...s,
+          costs: [
+            ...s.costs,
+            {
+              id: uuidv4(),
+              description: '',
+              quantity: 1,
+              unitValue: 0,
+              value: 0,
+              paymentStatus: 'pendente' as PaymentStatus,
+              paymentDate: null,
+            },
+          ],
+        };
+      }
+      return s;
+    }));
+  };
+
+  // Atualizar item de custo
+  const updateCostItem = (serviceId: string, costId: string, updates: Partial<CostItem>) => {
+    setServices(services.map(s => {
+      if (s.id === serviceId) {
+        return {
+          ...s,
+          costs: s.costs.map(c =>
+            c.id === costId ? { ...c, ...updates } : c
+          ),
+        };
+      }
+      return s;
+    }));
+  };
+
+  // Remover item de custo
+  const removeCostItem = (serviceId: string, costId: string) => {
+    setServices(services.map(s => {
+      if (s.id === serviceId) {
+        return {
+          ...s,
+          costs: s.costs.filter(c => c.id !== costId),
+        };
+      }
+      return s;
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.projectName.trim()) {
+      newErrors.projectName = 'Nome do projeto é obrigatório';
+    }
+
+    if (!formData.clientId) {
+      newErrors.clientId = 'Cliente é obrigatório';
+    }
+
+    if (services.length === 0) {
+      newErrors.services = 'Adicione pelo menos um serviço';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    // Criar orçamento para cada serviço ou um orçamento com todos os serviços
+    const firstService = services[0];
+    const newBudget = addBudget({
+      projectName: formData.projectName,
+      projectDescription: formData.projectDescription,
+      clientId: formData.clientId,
+      serviceType: firstService.serviceType,
+      objective: firstService.objective as any,
+      description: services.map(s => `[${s.serviceType}] ${s.description}`).join('\n\n'),
+      paymentTerms: formData.paymentTerms,
+      includesTax: formData.includesTax,
+      includesLogistics: formData.includesLogistics,
+      includesAccommodation: formData.includesAccommodation,
+      includesMeals: formData.includesMeals,
+      includesRawMaterial: formData.includesRawMaterial,
+      hasExecutionDate: formData.hasExecutionDate,
+      executionStartDate: formData.executionStartDate,
+      executionEndDate: formData.executionEndDate,
+      location: formData.location,
+      status: formData.status,
+    });
+
+    // Criar versão com todos os custos e serviços
+    addBudgetVersion(newBudget.id, {
+      services: services.map(s => ({
+        id: s.id,
+        serviceType: s.serviceType,
+        objective: s.objective,
+        description: s.description,
+        costs: s.costs,
+        fixedCostPercentage: s.fixedCostPercentage,
+        nfCostPercentage: s.nfCostPercentage,
+        targetMargin: s.targetMargin,
+      })),
+      costs: [],
+      productionCost: totals.totalCost,
+      fixedCostPercentage: 20,
+      nfCostPercentage: 13,
+      totalCost: totals.totalCost,
+      fullPrice: totals.totalFinalValue,
+      discount4Price: totals.totalFinalValue * 0.96,
+      discount5Price: totals.totalFinalValue * 0.95,
+      margin: totals.totalMargin,
+      reason: 'Versão inicial',
+    });
+
+    toast.success('Orçamento criado com sucesso!');
+    navigate('/crm');
+  };
+
+  // Gerar PDF
+  const generatePDF = () => {
+    if (!selectedClient || services.length === 0) {
+      toast.error('Preencha os dados do orçamento primeiro');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+
+    // Header
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HERO', 20, yPos);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Proposta Comercial', 20, yPos + 8);
+
+    // Linha separadora
+    yPos += 20;
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, pageWidth - 20, yPos);
+
+    // Dados do projeto
+    yPos += 15;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Projeto', 20, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(formData.projectName || 'Nome do Projeto', 20, yPos);
+
+    yPos += 12;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente', 20, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(selectedClient.companyName, 20, yPos);
+
+    // Serviços
+    yPos += 15;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Escopo do Serviço', 20, yPos);
+
+    services.forEach((service, index) => {
+      yPos += 10;
+      const objectives = getObjectivesForCategory(service.serviceType);
+      const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${service.serviceType} - ${objectiveLabel}`, 20, yPos);
+      
+      if (service.description) {
+        yPos += 6;
+        doc.setFont('helvetica', 'normal');
+        const lines = doc.splitTextToSize(service.description, pageWidth - 40);
+        doc.text(lines, 20, yPos);
+        yPos += lines.length * 5;
+      }
+    });
+
+    // Observações
+    yPos += 15;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Observações', 20, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const observacoes = [
+      '• Logística inclusa',
+      '• Impostos inclusos',
+      '• Nota Fiscal obrigatória',
+      '',
+      'O que não está incluso:',
+      '• Itens não especificados nesta proposta',
+    ];
+    observacoes.forEach(obs => {
+      doc.text(obs, 20, yPos);
+      yPos += 5;
+    });
+
+    // Valor Final
+    yPos += 10;
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos, pageWidth - 20, yPos);
+
+    yPos += 12;
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Valor Final', 20, yPos);
+    doc.text(formatCurrency(totals.totalFinalValue), pageWidth - 20, yPos, { align: 'right' });
+
+    // Condição de Pagamento
+    if (formData.paymentTerms) {
+      yPos += 10;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Condição de Pagamento: ${formData.paymentTerms}`, 20, yPos);
+    }
+
+    // Versão
+    yPos += 15;
+    doc.setFontSize(9);
+    doc.setTextColor(128);
+    doc.text(`Proposta V1 - ${new Date().toLocaleDateString('pt-BR')}`, 20, yPos);
+
+    // Salvar
+    doc.save(`proposta_${formData.projectName.replace(/\s+/g, '_') || 'orcamento'}.pdf`);
+    toast.success('PDF gerado com sucesso!');
+  };
+
+  const getMarginColor = (margin: number) => {
+    if (margin >= 40) return 'text-success';
+    if (margin >= 25) return 'text-warning';
+    return 'text-destructive';
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header
+        title="Novo Orçamento"
+        subtitle="Crie uma nova proposta comercial"
+      />
+
+      <div className="p-6 max-w-6xl mx-auto">
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={() => navigate('/crm')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* General Data */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="card-elevated">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-foreground/5">
+                    <FileText className="w-6 h-6 text-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Dados do Orçamento</CardTitle>
+                    <CardDescription>
+                      Informações gerais do projeto
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status do Orçamento</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, status: value as CRMStatus })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...kanbanColumns].sort((a, b) => a.order - b.order).map((col) => (
+                          <SelectItem key={col.key} value={col.key}>
+                            {col.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Client Search */}
+                  <div className="space-y-2">
+                    <Label>Cliente *</Label>
+                    <Popover open={clientOpen} onOpenChange={setClientOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={clientOpen}
+                          className={cn(
+                            "w-full justify-between",
+                            errors.clientId && "border-destructive"
+                          )}
+                        >
+                          {selectedClient
+                            ? selectedClient.companyName
+                            : "Buscar cliente..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Digite o nome do cliente..." 
+                            value={clientSearch}
+                            onValueChange={setClientSearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {filteredClients.map((client) => (
+                                <CommandItem
+                                  key={client.id}
+                                  value={client.companyName}
+                                  onSelect={() => {
+                                    setFormData({ ...formData, clientId: client.id });
+                                    setClientOpen(false);
+                                    setClientSearch('');
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.clientId === client.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{client.companyName}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Score: {client.score}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    {errors.clientId && (
+                      <p className="text-sm text-destructive">{errors.clientId}</p>
+                    )}
+                  </div>
+
+                  {/* Project Name */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="projectName">Nome do Projeto *</Label>
+                    <Input
+                      id="projectName"
+                      placeholder="Ex: Vídeo Institucional 2024"
+                      value={formData.projectName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, projectName: e.target.value })
+                      }
+                      className={errors.projectName ? 'border-destructive' : ''}
+                    />
+                    {errors.projectName && (
+                      <p className="text-sm text-destructive">
+                        {errors.projectName}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Project Description */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="projectDescription">Descrição Geral do Projeto</Label>
+                    <Textarea
+                      id="projectDescription"
+                      placeholder="Descreva o projeto de forma geral..."
+                      value={formData.projectDescription}
+                      onChange={(e) =>
+                        setFormData({ ...formData, projectDescription: e.target.value })
+                      }
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Payment Terms */}
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentTerms">Condição de Pagamento</Label>
+                    <Input
+                      id="paymentTerms"
+                      placeholder="Ex: 50% entrada + 50% na entrega"
+                      value={formData.paymentTerms}
+                      onChange={(e) =>
+                        setFormData({ ...formData, paymentTerms: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  {/* Location */}
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Local</Label>
+                    <Input
+                      id="location"
+                      placeholder="Ex: São Paulo - SP"
+                      value={formData.location}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  {/* Execution Date */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Data para Execução</Label>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="hasExecutionDate"
+                          checked={formData.hasExecutionDate}
+                          onCheckedChange={(checked) =>
+                            setFormData({ 
+                              ...formData, 
+                              hasExecutionDate: checked === true,
+                              executionStartDate: checked === true ? formData.executionStartDate : null,
+                              executionEndDate: checked === true ? formData.executionEndDate : null
+                            })
+                          }
+                        />
+                        <Label htmlFor="hasExecutionDate" className="text-sm font-normal cursor-pointer">
+                          Data definida
+                        </Label>
+                      </div>
+                      {formData.hasExecutionDate ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-[150px] justify-start text-left font-normal",
+                                  !formData.executionStartDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.executionStartDate ? (
+                                  format(formData.executionStartDate, "dd/MM/yyyy")
+                                ) : (
+                                  <span>Início</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={formData.executionStartDate || undefined}
+                                onSelect={(date) =>
+                                  setFormData({ ...formData, executionStartDate: date || null })
+                                }
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <span className="text-muted-foreground">até</span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-[150px] justify-start text-left font-normal",
+                                  !formData.executionEndDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.executionEndDate ? (
+                                  format(formData.executionEndDate, "dd/MM/yyyy")
+                                ) : (
+                                  <span>Fim (opcional)</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={formData.executionEndDate || undefined}
+                                onSelect={(date) =>
+                                  setFormData({ ...formData, executionEndDate: date || null })
+                                }
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">A definir</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Raw Material */}
+                  <div className="space-y-2">
+                    <Label>Material Bruto na Entrega</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesRawMaterial"
+                          checked={formData.includesRawMaterial}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesRawMaterial: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesRawMaterial" className="text-sm font-normal cursor-pointer">
+                          Material bruto incluso
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Inclusion Options */}
+                  <div className="space-y-3 md:col-span-2">
+                    <Label>O que está incluso na proposta</Label>
+                    <div className="flex flex-wrap gap-6">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesTax"
+                          checked={formData.includesTax}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesTax: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesTax" className="text-sm font-normal cursor-pointer">
+                          Imposto incluso
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesLogistics"
+                          checked={formData.includesLogistics}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesLogistics: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesLogistics" className="text-sm font-normal cursor-pointer">
+                          Logística inclusa
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesAccommodation"
+                          checked={formData.includesAccommodation}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesAccommodation: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesAccommodation" className="text-sm font-normal cursor-pointer">
+                          Hospedagem inclusa
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesMeals"
+                          checked={formData.includesMeals}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesMeals: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesMeals" className="text-sm font-normal cursor-pointer">
+                          Alimentação da equipe inclusa
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Add Service Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="card-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-foreground/5">
+                      <Plus className="w-6 h-6 text-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>Adicionar Serviço</CardTitle>
+                      <CardDescription>
+                        Cada serviço tem sua própria planilha de custos
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  {[...serviceCategories].sort((a, b) => a.order - b.order).map((category) => {
+                    const Icon = SERVICE_ICONS[category.key] || Layers;
+                    return (
+                      <Button
+                        key={category.key}
+                        type="button"
+                        variant="outline"
+                        onClick={() => addService(category.key)}
+                        className="flex items-center gap-2"
+                      >
+                        <Icon className="w-4 h-4" />
+                        {category.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {errors.services && (
+                  <p className="text-sm text-destructive mt-2">{errors.services}</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Services List */}
+          <AnimatePresence mode="popLayout">
+            {services.map((service, index) => {
+              const calc = calculateService(service);
+              const Icon = SERVICE_ICONS[service.serviceType] || Layers;
+              const objectives = getObjectivesForCategory(service.serviceType);
+
+              return (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: 0.05 * index }}
+                >
+                  <Card className="card-elevated border-l-4 border-l-foreground">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 rounded-xl bg-foreground text-background">
+                            <Icon className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <CardTitle className="flex items-center gap-2">
+                              <span className="service-badge service-badge-cine">
+                                {service.serviceType}
+                              </span>
+                              Planilha de Custos
+                            </CardTitle>
+                            <CardDescription>
+                              Serviço #{index + 1}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeService(service.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Objetivo e Descrição */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Objetivo</Label>
+                          <Select
+                            value={service.objective}
+                            onValueChange={(value) =>
+                              updateService(service.id, { objective: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o objetivo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {objectives.map((obj) => (
+                                <SelectItem key={obj.value} value={obj.value}>
+                                  {obj.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Descrição do Serviço</Label>
+                          <Textarea
+                            placeholder="Descreva os detalhes deste serviço..."
+                            value={service.description}
+                            onChange={(e) =>
+                              updateService(service.id, { description: e.target.value })
+                            }
+                            rows={2}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Costs Table */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <Label className="flex items-center gap-2">
+                            <Calculator className="w-4 h-4" />
+                            Itens de Custo
+                          </Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addCostItem(service.id)}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Adicionar
+                          </Button>
+                        </div>
+
+                        {service.costs.length > 0 ? (
+                          <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead className="w-[40%]">Descrição</TableHead>
+                                  <TableHead className="w-[80px]">Qtd</TableHead>
+                                  <TableHead>Valor Unit.</TableHead>
+                                  <TableHead>Total</TableHead>
+                                  <TableHead className="w-12"></TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {service.costs.map((cost) => (
+                                  <TableRow key={cost.id}>
+                                    <TableCell>
+                                      <Input
+                                        value={cost.description}
+                                        onChange={(e) =>
+                                          updateCostItem(service.id, cost.id, { description: e.target.value })
+                                        }
+                                        placeholder="Ex: Direção, Equipamentos..."
+                                        className="border-0 p-0 h-8 focus:ring-0"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={cost.quantity || 1}
+                                        onChange={(e) => {
+                                          const qty = parseInt(e.target.value) || 1;
+                                          updateCostItem(service.id, cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
+                                        }}
+                                        className="border-0 p-0 h-8 w-16 focus:ring-0"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        value={cost.unitValue || ''}
+                                        onChange={(e) => {
+                                          const uv = parseFloat(e.target.value) || 0;
+                                          updateCostItem(service.id, cost.id, { unitValue: uv, value: (cost.quantity || 1) * uv });
+                                        }}
+                                        placeholder="0,00"
+                                        className="border-0 p-0 h-8 w-28 focus:ring-0"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-sm font-medium">
+                                        {formatCurrency(cost.value || 0)}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeCostItem(service.id, cost.id)}
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 text-muted-foreground border rounded-lg">
+                            Clique em "Adicionar" para incluir itens de custo
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Percentages and Margin */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label>Custo Fixo (%)</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={service.fixedCostPercentage}
+                              onChange={(e) =>
+                                updateService(service.id, {
+                                  fixedCostPercentage: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20"
+                            />
+                            <span className="text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Custo NF (%)</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={service.nfCostPercentage}
+                              onChange={(e) =>
+                                updateService(service.id, {
+                                  nfCostPercentage: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20"
+                            />
+                            <span className="text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <Percent className="w-3 h-3" />
+                            Margem Desejada
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={service.targetMargin}
+                              onChange={(e) =>
+                                updateService(service.id, {
+                                  targetMargin: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="w-20"
+                            />
+                            <span className="text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />
+                            Valor Final
+                          </Label>
+                          <div className={`text-2xl font-bold ${getMarginColor(calc.margin)}`}>
+                            {formatCurrency(calc.finalValue)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Custo de Produção
+                          </p>
+                          <p className="font-semibold">
+                            {formatCurrency(calc.productionCost)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Custo Fixo ({service.fixedCostPercentage}%)
+                          </p>
+                          <p className="font-semibold">
+                            {formatCurrency(calc.fixedCost)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Custo NF ({service.nfCostPercentage}%)
+                          </p>
+                          <p className="font-semibold">
+                            {formatCurrency(calc.nfCost)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Total de Custo
+                          </p>
+                          <p className="font-bold">
+                            {formatCurrency(calc.totalCost)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {/* Grand Total */}
+          {services.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="card-elevated bg-foreground text-background">
+                <CardContent className="py-6">
+                  <div className="grid grid-cols-3 gap-6 text-center">
+                    <div>
+                      <p className="text-sm text-background/60 mb-1">Total de Custos</p>
+                      <p className="text-2xl font-bold">{formatCurrency(totals.totalCost)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-background/60 mb-1">Valor Final Total</p>
+                      <p className="text-3xl font-bold">{formatCurrency(totals.totalFinalValue)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-background/60 mb-1">Margem Média</p>
+                      <p className={`text-2xl font-bold ${totals.totalMargin >= 40 ? 'text-green-400' : totals.totalMargin >= 25 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {totals.totalMargin.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate('/crm')}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={generatePDF}
+              disabled={services.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Gerar PDF
+            </Button>
+            <Button type="submit" className="flex-1 btn-hero">
+              <Save className="w-4 h-4 mr-2" />
+              Salvar Orçamento
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
