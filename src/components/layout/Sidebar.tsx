@@ -71,7 +71,8 @@ export function Sidebar() {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const showUsuarios = hasPageAccess('usuarios');
+  const { role } = useAuth();
+  const showUsuarios = role === 'owner';
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
