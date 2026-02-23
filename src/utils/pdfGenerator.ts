@@ -4,7 +4,6 @@ import {
   Budget,
   Client,
   OBJECTIVES_BY_SERVICE,
-  calculateServiceTotals,
   formatCurrency,
   SERVICE_TYPE_LABELS,
 } from '@/types/crm';
@@ -249,9 +248,7 @@ export async function generateProposalPDF({
   doc.addPage();
   y = margin;
   
-  let totalServicesValue = 0; // Service values without NF
-  let totalNfValue = 0; // Total NF across all services
-  const versionNfPercentage = version.nfCostPercentage || 13;
+  let totalProductionCost = 0;
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -269,10 +266,8 @@ export async function generateProposalPDF({
     
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
     const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
-    const calc = calculateServiceTotals(service);
-    const serviceValueWithoutNf = calc.finalValue - calc.nfCost;
-    totalServicesValue += serviceValueWithoutNf;
-    totalNfValue += calc.nfCost;
+    const serviceProductionCost = service.costs.reduce((sum, c) => sum + c.value, 0);
+    totalProductionCost += serviceProductionCost;
 
     // Service header
     doc.setFontSize(normalSize);
@@ -334,15 +329,7 @@ export async function generateProposalPDF({
       });
     }
     
-    y += 4;
-    
-    // Service investment
-    doc.setFontSize(normalSize);
-    doc.setFont('helvetica', 'bold');
-    setColor(black);
-    doc.text(`Investimento: ${formatCurrency(calc.finalValue)}`, pageWidth - margin, y, { align: 'right' });
-    
-    y += 12;
+    y += 8;
     
     // Separator between services
     if (serviceIndex < version.services.length - 1) {
@@ -429,39 +416,62 @@ export async function generateProposalPDF({
     y = margin;
   }
 
-  // INVESTMENT BREAKDOWN
+  // INVESTMENT BREAKDOWN (new formula)
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
   doc.text('COMPOSIÇÃO DO INVESTIMENTO', margin, y);
   y += 10;
 
-  // Add NF on operational costs
-  const operationalNfValue = operationalTotal * (versionNfPercentage / 100);
-  totalNfValue += operationalNfValue;
-  const totalInvestment = totalServicesValue + totalNfValue + operationalTotal;
+  const versionNfPercentage = version.nfCostPercentage || 13;
+  const versionFixedCostPct = version.fixedCostPercentage || 0;
+  const versionMarginPct = version.margin || 0;
 
-  // Services value (without NF)
+  const fixedCostValue = totalProductionCost * (versionFixedCostPct / 100);
+  const totalCosts = totalProductionCost + fixedCostValue + operationalTotal;
+  const divisor = 1 - (versionMarginPct / 100) - (versionNfPercentage / 100);
+  const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+  const nfValue = totalProjectValue * (versionNfPercentage / 100);
+  const marginValue = totalProjectValue - totalCosts - nfValue;
+
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
-  doc.text('Serviços', margin, y);
-  doc.text(formatCurrency(totalServicesValue), pageWidth - margin, y, { align: 'right' });
+
+  // Custo de Produção
+  doc.text('Custo de Produção', margin, y);
+  doc.text(formatCurrency(totalProductionCost), pageWidth - margin, y, { align: 'right' });
   y += 7;
 
-  // NF value
-  doc.text('Nota Fiscal (NF)', margin, y);
-  doc.text(formatCurrency(totalNfValue), pageWidth - margin, y, { align: 'right' });
+  // Custo Fixo
+  doc.text(`Custo Fixo (${versionFixedCostPct}%)`, margin, y);
+  doc.text(formatCurrency(fixedCostValue), pageWidth - margin, y, { align: 'right' });
   y += 7;
 
-  // Operational expenses (only if exists)
+  // Despesas Operacionais
   if (operationalTotal > 0) {
     doc.text('Despesas Operacionais', margin, y);
     doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
     y += 7;
   }
 
+  // Total dos Custos
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total dos Custos', margin, y);
+  doc.text(formatCurrency(totalCosts), pageWidth - margin, y, { align: 'right' });
+  y += 7;
+
+  // Margem
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Margem (${versionMarginPct}%)`, margin, y);
+  doc.text(formatCurrency(marginValue), pageWidth - margin, y, { align: 'right' });
+  y += 7;
+
+  // NF
+  doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
+  doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
   y += 3;
+
   drawLine(y);
   y += 8;
 
@@ -472,7 +482,7 @@ export async function generateProposalPDF({
   doc.text('INVESTIMENTO TOTAL', margin, y);
   
   doc.setFontSize(titleSize);
-  doc.text(formatCurrency(totalInvestment), pageWidth - margin, y, { align: 'right' });
+  doc.text(formatCurrency(totalProjectValue), pageWidth - margin, y, { align: 'right' });
   
   addFooter();
 
