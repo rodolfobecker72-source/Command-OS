@@ -1,51 +1,21 @@
 
-# Despesas Operacionais no Orcamento
 
-## O que sera feito
+# Corrigir Bug de Contagem Dupla nas Despesas Operacionais do PDF
 
-Adicionar uma secao de **Despesas Operacionais** ao orcamento, separada dos servicos. Sao custos gerais do projeto como logistica, hospedagem, alimentacao, deslocamento, etc. Esses custos aparecerao em tres momentos:
+## Problema
 
-1. **Criacao/edicao do orcamento** - secao dedicada abaixo dos servicos
-2. **Exportacao PDF** - secao propria no documento
-3. **Execucao do projeto** - acompanhamento de custos reais vs orcados
+No arquivo `pdfGenerator.ts`, o total das despesas operacionais esta sendo calculado **duas vezes**:
 
-## Como vai funcionar
+1. Linhas 358-359: calcula `operationalTotal` somando todos os itens
+2. Linha 407: dentro do loop de renderizacao, soma novamente cada item ao `operationalTotal`
 
-- Na tela de novo orcamento, apos os servicos, havera um card "Despesas Operacionais" com tabela de custos (mesma estrutura dos custos de servico: descricao, quantidade, valor unitario, total)
-- As despesas operacionais nao terao margem, custo fixo % ou NF % aplicados - sao custos diretos
-- No calculo do total do orcamento, as despesas operacionais serao somadas ao valor final
-- No PDF, aparecera uma secao "Despesas Operacionais" entre os servicos e o investimento total
-- Na execucao, havera uma secao separada para acompanhar os custos reais das despesas operacionais
+Isso faz com que o valor das despesas operacionais na "Composicao do Investimento" apareca com o **dobro** do valor real.
 
-## Detalhes tecnicos
+## Correcao
 
-### 1. Tipo `BudgetVersion` (src/types/crm.ts)
-- Adicionar campo `operationalCosts: CostItem[]` ao `BudgetVersion`
-- Adicionar campo `operationalCosts: ExecutionCostItem[]` e `extraOperationalCosts: ExecutionCostItem[]` ao `ProjectExecution`
+Remover a linha 407 (`operationalTotal += cost.value;`) dentro do `forEach` de renderizacao, ja que o total ja foi calculado antes do loop.
 
-### 2. NewBudget.tsx
-- Adicionar estado `operationalCosts: CostItem[]`
-- Adicionar card "Despesas Operacionais" com tabela de custos editavel (mesmo padrao dos custos de servico)
-- Incluir despesas operacionais no calculo do total geral (somadas apos os servicos)
-- Salvar no `addBudgetVersion` com o campo `operationalCosts`
+## Arquivo modificado
 
-### 3. BudgetDetail.tsx
-- Exibir card "Despesas Operacionais" na aba de orcamento (entre servicos e historico de versoes)
-- Na criacao de nova versao, incluir secao de despesas operacionais
-- Na aba de execucao, exibir secao de despesas operacionais com custos reais vs orcados
-- Suportar gastos extras nas despesas operacionais
+- `src/utils/pdfGenerator.ts` - remover a linha duplicada de acumulacao do total
 
-### 4. pdfGenerator.ts
-- Adicionar secao "DESPESAS OPERACIONAIS" no PDF, listando os itens e o subtotal
-- Somar ao investimento total
-
-### 5. CRMContext.tsx
-- Atualizar `approveBudget` para incluir despesas operacionais na planilha de execucao
-- Atualizar funcoes de custo de execucao para suportar custos operacionais
-
-### Arquivos modificados
-- `src/types/crm.ts` - novos campos nos tipos
-- `src/pages/crm/NewBudget.tsx` - secao de despesas operacionais no formulario
-- `src/pages/crm/BudgetDetail.tsx` - exibicao e execucao das despesas operacionais
-- `src/utils/pdfGenerator.ts` - secao no PDF
-- `src/contexts/CRMContext.tsx` - logica de aprovacao e execucao
