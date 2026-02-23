@@ -109,22 +109,25 @@ export function EditClient() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    updateClient(client.id, {
-      companyName: formData.companyName,
-      cnpj: formData.document.replace(/\D/g, ''),
-      responsiblePerson: formData.responsiblePerson,
-      email: formData.email.trim(),
-      phone: formData.phone.replace(/\D/g, ''),
-      leadOrigin: formData.leadOrigin as LeadOrigin,
-    });
-
-    toast.success('Cliente atualizado com sucesso!');
-    navigate('/clientes');
+    try {
+      await updateClient(client.id, {
+        companyName: formData.companyName,
+        cnpj: formData.document.replace(/\D/g, ''),
+        responsiblePerson: formData.responsiblePerson,
+        email: formData.email.trim(),
+        phone: formData.phone.replace(/\D/g, ''),
+        leadOrigin: formData.leadOrigin as LeadOrigin,
+      });
+      toast.success('Cliente atualizado com sucesso!');
+      navigate('/clientes');
+    } catch (error) {
+      toast.error('Erro ao atualizar cliente');
+    }
   };
 
   const formatDocumentInput = (value: string, type: 'cnpj' | 'cpf') => {

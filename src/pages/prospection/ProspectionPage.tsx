@@ -216,25 +216,33 @@ export function ProspectionPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.companyName.trim()) {
       toast.error('Nome da empresa é obrigatório');
       return;
     }
-    if (editingLead) {
-      updateLead(editingLead.id, formData);
-      toast.success('Lead atualizado!');
-    } else {
-      addLead(formData);
-      toast.success('Lead criado!');
+    try {
+      if (editingLead) {
+        await updateLead(editingLead.id, formData);
+        toast.success('Lead atualizado!');
+      } else {
+        await addLead(formData);
+        toast.success('Lead criado!');
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      toast.error('Erro ao salvar lead');
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    deleteLead(id);
-    setDeleteConfirm(null);
-    toast.success('Lead excluído');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteLead(id);
+      setDeleteConfirm(null);
+      toast.success('Lead excluído');
+    } catch (error) {
+      toast.error('Erro ao excluir lead');
+    }
   };
 
   const mapOriginToCRM = (origin: LeadOriginType): import('@/types/crm').LeadOrigin => {
@@ -252,23 +260,31 @@ export function ProspectionPage() {
     return map[origin];
   };
 
-  const handleMigrateToCRM = (lead: ProspectionLead) => {
-    const newClient = addClient({
-      companyName: lead.companyName,
-      cnpj: '',
-      responsiblePerson: lead.contactName,
-      email: lead.email,
-      phone: lead.phone,
-      leadOrigin: mapOriginToCRM(lead.origin),
-      score: 0,
-    });
-    updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
-    toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
+  const handleMigrateToCRM = async (lead: ProspectionLead) => {
+    try {
+      await addClient({
+        companyName: lead.companyName,
+        cnpj: '',
+        responsiblePerson: lead.contactName,
+        email: lead.email,
+        phone: lead.phone,
+        leadOrigin: mapOriginToCRM(lead.origin),
+        score: 0,
+      });
+      await updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
+      toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
+    } catch (error) {
+      toast.error('Erro ao migrar lead para o CRM');
+    }
   };
 
-  const handleReactivate = (lead: ProspectionLead) => {
-    reactivateLead(lead.id);
-    toast.success(`"${lead.companyName}" reativado!`);
+  const handleReactivate = async (lead: ProspectionLead) => {
+    try {
+      await reactivateLead(lead.id);
+      toast.success(`"${lead.companyName}" reativado!`);
+    } catch (error) {
+      toast.error('Erro ao reativar lead');
+    }
   };
 
   // Kanban columns (filter out perdido and nutricao — they show separately)
