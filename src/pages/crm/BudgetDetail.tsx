@@ -114,6 +114,9 @@ export function BudgetDetail() {
   const [newVersionReason, setNewVersionReason] = useState('');
   const [newVersionServices, setNewVersionServices] = useState<ServiceItem[]>([]);
   const [newVersionOperationalCosts, setNewVersionOperationalCosts] = useState<CostItem[]>([]);
+  const [newVersionFixedCostPct, setNewVersionFixedCostPct] = useState(20);
+  const [newVersionNfPct, setNewVersionNfPct] = useState(13);
+  const [newVersionTargetMargin, setNewVersionTargetMargin] = useState(0);
   const [approveOpen, setApproveOpen] = useState(false);
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
@@ -191,6 +194,10 @@ export function BudgetDetail() {
     setNewVersionOperationalCosts(
       (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
     );
+    // Initialize global percentages from current version
+    setNewVersionFixedCostPct(currentVersionData?.fixedCostPercentage ?? 20);
+    setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
+    setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
   };
 
   // Calculate totals for new version
@@ -199,23 +206,20 @@ export function BudgetDetail() {
   }, [newVersionOperationalCosts]);
 
   const newVersionTotals = useMemo(() => {
-    let totalCost = 0;
-    let totalFinalValue = 0;
+    const productionCost = newVersionServices.reduce((sum, service) => {
+      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
+    }, 0);
+    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
+    const operationalTotal = newVersionOperationalTotal;
+    const totalCosts = productionCost + fixedCost + operationalTotal;
 
-    newVersionServices.forEach((service) => {
-      const calc = calculateServiceTotals(service);
-      totalCost += calc.totalCost;
-      totalFinalValue += calc.finalValue;
-    });
+    const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
+    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+    const nfValue = totalProjectValue * (newVersionNfPct / 100);
+    const marginValue = totalProjectValue - totalCosts - nfValue;
 
-    totalFinalValue += newVersionOperationalTotal;
-
-    const totalMargin = totalFinalValue > 0 
-      ? ((totalFinalValue - totalCost - newVersionOperationalTotal) / totalFinalValue) * 100 
-      : 0;
-
-    return { totalCost, totalFinalValue, totalMargin };
-  }, [newVersionServices, newVersionOperationalTotal]);
+    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
+  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
 
   // Update service in new version
   const updateNewVersionService = (serviceId: string, updates: Partial<ServiceItem>) => {
@@ -311,14 +315,14 @@ export function BudgetDetail() {
       services: newVersionServices,
       operationalCosts: newVersionOperationalCosts,
       costs: [],
-      productionCost: newVersionTotals.totalCost,
-      fixedCostPercentage: 20,
-      nfCostPercentage: 13,
-      totalCost: newVersionTotals.totalCost,
-      fullPrice: newVersionTotals.totalFinalValue,
-      discount4Price: newVersionTotals.totalFinalValue * 0.96,
-      discount5Price: newVersionTotals.totalFinalValue * 0.95,
-      margin: newVersionTotals.totalMargin,
+      productionCost: newVersionTotals.productionCost,
+      fixedCostPercentage: newVersionFixedCostPct,
+      nfCostPercentage: newVersionNfPct,
+      totalCost: newVersionTotals.totalCosts,
+      fullPrice: newVersionTotals.totalProjectValue,
+      discount4Price: newVersionTotals.totalProjectValue * 0.96,
+      discount5Price: newVersionTotals.totalProjectValue * 0.95,
+      margin: newVersionTargetMargin,
       reason: newVersionReason,
     });
     setNewVersionReason('');
@@ -956,48 +960,6 @@ export function BudgetDetail() {
                                                   />
                                                 </div>
                                               </div>
-                                              <div className="grid grid-cols-3 gap-4">
-                                                <div className="space-y-2">
-                                                  <Label>Custo Fixo (%)</Label>
-                                                  <Input
-                                                    type="number"
-                                                    min={0}
-                                                    value={service.fixedCostPercentage}
-                                                    onChange={(e) =>
-                                                      updateNewVersionService(service.id, {
-                                                        fixedCostPercentage: parseFloat(e.target.value) || 0,
-                                                      })
-                                                    }
-                                                  />
-                                                </div>
-                                                <div className="space-y-2">
-                                                  <Label>Custo NF (%)</Label>
-                                                  <Input
-                                                    type="number"
-                                                    min={0}
-                                                    value={service.nfCostPercentage}
-                                                    onChange={(e) =>
-                                                      updateNewVersionService(service.id, {
-                                                        nfCostPercentage: parseFloat(e.target.value) || 0,
-                                                      })
-                                                    }
-                                                  />
-                                                </div>
-                                                <div className="space-y-2">
-                                                  <Label>Margem (%)</Label>
-                                                  <Input
-                                                    type="number"
-                                                    min={0}
-                                                    max={99}
-                                                    value={service.targetMargin}
-                                                    onChange={(e) =>
-                                                      updateNewVersionService(service.id, {
-                                                        targetMargin: parseFloat(e.target.value) || 0,
-                                                      })
-                                                    }
-                                                  />
-                                                </div>
-                                              </div>
 
                                               {/* Costs Table */}
                                               <div className="space-y-2">
@@ -1089,19 +1051,9 @@ export function BudgetDetail() {
                                               </div>
 
                                               {/* Service Summary */}
-                                              <div className="grid grid-cols-3 gap-4 p-3 bg-muted rounded-lg text-sm">
-                                                <div>
-                                                  <p className="text-muted-foreground">Custo Total</p>
-                                                  <p className="font-semibold">{formatCurrency(calc.totalCost)}</p>
-                                                </div>
-                                                <div>
-                                                  <p className="text-muted-foreground">Valor Final</p>
-                                                  <p className="font-bold">{formatCurrency(calc.finalValue)}</p>
-                                                </div>
-                                                <div>
-                                                  <p className="text-muted-foreground">Margem</p>
-                                                  <p className="font-bold">{calc.margin.toFixed(1)}%</p>
-                                                </div>
+                                              <div className="p-3 bg-muted rounded-lg text-sm">
+                                                <p className="text-muted-foreground">Custo de Produção</p>
+                                                <p className="font-semibold">{formatCurrency(calc.productionCost)}</p>
                                               </div>
                                             </CardContent>
                                           </Card>
@@ -1222,24 +1174,79 @@ export function BudgetDetail() {
                                         </CardContent>
                                       </Card>
 
-                                      {/* Total Summary */}
+                                      {/* Composição do Investimento */}
                                       {newVersionServices.length > 0 && (
-                                        <div className="p-4 bg-foreground text-background rounded-lg">
-                                          <div className="grid grid-cols-3 gap-4 text-center">
-                                            <div>
-                                              <p className="text-sm opacity-80">Custo Total</p>
-                                              <p className="text-xl font-bold">{formatCurrency(newVersionTotals.totalCost)}</p>
+                                        <Card className="border-l-4 border-l-primary">
+                                          <CardHeader className="pb-3">
+                                            <CardTitle className="text-base flex items-center gap-2">
+                                              <Calculator className="w-4 h-4 text-primary" />
+                                              Composição do Investimento
+                                            </CardTitle>
+                                          </CardHeader>
+                                          <CardContent className="space-y-4">
+                                            <div className="grid grid-cols-3 gap-4">
+                                              <div className="space-y-2">
+                                                <Label>Custo Fixo (%)</Label>
+                                                <Input
+                                                  type="number"
+                                                  min={0}
+                                                  value={newVersionFixedCostPct}
+                                                  onChange={(e) => setNewVersionFixedCostPct(parseFloat(e.target.value) || 0)}
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label>Nota Fiscal (%)</Label>
+                                                <Input
+                                                  type="number"
+                                                  min={0}
+                                                  value={newVersionNfPct}
+                                                  onChange={(e) => setNewVersionNfPct(parseFloat(e.target.value) || 0)}
+                                                />
+                                              </div>
+                                              <div className="space-y-2">
+                                                <Label>Margem Desejada (%)</Label>
+                                                <Input
+                                                  type="number"
+                                                  min={0}
+                                                  max={99}
+                                                  value={newVersionTargetMargin}
+                                                  onChange={(e) => setNewVersionTargetMargin(parseFloat(e.target.value) || 0)}
+                                                />
+                                              </div>
                                             </div>
-                                            <div>
-                                              <p className="text-sm opacity-80">Valor Final</p>
-                                              <p className="text-2xl font-bold">{formatCurrency(newVersionTotals.totalFinalValue)}</p>
+
+                                            <div className="space-y-2 p-4 bg-muted rounded-lg text-sm">
+                                              <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Custo de Produção</span>
+                                                <span className="font-medium">{formatCurrency(newVersionTotals.productionCost)}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Custo Fixo ({newVersionFixedCostPct}%)</span>
+                                                <span className="font-medium">{formatCurrency(newVersionTotals.fixedCost)}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Despesas Operacionais</span>
+                                                <span className="font-medium">{formatCurrency(newVersionTotals.operationalTotal)}</span>
+                                              </div>
+                                              <div className="flex justify-between border-t pt-2">
+                                                <span className="font-semibold">Total dos Custos</span>
+                                                <span className="font-semibold">{formatCurrency(newVersionTotals.totalCosts)}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Margem ({newVersionTargetMargin}%)</span>
+                                                <span className="font-medium">{formatCurrency(newVersionTotals.marginValue)}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Nota Fiscal ({newVersionNfPct}%)</span>
+                                                <span className="font-medium">{formatCurrency(newVersionTotals.nfValue)}</span>
+                                              </div>
+                                              <div className="flex justify-between border-t pt-2">
+                                                <span className="font-bold text-base">Valor Total do Projeto</span>
+                                                <span className="font-bold text-base text-primary">{formatCurrency(newVersionTotals.totalProjectValue)}</span>
+                                              </div>
                                             </div>
-                                            <div>
-                                              <p className="text-sm opacity-80">Margem</p>
-                                              <p className="text-xl font-bold">{newVersionTotals.totalMargin.toFixed(1)}%</p>
-                                            </div>
-                                          </div>
-                                        </div>
+                                          </CardContent>
+                                        </Card>
                                       )}
                                     </div>
                                     <DialogFooter>
