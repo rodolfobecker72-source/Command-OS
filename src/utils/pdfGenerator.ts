@@ -264,6 +264,20 @@ export async function generateProposalPDF({
   y = margin;
   
   let totalProductionCost = 0;
+  version.services.forEach(s => { totalProductionCost += s.costs.reduce((sum, c) => sum + c.value, 0); });
+
+  // Pre-compute values needed for per-service pricing
+  const preNfPct = version.nfCostPercentage || 13;
+  const preFixedPct = version.fixedCostPercentage || 0;
+  const preMarginPct = version.margin || 0;
+  const preFixedValue = totalProductionCost * (preFixedPct / 100);
+  const preOpTotal = (version.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
+  const preTotalCosts = totalProductionCost + preFixedValue + preOpTotal;
+  const preDivisor = 1 - (preMarginPct / 100) - (preNfPct / 100);
+  const preTotalProject = preDivisor > 0 ? preTotalCosts / preDivisor : preTotalCosts;
+  const preNfValue = preTotalProject * (preNfPct / 100);
+  const preMarginValue = preTotalProject - preTotalCosts - preNfValue;
+  const preToDistribute = totalProductionCost + preFixedValue + preMarginValue;
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -282,7 +296,8 @@ export async function generateProposalPDF({
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
     const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
     const serviceProductionCost = service.costs.reduce((sum, c) => sum + c.value, 0);
-    totalProductionCost += serviceProductionCost;
+    const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
+    const serviceDisplayValue = serviceWeight * preToDistribute;
 
     // Service header
     doc.setFontSize(normalSize);
@@ -344,6 +359,14 @@ export async function generateProposalPDF({
       });
     }
     
+    // Service subtotal
+    y += 2;
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(black);
+    doc.text(`Subtotal: ${formatCurrency(serviceDisplayValue)}`, pageWidth - margin, y, { align: 'right' });
+    
+    y += 8;
     y += 8;
     
     // Separator between services
