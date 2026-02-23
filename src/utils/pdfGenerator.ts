@@ -249,7 +249,8 @@ export async function generateProposalPDF({
   doc.addPage();
   y = margin;
   
-  let totalInvestment = 0;
+  let totalServicesValue = 0; // Service values without NF
+  let totalNfValue = 0; // Total NF across all services
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -268,7 +269,9 @@ export async function generateProposalPDF({
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
     const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
     const calc = calculateServiceTotals(service);
-    totalInvestment += calc.finalValue;
+    const serviceValueWithoutNf = calc.finalValue - calc.nfCost;
+    totalServicesValue += serviceValueWithoutNf;
+    totalNfValue += calc.nfCost;
 
     // Service header
     doc.setFontSize(normalSize);
@@ -351,8 +354,11 @@ export async function generateProposalPDF({
   // ============================================
   // OPERATIONAL COSTS SECTION
   // ============================================
-  const operationalCosts = version.operationalCosts || [];
-  if (operationalCosts.length > 0) {
+  const operationalCostItems = version.operationalCosts || [];
+  let operationalTotal = 0;
+  operationalCostItems.forEach(c => { operationalTotal += c.value; });
+  
+  if (operationalCostItems.length > 0) {
     y += 6;
     
     if (y > pageHeight - 60) {
@@ -385,8 +391,7 @@ export async function generateProposalPDF({
     doc.setFont('helvetica', 'normal');
     setColor(darkGray);
     
-    let operationalTotal = 0;
-    operationalCosts.forEach((cost, costIndex) => {
+    operationalCostItems.forEach((cost, costIndex) => {
       if (y > pageHeight - 40) {
         addFooter();
         doc.addPage();
@@ -410,7 +415,6 @@ export async function generateProposalPDF({
     setColor(black);
     doc.text(`Subtotal: ${formatCurrency(operationalTotal)}`, pageWidth - margin, y, { align: 'right' });
     
-    totalInvestment += operationalTotal;
     y += 8;
   }
 
@@ -418,7 +422,47 @@ export async function generateProposalPDF({
   drawLine(y);
   y += 12;
 
-  // TOTAL INVESTMENT
+  // Check if we need a new page for the summary
+  if (y > pageHeight - 80) {
+    addFooter();
+    doc.addPage();
+    y = margin;
+  }
+
+  // INVESTMENT BREAKDOWN
+  doc.setFontSize(subtitleSize);
+  doc.setFont('helvetica', 'bold');
+  setColor(black);
+  doc.text('COMPOSIÇÃO DO INVESTIMENTO', margin, y);
+  y += 10;
+
+  const totalInvestment = totalServicesValue + totalNfValue + operationalTotal;
+
+  // Services value (without NF)
+  doc.setFontSize(normalSize);
+  doc.setFont('helvetica', 'normal');
+  setColor(darkGray);
+  doc.text('Serviços', margin, y);
+  doc.text(formatCurrency(totalServicesValue), pageWidth - margin, y, { align: 'right' });
+  y += 7;
+
+  // NF value
+  doc.text('Nota Fiscal (NF)', margin, y);
+  doc.text(formatCurrency(totalNfValue), pageWidth - margin, y, { align: 'right' });
+  y += 7;
+
+  // Operational expenses (only if exists)
+  if (operationalTotal > 0) {
+    doc.text('Despesas Operacionais', margin, y);
+    doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
+    y += 7;
+  }
+
+  y += 3;
+  drawLine(y);
+  y += 8;
+
+  // TOTAL
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
