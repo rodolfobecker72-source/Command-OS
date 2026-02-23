@@ -251,6 +251,7 @@ export async function generateProposalPDF({
   
   let totalServicesValue = 0; // Service values without NF
   let totalNfValue = 0; // Total NF across all services
+  const versionNfPercentage = version.nfCostPercentage || 13;
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -435,6 +436,9 @@ export async function generateProposalPDF({
   doc.text('COMPOSIÇÃO DO INVESTIMENTO', margin, y);
   y += 10;
 
+  // Add NF on operational costs
+  const operationalNfValue = operationalTotal * (versionNfPercentage / 100);
+  totalNfValue += operationalNfValue;
   const totalInvestment = totalServicesValue + totalNfValue + operationalTotal;
 
   // Services value (without NF)
