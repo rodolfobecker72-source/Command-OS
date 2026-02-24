@@ -105,7 +105,7 @@ export function BudgetDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget } = useCRM();
+  const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget, budgetsLoading } = useCRM();
 
   const budget = getBudget(id || '');
   const client = budget ? getClient(budget.clientId) : null;
@@ -147,6 +147,38 @@ export function BudgetDetail() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showAddLink, setShowAddLink] = useState(false);
+
+  // Calculate totals for new version (hooks must be before early returns)
+  const newVersionOperationalTotal = useMemo(() => {
+    return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
+  }, [newVersionOperationalCosts]);
+
+  const newVersionTotals = useMemo(() => {
+    const productionCost = newVersionServices.reduce((sum, service) => {
+      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
+    }, 0);
+    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
+    const operationalTotal = newVersionOperationalTotal;
+    const totalCosts = productionCost + fixedCost + operationalTotal;
+
+    const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
+    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+    const nfValue = totalProjectValue * (newVersionNfPct / 100);
+    const marginValue = totalProjectValue - totalCosts - nfValue;
+
+    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
+  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
+
+  if (budgetsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando orçamento...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!budget || !client) {
     return (
@@ -199,27 +231,6 @@ export function BudgetDetail() {
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
   };
-
-  // Calculate totals for new version
-  const newVersionOperationalTotal = useMemo(() => {
-    return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
-  }, [newVersionOperationalCosts]);
-
-  const newVersionTotals = useMemo(() => {
-    const productionCost = newVersionServices.reduce((sum, service) => {
-      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
-    }, 0);
-    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
-    const operationalTotal = newVersionOperationalTotal;
-    const totalCosts = productionCost + fixedCost + operationalTotal;
-
-    const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
-    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
-    const nfValue = totalProjectValue * (newVersionNfPct / 100);
-    const marginValue = totalProjectValue - totalCosts - nfValue;
-
-    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
-  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
 
   // Update service in new version
   const updateNewVersionService = (serviceId: string, updates: Partial<ServiceItem>) => {

@@ -54,6 +54,7 @@ interface CRMContextType {
 
   // Budgets
   budgets: Budget[];
+  budgetsLoading: boolean;
   addBudget: (budget: Omit<Budget, 'id' | 'proposalId' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>) => Promise<Budget>;
   updateBudget: (id: string, updates: Partial<Budget>) => Promise<void>;
   updateBudgetStatus: (id: string, status: CRMStatus) => Promise<void>;
@@ -142,6 +143,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgetsLoading, setBudgetsLoading] = useState(true);
   const [kanbanColumns, setKanbanColumns] = useState<KanbanColumn[]>([]);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
   const [serviceObjectives, setServiceObjectives] = useState<ServiceObjective[]>([]);
@@ -195,6 +197,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       setProjectColumns(colsData);
     } catch (error) {
       console.error('Error loading CRM data:', error);
+    } finally {
+      setBudgetsLoading(false);
     }
   }, [workspace?.id]);
 
@@ -796,7 +800,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const value: CRMContextType = {
     clients, clientsLoading, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown, refreshClients,
-    budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
+    budgets, budgetsLoading, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
     addBudgetVersion, updateBudgetVersion, approveBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,
     kanbanColumns, addKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, getStatusLabel,
