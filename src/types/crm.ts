@@ -273,7 +273,7 @@ export interface ProjectExecution {
 // Budget Interface
 export interface Budget {
   id: string;
-  proposalId: string; // Auto-generated
+  proposalId: string; // User-defined identifier
   projectName: string;
   projectDescription: string; // General project description
   clientId: string;
