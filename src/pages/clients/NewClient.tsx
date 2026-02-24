@@ -76,26 +76,23 @@ export function NewClient() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    try {
-      await addClient({
-        companyName: formData.companyName,
-        cnpj: formData.document.replace(/\D/g, ''),
-        responsiblePerson: formData.responsiblePerson,
-        email: formData.email.trim(),
-        phone: formData.phone.replace(/\D/g, ''),
-        leadOrigin: formData.leadOrigin as LeadOrigin,
-        score: 0,
-      });
-      toast.success('Cliente cadastrado com sucesso!');
-      navigate('/clientes');
-    } catch (error) {
-      toast.error('Erro ao cadastrar cliente');
-    }
+    addClient({
+      companyName: formData.companyName,
+      cnpj: formData.document.replace(/\D/g, ''),
+      responsiblePerson: formData.responsiblePerson,
+      email: formData.email.trim(),
+      phone: formData.phone.replace(/\D/g, ''),
+      leadOrigin: formData.leadOrigin as LeadOrigin,
+      score: 0,
+    });
+
+    toast.success('Cliente cadastrado com sucesso!');
+    navigate('/clientes');
   };
 
   const formatDocumentInput = (value: string, type: 'cnpj' | 'cpf') => {

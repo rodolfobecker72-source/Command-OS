@@ -1,81 +1,44 @@
-import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 import { Client } from '@/types/crm';
 
-// Helper to map DB row to Client type
-function rowToClient(row: any): Client {
-  return {
-    id: row.id,
-    companyName: row.company_name,
-    cnpj: row.cnpj,
-    responsiblePerson: row.responsible_person,
-    email: row.email,
-    phone: row.phone,
-    leadOrigin: row.lead_origin,
-    score: row.score,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  };
-}
-
-// Helper to map Client to DB insert/update
-function clientToRow(data: Partial<Client>) {
-  const row: any = {};
-  if (data.companyName !== undefined) row.company_name = data.companyName;
-  if (data.cnpj !== undefined) row.cnpj = data.cnpj;
-  if (data.responsiblePerson !== undefined) row.responsible_person = data.responsiblePerson;
-  if (data.email !== undefined) row.email = data.email;
-  if (data.phone !== undefined) row.phone = data.phone;
-  if (data.leadOrigin !== undefined) row.lead_origin = data.leadOrigin;
-  if (data.score !== undefined) row.score = data.score;
-  return row;
-}
+const STORAGE_KEY = 'crm_clients';
 
 export const clientService = {
-  async getAll(workspaceId: string): Promise<Client[]> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('workspace_id', workspaceId)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(rowToClient);
+  getAll(): Client[] {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
   },
 
-  async getById(id: string): Promise<Client | null> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) return null;
-    return rowToClient(data);
+  getById(id: string): Client | undefined {
+    return clientService.getAll().find(c => c.id === id);
   },
 
-  async create(workspaceId: string, data: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> {
-    const row = { ...clientToRow(data), workspace_id: workspaceId };
-    const { data: inserted, error } = await supabase
-      .from('clients')
-      .insert(row)
-      .select()
-      .single();
-    if (error) throw error;
-    return rowToClient(inserted);
+  create(data: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Client {
+    const now = new Date().toISOString();
+    const client: Client = {
+      ...data,
+      id: uuidv4(),
+      createdAt: now as any,
+      updatedAt: now as any,
+    };
+    const all = [...clientService.getAll(), client];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return client;
   },
 
-  async update(id: string, updates: Partial<Client>): Promise<void> {
-    const row = clientToRow(updates);
-    const { error } = await supabase
-      .from('clients')
-      .update(row)
-      .eq('id', id);
-    if (error) throw error;
+  update(id: string, updates: Partial<Client>): void {
+    const all = clientService.getAll().map(c =>
+      c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() as any } : c
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   },
 
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+  delete(id: string): void {
+    const all = clientService.getAll().filter(c => c.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  },
+
+  persist(clients: Client[]): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
   },
 };
