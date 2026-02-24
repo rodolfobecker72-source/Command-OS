@@ -100,6 +100,7 @@ export function NewBudget() {
 
   const [formData, setFormData] = useState({
     status: 'oportunidade_mapeada' as CRMStatus,
+    proposalId: '',
     projectName: '',
     projectDescription: '',
     clientId: '',
@@ -263,6 +264,10 @@ export function NewBudget() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.proposalId.trim()) {
+      newErrors.proposalId = 'Identificador da proposta é obrigatório';
+    }
+
     if (!formData.projectName.trim()) {
       newErrors.projectName = 'Nome do projeto é obrigatório';
     }
@@ -287,6 +292,7 @@ export function NewBudget() {
     // Criar orçamento para cada serviço ou um orçamento com todos os serviços
     const firstService = services[0];
     const newBudget = addBudget({
+      proposalId: formData.proposalId.trim(),
       projectName: formData.projectName,
       projectDescription: formData.projectDescription,
       clientId: formData.clientId,
@@ -589,8 +595,27 @@ export function NewBudget() {
                     )}
                   </div>
 
+                  {/* Proposal ID */}
+                  <div className="space-y-2">
+                    <Label htmlFor="proposalId">Identificador da Proposta *</Label>
+                    <Input
+                      id="proposalId"
+                      placeholder="Ex: 850"
+                      value={formData.proposalId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, proposalId: e.target.value })
+                      }
+                      className={errors.proposalId ? 'border-destructive' : ''}
+                    />
+                    {errors.proposalId && (
+                      <p className="text-sm text-destructive">
+                        {errors.proposalId}
+                      </p>
+                    )}
+                  </div>
+
                   {/* Project Name */}
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label htmlFor="projectName">Nome do Projeto *</Label>
                     <Input
                       id="projectName"

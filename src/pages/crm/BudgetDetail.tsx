@@ -124,6 +124,7 @@ export function BudgetDetail() {
   const [editedPaymentTerms, setEditedPaymentTerms] = useState('');
   const [editedProjectName, setEditedProjectName] = useState('');
   const [editedProjectDescription, setEditedProjectDescription] = useState('');
+  const [editedProposalId, setEditedProposalId] = useState('');
   const [activeTab, setActiveTab] = useState('budget');
   const [deleteOpen, setDeleteOpen] = useState(false);
   
@@ -170,6 +171,7 @@ export function BudgetDetail() {
 
   const handleSaveEdit = () => {
     updateBudget(budget.id, { 
+      proposalId: editedProposalId,
       paymentTerms: editedPaymentTerms,
       projectName: editedProjectName,
       projectDescription: editedProjectDescription,
@@ -591,6 +593,7 @@ export function BudgetDetail() {
                             setEditedPaymentTerms(budget.paymentTerms);
                             setEditedProjectName(budget.projectName);
                             setEditedProjectDescription(budget.projectDescription || '');
+                            setEditedProposalId(budget.proposalId);
                             setIsEditing(true);
                           }}
                         >
@@ -602,6 +605,20 @@ export function BudgetDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Identificador da Proposta */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Identificador da Proposta</p>
+                      {isEditing ? (
+                        <Input
+                          value={editedProposalId}
+                          onChange={(e) => setEditedProposalId(e.target.value)}
+                          placeholder="Ex: 850"
+                        />
+                      ) : (
+                        <p className="font-medium">{budget.proposalId}</p>
+                      )}
+                    </div>
+
                     {/* Descrição Geral do Projeto */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Descrição Geral do Projeto</p>
