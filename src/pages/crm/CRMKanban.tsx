@@ -22,7 +22,7 @@ import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function CRMKanban() {
-  const { getCRMCards, moveCard, kanbanColumns, approveBudget, budgetsLoading } = useCRM();
+  const { getCRMCards, moveCard, kanbanColumns, approveBudget } = useCRM();
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
 
@@ -154,24 +154,15 @@ export function CRMKanban() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
-            {budgetsLoading ? (
-              <div className="flex items-center justify-center w-full py-12">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-muted-foreground">Carregando pipeline...</p>
-                </div>
-              </div>
-            ) : (
-              sortedColumns.map((column) => (
-                <KanbanColumn
-                  key={column.id}
-                  status={column.key}
-                  cards={cardsByStatus[column.key] || []}
-                  color=""
-                  label={column.label}
-                />
-              ))
-            )}
+            {sortedColumns.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                status={column.key}
+                cards={cardsByStatus[column.key] || []}
+                color=""
+                label={column.label}
+              />
+            ))}
           </div>
 
           <DragOverlay>
