@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 import {
   KanbanColumn,
   DEFAULT_KANBAN_COLUMNS,
@@ -10,119 +10,55 @@ import {
   DEFAULT_PROJECT_COLUMNS,
 } from '@/types/crm';
 
-// Helper mappers
-function rowToKanbanColumn(row: any): KanbanColumn {
-  return { id: row.id, key: row.key, label: row.label, color: row.color, order: row.order, isDefault: row.is_default };
-}
-function rowToServiceCategory(row: any): ServiceCategory {
-  return { id: row.id, key: row.key, label: row.label, order: row.order, isDefault: row.is_default };
-}
-function rowToServiceObjective(row: any): ServiceObjective {
-  return { id: row.id, categoryKey: row.category_key, key: row.key, label: row.label, order: row.order };
-}
-function rowToProjectColumn(row: any): ProjectColumn {
-  return { id: row.id, key: row.key, label: row.label, color: row.color, order: row.order, isDefault: row.is_default };
-}
+const KEYS = {
+  kanbanColumns: 'crm_kanban_columns',
+  serviceCategories: 'crm_service_categories',
+  serviceObjectives: 'crm_service_objectives',
+  projectColumns: 'crm_project_columns',
+};
 
-async function seedDefaults<T>(
-  table: 'kanban_columns' | 'service_categories' | 'service_objectives' | 'project_columns',
-  workspaceId: string,
-  defaults: any[],
-  mapFn: (row: any) => T,
-  toRowFn: (item: any, wsId: string) => any,
-): Promise<T[]> {
-  const rows = defaults.map(d => toRowFn(d, workspaceId));
-  const { data, error } = await supabase.from(table).insert(rows as any).select();
-  if (error) throw error;
-  return (data || []).map(mapFn);
+function loadOrDefault<T>(key: string, defaults: T): T {
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    try { return JSON.parse(saved); } catch { return defaults; }
+  }
+  return defaults;
 }
 
 export const settingsService = {
   // Kanban Columns
-  async getKanbanColumns(workspaceId: string): Promise<KanbanColumn[]> {
-    const { data, error } = await supabase.from('kanban_columns').select('*').eq('workspace_id', workspaceId).order('order');
-    if (error) throw error;
-    if (data && data.length > 0) return data.map(rowToKanbanColumn);
-    // Seed defaults
-    return seedDefaults('kanban_columns', workspaceId, DEFAULT_KANBAN_COLUMNS, rowToKanbanColumn,
-      (col, wsId) => ({ workspace_id: wsId, key: col.key, label: col.label, color: col.color, order: col.order, is_default: col.isDefault || false }));
+  getKanbanColumns(): KanbanColumn[] {
+    return loadOrDefault(KEYS.kanbanColumns, DEFAULT_KANBAN_COLUMNS);
   },
-  async upsertKanbanColumn(workspaceId: string, col: KanbanColumn): Promise<KanbanColumn> {
-    const row = { id: col.id, workspace_id: workspaceId, key: col.key, label: col.label, color: col.color, order: col.order, is_default: col.isDefault || false };
-    const { data, error } = await supabase.from('kanban_columns').upsert(row).select().single();
-    if (error) throw error;
-    return rowToKanbanColumn(data);
-  },
-  async deleteKanbanColumn(id: string): Promise<void> {
-    const { error } = await supabase.from('kanban_columns').delete().eq('id', id);
-    if (error) throw error;
-  },
-  async persistKanbanColumns(workspaceId: string, columns: KanbanColumn[]): Promise<void> {
-    // Delete all then re-insert
-    await supabase.from('kanban_columns').delete().eq('workspace_id', workspaceId);
-    if (columns.length > 0) {
-      const rows = columns.map(col => ({
-        id: col.id, workspace_id: workspaceId, key: col.key, label: col.label, color: col.color, order: col.order, is_default: col.isDefault || false,
-      }));
-      const { error } = await supabase.from('kanban_columns').insert(rows);
-      if (error) throw error;
-    }
+  persistKanbanColumns(columns: KanbanColumn[]): void {
+    localStorage.setItem(KEYS.kanbanColumns, JSON.stringify(columns));
   },
 
   // Service Categories
-  async getServiceCategories(workspaceId: string): Promise<ServiceCategory[]> {
-    const { data, error } = await supabase.from('service_categories').select('*').eq('workspace_id', workspaceId).order('order');
-    if (error) throw error;
-    if (data && data.length > 0) return data.map(rowToServiceCategory);
-    return seedDefaults('service_categories', workspaceId, DEFAULT_SERVICE_CATEGORIES, rowToServiceCategory,
-      (cat, wsId) => ({ workspace_id: wsId, key: cat.key, label: cat.label, order: cat.order, is_default: cat.isDefault || false }));
+  getServiceCategories(): ServiceCategory[] {
+    return loadOrDefault(KEYS.serviceCategories, DEFAULT_SERVICE_CATEGORIES);
   },
-  async persistServiceCategories(workspaceId: string, categories: ServiceCategory[]): Promise<void> {
-    await supabase.from('service_categories').delete().eq('workspace_id', workspaceId);
-    if (categories.length > 0) {
-      const rows = categories.map(cat => ({
-        id: cat.id, workspace_id: workspaceId, key: cat.key, label: cat.label, order: cat.order, is_default: cat.isDefault || false,
-      }));
-      const { error } = await supabase.from('service_categories').insert(rows);
-      if (error) throw error;
-    }
+  persistServiceCategories(categories: ServiceCategory[]): void {
+    localStorage.setItem(KEYS.serviceCategories, JSON.stringify(categories));
   },
 
   // Service Objectives
-  async getServiceObjectives(workspaceId: string): Promise<ServiceObjective[]> {
-    const { data, error } = await supabase.from('service_objectives').select('*').eq('workspace_id', workspaceId).order('order');
-    if (error) throw error;
-    if (data && data.length > 0) return data.map(rowToServiceObjective);
-    return seedDefaults('service_objectives', workspaceId, DEFAULT_SERVICE_OBJECTIVES, rowToServiceObjective,
-      (obj, wsId) => ({ workspace_id: wsId, category_key: obj.categoryKey, key: obj.key, label: obj.label, order: obj.order }));
+  getServiceObjectives(): ServiceObjective[] {
+    return loadOrDefault(KEYS.serviceObjectives, DEFAULT_SERVICE_OBJECTIVES);
   },
-  async persistServiceObjectives(workspaceId: string, objectives: ServiceObjective[]): Promise<void> {
-    await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId);
-    if (objectives.length > 0) {
-      const rows = objectives.map(obj => ({
-        id: obj.id, workspace_id: workspaceId, category_key: obj.categoryKey, key: obj.key, label: obj.label, order: obj.order,
-      }));
-      const { error } = await supabase.from('service_objectives').insert(rows);
-      if (error) throw error;
-    }
+  persistServiceObjectives(objectives: ServiceObjective[]): void {
+    localStorage.setItem(KEYS.serviceObjectives, JSON.stringify(objectives));
   },
 
   // Project Columns
-  async getProjectColumns(workspaceId: string): Promise<ProjectColumn[]> {
-    const { data, error } = await supabase.from('project_columns').select('*').eq('workspace_id', workspaceId).order('order');
-    if (error) throw error;
-    if (data && data.length > 0) return data.map(rowToProjectColumn);
-    return seedDefaults('project_columns', workspaceId, DEFAULT_PROJECT_COLUMNS, rowToProjectColumn,
-      (col, wsId) => ({ workspace_id: wsId, key: col.key, label: col.label, color: col.color, order: col.order, is_default: col.isDefault || false }));
+  getProjectColumns(): ProjectColumn[] {
+    return loadOrDefault(KEYS.projectColumns, DEFAULT_PROJECT_COLUMNS);
   },
-  async persistProjectColumns(workspaceId: string, columns: ProjectColumn[]): Promise<void> {
-    await supabase.from('project_columns').delete().eq('workspace_id', workspaceId);
-    if (columns.length > 0) {
-      const rows = columns.map(col => ({
-        id: col.id, workspace_id: workspaceId, key: col.key, label: col.label, color: col.color, order: col.order, is_default: col.isDefault || false,
-      }));
-      const { error } = await supabase.from('project_columns').insert(rows);
-      if (error) throw error;
-    }
+  persistProjectColumns(columns: ProjectColumn[]): void {
+    localStorage.setItem(KEYS.projectColumns, JSON.stringify(columns));
+  },
+
+  generateId(): string {
+    return uuidv4();
   },
 };

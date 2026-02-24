@@ -1,58 +1,32 @@
-import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 import { Asset } from '@/types/crm';
 
-function rowToAsset(row: any): Asset {
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    value: Number(row.value),
-    serialNumber: row.serial_number,
-    heroAssetNumber: row.hero_asset_number,
-    photo: row.photo,
-    referenceLink: row.reference_link,
-    assignedTo: row.assigned_to,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  };
-}
-
-function assetToRow(asset: Partial<Asset>, workspaceId?: string) {
-  const row: any = {};
-  if (workspaceId) row.workspace_id = workspaceId;
-  if (asset.name !== undefined) row.name = asset.name;
-  if (asset.description !== undefined) row.description = asset.description;
-  if (asset.value !== undefined) row.value = asset.value;
-  if (asset.serialNumber !== undefined) row.serial_number = asset.serialNumber;
-  if (asset.heroAssetNumber !== undefined) row.hero_asset_number = asset.heroAssetNumber;
-  if (asset.photo !== undefined) row.photo = asset.photo;
-  if (asset.referenceLink !== undefined) row.reference_link = asset.referenceLink;
-  if (asset.assignedTo !== undefined) row.assigned_to = asset.assignedTo;
-  return row;
-}
+const STORAGE_KEY = 'crm_assets';
 
 export const assetService = {
-  async getAll(workspaceId: string): Promise<Asset[]> {
-    const { data, error } = await supabase.from('assets').select('*').eq('workspace_id', workspaceId).order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(rowToAsset);
+  getAll(): Asset[] {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
   },
 
-  async create(workspaceId: string, asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset> {
-    const row = assetToRow(asset, workspaceId);
-    const { data, error } = await supabase.from('assets').insert(row).select().single();
-    if (error) throw error;
-    return rowToAsset(data);
+  getById(id: string): Asset | undefined {
+    return assetService.getAll().find(a => a.id === id);
   },
 
-  async update(id: string, updates: Partial<Asset>): Promise<void> {
-    const row = assetToRow(updates);
-    const { error } = await supabase.from('assets').update(row).eq('id', id);
-    if (error) throw error;
+  create(data: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Asset {
+    const now = new Date().toISOString();
+    const asset: Asset = {
+      ...data,
+      id: uuidv4(),
+      createdAt: now as any,
+      updatedAt: now as any,
+    };
+    const all = [...assetService.getAll(), asset];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return asset;
   },
 
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('assets').delete().eq('id', id);
-    if (error) throw error;
+  persist(assets: Asset[]): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
   },
 };
