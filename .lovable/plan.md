@@ -1,32 +1,27 @@
 
-# Adicionar pagina "Sobre" ao menu
+# Identificador manual na proposta
 
-## O que sera feito
+## O que muda
 
-Adicionar um item "Sobre" no rodape da sidebar (abaixo de "Usuarios" ou no mesmo nivel), acessivel por todos os usuarios. Ao clicar, abre a rota `/sobre` com a logo do sistema e o texto descritivo fornecido.
+Atualmente o `proposalId` e gerado automaticamente (sequencial a partir de 800). A mudanca permite que o usuario digite manualmente o identificador ao criar o orcamento. Esse identificador sera usado na nomenclatura como **"ID - Nome do Projeto"** em todo o sistema.
 
-## Nova pagina: Sobre
+## Alteracoes
 
-A pagina exibira:
-- Logo do Command CRM (centralizada)
-- Texto descritivo em 3 paragrafos, com tipografia elegante e espaçamento adequado
-- Layout limpo, centralizado verticalmente
+### 1. Formulario de novo orcamento (`src/pages/crm/NewBudget.tsx`)
+- Adicionar campo de texto "Identificador da Proposta" no formulario, ao lado do nome do projeto
+- O campo sera obrigatorio (validacao)
+- Placeholder: ex. "850"
 
-## Detalhes tecnicos
+### 2. Contexto CRM (`src/contexts/CRMContext.tsx`)
+- Remover a funcao `generateNextProposalId()`
+- Alterar `addBudget` para receber `proposalId` como parte dos dados do formulario (remover do `Omit`)
+- O `proposalId` vira diretamente do input do usuario
 
-### 1. Novo arquivo: `src/pages/about/AboutPage.tsx`
-- Componente simples com a logo (`command-logo.png`) e os 3 paragrafos do texto fornecido
-- Estilizado com Tailwind: centralizado, max-width contido, texto em cinza escuro
+### 3. Tipo Budget (`src/types/crm.ts`)
+- Atualizar o comentario de `proposalId` de "Auto-generated" para "User-defined identifier"
 
-### 2. Arquivo: `src/components/layout/Sidebar.tsx`
-- Adicionar import do icone `Info` do lucide-react
-- No rodape da sidebar (area do footer), adicionar um NavLink para `/sobre` com icone `Info` e texto "Sobre"
-- Esse item aparece para **todos os usuarios**, nao apenas owners (diferente de "Usuarios")
-- Reorganizar o footer para mostrar "Usuarios" (se owner) e "Sobre" (sempre)
+### 4. Exibicao no Kanban e demais telas
+- O padrao de exibicao ja usa `proposalId - projectName` em varios lugares (Kanban cards, PDF, detalhes). Nenhuma alteracao necessaria nesses pontos, pois o campo `proposalId` continuara existindo, apenas sera preenchido manualmente.
 
-### 3. Arquivo: `src/App.tsx`
-- Adicionar import de `AboutPage`
-- Adicionar rota `/sobre` dentro do `AppLayout`, sem `PageGuard` (acessivel a todos)
-
-### 4. Arquivo: `src/config/pages.ts`
-- Nao sera adicionada a `APP_PAGES` pois a pagina "Sobre" nao precisa de controle de permissao
+### 5. Pagina de detalhes / edicao (`src/pages/crm/BudgetDetail.tsx`)
+- Permitir editar o identificador caso o usuario precise corrigir
