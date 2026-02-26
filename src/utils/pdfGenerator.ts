@@ -516,8 +516,9 @@ export async function generateProposalPDF({
 
   doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
   doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
+  y += 6;
   drawLine(y);
-  y += 8;
+  y += 10;
 
   // TOTAL
   doc.setFontSize(subtitleSize);
