@@ -286,6 +286,7 @@ export interface Budget {
   includesAccommodation: boolean; // Custos com hospedagem incluso
   includesMeals: boolean; // Alimentação da equipe inclusa
   includesRawMaterial: boolean; // Material bruto incluso na entrega
+  includesTechnicalVisit: boolean; // Visita técnica inclusa
   hasExecutionDate: boolean; // Se tem data para execução definida
   executionStartDate: Date | null; // Data início da execução
   executionEndDate: Date | null; // Data fim da execução (opcional, para período)
