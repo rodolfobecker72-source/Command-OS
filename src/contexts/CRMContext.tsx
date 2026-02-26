@@ -423,6 +423,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       id: uuidv4(),
       projectDescription: budgetData.projectDescription || '',
       includesRawMaterial: budgetData.includesRawMaterial ?? false,
+      includesTechnicalVisit: budgetData.includesTechnicalVisit ?? false,
       hasExecutionDate: budgetData.hasExecutionDate ?? false,
       executionStartDate: budgetData.executionStartDate ?? null,
       executionEndDate: budgetData.executionEndDate ?? null,

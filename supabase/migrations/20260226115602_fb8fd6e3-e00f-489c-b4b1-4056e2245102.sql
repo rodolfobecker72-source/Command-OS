@@ -1,0 +1,1 @@
+ALTER TABLE public.budgets ADD COLUMN includes_technical_visit boolean NOT NULL DEFAULT false;

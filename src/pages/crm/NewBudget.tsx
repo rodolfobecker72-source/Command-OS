@@ -110,6 +110,7 @@ export function NewBudget() {
     includesAccommodation: false,
     includesMeals: false,
     includesRawMaterial: false,
+    includesTechnicalVisit: false,
     hasExecutionDate: false,
     executionStartDate: null as Date | null,
     executionEndDate: null as Date | null,
@@ -305,6 +306,7 @@ export function NewBudget() {
       includesAccommodation: formData.includesAccommodation,
       includesMeals: formData.includesMeals,
       includesRawMaterial: formData.includesRawMaterial,
+      includesTechnicalVisit: formData.includesTechnicalVisit,
       hasExecutionDate: formData.hasExecutionDate,
       executionStartDate: formData.executionStartDate,
       executionEndDate: formData.executionEndDate,
@@ -869,6 +871,18 @@ export function NewBudget() {
                         />
                         <Label htmlFor="includesMeals" className="text-sm font-normal cursor-pointer">
                           Alimentação da equipe inclusa
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="includesTechnicalVisit"
+                          checked={formData.includesTechnicalVisit}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, includesTechnicalVisit: checked === true })
+                          }
+                        />
+                        <Label htmlFor="includesTechnicalVisit" className="text-sm font-normal cursor-pointer">
+                          Visita técnica inclusa
                         </Label>
                       </div>
                     </div>

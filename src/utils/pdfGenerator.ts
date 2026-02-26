@@ -245,6 +245,7 @@ export async function generateProposalPDF({
     { label: 'Hospedagem da equipe', included: budget.includesAccommodation },
     { label: 'Alimentação da equipe', included: budget.includesMeals },
     { label: 'Material bruto', included: budget.includesRawMaterial },
+    { label: 'Visita técnica', included: budget.includesTechnicalVisit },
   ];
 
   inclusions.forEach((item) => {

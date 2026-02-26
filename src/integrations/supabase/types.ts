@@ -168,6 +168,7 @@ export type Database = {
           includes_meals: boolean
           includes_raw_material: boolean
           includes_tax: boolean
+          includes_technical_visit: boolean
           location: string
           nf_url: string | null
           objective: string
@@ -199,6 +200,7 @@ export type Database = {
           includes_meals?: boolean
           includes_raw_material?: boolean
           includes_tax?: boolean
+          includes_technical_visit?: boolean
           location?: string
           nf_url?: string | null
           objective?: string
@@ -230,6 +232,7 @@ export type Database = {
           includes_meals?: boolean
           includes_raw_material?: boolean
           includes_tax?: boolean
+          includes_technical_visit?: boolean
           location?: string
           nf_url?: string | null
           objective?: string
