@@ -104,11 +104,7 @@ export async function generateProposalPDF({
     doc.setTextColor(color[0], color[1], color[2]);
   };
 
-  const drawLine = (yPos: number) => {
-    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.setLineWidth(0.5);
-    doc.line(margin, yPos, pageWidth - margin, yPos);
-  };
+  // drawLine removed per user request
 
   const addHeader = () => {
     if (logoData) {
@@ -117,18 +113,9 @@ export async function generateProposalPDF({
       const logoWidth = logoHeight * aspectRatio;
       doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
     }
-    // Thin line separating header from content
-    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.setLineWidth(0.3);
-    doc.line(margin, contentStartY - 4, pageWidth - margin, contentStartY - 4);
   };
 
   const addFooter = () => {
-    // Thin line separating content from footer
-    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-    doc.setLineWidth(0.3);
-    doc.line(margin, footerTopY + 2, pageWidth - margin, footerTopY + 2);
-
     if (footerLogoData) {
       const fLogoH = 6;
       const fAspect = footerLogoData.width / footerLogoData.height;
@@ -168,13 +155,8 @@ export async function generateProposalPDF({
   // PAGE 1: Header, Client, Project, Inclusions
   // ============================================
   
-  // First page special header (with title)
-  if (logoData) {
-    const logoHeight = 10;
-    const aspectRatio = logoData.width / logoData.height;
-    const logoWidth = logoHeight * aspectRatio;
-    doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
-  }
+  // First page header (logo + title, no duplicate)
+  addHeader();
   
   doc.setFontSize(titleSize);
   doc.setFont('helvetica', 'bold');
@@ -191,8 +173,7 @@ export async function generateProposalPDF({
   doc.text(identifierLines, margin, y);
   y += identifierLines.length * 6 + 8;
   
-  drawLine(y);
-  y += 12;
+  y += 8;
 
   // CLIENT BLOCK — estimate height to keep together
   const clientBlockHeight = 8 + 6 * 3 + (responsibleUser ? 6 : 0) + 20;
@@ -220,8 +201,6 @@ export async function generateProposalPDF({
     y += 6;
   }
   
-  y += 8;
-  drawLine(y);
   y += 12;
 
   // PROJECT BLOCK
@@ -268,8 +247,7 @@ export async function generateProposalPDF({
   doc.text('Validade: 30 dias', margin, y);
   y += 12;
   
-  drawLine(y);
-  y += 12;
+  y += 8;
 
   // INCLUSIONS BLOCK
   const inclusionItems = [
@@ -387,10 +365,7 @@ export async function generateProposalPDF({
       doc.text('Descrição', col2, y);
       y += 2;
       
-      doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.setLineWidth(0.3);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 5;
+      y += 4;
       
       doc.setFont('helvetica', 'normal');
       setColor(darkGray);
@@ -416,12 +391,7 @@ export async function generateProposalPDF({
     
     y += 16;
     
-    // Separator between services
-    if (serviceIndex < version.services.length - 1) {
-      doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y - 4, pageWidth - margin, y - 4);
-    }
+    // space between services
   });
 
   // ============================================
@@ -487,9 +457,7 @@ export async function generateProposalPDF({
     y += 8;
   }
 
-  y += 10;
-  drawLine(y);
-  y += 12;
+  y += 16;
 
   // INVESTMENT BREAKDOWN — keep as a block
   const investmentBlockHeight = 10 + version.services.length * 7 + (operationalTotal > 0 ? 7 : 0) + 7 + 20;
@@ -536,10 +504,7 @@ export async function generateProposalPDF({
 
   doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
   doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
-  y += 3;
-
-  drawLine(y);
-  y += 8;
+  y += 10;
 
   // TOTAL
   doc.setFontSize(subtitleSize);
