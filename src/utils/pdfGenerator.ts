@@ -104,7 +104,11 @@ export async function generateProposalPDF({
     doc.setTextColor(color[0], color[1], color[2]);
   };
 
-  // drawLine removed per user request
+  const drawLine = (yPos: number) => {
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+  };
 
   const addHeader = () => {
     if (logoData) {
@@ -173,7 +177,8 @@ export async function generateProposalPDF({
   doc.text(identifierLines, margin, y);
   y += identifierLines.length * 6 + 8;
   
-  y += 8;
+  drawLine(y);
+  y += 10;
 
   // CLIENT BLOCK — estimate height to keep together
   const clientBlockHeight = 8 + 6 * 3 + (responsibleUser ? 6 : 0) + 20;
@@ -202,9 +207,11 @@ export async function generateProposalPDF({
   }
   
   y += 12;
+  drawLine(y);
+  y += 10;
 
   // PROJECT BLOCK
-  const projectDescLines = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) : [];
+  const projectDescLines = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
   const projectBlockHeight = 8 + projectDescLines.length * 5 + 30;
   ensureSpace(projectBlockHeight);
 
@@ -219,8 +226,11 @@ export async function generateProposalPDF({
   setColor(darkGray);
   
   if (projectDescLines.length > 0) {
-    doc.text(projectDescLines, margin, y);
-    y += projectDescLines.length * 5 + 4;
+    projectDescLines.forEach((line: string) => {
+      doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+      y += 5;
+    });
+    y += 4;
   }
   
   if (budget.location) {
@@ -247,7 +257,8 @@ export async function generateProposalPDF({
   doc.text('Validade: 30 dias', margin, y);
   y += 12;
   
-  y += 8;
+  drawLine(y);
+  y += 10;
 
   // INCLUSIONS BLOCK
   const inclusionItems = [
@@ -316,7 +327,7 @@ export async function generateProposalPDF({
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
     // Estimate block height: header(6) + objective(6) + desc + items + subtotal(16)
-    const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth - 10) : [];
+    const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth - 10) as string[] : [];
     const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
     
     // If the whole service fits, keep it together; otherwise just ensure minimum header space
@@ -346,7 +357,7 @@ export async function generateProposalPDF({
       setColor(darkGray);
       for (const line of descLines) {
         ensureSpace(6);
-        doc.text(line, margin, y);
+        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth - 10 });
         y += 5;
       }
       y += 4;
@@ -457,7 +468,8 @@ export async function generateProposalPDF({
     y += 8;
   }
 
-  y += 16;
+  drawLine(y);
+  y += 12;
 
   // INVESTMENT BREAKDOWN — keep as a block
   const investmentBlockHeight = 10 + version.services.length * 7 + (operationalTotal > 0 ? 7 : 0) + 7 + 20;
@@ -504,7 +516,8 @@ export async function generateProposalPDF({
 
   doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
   doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
-  y += 10;
+  drawLine(y);
+  y += 8;
 
   // TOTAL
   doc.setFontSize(subtitleSize);
