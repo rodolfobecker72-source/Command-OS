@@ -58,9 +58,12 @@ export async function generateProposalPDF({
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
-  // Basic configuration
+  // Layout configuration
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
+  const headerY = 15; // top margin for header area
+  const contentStartY = 28; // where content begins (below header)
+  const footerTopY = pageHeight - 28; // max Y before footer area
   
   // Colors (only black, gray, white)
   const black = [0, 0, 0] as [number, number, number];
@@ -68,7 +71,7 @@ export async function generateProposalPDF({
   const gray = [128, 128, 128] as [number, number, number];
   const lightGray = [200, 200, 200] as [number, number, number];
   
-  // Font sizes (Montserrat style using helvetica as base)
+  // Font sizes
   const titleSize = 14;
   const subtitleSize = 12;
   const normalSize = 10;
@@ -78,7 +81,7 @@ export async function generateProposalPDF({
   const projectIdentifier = `${budget.proposalId} - ${budget.projectName} - Versão ${version.version}`;
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
   
-  // Load logo
+  // Load logos
   let logoData: { base64: string; width: number; height: number } | null = null;
   try {
     logoData = await loadImageAsBase64('/images/hero-logo-black.png');
@@ -94,7 +97,7 @@ export async function generateProposalPDF({
     console.warn('Could not load footer logo:', error);
   }
   
-  let y = margin;
+  let y = contentStartY;
 
   // Helper functions
   const setColor = (color: [number, number, number]) => {
@@ -107,13 +110,30 @@ export async function generateProposalPDF({
     doc.line(margin, yPos, pageWidth - margin, yPos);
   };
 
+  const addHeader = () => {
+    if (logoData) {
+      const logoHeight = 8;
+      const aspectRatio = logoData.width / logoData.height;
+      const logoWidth = logoHeight * aspectRatio;
+      doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
+    }
+    // Thin line separating header from content
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.setLineWidth(0.3);
+    doc.line(margin, contentStartY - 4, pageWidth - margin, contentStartY - 4);
+  };
+
   const addFooter = () => {
-    // Logo discreto no rodapé
+    // Thin line separating content from footer
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.setLineWidth(0.3);
+    doc.line(margin, footerTopY + 2, pageWidth - margin, footerTopY + 2);
+
     if (footerLogoData) {
       const fLogoH = 6;
       const fAspect = footerLogoData.width / footerLogoData.height;
       const fLogoW = fLogoH * fAspect;
-      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - fLogoW / 2, pageHeight - 18, fLogoW, fLogoH);
+      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - fLogoW / 2, pageHeight - 20, fLogoW, fLogoH);
     }
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
@@ -121,33 +141,49 @@ export async function generateProposalPDF({
     doc.text(
       'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br',
       pageWidth / 2,
-      pageHeight - 8,
+      pageHeight - 10,
       { align: 'center' }
     );
+  };
+
+  /** If the next block of `neededHeight` won't fit, adds a new page and returns the new Y */
+  const ensureSpace = (neededHeight: number): number => {
+    if (y + neededHeight > footerTopY) {
+      addHeader();
+      addFooter();
+      doc.addPage();
+      y = contentStartY;
+    }
+    return y;
+  };
+
+  const newPage = () => {
+    addHeader();
+    addFooter();
+    doc.addPage();
+    y = contentStartY;
   };
 
   // ============================================
   // PAGE 1: Header, Client, Project, Inclusions
   // ============================================
   
-  // HEADER with Logo
-  // Logo on top right (subtle, maintaining original aspect ratio)
+  // First page special header (with title)
   if (logoData) {
     const logoHeight = 10;
     const aspectRatio = logoData.width / logoData.height;
     const logoWidth = logoHeight * aspectRatio;
-    doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, y - 3, logoWidth, logoHeight);
+    doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
   }
   
-  // Title on left
   doc.setFontSize(titleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('PROPOSTA COMERCIAL', margin, y);
+  doc.text('PROPOSTA COMERCIAL', margin, headerY + 4);
   
-  y += 10;
+  y = contentStartY;
   
-  // Project identifier (ID - Name - Version)
+  // Project identifier
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(darkGray);
@@ -158,7 +194,10 @@ export async function generateProposalPDF({
   drawLine(y);
   y += 12;
 
-  // CLIENT BLOCK
+  // CLIENT BLOCK — estimate height to keep together
+  const clientBlockHeight = 8 + 6 * 3 + (responsibleUser ? 6 : 0) + 20;
+  ensureSpace(clientBlockHeight);
+
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
@@ -186,6 +225,10 @@ export async function generateProposalPDF({
   y += 12;
 
   // PROJECT BLOCK
+  const projectDescLines = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) : [];
+  const projectBlockHeight = 8 + projectDescLines.length * 5 + 30;
+  ensureSpace(projectBlockHeight);
+
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
@@ -196,10 +239,9 @@ export async function generateProposalPDF({
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
   
-  if (budget.projectDescription) {
-    const descLines = doc.splitTextToSize(budget.projectDescription, contentWidth);
-    doc.text(descLines, margin, y);
-    y += descLines.length * 5 + 4;
+  if (projectDescLines.length > 0) {
+    doc.text(projectDescLines, margin, y);
+    y += projectDescLines.length * 5 + 4;
   }
   
   if (budget.location) {
@@ -230,6 +272,17 @@ export async function generateProposalPDF({
   y += 12;
 
   // INCLUSIONS BLOCK
+  const inclusionItems = [
+    { label: 'Impostos', included: budget.includesTax },
+    { label: 'Logística e deslocamento', included: budget.includesLogistics },
+    { label: 'Hospedagem da equipe', included: budget.includesAccommodation },
+    { label: 'Alimentação da equipe', included: budget.includesMeals },
+    { label: 'Material bruto', included: budget.includesRawMaterial },
+    { label: 'Visita técnica', included: budget.includesTechnicalVisit },
+  ];
+  const inclusionsBlockHeight = 8 + inclusionItems.length * 6 + 4;
+  ensureSpace(inclusionsBlockHeight);
+
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
@@ -238,17 +291,8 @@ export async function generateProposalPDF({
   
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
-  
-  const inclusions = [
-    { label: 'Impostos', included: budget.includesTax },
-    { label: 'Logística e deslocamento', included: budget.includesLogistics },
-    { label: 'Hospedagem da equipe', included: budget.includesAccommodation },
-    { label: 'Alimentação da equipe', included: budget.includesMeals },
-    { label: 'Material bruto', included: budget.includesRawMaterial },
-    { label: 'Visita técnica', included: budget.includesTechnicalVisit },
-  ];
 
-  inclusions.forEach((item) => {
+  inclusionItems.forEach((item) => {
     const status = item.included ? '[x]' : '[ ]';
     setColor(item.included ? darkGray : gray);
     doc.text(`${status} ${item.label}`, margin, y);
@@ -262,7 +306,7 @@ export async function generateProposalPDF({
   // ============================================
   
   doc.addPage();
-  y = margin;
+  y = contentStartY;
   
   let totalProductionCost = 0;
   version.services.forEach(s => { totalProductionCost += s.costs.reduce((sum, c) => sum + c.value, 0); });
@@ -287,19 +331,23 @@ export async function generateProposalPDF({
   y += 10;
 
   version.services.forEach((service, serviceIndex) => {
-    // Check if we need a new page
-    if (y > pageHeight - 60) {
-      addFooter();
-      doc.addPage();
-      y = margin;
-    }
-    
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
     const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
     const serviceProductionCost = service.costs.reduce((sum, c) => sum + c.value, 0);
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
+    // Estimate block height: header(6) + objective(6) + desc + items + subtotal(16)
+    const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth - 10) : [];
+    const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
+    
+    // If the whole service fits, keep it together; otherwise just ensure minimum header space
+    if (estimatedHeight < footerTopY - contentStartY) {
+      ensureSpace(estimatedHeight);
+    } else {
+      ensureSpace(40); // at least header + objective + some items
+    }
+    
     // Service header
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
@@ -315,12 +363,15 @@ export async function generateProposalPDF({
     y += 6;
     
     // Description
-    if (service.description) {
+    if (descLines.length > 0) {
       doc.setFontSize(normalSize);
       setColor(darkGray);
-      const descLines = doc.splitTextToSize(service.description, contentWidth - 10);
-      doc.text(descLines, margin, y);
-      y += descLines.length * 5 + 4;
+      for (const line of descLines) {
+        ensureSpace(6);
+        doc.text(line, margin, y);
+        y += 5;
+      }
+      y += 4;
     }
     
     // Items list
@@ -328,6 +379,7 @@ export async function generateProposalPDF({
       const col1 = margin;
       const col2 = margin + 10;
       
+      ensureSpace(12);
       doc.setFontSize(smallSize);
       doc.setFont('helvetica', 'bold');
       setColor(black);
@@ -344,31 +396,25 @@ export async function generateProposalPDF({
       setColor(darkGray);
       
       service.costs.forEach((cost, costIndex) => {
-        if (y > pageHeight - 40) {
-          addFooter();
-          doc.addPage();
-          y = margin;
-        }
+        const costDescLines = doc.splitTextToSize(cost.description, contentWidth - 15);
+        const itemHeight = costDescLines.length * 5 + 3;
+        ensureSpace(itemHeight);
         
         doc.text(`${costIndex + 1}`, col1, y);
-        
-        const maxDescWidth = contentWidth - 15;
-        const descLines = doc.splitTextToSize(cost.description, maxDescWidth);
-        doc.text(descLines, col2, y);
-        
-        y += descLines.length * 5 + 3;
+        doc.text(costDescLines, col2, y);
+        y += itemHeight;
       });
     }
     
-    // Service subtotal
+    // Service subtotal — keep with last item
+    ensureSpace(16);
     y += 2;
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
     doc.text(`Subtotal: ${formatCurrency(serviceDisplayValue)}`, pageWidth - margin, y, { align: 'right' });
     
-    y += 8;
-    y += 8;
+    y += 16;
     
     // Separator between services
     if (serviceIndex < version.services.length - 1) {
@@ -386,13 +432,15 @@ export async function generateProposalPDF({
   operationalCostItems.forEach(c => { operationalTotal += c.value; });
   
   if (operationalCostItems.length > 0) {
-    y += 6;
-    
-    if (y > pageHeight - 60) {
-      addFooter();
-      doc.addPage();
-      y = margin;
+    // Estimate block height
+    const opBlockHeight = 10 + 10 + operationalCostItems.length * 8 + 16;
+    if (opBlockHeight < footerTopY - contentStartY) {
+      ensureSpace(opBlockHeight);
+    } else {
+      ensureSpace(30);
     }
+    
+    y += 6;
     
     doc.setFontSize(subtitleSize);
     doc.setFont('helvetica', 'bold');
@@ -419,21 +467,16 @@ export async function generateProposalPDF({
     setColor(darkGray);
     
     operationalCostItems.forEach((cost, costIndex) => {
-      if (y > pageHeight - 40) {
-        addFooter();
-        doc.addPage();
-        y = margin;
-      }
+      const costDescLines = doc.splitTextToSize(cost.description, contentWidth - 15);
+      const itemHeight = costDescLines.length * 5 + 3;
+      ensureSpace(itemHeight);
       
       doc.text(`${costIndex + 1}`, opCol1, y);
-      
-      const maxDescWidth = contentWidth - 15;
-      const descLines = doc.splitTextToSize(cost.description, maxDescWidth);
-      doc.text(descLines, opCol2, y);
-      
-      y += descLines.length * 5 + 3;
+      doc.text(costDescLines, opCol2, y);
+      y += itemHeight;
     });
     
+    ensureSpace(12);
     y += 4;
     
     doc.setFontSize(normalSize);
@@ -448,14 +491,10 @@ export async function generateProposalPDF({
   drawLine(y);
   y += 12;
 
-  // Check if we need a new page for the summary
-  if (y > pageHeight - 80) {
-    addFooter();
-    doc.addPage();
-    y = margin;
-  }
+  // INVESTMENT BREAKDOWN — keep as a block
+  const investmentBlockHeight = 10 + version.services.length * 7 + (operationalTotal > 0 ? 7 : 0) + 7 + 20;
+  ensureSpace(investmentBlockHeight);
 
-  // INVESTMENT BREAKDOWN - services with proportional fixed cost + margin
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
@@ -472,21 +511,13 @@ export async function generateProposalPDF({
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-
-  // Total to distribute per service = production + fixed + margin
   const totalToDistribute = totalProductionCost + fixedCostValue + marginValue;
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
 
-  // List each service with proportional value
   version.services.forEach((service, idx) => {
-    if (y > pageHeight - 40) {
-      addFooter();
-      doc.addPage();
-      y = margin;
-    }
     const serviceCost = service.costs.reduce((sum, c) => sum + c.value, 0);
     const weight = totalProductionCost > 0 ? serviceCost / totalProductionCost : 0;
     const serviceValue = weight * totalToDistribute;
@@ -497,14 +528,12 @@ export async function generateProposalPDF({
     y += 7;
   });
 
-  // Despesas Operacionais
   if (operationalTotal > 0) {
     doc.text('Despesas Operacionais', margin, y);
     doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
     y += 7;
   }
 
-  // NF
   doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
   doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
   y += 3;
@@ -521,6 +550,7 @@ export async function generateProposalPDF({
   doc.setFontSize(titleSize);
   doc.text(formatCurrency(totalProjectValue), pageWidth - margin, y, { align: 'right' });
   
+  addHeader();
   addFooter();
 
   // ============================================
@@ -528,7 +558,7 @@ export async function generateProposalPDF({
   // ============================================
   
   doc.addPage();
-  y = margin;
+  y = contentStartY;
   
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -619,19 +649,18 @@ export async function generateProposalPDF({
   doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
   doc.setLineWidth(0.5);
   
-  // Client signature
   doc.line(margin, y, margin + signatureWidth, y);
   doc.setFontSize(smallSize);
   setColor(gray);
   doc.text('Responsável', margin, y + 5);
   
-  // Date
   doc.line(margin + signatureWidth + gap, y, margin + signatureWidth + gap + signatureWidth, y);
   doc.text('Data', margin + signatureWidth + gap, y + 5);
 
+  addHeader();
   addFooter();
 
-  // Save with project identifier pattern
+  // Save
   const safeProjectName = budget.projectName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
   const fileName = `${budget.proposalId}_${safeProjectName}_V${version.version}.pdf`;
   doc.save(fileName);
