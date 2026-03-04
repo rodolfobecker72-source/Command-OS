@@ -1,35 +1,23 @@
 
 
-# Plano: Corrigir carregamento inicial do sistema
+# Plano: Corrigir salvamento silencioso no formulario de orcamento
 
-## Problema
-Race condition no `AuthContext.tsx`: quando o usuario faz login ou acessa o sistema, o fluxo de autenticacao dispara duas cargas paralelas de dados do usuario (`onAuthStateChange` + `getSession`), e os contextos `CRMContext` e `ProspectionContext` tentam carregar antes do `workspace` estar disponivel.
+## Problema identificado
 
-O fluxo atual:
-1. `onAuthStateChange` dispara → seta session/user → chama `loadUserData` via `setTimeout`
-2. `getSession` tambem dispara → chama `loadUserData` novamente
-3. Enquanto isso, CRMContext ve `workspaceId = undefined` → seta `isLoading = false` com dados vazios
-4. Quando workspace finalmente carrega, o useEffect re-executa, mas a tela ja renderizou vazia
+O formulario `NewBudget.tsx` falha silenciosamente em dois pontos:
 
-Isso explica por que atualizar a pagina resolve: na segunda vez, a sessao ja esta no localStorage e o workspace carrega mais rapido.
+1. **Validacao sem feedback** (linha 297): `if (!validateForm()) return;` -- quando a validacao falha, nada acontece. Nao ha toast nem indicacao visual dos erros.
+
+2. **`addBudget` retorna null sem feedback** (linha 323): `if (!newBudget) return;` -- se o `addBudget` falhar (ex: workspaceId undefined), o formulario simplesmente para sem avisar.
+
+3. **`proposalId` pode ficar vazio**: O `formData.proposalId` e inicializado com `nextProposalId` do `useMemo`, mas como `useState` captura apenas o valor inicial, se `budgets` ainda nao carregou quando o componente montou, o `proposalId` pode ficar com valor desatualizado.
 
 ## Solucao
 
-### 1. AuthContext.tsx - Eliminar carga duplicada
-- Remover a chamada `loadUserData` de dentro do `onAuthStateChange` 
-- Manter apenas a carga no `getSession` inicial
-- No `onAuthStateChange`, apenas atualizar session/user e re-carregar dados quando o evento for `SIGNED_IN` ou `TOKEN_REFRESHED` (nao duplicar com getSession)
-- Remover o `setTimeout` que causa timing issues
+### Arquivo: `src/pages/crm/NewBudget.tsx`
 
-### 2. CRMContext.tsx - Nao finalizar loading prematuramente
-- Quando `workspaceId` e `undefined`, manter `isLoading = true` (nao setar false)
-- So setar `isLoading = false` apos os dados terem sido efetivamente carregados ou quando confirmado que nao ha sessao
-
-### 3. ProspectionContext.tsx - Mesma correcao
-- Mesmo ajuste: nao setar `isLoading = false` quando workspace ainda nao carregou
-
-## Arquivos
-- `src/contexts/AuthContext.tsx` - corrigir race condition na carga de dados
-- `src/contexts/CRMContext.tsx` - ajustar logica de isLoading
-- `src/contexts/ProspectionContext.tsx` - ajustar logica de isLoading
+1. Adicionar `toast.error` quando `validateForm()` falha, mostrando quais campos estao faltando
+2. Adicionar `toast.error` quando `addBudget` retorna null (workspace nao carregado)
+3. Adicionar `useEffect` para sincronizar `formData.proposalId` com `nextProposalId` quando budgets carregam
+4. Mostrar visualmente os erros de validacao nos campos (ja existe `errors` state, mas precisa ter feedback visual)
 
