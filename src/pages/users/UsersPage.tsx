@@ -4,6 +4,7 @@ import { useAuth, type AppRole, type Profile } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -267,9 +268,8 @@ export function UsersPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="create-password">Senha</Label>
-                      <Input
+                      <PasswordInput
                         id="create-password"
-                        type="password"
                         placeholder="Mínimo 6 caracteres"
                         value={createForm.password}
                         onChange={e => setCreateForm({ ...createForm, password: e.target.value })}
