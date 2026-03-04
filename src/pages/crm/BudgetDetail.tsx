@@ -149,6 +149,27 @@ export function BudgetDetail() {
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showAddLink, setShowAddLink] = useState(false);
 
+  // Calculate totals for new version (hooks must be before early returns)
+  const newVersionOperationalTotal = useMemo(() => {
+    return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
+  }, [newVersionOperationalCosts]);
+
+  const newVersionTotals = useMemo(() => {
+    const productionCost = newVersionServices.reduce((sum, service) => {
+      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
+    }, 0);
+    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
+    const operationalTotal = newVersionOperationalTotal;
+    const totalCosts = productionCost + fixedCost + operationalTotal;
+
+    const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
+    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+    const nfValue = totalProjectValue * (newVersionNfPct / 100);
+    const marginValue = totalProjectValue - totalCosts - nfValue;
+
+    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
+  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
+
   if (!budget || !client) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -196,32 +217,10 @@ export function BudgetDetail() {
     setNewVersionOperationalCosts(
       (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
     );
-    // Initialize global percentages from current version
     setNewVersionFixedCostPct(currentVersionData?.fixedCostPercentage ?? 20);
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
   };
-
-  // Calculate totals for new version
-  const newVersionOperationalTotal = useMemo(() => {
-    return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
-  }, [newVersionOperationalCosts]);
-
-  const newVersionTotals = useMemo(() => {
-    const productionCost = newVersionServices.reduce((sum, service) => {
-      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
-    }, 0);
-    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
-    const operationalTotal = newVersionOperationalTotal;
-    const totalCosts = productionCost + fixedCost + operationalTotal;
-
-    const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
-    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
-    const nfValue = totalProjectValue * (newVersionNfPct / 100);
-    const marginValue = totalProjectValue - totalCosts - nfValue;
-
-    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
-  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
 
   // Update service in new version
   const updateNewVersionService = (serviceId: string, updates: Partial<ServiceItem>) => {
