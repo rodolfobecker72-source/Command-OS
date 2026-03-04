@@ -1156,7 +1156,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const getCardsByStatus = (status: CRMStatus) => getCRMCards().filter(card => card.status === status);
+  const getCardsByStatus = (status: CRMStatus) => getCRMCards()
+    .filter(card => card.status === status)
+    .sort((a, b) => {
+      const numA = parseInt(a.projectName, 10);
+      const numB = parseInt(b.projectName, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.projectName.localeCompare(b.projectName);
+    });
 
   const moveCard = (cardId: string, newStatus: CRMStatus) => {
     updateBudgetStatus(cardId, newStatus);
