@@ -216,23 +216,23 @@ export function ProspectionPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.companyName.trim()) {
       toast.error('Nome da empresa é obrigatório');
       return;
     }
     if (editingLead) {
-      updateLead(editingLead.id, formData);
+      await updateLead(editingLead.id, formData);
       toast.success('Lead atualizado!');
     } else {
-      addLead(formData);
+      await addLead(formData);
       toast.success('Lead criado!');
     }
     setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    deleteLead(id);
+  const handleDelete = async (id: string) => {
+    await deleteLead(id);
     setDeleteConfirm(null);
     toast.success('Lead excluído');
   };
@@ -252,8 +252,8 @@ export function ProspectionPage() {
     return map[origin];
   };
 
-  const handleMigrateToCRM = (lead: ProspectionLead) => {
-    const newClient = addClient({
+  const handleMigrateToCRM = async (lead: ProspectionLead) => {
+    const newClient = await addClient({
       companyName: lead.companyName,
       cnpj: '',
       responsiblePerson: lead.contactName,
@@ -262,8 +262,10 @@ export function ProspectionPage() {
       leadOrigin: mapOriginToCRM(lead.origin),
       score: 0,
     });
-    updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
-    toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
+    if (newClient) {
+      await updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
+      toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
+    }
   };
 
   const handleReactivate = (lead: ProspectionLead) => {

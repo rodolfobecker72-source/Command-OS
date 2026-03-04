@@ -76,12 +76,12 @@ export function NewClient() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    addClient({
+    const result = await addClient({
       companyName: formData.companyName,
       cnpj: formData.document.replace(/\D/g, ''),
       responsiblePerson: formData.responsiblePerson,
@@ -91,8 +91,10 @@ export function NewClient() {
       score: 0,
     });
 
-    toast.success('Cliente cadastrado com sucesso!');
-    navigate('/clientes');
+    if (result) {
+      toast.success('Cliente cadastrado com sucesso!');
+      navigate('/clientes');
+    }
   };
 
   const formatDocumentInput = (value: string, type: 'cnpj' | 'cpf') => {

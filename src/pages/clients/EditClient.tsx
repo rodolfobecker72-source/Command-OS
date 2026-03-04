@@ -109,12 +109,12 @@ export function EditClient() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    updateClient(client.id, {
+    await updateClient(client.id, {
       companyName: formData.companyName,
       cnpj: formData.document.replace(/\D/g, ''),
       responsiblePerson: formData.responsiblePerson,

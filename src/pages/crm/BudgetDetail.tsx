@@ -302,7 +302,7 @@ export function BudgetDetail() {
     setNewVersionServices((prev) => prev.filter((s) => s.id !== serviceId));
   };
 
-  const handleCreateNewVersion = () => {
+  const handleCreateNewVersion = async () => {
     if (!newVersionReason.trim()) {
       toast.error('Informe o motivo da nova versão');
       return;
@@ -313,7 +313,7 @@ export function BudgetDetail() {
       return;
     }
 
-    addBudgetVersion(budget.id, {
+    await addBudgetVersion(budget.id, {
       services: newVersionServices,
       operationalCosts: newVersionOperationalCosts,
       costs: [],
@@ -333,9 +333,9 @@ export function BudgetDetail() {
     toast.success(`Nova versão V${budget.currentVersion + 1} criada com sucesso!`);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (budget.currentVersion > 0) {
-      approveBudget(budget.id, budget.currentVersion);
+      await approveBudget(budget.id, budget.currentVersion);
       setApproveOpen(false);
       toast.success('Orçamento aprovado! Planilha de execução criada.');
     }

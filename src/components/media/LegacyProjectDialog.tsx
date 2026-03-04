@@ -63,7 +63,7 @@ export function LegacyProjectDialog() {
     setNewLeadOrigin('cliente_antigo');
   };
 
-  const handleCreateClient = () => {
+  const handleCreateClient = async () => {
     if (!newCompanyName.trim()) {
       toast.error('Informe o nome da empresa');
       return;
@@ -73,7 +73,7 @@ export function LegacyProjectDialog() {
       return;
     }
 
-    const newClient = addClient({
+    const newClient = await addClient({
       companyName: newCompanyName.trim(),
       cnpj: '',
       responsiblePerson: newResponsiblePerson.trim(),
@@ -83,14 +83,16 @@ export function LegacyProjectDialog() {
       score: 0,
     });
 
-    setSelectedClientId(newClient.id);
-    setSelectedClientName(newClient.companyName);
-    setShowNewClient(false);
-    setClientSearch('');
-    toast.success(`Cliente "${newClient.companyName}" cadastrado!`);
+    if (newClient) {
+      setSelectedClientId(newClient.id);
+      setSelectedClientName(newClient.companyName);
+      setShowNewClient(false);
+      setClientSearch('');
+      toast.success(`Cliente "${newClient.companyName}" cadastrado!`);
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!projectNumber.trim()) {
       toast.error('Informe o número do projeto');
       return;
@@ -105,7 +107,7 @@ export function LegacyProjectDialog() {
       return;
     }
 
-    addLegacyProject({
+    await addLegacyProject({
       projectNumber: projectNumber.trim(),
       clientId: selectedClientId,
       clientName: selectedClientName,
