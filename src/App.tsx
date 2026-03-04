@@ -10,6 +10,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PageGuard } from "@/components/auth/PageGuard";
 import { Login } from "@/pages/auth/Login";
 import { Signup } from "@/pages/auth/Signup";
+import { ForgotPassword } from "@/pages/auth/ForgotPassword";
+import { ResetPassword } from "@/pages/auth/ResetPassword";
 import { ClientDashboard } from "@/pages/clients/ClientDashboard";
 import { NewClient } from "@/pages/clients/NewClient";
 import { EditClient } from "@/pages/clients/EditClient";
@@ -40,6 +42,8 @@ const App = () => (
               {/* Auth */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
