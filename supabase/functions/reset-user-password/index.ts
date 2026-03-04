@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       await adminClient.auth.admin.listUsers();
     if (listError) throw listError;
 
-    const targetUser = userList.users.find((u) => u.email === email);
+    const targetUser = userList.users.find((u: any) => u.email === email);
     if (!targetUser) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
