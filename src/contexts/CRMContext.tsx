@@ -385,11 +385,21 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
+  // Helper: check workspace ready before any mutation
+  const ensureWorkspace = (): boolean => {
+    if (!workspaceId) {
+      console.error('[CRM] workspaceId é null - operação bloqueada');
+      toast.error('Sessão expirada ou workspace não carregado. Faça login novamente.');
+      return false;
+    }
+    return true;
+  };
+
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
-    if (!workspaceId) return null;
+    if (!ensureWorkspace()) return null;
     try {
-      const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId) }).select().single();
+      const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId!) }).select().single();
       if (error) throw error;
       const newClient = clientFromDb(data);
       setClients(prev => [...prev, newClient]);
@@ -458,7 +468,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
-    if (!workspaceId) return;
+    if (!ensureWorkspace()) return;
     const maxOrder = Math.max(...kanbanColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('kanban_columns').insert({
@@ -515,7 +525,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Service Category functions =============
   const addServiceCategory = async (categoryData: Omit<ServiceCategory, 'id' | 'order'>) => {
-    if (!workspaceId) return;
+    if (!ensureWorkspace()) return;
     const maxOrder = Math.max(...serviceCategories.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('service_categories').insert({
@@ -552,7 +562,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
-    if (!workspaceId) return;
+    if (!ensureWorkspace()) return;
     const categoryObjectives = serviceObjectives.filter(o => o.categoryKey === objectiveData.categoryKey);
     const maxOrder = Math.max(...categoryObjectives.map(o => o.order), -1);
     try {
@@ -594,7 +604,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Budget functions =============
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
-    if (!workspaceId) return null;
+    if (!ensureWorkspace()) return null;
     try {
       const { data, error } = await supabase.from('budgets').insert({
         workspace_id: workspaceId,
@@ -676,31 +686,23 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    console.log('[addBudgetVersion] chamado com budgetId:', budgetId, 'workspaceId:', workspaceId);
-    if (!workspaceId) {
-      console.error('[addBudgetVersion] workspaceId é null, abortando');
-      toast.error('Erro: workspace não carregado');
-      return;
-    }
+    if (!ensureWorkspace()) return;
     let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
     if (budget) {
       currentVersion = budget.currentVersion;
-      console.log('[addBudgetVersion] budget encontrado no state, currentVersion:', currentVersion);
     } else {
       // Budget recém-criado, state ainda não atualizou - buscar do DB
-      console.log('[addBudgetVersion] budget NÃO encontrado no state, buscando do DB...');
       const { data: budgetData, error: fetchError } = await supabase
         .from('budgets').select('current_version')
         .eq('id', budgetId).single();
       if (fetchError) {
-        console.error('[addBudgetVersion] erro ao buscar budget do DB:', fetchError);
+        toast.error('Erro ao buscar orçamento: ' + fetchError.message);
+        return;
       }
       currentVersion = budgetData?.current_version ?? 0;
-      console.log('[addBudgetVersion] currentVersion do DB:', currentVersion);
     }
     const newVersionNum = currentVersion + 1;
-    console.log('[addBudgetVersion] inserindo versão', newVersionNum);
     try {
       const { data, error } = await supabase.from('budget_versions').insert({
         workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
@@ -970,7 +972,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Hard Drive functions =============
   const addHardDrive = async (hdData: Omit<HardDrive, 'id' | 'projects' | 'createdAt'>) => {
-    if (!workspaceId) return;
+    if (!ensureWorkspace()) return;
     try {
       const { data, error } = await supabase.from('hard_drives').insert({
         workspace_id: workspaceId, label: hdData.label, capacity_gb: hdData.capacityGB, projects: [] as any,
@@ -1024,7 +1026,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Legacy Project functions =============
   const addLegacyProject = async (projectData: Omit<LegacyProject, 'id' | 'createdAt'>): Promise<LegacyProject | null> => {
-    if (!workspaceId) return null;
+    if (!ensureWorkspace()) return null;
     try {
       const { data, error } = await supabase.from('legacy_projects').insert({
         workspace_id: workspaceId, project_number: projectData.projectNumber,
@@ -1056,7 +1058,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Asset functions =============
   const addAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset | null> => {
-    if (!workspaceId) return null;
+    if (!ensureWorkspace()) return null;
     try {
       const { data, error } = await supabase.from('assets').insert({
         workspace_id: workspaceId, name: assetData.name, description: assetData.description,
@@ -1120,7 +1122,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addProjectColumn = async (colData: Omit<ProjectColumn, 'id' | 'order'>) => {
-    if (!workspaceId) return;
+    if (!ensureWorkspace()) return;
     const maxOrder = Math.max(...projectColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('project_columns').insert({

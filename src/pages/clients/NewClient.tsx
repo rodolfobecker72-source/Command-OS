@@ -78,16 +78,11 @@ export function NewClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[NewClient] handleSubmit disparado');
-    console.log('[NewClient] formData:', formData);
 
     if (!validateForm()) {
-      console.log('[NewClient] validação falhou:', errors);
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
-
-    console.log('[NewClient] validação OK, chamando addClient...');
 
     try {
       const result = await addClient({
@@ -100,17 +95,11 @@ export function NewClient() {
         score: 0,
       });
 
-      console.log('[NewClient] resultado addClient:', result);
-
       if (result) {
         toast.success('Cliente cadastrado com sucesso!');
         navigate('/clientes');
-      } else {
-        console.error('[NewClient] addClient retornou null (workspaceId pode estar null)');
-        toast.error('Erro ao salvar cliente. Tente novamente.');
       }
     } catch (e: any) {
-      console.error('[NewClient] erro inesperado:', e);
       toast.error('Erro inesperado: ' + e.message);
     }
   };

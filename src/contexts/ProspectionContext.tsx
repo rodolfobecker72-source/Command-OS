@@ -103,7 +103,10 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
   }, [workspaceId, authLoading]);
 
   const addLead = useCallback(async (data: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProspectionLead | null> => {
-    if (!workspaceId) return null;
+    if (!workspaceId) {
+      toast.error('Sessão expirada ou workspace não carregado. Faça login novamente.');
+      return null;
+    }
     try {
       const { data: row, error } = await supabase.from('prospection_leads').insert(leadToDb(data, workspaceId)).select().single();
       if (error) throw error;
