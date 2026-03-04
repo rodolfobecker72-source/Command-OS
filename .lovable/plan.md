@@ -1,55 +1,38 @@
 
 
-# Plano: Diagnosticar e corrigir cadastro de cliente
+# Fix: Recriar todas as políticas RLS como PERMISSIVE
 
-## Investigacao
+## Problema
 
-O fluxo `handleSubmit` em `NewClient.tsx` depende de:
-1. Validacao do formulario (campos obrigatorios)
-2. `addClient()` do CRMContext, que depende de `workspaceId`
+Todas as 60+ políticas RLS em todas as tabelas ainda estão como `RESTRICTIVE`. No PostgreSQL, quando só existem políticas restritivas sem uma política permissiva base, **todas as operações são bloqueadas por padrão**. Isso explica por que nenhum dado salva (clientes, orçamentos, leads, etc.).
 
-Possiveis causas silenciosas:
-- `workspaceId` estar `null` no momento do clique (addClient retorna `null`, mas o toast "Erro ao salvar" deveria aparecer)
-- Validacao falhando sem o usuario perceber o toast
-- Algum erro de JS impedindo o submit
+## Solução
 
-## Solucao
+Executar uma migration SQL que:
+1. Remove (DROP) todas as políticas existentes em todas as tabelas
+2. Recria cada uma como `PERMISSIVE` (que é o padrão do PostgreSQL)
 
-### Arquivo: `src/pages/clients/NewClient.tsx`
+## Tabelas afetadas (17 tabelas)
 
-Adicionar logs de debug no `handleSubmit` para rastrear exatamente onde para:
+clients, budgets, budget_versions, prospection_leads, assets, hard_drives, legacy_projects, kanban_columns, project_cards, project_columns, score_history, service_categories, service_objectives, workspace_invites, workspace_members, workspaces, profiles
 
-```typescript
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  console.log('[NewClient] handleSubmit disparado');
-  console.log('[NewClient] formData:', formData);
+## SQL (resumo do padrão por tabela)
 
-  if (!validateForm()) {
-    console.log('[NewClient] validação falhou:', errors);
-    toast.error('Preencha todos os campos obrigatórios');
-    return;
-  }
-
-  console.log('[NewClient] validação OK, chamando addClient...');
-  
-  try {
-    const result = await addClient({...});
-    console.log('[NewClient] resultado addClient:', result);
-    
-    if (result) {
-      toast.success('Cliente cadastrado com sucesso!');
-      navigate('/clientes');
-    } else {
-      console.error('[NewClient] addClient retornou null');
-      toast.error('Erro ao salvar cliente. Tente novamente.');
-    }
-  } catch (e: any) {
-    console.error('[NewClient] erro:', e);
-    toast.error('Erro inesperado: ' + e.message);
-  }
-};
+```sql
+-- Para cada tabela operacional (clients, budgets, etc.):
+DROP POLICY IF EXISTS "..." ON public.<table>;
+CREATE POLICY "..." ON public.<table>
+  FOR <SELECT|INSERT|UPDATE|DELETE>
+  TO authenticated
+  USING (has_workspace_access(auth.uid(), workspace_id));
+  -- ou WITH CHECK para INSERT
 ```
 
-Isso vai revelar exatamente onde o fluxo esta parando (validacao, workspaceId null, erro de DB, etc).
+Políticas especiais mantidas para:
+- `profiles`: acesso próprio + peers do workspace
+- `workspace_members`: owner/admin para mutações, self-insert como owner
+- `workspace_invites`: owner/admin para mutações
+- `workspaces`: criação pelo próprio usuário
+
+Nenhuma alteração de código é necessária -- apenas a correção das políticas no banco.
 
