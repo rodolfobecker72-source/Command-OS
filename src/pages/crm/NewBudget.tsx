@@ -95,12 +95,21 @@ interface ServiceItem {
 }
 
 export function NewBudget() {
-  const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel } = useCRM();
+  const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets } = useCRM();
   const navigate = useNavigate();
+
+  // Auto-generate next proposalId starting from 900
+  const nextProposalId = useMemo(() => {
+    const numericIds = budgets
+      .map(b => parseInt(b.proposalId, 10))
+      .filter(n => !isNaN(n));
+    const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 899;
+    return String(Math.max(maxId + 1, 900));
+  }, [budgets]);
 
   const [formData, setFormData] = useState({
     status: 'oportunidade_mapeada' as CRMStatus,
-    proposalId: '',
+    proposalId: nextProposalId,
     projectName: '',
     projectDescription: '',
     clientId: '',
@@ -265,9 +274,6 @@ export function NewBudget() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.proposalId.trim()) {
-      newErrors.proposalId = 'Identificador da proposta é obrigatório';
-    }
 
     if (!formData.projectName.trim()) {
       newErrors.projectName = 'Nome do projeto é obrigatório';
@@ -601,21 +607,14 @@ export function NewBudget() {
 
                   {/* Proposal ID */}
                   <div className="space-y-2">
-                    <Label htmlFor="proposalId">Identificador da Proposta *</Label>
+                    <Label htmlFor="proposalId">Identificador da Proposta</Label>
                     <Input
                       id="proposalId"
-                      placeholder="Ex: 850"
                       value={formData.proposalId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, proposalId: e.target.value })
-                      }
-                      className={errors.proposalId ? 'border-destructive' : ''}
+                      readOnly
+                      className="bg-muted"
                     />
-                    {errors.proposalId && (
-                      <p className="text-sm text-destructive">
-                        {errors.proposalId}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">Gerado automaticamente</p>
                   </div>
 
                   {/* Project Name */}
