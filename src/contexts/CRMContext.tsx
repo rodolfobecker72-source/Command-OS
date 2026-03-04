@@ -677,9 +677,18 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
     if (!workspaceId) return;
+    let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
-    if (!budget) return;
-    const newVersionNum = budget.currentVersion + 1;
+    if (budget) {
+      currentVersion = budget.currentVersion;
+    } else {
+      // Budget recém-criado, state ainda não atualizou - buscar do DB
+      const { data: budgetData } = await supabase
+        .from('budgets').select('current_version')
+        .eq('id', budgetId).single();
+      currentVersion = budgetData?.current_version ?? 0;
+    }
+    const newVersionNum = currentVersion + 1;
     try {
       const { data, error } = await supabase.from('budget_versions').insert({
         workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
