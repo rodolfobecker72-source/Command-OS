@@ -1,23 +1,45 @@
 
 
-# Plano: Corrigir salvamento silencioso no formulario de orcamento
+# Plano: Corrigir submit silencioso no formulario de orcamento
 
-## Problema identificado
+## Problema
 
-O formulario `NewBudget.tsx` falha silenciosamente em dois pontos:
+O `handleSubmit` em `NewBudget.tsx` e uma funcao async sem `try/catch` global. Se qualquer erro ocorrer durante `addBudget` ou `addBudgetVersion`, a excecao vira uma Promise rejection nao tratada e o usuario nao ve nenhum feedback.
 
-1. **Validacao sem feedback** (linha 297): `if (!validateForm()) return;` -- quando a validacao falha, nada acontece. Nao ha toast nem indicacao visual dos erros.
-
-2. **`addBudget` retorna null sem feedback** (linha 323): `if (!newBudget) return;` -- se o `addBudget` falhar (ex: workspaceId undefined), o formulario simplesmente para sem avisar.
-
-3. **`proposalId` pode ficar vazio**: O `formData.proposalId` e inicializado com `nextProposalId` do `useMemo`, mas como `useState` captura apenas o valor inicial, se `budgets` ainda nao carregou quando o componente montou, o `proposalId` pode ficar com valor desatualizado.
+Alem disso, o `addBudget` no `CRMContext.tsx` (linha 625) ja tem seu proprio try/catch que retorna `null` em caso de erro, mas tambem mostra um toast de erro proprio. Porem, se a excecao acontecer ANTES de chegar la (ex: erro de tipo, campo undefined), nada e capturado.
 
 ## Solucao
 
 ### Arquivo: `src/pages/crm/NewBudget.tsx`
 
-1. Adicionar `toast.error` quando `validateForm()` falha, mostrando quais campos estao faltando
-2. Adicionar `toast.error` quando `addBudget` retorna null (workspace nao carregado)
-3. Adicionar `useEffect` para sincronizar `formData.proposalId` com `nextProposalId` quando budgets carregam
-4. Mostrar visualmente os erros de validacao nos campos (ja existe `errors` state, mas precisa ter feedback visual)
+1. Envolver todo o corpo do `handleSubmit` (linhas 298-366) em um bloco `try/catch`, com `toast.error` no catch mostrando a mensagem de erro
+2. Adicionar `console.log` temporarios para debug caso o problema persista
+
+Mudanca especifica:
+```typescript
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  const validationErrors = validateForm();
+  if (validationErrors) {
+    const errorMessages = Object.values(validationErrors);
+    toast.error('Preencha os campos obrigatórios', {
+      description: errorMessages.join(', '),
+    });
+    return;
+  }
+
+  try {
+    // ... todo o codigo existente de addBudget e addBudgetVersion ...
+    
+    toast.success('Orçamento criado com sucesso!');
+    navigate('/crm');
+  } catch (error: any) {
+    console.error('Erro ao salvar orçamento:', error);
+    toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
+  }
+};
+```
+
+Isso garante que QUALQUER erro sera capturado e exibido ao usuario.
 
