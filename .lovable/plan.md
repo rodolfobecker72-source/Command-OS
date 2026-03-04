@@ -1,27 +1,72 @@
 
-# Identificador manual na proposta
 
-## O que muda
+# Plano: Migrar localStorage para o banco de dados atual
 
-Atualmente o `proposalId` e gerado automaticamente (sequencial a partir de 800). A mudanca permite que o usuario digite manualmente o identificador ao criar o orcamento. Esse identificador sera usado na nomenclatura como **"ID - Nome do Projeto"** em todo o sistema.
+## Resumo
 
-## Alteracoes
+O `CRMContext.tsx` e o `ProspectionContext.tsx` usam 100% localStorage via service files. As tabelas ja existem no banco com RLS configurado. O plano e substituir todas as leituras e escritas por operacoes diretas no banco via Supabase SDK.
 
-### 1. Formulario de novo orcamento (`src/pages/crm/NewBudget.tsx`)
-- Adicionar campo de texto "Identificador da Proposta" no formulario, ao lado do nome do projeto
-- O campo sera obrigatorio (validacao)
-- Placeholder: ex. "850"
+## Abordagem
 
-### 2. Contexto CRM (`src/contexts/CRMContext.tsx`)
-- Remover a funcao `generateNextProposalId()`
-- Alterar `addBudget` para receber `proposalId` como parte dos dados do formulario (remover do `Omit`)
-- O `proposalId` vira diretamente do input do usuario
+Refatorar **entidade por entidade** dentro do mesmo CRMContext, substituindo cada `useState(() => localStorage...)` por carregamento assincrono e cada mutacao por operacao no banco. Trabalhar em **3 blocos** para manter o tamanho das mudancas gerenciavel:
 
-### 3. Tipo Budget (`src/types/crm.ts`)
-- Atualizar o comentario de `proposalId` de "Auto-generated" para "User-defined identifier"
+### Bloco 1: CRMContext - Carregamento + Clients + Settings
 
-### 4. Exibicao no Kanban e demais telas
-- O padrao de exibicao ja usa `proposalId - projectName` em varios lugares (Kanban cards, PDF, detalhes). Nenhuma alteracao necessaria nesses pontos, pois o campo `proposalId` continuara existindo, apenas sera preenchido manualmente.
+**Carregamento assincrono:**
+- Adicionar `isLoading` ao contexto
+- Usar `useAuth()` para obter `workspace` (workspace_id)
+- Criar `useEffect` que carrega todas as entidades do banco em paralelo quando workspace_id estiver disponivel
+- Mapear snake_case do banco para camelCase do TypeScript com funcoes helper
 
-### 5. Pagina de detalhes / edicao (`src/pages/crm/BudgetDetail.tsx`)
-- Permitir editar o identificador caso o usuario precise corrigir
+**Clients** (read/write):
+- `addClient` -> `supabase.from('clients').insert()` + atualizar estado local
+- `updateClient` -> `supabase.from('clients').update()`
+- `deleteClient` -> `supabase.from('clients').delete()`
+
+**Settings** (kanban_columns, service_categories, service_objectives, project_columns):
+- CRUD direto no banco para cada entidade
+- Se tabela vazia no banco, inserir defaults na primeira carga
+
+### Bloco 2: CRMContext - Budgets + Versions + Execution + Project Cards
+
+**Budgets:**
+- Carregar budgets + budget_versions separadamente, montar array `versions` em cada budget
+- `addBudget` -> insert em `budgets` + `budget_versions`
+- `addBudgetVersion` -> insert em `budget_versions` + update `current_version`
+- `approveBudget` -> update budget + insert `project_cards`
+- Execution updates -> update coluna JSONB `execution` no budget
+
+**Project Cards:**
+- CRUD direto na tabela `project_cards`
+
+### Bloco 3: Assets + Hard Drives + Legacy Projects + Score History + Prospection
+
+**Assets, Hard Drives, Legacy Projects, Score History:**
+- CRUD direto nas respectivas tabelas
+
+**ProspectionContext:**
+- Mesma abordagem: carregar do banco, mutacoes diretas no banco
+
+**Limpeza:**
+- Remover/esvaziar os service files de localStorage
+
+## Detalhes tecnicos
+
+- Workspace ID vem de `useAuth().workspace?.id`
+- Funcoes helper `toSnakeCase()` / `toCamelCase()` para mapeamento de campos
+- Cada mutacao: try/catch com `toast.error()` para feedback
+- Apos insert/update com sucesso, atualizar estado local com dados retornados (sem refetch completo)
+- Budget versions carregadas via query separada agrupadas por budget_id
+
+## Arquivos modificados
+
+- `src/contexts/CRMContext.tsx` - refatoracao principal
+- `src/contexts/ProspectionContext.tsx` - migrar para banco
+- `src/services/*.ts` - remover conteudo localStorage
+
+## Arquivos nao modificados
+
+- Schema do banco (tabelas ja existem)
+- RLS policies (ja configuradas)
+- `src/integrations/supabase/client.ts` (nunca editar)
+
