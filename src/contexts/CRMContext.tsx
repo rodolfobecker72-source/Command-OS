@@ -676,19 +676,31 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    if (!workspaceId) return;
+    console.log('[addBudgetVersion] chamado com budgetId:', budgetId, 'workspaceId:', workspaceId);
+    if (!workspaceId) {
+      console.error('[addBudgetVersion] workspaceId é null, abortando');
+      toast.error('Erro: workspace não carregado');
+      return;
+    }
     let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
     if (budget) {
       currentVersion = budget.currentVersion;
+      console.log('[addBudgetVersion] budget encontrado no state, currentVersion:', currentVersion);
     } else {
       // Budget recém-criado, state ainda não atualizou - buscar do DB
-      const { data: budgetData } = await supabase
+      console.log('[addBudgetVersion] budget NÃO encontrado no state, buscando do DB...');
+      const { data: budgetData, error: fetchError } = await supabase
         .from('budgets').select('current_version')
         .eq('id', budgetId).single();
+      if (fetchError) {
+        console.error('[addBudgetVersion] erro ao buscar budget do DB:', fetchError);
+      }
       currentVersion = budgetData?.current_version ?? 0;
+      console.log('[addBudgetVersion] currentVersion do DB:', currentVersion);
     }
     const newVersionNum = currentVersion + 1;
+    console.log('[addBudgetVersion] inserindo versão', newVersionNum);
     try {
       const { data, error } = await supabase.from('budget_versions').insert({
         workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
