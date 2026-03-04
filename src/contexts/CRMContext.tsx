@@ -268,7 +268,7 @@ interface CRMContextType {
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
 export function CRMProvider({ children }: { children: ReactNode }) {
-  const { workspace } = useAuth();
+  const { workspace, isLoading: authLoading } = useAuth();
   const workspaceId = workspace?.id;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -287,7 +287,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Load all data from DB =============
   useEffect(() => {
     if (!workspaceId) {
-      setIsLoading(false);
+      // Only set isLoading=false if auth has finished loading (no workspace means user has none)
+      if (!authLoading) setIsLoading(false);
       return;
     }
 
@@ -382,7 +383,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     };
 
     loadAll();
-  }, [workspaceId]);
+  }, [workspaceId, authLoading]);
 
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
