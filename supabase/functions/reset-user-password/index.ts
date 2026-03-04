@@ -12,48 +12,50 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate caller
+    const { email, new_password, admin_key } = await req.json();
+
+    // Validate: require service role key as admin_key, or a valid owner/admin JWT
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    let authorized = false;
+    
+    // Check admin_key in body
+    if (admin_key === serviceRoleKey) {
+      authorized = true;
     }
-
-    const anonClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: claimsData, error: claimsError } =
-      await anonClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const callerId = claimsData.claims.sub as string;
-
-    // Check caller is owner or admin
-    const { data: callerRole } = await anonClient.rpc("get_user_role", {
-      _user_id: callerId,
-    });
-
-    if (callerRole !== "owner" && callerRole !== "admin") {
-      return new Response(
-        JSON.stringify({ error: "Only owner/admin can reset passwords" }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+    
+    // Check Authorization header for authenticated owner/admin
+    if (!authorized && authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      if (token !== anonKey) {
+        const anonClient = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          anonKey,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data: claimsData, error: claimsError } =
+          await anonClient.auth.getClaims(token);
+        if (!claimsError && claimsData?.claims) {
+          const callerId = claimsData.claims.sub as string;
+          const { data: callerRole } = await anonClient.rpc("get_user_role", {
+            _user_id: callerId,
+          });
+          if (callerRole === "owner" || callerRole === "admin") {
+            authorized = true;
+          }
         }
-      );
+      }
+    }
+    
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const { email, new_password } = await req.json();
     if (!email || !new_password) {
       return new Response(
         JSON.stringify({ error: "email and new_password required" }),
