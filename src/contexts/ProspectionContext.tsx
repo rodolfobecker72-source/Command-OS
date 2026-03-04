@@ -79,13 +79,16 @@ export function useProspection() {
 }
 
 export function ProspectionProvider({ children }: { children: ReactNode }) {
-  const { workspace } = useAuth();
+  const { workspace, isLoading: authLoading } = useAuth();
   const workspaceId = workspace?.id;
   const [leads, setLeads] = useState<ProspectionLead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!workspaceId) { setIsLoading(false); return; }
+    if (!workspaceId) {
+      if (!authLoading) setIsLoading(false);
+      return;
+    }
     const load = async () => {
       try {
         const { data, error } = await supabase.from('prospection_leads').select('*').eq('workspace_id', workspaceId);
@@ -97,7 +100,7 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
       } finally { setIsLoading(false); }
     };
     load();
-  }, [workspaceId]);
+  }, [workspaceId, authLoading]);
 
   const addLead = useCallback(async (data: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProspectionLead | null> => {
     if (!workspaceId) return null;
