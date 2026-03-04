@@ -1,49 +1,55 @@
 
 
-# Plano: Corrigir versao do orcamento nao sendo criada
+# Plano: Diagnosticar e corrigir cadastro de cliente
 
-## Problema raiz
+## Investigacao
 
-Bug classico de **stale closure** no React.
+O fluxo `handleSubmit` em `NewClient.tsx` depende de:
+1. Validacao do formulario (campos obrigatorios)
+2. `addClient()` do CRMContext, que depende de `workspaceId`
 
-1. `handleSubmit` chama `addBudget()` que insere o budget no DB e chama `setBudgets(prev => [...prev, newBudget])` 
-2. Logo em seguida, `handleSubmit` chama `addBudgetVersion(newBudget.id, ...)`
-3. Dentro de `addBudgetVersion` (linha 680): `const budget = budgets.find(b => b.id === budgetId)`
-4. **O state `budgets` ainda nao foi atualizado** porque `setBudgets` e assincrono no React. O `budgets` no closure ainda e o array antigo (sem o novo budget).
-5. `budget` e `undefined`, e a funcao retorna silenciosamente na linha 681: `if (!budget) return;`
-
-Resultado: o budget e salvo no DB, mas a versao (composicao de custos) nunca e criada.
+Possiveis causas silenciosas:
+- `workspaceId` estar `null` no momento do clique (addClient retorna `null`, mas o toast "Erro ao salvar" deveria aparecer)
+- Validacao falhando sem o usuario perceber o toast
+- Algum erro de JS impedindo o submit
 
 ## Solucao
 
-### Arquivo: `src/contexts/CRMContext.tsx`
+### Arquivo: `src/pages/clients/NewClient.tsx`
 
-Modificar `addBudgetVersion` para nao depender de encontrar o budget no state local. Em vez de buscar `budget.currentVersion`, aceitar o `currentVersion` diretamente do budget que acabou de ser retornado, ou buscar no state de forma funcional.
-
-Abordagem mais simples: na linha 680-682, se o budget nao for encontrado no state local, usar `currentVersion = 0` como fallback (ja que o budget acabou de ser criado com `current_version: 0`). Ou melhor: consultar o DB diretamente para obter o `current_version`.
-
-**Solucao escolhida**: Remover a dependencia do state local. Se o budget nao for encontrado em `budgets`, buscar o `current_version` diretamente do banco de dados antes de inserir a versao.
+Adicionar logs de debug no `handleSubmit` para rastrear exatamente onde para:
 
 ```typescript
-const addBudgetVersion = async (budgetId, versionData) => {
-  if (!workspaceId) return;
-  
-  let currentVersion: number;
-  const budget = budgets.find(b => b.id === budgetId);
-  if (budget) {
-    currentVersion = budget.currentVersion;
-  } else {
-    // Budget recem-criado, state ainda nao atualizou - buscar do DB
-    const { data: budgetData } = await supabase
-      .from('budgets').select('current_version')
-      .eq('id', budgetId).single();
-    currentVersion = budgetData?.current_version ?? 0;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  console.log('[NewClient] handleSubmit disparado');
+  console.log('[NewClient] formData:', formData);
+
+  if (!validateForm()) {
+    console.log('[NewClient] validação falhou:', errors);
+    toast.error('Preencha todos os campos obrigatórios');
+    return;
   }
+
+  console.log('[NewClient] validação OK, chamando addClient...');
   
-  const newVersionNum = currentVersion + 1;
-  // ... resto da logica igual ...
+  try {
+    const result = await addClient({...});
+    console.log('[NewClient] resultado addClient:', result);
+    
+    if (result) {
+      toast.success('Cliente cadastrado com sucesso!');
+      navigate('/clientes');
+    } else {
+      console.error('[NewClient] addClient retornou null');
+      toast.error('Erro ao salvar cliente. Tente novamente.');
+    }
+  } catch (e: any) {
+    console.error('[NewClient] erro:', e);
+    toast.error('Erro inesperado: ' + e.message);
+  }
 };
 ```
 
-Isso resolve o problema sem alterar a API publica da funcao.
+Isso vai revelar exatamente onde o fluxo esta parando (validacao, workspaceId null, erro de DB, etc).
 
