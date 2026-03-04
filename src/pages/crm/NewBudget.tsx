@@ -307,62 +307,71 @@ export function NewBudget() {
       return;
     }
 
-    // Criar orçamento para cada serviço ou um orçamento com todos os serviços
-    const firstService = services[0];
-    const newBudget = await addBudget({
-      proposalId: formData.proposalId.trim(),
-      projectName: formData.projectName,
-      projectDescription: formData.projectDescription,
-      clientId: formData.clientId,
-      serviceType: firstService.serviceType,
-      objective: firstService.objective as any,
-      description: services.map(s => `[${s.serviceType}] ${s.description}`).join('\n\n'),
-      paymentTerms: formData.paymentTerms,
-      includesTax: formData.includesTax,
-      includesLogistics: formData.includesLogistics,
-      includesAccommodation: formData.includesAccommodation,
-      includesMeals: formData.includesMeals,
-      includesRawMaterial: formData.includesRawMaterial,
-      includesTechnicalVisit: formData.includesTechnicalVisit,
-      hasExecutionDate: formData.hasExecutionDate,
-      executionStartDate: formData.executionStartDate,
-      executionEndDate: formData.executionEndDate,
-      location: formData.location,
-      status: formData.status,
-    });
+    try {
+      console.log('Iniciando salvamento do orçamento...', { formData, services, operationalCosts });
+      
+      // Criar orçamento para cada serviço ou um orçamento com todos os serviços
+      const firstService = services[0];
+      const newBudget = await addBudget({
+        proposalId: formData.proposalId.trim(),
+        projectName: formData.projectName,
+        projectDescription: formData.projectDescription,
+        clientId: formData.clientId,
+        serviceType: firstService.serviceType,
+        objective: firstService.objective as any,
+        description: services.map(s => `[${s.serviceType}] ${s.description}`).join('\n\n'),
+        paymentTerms: formData.paymentTerms,
+        includesTax: formData.includesTax,
+        includesLogistics: formData.includesLogistics,
+        includesAccommodation: formData.includesAccommodation,
+        includesMeals: formData.includesMeals,
+        includesRawMaterial: formData.includesRawMaterial,
+        includesTechnicalVisit: formData.includesTechnicalVisit,
+        hasExecutionDate: formData.hasExecutionDate,
+        executionStartDate: formData.executionStartDate,
+        executionEndDate: formData.executionEndDate,
+        location: formData.location,
+        status: formData.status,
+      });
 
-    if (!newBudget) {
-      toast.error('Erro ao salvar orçamento. Aguarde o carregamento dos dados e tente novamente.');
-      return;
-    }
+      console.log('Resultado addBudget:', newBudget);
 
-    // Criar versão com todos os custos e serviços
-    await addBudgetVersion(newBudget.id, {
-      services: services.map(s => ({
-        id: s.id,
-        serviceType: s.serviceType,
-        objective: s.objective,
-        description: s.description,
-        costs: s.costs,
+      if (!newBudget) {
+        toast.error('Erro ao salvar orçamento. Aguarde o carregamento dos dados e tente novamente.');
+        return;
+      }
+
+      // Criar versão com todos os custos e serviços
+      await addBudgetVersion(newBudget.id, {
+        services: services.map(s => ({
+          id: s.id,
+          serviceType: s.serviceType,
+          objective: s.objective,
+          description: s.description,
+          costs: s.costs,
+          fixedCostPercentage: formData.fixedCostPercentage,
+          nfCostPercentage: formData.nfCostPercentage,
+          targetMargin: s.targetMargin,
+        })),
+        operationalCosts: operationalCosts,
+        costs: [],
+        productionCost: totals.productionCost,
         fixedCostPercentage: formData.fixedCostPercentage,
         nfCostPercentage: formData.nfCostPercentage,
-        targetMargin: s.targetMargin,
-      })),
-      operationalCosts: operationalCosts,
-      costs: [],
-      productionCost: totals.productionCost,
-      fixedCostPercentage: formData.fixedCostPercentage,
-      nfCostPercentage: formData.nfCostPercentage,
-      totalCost: totals.totalCosts,
-      fullPrice: totals.totalProjectValue,
-      discount4Price: totals.totalProjectValue * 0.96,
-      discount5Price: totals.totalProjectValue * 0.95,
-      margin: formData.targetMargin,
-      reason: 'Versão inicial',
-    });
+        totalCost: totals.totalCosts,
+        fullPrice: totals.totalProjectValue,
+        discount4Price: totals.totalProjectValue * 0.96,
+        discount5Price: totals.totalProjectValue * 0.95,
+        margin: formData.targetMargin,
+        reason: 'Versão inicial',
+      });
 
-    toast.success('Orçamento criado com sucesso!');
-    navigate('/crm');
+      toast.success('Orçamento criado com sucesso!');
+      navigate('/crm');
+    } catch (error: any) {
+      console.error('Erro ao salvar orçamento:', error);
+      toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
+    }
   };
 
   // Gerar PDF
