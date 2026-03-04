@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -136,6 +136,11 @@ export function NewBudget() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Sincronizar proposalId quando budgets carregam
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, proposalId: nextProposalId }));
+  }, [nextProposalId]);
+
   // Filtrar clientes pela busca
   const filteredClients = useMemo(() => {
     if (!clientSearch) return clients;
@@ -271,9 +276,8 @@ export function NewBudget() {
     }));
   };
 
-  const validateForm = () => {
+  const validateForm = (): Record<string, string> | null => {
     const newErrors: Record<string, string> = {};
-
 
     if (!formData.projectName.trim()) {
       newErrors.projectName = 'Nome do projeto é obrigatório';
@@ -288,13 +292,20 @@ export function NewBudget() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 ? null : newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    const validationErrors = validateForm();
+    if (validationErrors) {
+      const errorMessages = Object.values(validationErrors);
+      toast.error('Preencha os campos obrigatórios', {
+        description: errorMessages.join(', '),
+      });
+      return;
+    }
 
     // Criar orçamento para cada serviço ou um orçamento com todos os serviços
     const firstService = services[0];
@@ -320,7 +331,10 @@ export function NewBudget() {
       status: formData.status,
     });
 
-    if (!newBudget) return;
+    if (!newBudget) {
+      toast.error('Erro ao salvar orçamento. Aguarde o carregamento dos dados e tente novamente.');
+      return;
+    }
 
     // Criar versão com todos os custos e serviços
     await addBudgetVersion(newBudget.id, {
