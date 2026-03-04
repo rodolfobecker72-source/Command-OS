@@ -218,7 +218,7 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('PROJETO', margin, y);
+  doc.text('BRIEFING DO PROJETO', margin, y);
   y += 8;
   
   doc.setFontSize(normalSize);
