@@ -79,21 +79,30 @@ export function NewClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
 
-    const result = await addClient({
-      companyName: formData.companyName,
-      cnpj: formData.document.replace(/\D/g, ''),
-      responsiblePerson: formData.responsiblePerson,
-      email: formData.email.trim(),
-      phone: formData.phone.replace(/\D/g, ''),
-      leadOrigin: formData.leadOrigin as LeadOrigin,
-      score: 0,
-    });
+    try {
+      const result = await addClient({
+        companyName: formData.companyName,
+        cnpj: formData.document.replace(/\D/g, ''),
+        responsiblePerson: formData.responsiblePerson,
+        email: formData.email.trim(),
+        phone: formData.phone.replace(/\D/g, ''),
+        leadOrigin: formData.leadOrigin as LeadOrigin,
+        score: 0,
+      });
 
-    if (result) {
-      toast.success('Cliente cadastrado com sucesso!');
-      navigate('/clientes');
+      if (result) {
+        toast.success('Cliente cadastrado com sucesso!');
+        navigate('/clientes');
+      } else {
+        toast.error('Erro ao salvar cliente. Tente novamente.');
+      }
+    } catch (e: any) {
+      toast.error('Erro inesperado: ' + e.message);
     }
   };
 
