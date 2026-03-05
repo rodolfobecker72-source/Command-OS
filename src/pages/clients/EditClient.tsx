@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 
 export function EditClient() {
   const { id } = useParams<{ id: string }>();
-  const { getClient, updateClient } = useCRM();
+  const { getClient, updateClient, isLoading: crmLoading } = useCRM();
   const navigate = useNavigate();
 
   const client = getClient(id || '');
@@ -358,9 +358,9 @@ export function EditClient() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1 btn-hero">
+                  <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
                     <Save className="w-4 h-4 mr-2" />
-                    Salvar Alterações
+                    {crmLoading ? 'Carregando...' : 'Salvar Alterações'}
                   </Button>
                 </div>
               </form>

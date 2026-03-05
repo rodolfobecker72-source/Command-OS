@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -312,6 +312,26 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           supabase.from('legacy_projects').select('*').eq('workspace_id', workspaceId),
           supabase.from('score_history').select('*').eq('workspace_id', workspaceId),
         ]);
+
+        // Check individual errors and report
+        const errors: string[] = [];
+        if (clientsRes.error) errors.push('clientes');
+        if (kanbanRes.error) errors.push('kanban');
+        if (catRes.error) errors.push('categorias');
+        if (objRes.error) errors.push('objetivos');
+        if (projColRes.error) errors.push('colunas de projeto');
+        if (budgetsRes.error) errors.push('orçamentos');
+        if (versionsRes.error) errors.push('versões');
+        if (projectCardsRes.error) errors.push('cards de projeto');
+        if (assetsRes.error) errors.push('patrimônios');
+        if (hdRes.error) errors.push('HDs');
+        if (legacyRes.error) errors.push('projetos legados');
+        if (scoreRes.error) errors.push('histórico de score');
+
+        if (errors.length > 0) {
+          console.error('[CRM] Falha ao carregar:', errors.join(', '));
+          toast.error(`Erro ao carregar: ${errors.join(', ')}. Recarregue a página.`);
+        }
 
         // Clients
         setClients((clientsRes.data || []).map(clientFromDb));
@@ -1192,7 +1212,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     updateBudgetStatus(cardId, newStatus);
   };
 
-  const value: CRMContextType = {
+  const value: CRMContextType = useMemo(() => ({
     isLoading,
     clients, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown,
     budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
@@ -1207,7 +1227,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     assets, addAsset, updateAsset, deleteAsset,
     projectCards, projectColumns, updateProjectCard, addProjectColumn, updateProjectColumn, deleteProjectColumn,
     getCRMCards, getCardsByStatus, moveCard,
-  };
+  }), [
+    isLoading, clients, budgets, kanbanColumns, serviceCategories, serviceObjectives,
+    hardDrives, legacyProjects, scoreHistory, assets, projectCards, projectColumns,
+  ]);
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
 }
