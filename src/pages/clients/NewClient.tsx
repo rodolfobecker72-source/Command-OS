@@ -28,7 +28,7 @@ import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function NewClient() {
-  const { addClient } = useCRM();
+  const { addClient, isLoading: crmLoading } = useCRM();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -335,9 +335,9 @@ export function NewClient() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1 btn-hero">
+                  <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
                     <Save className="w-4 h-4 mr-2" />
-                    Salvar Cliente
+                    {crmLoading ? 'Carregando...' : 'Salvar Cliente'}
                   </Button>
                 </div>
               </form>

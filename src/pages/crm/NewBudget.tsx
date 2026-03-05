@@ -95,7 +95,7 @@ interface ServiceItem {
 }
 
 export function NewBudget() {
-  const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets } = useCRM();
+  const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets, isLoading: crmLoading } = useCRM();
   const navigate = useNavigate();
 
   // Auto-generate next proposalId starting from 900
@@ -1399,9 +1399,9 @@ export function NewBudget() {
               <Download className="w-4 h-4 mr-2" />
               Gerar PDF
             </Button>
-            <Button type="submit" className="flex-1 btn-hero">
+            <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
               <Save className="w-4 h-4 mr-2" />
-              Salvar Orçamento
+              {crmLoading ? 'Carregando...' : 'Salvar Orçamento'}
             </Button>
           </div>
         </form>
