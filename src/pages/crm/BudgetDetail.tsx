@@ -148,7 +148,10 @@ export function BudgetDetail() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [showAddLink, setShowAddLink] = useState(false);
-
+  
+  // Notion link state
+  const [notionInput, setNotionInput] = useState('');
+  const [isEditingNotion, setIsEditingNotion] = useState(false);
   // Calculate totals for new version (hooks must be before early returns)
   const newVersionOperationalTotal = useMemo(() => {
     return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
@@ -1870,19 +1873,13 @@ export function BudgetDetail() {
                         <p className="text-sm text-muted-foreground">
                           Cole o link do Notion onde é feita a gestão deste projeto
                         </p>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            placeholder="https://notion.so/..."
-                            value={budget.execution?.notionLink || ''}
-                            onChange={(e) => {
-                              if (budget.execution) {
-                                const updated = { ...budget, execution: { ...budget.execution, notionLink: e.target.value } };
-                                updateBudget(budget.id, updated);
-                              }
-                            }}
-                            className="flex-1"
-                          />
-                          {budget.execution?.notionLink && (
+                        {budget.execution?.notionLink && !isEditingNotion ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={budget.execution.notionLink}
+                              readOnly
+                              className="flex-1 bg-muted"
+                            />
                             <Button
                               variant="outline"
                               size="sm"
@@ -1893,8 +1890,50 @@ export function BudgetDetail() {
                                 Abrir
                               </a>
                             </Button>
-                          )}
-                        </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNotionInput(budget.execution?.notionLink || '');
+                                setIsEditingNotion(true);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="https://notion.so/..."
+                              value={notionInput}
+                              onChange={(e) => setNotionInput(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="sm"
+                              disabled={!notionInput.trim()}
+                              onClick={() => {
+                                if (budget.execution && notionInput.trim()) {
+                                  const updated = { ...budget, execution: { ...budget.execution, notionLink: notionInput.trim() } };
+                                  updateBudget(budget.id, updated);
+                                  setNotionInput('');
+                                  setIsEditingNotion(false);
+                                }
+                              }}
+                            >
+                              Salvar
+                            </Button>
+                            {isEditingNotion && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsEditingNotion(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
