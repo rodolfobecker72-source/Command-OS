@@ -847,8 +847,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Execution functions (update JSONB on budget) =============
   const persistExecution = async (budgetId: string, execution: ProjectExecution) => {
     try {
-      await supabase.from('budgets').update({ execution: execution as any }).eq('id', budgetId);
-    } catch (e: any) { console.error('Error persisting execution:', e); }
+      const { error } = await supabase.from('budgets').update({ execution: execution as any }).eq('id', budgetId);
+      if (error) {
+        console.error('Error persisting execution:', error);
+        toast.error('Erro ao salvar dados de execução: ' + error.message);
+      }
+    } catch (e: any) {
+      console.error('Error persisting execution:', e);
+      toast.error('Erro ao salvar dados de execução');
+    }
   };
 
   const updateExecution = (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
