@@ -1860,25 +1860,41 @@ export function BudgetDetail() {
                       );
                     })()}
 
-                    {/* Project Management Shortcut */}
+                    {/* Project Management Link (Notion) */}
                     <div className="mt-8 pt-6 border-t">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-sm font-semibold flex items-center gap-2">
-                            <ExternalLink className="w-4 h-4" />
-                            Gestão do Projeto
-                          </h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Acompanhe o andamento detalhado na gestão de projetos
-                          </p>
+                      <div className="flex flex-col gap-3">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" />
+                          Gestão do Projeto
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Cole o link do Notion onde é feita a gestão deste projeto
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="https://notion.so/..."
+                            value={budget.execution?.notionLink || ''}
+                            onChange={(e) => {
+                              if (budget.execution) {
+                                const updated = { ...budget, execution: { ...budget.execution, notionLink: e.target.value } };
+                                updateBudget(budget.id, updated);
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          {budget.execution?.notionLink && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={budget.execution.notionLink} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Abrir
+                              </a>
+                            </Button>
+                          )}
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => navigate('/gestao-projetos')}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Ir para Gestão de Projetos
-                        </Button>
                       </div>
                     </div>
 
