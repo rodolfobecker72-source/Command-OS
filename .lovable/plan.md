@@ -1,43 +1,29 @@
 
 
-# Diagnóstico e Correção: Sistema Lento e Intermitente
+# Correção: Execução não salva valores reais e custos extras
 
-## Problema Real
+## Problema Identificado
 
-Confirmei que as políticas RLS estão **corretas e PERMISSIVE** no banco. O problema é de **arquitetura do código**, não do banco de dados. Identifiquei três causas-raiz:
+Duas causas-raiz:
 
-### 1. Carregamento massivo e frágil
-O `CRMContext` dispara **12 queries paralelas** ao banco no mount. Qualquer erro em uma query é silenciosamente ignorado (usa `data || []`), e se o carregamento for lento, o usuário pode tentar salvar antes dos dados estarem prontos.
+### 1. Políticas RLS ainda RESTRICTIVE
+As políticas de todas as tabelas (incluindo `budgets`) continuam como **RESTRICTIVE** (`Permissive: No`). Isso bloqueia as operações de UPDATE no campo `execution` (JSONB). A migração anterior pode não ter sido aplicada corretamente.
 
-### 2. Funções de mutação sem `useCallback`
-Nenhuma das 30+ funções de mutação (addClient, updateClient, addBudget, etc.) usa `useCallback`. Isso faz com que o contexto inteiro re-renderize em cascata a cada mudança de estado, causando lentidão.
-
-### 3. Erros silenciosos no carregamento
-O `loadAll` não verifica os `error` de cada resposta individual. Se `clientsRes.error` existir, ele simplesmente usa `[]` e continua, sem avisar o usuário.
+### 2. `persistExecution` engole erros silenciosamente
+A função que salva a execução no banco faz `catch (e) { console.error(...) }` — o usuário nunca é notificado quando o salvamento falha.
 
 ## Plano de Correção
 
-### Etapa 1: Corrigir o carregamento de dados (`loadAll`)
-- Verificar `error` em cada resposta individual das 12 queries
-- Exibir `toast.error` quando alguma query falhar, indicando qual tabela
-- Adicionar retry automático (1 tentativa) para queries que falharem
+### Etapa 1: Migração — Recriar políticas como PERMISSIVE
+Dropar e recriar todas as políticas RLS das tabelas principais (budgets, budget_versions, clients, etc.) usando o tipo padrão PERMISSIVE (sem especificar `AS RESTRICTIVE`).
 
-### Etapa 2: Otimizar as funções com `useCallback`
-- Envolver todas as funções de mutação em `useCallback` com as dependências corretas
-- Isso evita re-renderizações desnecessárias de todos os componentes que consomem o contexto
+### Etapa 2: Adicionar feedback de erro no `persistExecution`
+Em `src/contexts/CRMContext.tsx`, modificar `persistExecution` para:
+- Verificar o `error` retornado pelo Supabase
+- Exibir `toast.error` quando falhar
+- Fazer o mesmo para `updateExecutionCost`, `addExtraCost`, `removeExtraCost`
 
-### Etapa 3: Adicionar proteção contra operações durante carregamento
-- Nas páginas de formulário (NewBudget, EditClient, BudgetDetail), verificar `isLoading` do CRM antes de permitir submit
-- Desabilitar botões de salvar enquanto `isLoading === true`
-
-### Etapa 4: Memoizar o `value` do Provider
-- Usar `useMemo` para o objeto `value` passado ao `CRMContext.Provider`
-- Evita que todos os consumers re-renderizem quando apenas uma parte do estado muda
-
-## Arquivos a serem modificados
-- `src/contexts/CRMContext.tsx` — correções principais (loadAll, useCallback, useMemo)
-- `src/pages/crm/NewBudget.tsx` — desabilitar submit durante loading
-- `src/pages/crm/BudgetDetail.tsx` — desabilitar ações durante loading
-- `src/pages/clients/EditClient.tsx` — desabilitar submit durante loading
-- `src/pages/clients/NewClient.tsx` — desabilitar submit durante loading
+### Arquivos a modificar
+- Nova migração SQL (políticas RLS PERMISSIVE)
+- `src/contexts/CRMContext.tsx` — feedback de erro em `persistExecution`
 
