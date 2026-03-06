@@ -1459,60 +1459,6 @@ export function BudgetDetail() {
                       </div>
                     </div>
 
-                    {/* Resumo Real */}
-                    <div className="mb-6">
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Valores Reais</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Custo Real</p>
-                          <p className="font-bold text-lg text-destructive">
-                            {formatCurrency(budget.execution.realTotal)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Imposto NF Real</p>
-                          {isEditingNf ? (
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                value={executionNfValue}
-                                onChange={(e) => setExecutionNfValue(parseFloat(e.target.value) || 0)}
-                                className="w-24 h-8"
-                              />
-                              <Button size="sm" variant="ghost" onClick={handleSaveNfValue}>
-                                <Save className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div 
-                              className="font-bold text-lg cursor-pointer hover:text-primary flex items-center gap-1"
-                              onClick={() => {
-                                setExecutionNfValue(budget.execution?.nfTaxValue || 0);
-                                setIsEditingNf(true);
-                              }}
-                            >
-                              {formatCurrency(budget.execution.nfTaxValue)}
-                              <Edit2 className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Margem Real</p>
-                          {(() => {
-                            const investimento = budget.finalValue || 0;
-                            const custoRealComImposto = budget.execution.realTotal + (budget.execution.nfTaxValue || 0);
-                            const margemReal = investimento > 0 
-                              ? ((investimento - custoRealComImposto) / investimento) * 100 
-                              : 0;
-                            return (
-                              <p className={`font-bold text-lg ${getMarginColor(margemReal)}`}>
-                                {margemReal.toFixed(1)}%
-                              </p>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Services Execution */}
                     {budget.execution.services.map((service) => {
@@ -1978,6 +1924,60 @@ export function BudgetDetail() {
                               <p className="text-sm">{budget.execution.finalReport}</p>
                             </div>
                           )}
+                          {/* Resumo Real - só aparece quando finalizado */}
+                          <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-3">Valores Reais</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Custo Real</p>
+                                <p className="font-bold text-lg text-destructive">
+                                  {formatCurrency(budget.execution.realTotal)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Imposto NF Real</p>
+                                {isEditingNf ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      value={executionNfValue}
+                                      onChange={(e) => setExecutionNfValue(parseFloat(e.target.value) || 0)}
+                                      className="w-24 h-8"
+                                    />
+                                    <Button size="sm" variant="ghost" onClick={handleSaveNfValue}>
+                                      <Save className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div 
+                                    className="font-bold text-lg cursor-pointer hover:text-primary flex items-center gap-1"
+                                    onClick={() => {
+                                      setExecutionNfValue(budget.execution?.nfTaxValue || 0);
+                                      setIsEditingNf(true);
+                                    }}
+                                  >
+                                    {formatCurrency(budget.execution.nfTaxValue)}
+                                    <Edit2 className="w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Margem Real</p>
+                                {(() => {
+                                  const investimento = budget.finalValue || 0;
+                                  const custoRealComImposto = budget.execution.realTotal + (budget.execution.nfTaxValue || 0);
+                                  const margemReal = investimento > 0 
+                                    ? ((investimento - custoRealComImposto) / investimento) * 100 
+                                    : 0;
+                                  return (
+                                    <p className={`font-bold text-lg ${getMarginColor(margemReal)}`}>
+                                      {margemReal.toFixed(1)}%
+                                    </p>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
