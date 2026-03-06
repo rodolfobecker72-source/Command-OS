@@ -266,6 +266,7 @@ export interface ProjectExecution {
   finalizedAt: Date | null; // When execution was finalized
   deliveryLinks: DeliveryLink[]; // Links to delivery materials
   finalReport?: string; // Final execution report/notes
+  notionLink?: string; // Link to Notion project management page
   createdAt: Date;
   updatedAt: Date;
 }
