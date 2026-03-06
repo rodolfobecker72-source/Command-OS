@@ -1,23 +1,23 @@
 
 
-# Resumo Financeiro Diferenciado por Área
+# Reorganização do Resumo Financeiro por Aba
 
-## O que mudar
+## Mudanças
 
-O resumo financeiro no topo da aba "Execução" precisa ser reorganizado:
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-### 1. Seção "Valores Orçados" (amarela) — manter sempre visível
-- Já está correto: mostra Investimento Total, Custo Total Orçado, Margem Projetada com base na versão aprovada
-- Sem alterações necessárias
-
-### 2. Seção "Valores Reais" — mostrar apenas quando o projeto estiver finalizado
-- Remover o bloco "Valores Reais" (linhas 1462-1515) da posição atual (topo da execução)
-- Mover para **depois** da seção "Finalizar Execução", exibindo **somente quando `budget.execution.isFinalized === true`**
-- Quando finalizado, exibir o resumo completo: Custo Real, Imposto NF Real (editável), Margem Real
-- Enquanto não finalizado, o usuário preenche os valores reais nas planilhas de cada serviço normalmente, mas o resumo consolidado só aparece no final
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
 ### Arquivo a modificar
 - `src/pages/crm/BudgetDetail.tsx`
-  - Remover bloco "Valores Reais" das linhas 1462-1515
-  - Adicionar esse mesmo bloco dentro da seção de finalização (após linha 1964), visível apenas quando `isFinalized === true`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 
