@@ -1831,6 +1831,64 @@ export function BudgetDetail() {
                       );
                     })()}
 
+                    {/* Valores Reais - sempre visível na aba execução */}
+                    <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        Valores Reais
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Imposto NF Real</p>
+                          {isEditingNf ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={executionNfValue}
+                                onChange={(e) => setExecutionNfValue(parseFloat(e.target.value) || 0)}
+                                className="w-24 h-8"
+                              />
+                              <Button size="sm" variant="ghost" onClick={handleSaveNfValue}>
+                                <Save className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div 
+                              className="font-bold text-lg cursor-pointer hover:text-primary flex items-center gap-1"
+                              onClick={() => {
+                                setExecutionNfValue(budget.execution?.nfTaxValue || 0);
+                                setIsEditingNf(true);
+                              }}
+                            >
+                              {formatCurrency(budget.execution?.nfTaxValue || 0)}
+                              <Edit2 className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Custo Real</p>
+                          <p className="font-bold text-lg text-destructive">
+                            {formatCurrency(budget.execution?.realTotal || 0)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Margem Real</p>
+                          {(() => {
+                            const investimento = budget.finalValue || 0;
+                            const custoRealComImposto = (budget.execution?.realTotal || 0) + (budget.execution?.nfTaxValue || 0);
+                            const margemReal = investimento > 0 
+                              ? ((investimento - custoRealComImposto) / investimento) * 100 
+                              : 0;
+                            return (
+                              <p className={`font-bold text-lg ${getMarginColor(margemReal)}`}>
+                                {margemReal.toFixed(1)}%
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Project Management Link (Notion) */}
                     <div className="mt-8 pt-6 border-t">
                       <div className="flex flex-col gap-3">
@@ -1924,60 +1982,6 @@ export function BudgetDetail() {
                               <p className="text-sm">{budget.execution.finalReport}</p>
                             </div>
                           )}
-                          {/* Resumo Real - só aparece quando finalizado */}
-                          <div className="mt-4 p-4 bg-muted/30 rounded-lg">
-                            <h4 className="text-sm font-semibold text-muted-foreground mb-3">Valores Reais</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-xs text-muted-foreground">Custo Real</p>
-                                <p className="font-bold text-lg text-destructive">
-                                  {formatCurrency(budget.execution.realTotal)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Imposto NF Real</p>
-                                {isEditingNf ? (
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      type="number"
-                                      value={executionNfValue}
-                                      onChange={(e) => setExecutionNfValue(parseFloat(e.target.value) || 0)}
-                                      className="w-24 h-8"
-                                    />
-                                    <Button size="sm" variant="ghost" onClick={handleSaveNfValue}>
-                                      <Save className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div 
-                                    className="font-bold text-lg cursor-pointer hover:text-primary flex items-center gap-1"
-                                    onClick={() => {
-                                      setExecutionNfValue(budget.execution?.nfTaxValue || 0);
-                                      setIsEditingNf(true);
-                                    }}
-                                  >
-                                    {formatCurrency(budget.execution.nfTaxValue)}
-                                    <Edit2 className="w-3 h-3 text-muted-foreground" />
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Margem Real</p>
-                                {(() => {
-                                  const investimento = budget.finalValue || 0;
-                                  const custoRealComImposto = budget.execution.realTotal + (budget.execution.nfTaxValue || 0);
-                                  const margemReal = investimento > 0 
-                                    ? ((investimento - custoRealComImposto) / investimento) * 100 
-                                    : 0;
-                                  return (
-                                    <p className={`font-bold text-lg ${getMarginColor(margemReal)}`}>
-                                      {margemReal.toFixed(1)}%
-                                    </p>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -2108,61 +2112,117 @@ export function BudgetDetail() {
               </Card>
             </motion.div>
 
-            {/* Quick Stats */}
-            {currentVersionData && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Card className="card-elevated">
-                  <CardHeader>
-                    <CardTitle className="text-base">Resumo Financeiro</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">Valor Final</span>
+            {/* Quick Stats - Dynamic by tab */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="card-elevated">
+                <CardHeader>
+                  <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {activeTab === 'execution' && budget.execution ? (
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">Investimento</span>
+                        </div>
+                        <span className="font-bold">
+                          {formatCurrency(budget.finalValue || 0)}
+                        </span>
                       </div>
-                      <span className="font-bold">
-                        {formatCurrency(currentVersionData.fullPrice)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Calculator className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">Custo Total</span>
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Calculator className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">Custo Real</span>
+                        </div>
+                        <span className="font-bold text-destructive">
+                          {formatCurrency(budget.execution.realTotal)}
+                        </span>
                       </div>
-                      <span className="font-bold">
-                        {formatCurrency(currentVersionData.totalCost)}
-                      </span>
-                    </div>
-
-                    <div
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        currentVersionData.margin >= 40
-                          ? 'bg-success/10'
-                          : currentVersionData.margin >= 25
-                          ? 'bg-warning/10'
-                          : 'bg-destructive/10'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <TrendingUp
-                          className={`w-4 h-4 ${getMarginColor(currentVersionData.margin)}`}
-                        />
-                        <span className="text-sm">Margem</span>
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">Imposto NF Real</span>
+                        </div>
+                        <span className="font-bold">
+                          {formatCurrency(budget.execution.nfTaxValue || 0)}
+                        </span>
                       </div>
-                      <span className={`font-bold ${getMarginColor(currentVersionData.margin)}`}>
-                        {currentVersionData.margin.toFixed(1)}%
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+                      {(() => {
+                        const investimento = budget.finalValue || 0;
+                        const custoRealComImposto = budget.execution.realTotal + (budget.execution.nfTaxValue || 0);
+                        const margemReal = investimento > 0 
+                          ? ((investimento - custoRealComImposto) / investimento) * 100 
+                          : 0;
+                        return (
+                          <div
+                            className={`flex items-center justify-between p-3 rounded-lg ${
+                              margemReal >= 40
+                                ? 'bg-success/10'
+                                : margemReal >= 25
+                                ? 'bg-warning/10'
+                                : 'bg-destructive/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className={`w-4 h-4 ${getMarginColor(margemReal)}`} />
+                              <span className="text-sm">Margem Real</span>
+                            </div>
+                            <span className={`font-bold ${getMarginColor(margemReal)}`}>
+                              {margemReal.toFixed(1)}%
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : currentVersionData ? (
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">Valor Final</span>
+                        </div>
+                        <span className="font-bold">
+                          {formatCurrency(currentVersionData.fullPrice)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Calculator className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">Custo Total</span>
+                        </div>
+                        <span className="font-bold">
+                          {formatCurrency(currentVersionData.totalCost)}
+                        </span>
+                      </div>
+                      <div
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          currentVersionData.margin >= 40
+                            ? 'bg-success/10'
+                            : currentVersionData.margin >= 25
+                            ? 'bg-warning/10'
+                            : 'bg-destructive/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <TrendingUp
+                            className={`w-4 h-4 ${getMarginColor(currentVersionData.margin)}`}
+                          />
+                          <span className="text-sm">Margem</span>
+                        </div>
+                        <span className={`font-bold ${getMarginColor(currentVersionData.margin)}`}>
+                          {currentVersionData.margin.toFixed(1)}%
+                        </span>
+                      </div>
+                    </>
+                  ) : null}
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Timeline */}
             <motion.div
