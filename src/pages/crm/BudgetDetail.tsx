@@ -1647,7 +1647,7 @@ export function BudgetDetail() {
                             <h4 className="text-xs font-semibold text-muted-foreground mb-2">Resumo por Entrega</h4>
                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg text-sm">
                               <div>
-                                <p className="text-xs text-muted-foreground">Investimento do Cliente</p>
+                                <p className="text-xs text-muted-foreground">Subtotal</p>
                                 <p className="font-semibold text-blue-500">{formatCurrency(service.budgetedFinalValue || service.finalValue)}</p>
                               </div>
                               <div>
