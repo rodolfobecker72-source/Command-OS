@@ -1645,7 +1645,7 @@ export function BudgetDetail() {
                           {/* Resumo por Entrega */}
                           <div className="mt-3">
                             <h4 className="text-xs font-semibold text-muted-foreground mb-2">Resumo por Entrega</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-muted/30 rounded-lg text-sm">
+                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg text-sm">
                               <div>
                                 <p className="text-xs text-muted-foreground">Investimento do Cliente</p>
                                 <p className="font-semibold text-blue-500">{formatCurrency(service.budgetedFinalValue || service.finalValue)}</p>
@@ -1660,27 +1660,7 @@ export function BudgetDetail() {
                                   {formatCurrency(service.realTotal)}
                                 </p>
                               </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Imposto NF</p>
-                                <p className="font-semibold">{formatCurrency(service.nfTaxProportion || 0)}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Margem Real</p>
-                                <p className={`font-semibold ${
-                                  service.finalValue > 0 
-                                    ? ((service.finalValue - service.realTotal - (service.nfTaxProportion || 0)) / service.finalValue * 100) >= 40 
-                                      ? 'text-success' 
-                                      : ((service.finalValue - service.realTotal - (service.nfTaxProportion || 0)) / service.finalValue * 100) >= 25 
-                                        ? 'text-warning' 
-                                        : 'text-destructive'
-                                    : ''
-                                }`}>
-                                  {service.finalValue > 0 
-                                    ? `${((service.finalValue - service.realTotal - (service.nfTaxProportion || 0)) / service.finalValue * 100).toFixed(1)}%`
-                                    : '-'}
-                                </p>
-                              </div>
-                            </div>
+                             </div>
                           </div>
                         </div>
                       );
