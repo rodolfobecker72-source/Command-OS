@@ -1429,35 +1429,6 @@ export function BudgetDetail() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Resumo Orçado */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">Valores Orçados</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Investimento Total do Cliente</p>
-                          <p className="font-bold text-lg text-blue-500">{formatCurrency(budget.finalValue || 0)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Custo Total Orçado</p>
-                          <p className="font-bold text-lg text-orange-500">
-                            {(() => {
-                              const approvedVer = budget.versions.find(v => v.version === budget.approvedVersion);
-                              return formatCurrency(approvedVer ? approvedVer.totalCost : budget.execution.budgetedTotal);
-                            })()}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">(produção + operacional + NF)</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Margem Projetada</p>
-                          <p className="font-bold text-lg text-blue-600">
-                            {(() => {
-                              const approvedVer = budget.versions.find(v => v.version === budget.approvedVersion);
-                              return approvedVer ? `${approvedVer.margin.toFixed(1)}%` : '—';
-                            })()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
 
 
                     {/* Services Execution */}
