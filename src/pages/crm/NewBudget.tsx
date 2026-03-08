@@ -1412,9 +1412,9 @@ export function NewBudget() {
               <Download className="w-4 h-4 mr-2" />
               Gerar PDF
             </Button>
-            <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
+            <Button type="submit" className="flex-1 btn-hero">
               <Save className="w-4 h-4 mr-2" />
-              {crmLoading ? 'Carregando...' : 'Salvar Orçamento'}
+              Salvar Orçamento
             </Button>
           </div>
         </form>
