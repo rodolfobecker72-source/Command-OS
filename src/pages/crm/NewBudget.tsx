@@ -297,6 +297,12 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit chamado', { crmLoading, formData, servicesCount: services.length });
+
+    if (crmLoading) {
+      toast.error('Aguarde o carregamento dos dados antes de salvar.');
+      return;
+    }
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -304,6 +310,13 @@ export function NewBudget() {
       toast.error('Preencha os campos obrigatórios', {
         description: errorMessages.join(', '),
       });
+      // Scroll to first error field
+      const firstErrorKey = Object.keys(validationErrors)[0];
+      const el = document.getElementById(firstErrorKey);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
       return;
     }
 
