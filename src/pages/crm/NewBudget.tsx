@@ -297,6 +297,12 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit chamado', { crmLoading, formData, servicesCount: services.length });
+
+    if (crmLoading) {
+      toast.error('Aguarde o carregamento dos dados antes de salvar.');
+      return;
+    }
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -304,6 +310,13 @@ export function NewBudget() {
       toast.error('Preencha os campos obrigatórios', {
         description: errorMessages.join(', '),
       });
+      // Scroll to first error field
+      const firstErrorKey = Object.keys(validationErrors)[0];
+      const el = document.getElementById(firstErrorKey);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
       return;
     }
 
@@ -1399,9 +1412,9 @@ export function NewBudget() {
               <Download className="w-4 h-4 mr-2" />
               Gerar PDF
             </Button>
-            <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
+            <Button type="submit" className="flex-1 btn-hero">
               <Save className="w-4 h-4 mr-2" />
-              {crmLoading ? 'Carregando...' : 'Salvar Orçamento'}
+              Salvar Orçamento
             </Button>
           </div>
         </form>

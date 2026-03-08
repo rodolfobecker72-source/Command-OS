@@ -1,26 +1,23 @@
 
 
-# Diagnóstico: Botão "Salvar Orçamento" não funciona
+# Reorganização do Resumo Financeiro por Aba
 
-## Problema identificado
+## Mudanças
 
-Após análise do código, há duas causas prováveis:
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-1. **Botão desabilitado**: O botão "Salvar Orçamento" fica com `disabled={crmLoading}` e mostra "Carregando..." enquanto os dados do CRM carregam. Se houver qualquer atraso ou erro silencioso no carregamento, o botão fica permanentemente desabilitado.
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-2. **Validação falhando silenciosamente**: A validação exige nome do projeto, cliente selecionado e pelo menos um serviço adicionado. Se faltar algo, aparece um toast que pode passar despercebido.
-
-## Plano de correção
-
-### Arquivo: `src/pages/crm/NewBudget.tsx`
-
-1. **Adicionar console.log no handleSubmit** para confirmar se a função é chamada ao clicar
-2. **Melhorar feedback visual** quando a validação falha — destacar os campos com erro (border vermelha) e fazer scroll até o primeiro erro
-3. **Remover o `disabled={crmLoading}`** no botão de salvar — em vez disso, fazer o check no `handleSubmit` e mostrar mensagem clara se dados ainda não carregaram
-4. **Adicionar console.log** no início do `handleSubmit` para debug: `console.log('handleSubmit chamado', { crmLoading, formData })`
-
-### Detalhes técnicos
-- Trocar `disabled={crmLoading}` por lógica dentro do `handleSubmit` que verifica se o workspace está pronto
-- Nos campos com erro, adicionar classe `border-destructive` condicionalmente
-- Usar `scrollIntoView` no primeiro campo com erro para guiar o usuário
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 
