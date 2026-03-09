@@ -358,9 +358,9 @@ export function EditClient() {
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1 btn-hero" disabled={crmLoading}>
+                  <Button type="submit" className="flex-1 btn-hero">
                     <Save className="w-4 h-4 mr-2" />
-                    {crmLoading ? 'Carregando...' : 'Salvar Alterações'}
+                    Salvar Alterações
                   </Button>
                 </div>
               </form>
