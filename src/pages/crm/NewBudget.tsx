@@ -299,11 +299,6 @@ export function NewBudget() {
     e.preventDefault();
     console.log('handleSubmit chamado', { crmLoading, formData, servicesCount: services.length });
 
-    if (crmLoading) {
-      toast.error('Aguarde o carregamento dos dados antes de salvar.');
-      return;
-    }
-
     const validationErrors = validateForm();
     if (validationErrors) {
       const errorMessages = Object.values(validationErrors);
