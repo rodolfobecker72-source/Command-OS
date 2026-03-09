@@ -111,20 +111,29 @@ export function EditClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[EditClient] handleSubmit chamado', { clientId: client.id, formData, crmLoading });
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log('[EditClient] validação falhou', errors);
+      return;
+    }
 
-    await updateClient(client.id, {
-      companyName: formData.companyName,
-      cnpj: formData.document.replace(/\D/g, ''),
-      responsiblePerson: formData.responsiblePerson,
-      email: formData.email.trim(),
-      phone: formData.phone.replace(/\D/g, ''),
-      leadOrigin: formData.leadOrigin as LeadOrigin,
-    });
-
-    toast.success('Cliente atualizado com sucesso!');
-    navigate('/clientes');
+    console.log('[EditClient] Chamando updateClient...');
+    try {
+      await updateClient(client.id, {
+        companyName: formData.companyName,
+        cnpj: formData.document.replace(/\D/g, ''),
+        responsiblePerson: formData.responsiblePerson,
+        email: formData.email.trim(),
+        phone: formData.phone.replace(/\D/g, ''),
+        leadOrigin: formData.leadOrigin as LeadOrigin,
+      });
+      console.log('[EditClient] updateClient concluído com sucesso');
+      toast.success('Cliente atualizado com sucesso!');
+      navigate('/clientes');
+    } catch (err) {
+      console.error('[EditClient] Erro no updateClient:', err);
+    }
   };
 
   const formatDocumentInput = (value: string, type: 'cnpj' | 'cpf') => {
