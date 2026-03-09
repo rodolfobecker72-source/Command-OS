@@ -193,15 +193,20 @@ export function BudgetDetail() {
     toast.success('Status atualizado!');
   };
 
-  const handleSaveEdit = () => {
-    updateBudget(budget.id, { 
-      proposalId: editedProposalId,
-      paymentTerms: editedPaymentTerms,
-      projectName: editedProjectName,
-      projectDescription: editedProjectDescription,
-    });
-    setIsEditing(false);
-    toast.success('Informações atualizadas!');
+  const handleSaveEdit = async () => {
+    try {
+      await updateBudget(budget.id, { 
+        proposalId: editedProposalId,
+        paymentTerms: editedPaymentTerms,
+        projectName: editedProjectName,
+        projectDescription: editedProjectDescription,
+      });
+      setIsEditing(false);
+      toast.success('Informações atualizadas!');
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+      toast.error('Erro ao salvar alterações. Tente novamente.');
+    }
   };
 
   // Initialize new version services from current version
