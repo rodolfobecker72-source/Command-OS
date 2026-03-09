@@ -1,23 +1,20 @@
 
 
-# Reorganização do Resumo Financeiro por Aba
+# Listas de seleção não aparecem dentro do Dialog de Lead
 
-## Mudanças
+## Problema
 
-### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
-- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
-- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
-- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
-- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
+O componente `Select` (Radix UI) usa um `Portal` para renderizar o dropdown. O `Dialog` também usa um `Portal`. Ambos têm `z-index: 50`. Dependendo do navegador/sistema operacional, o dropdown do Select pode renderizar **atrás** do overlay do Dialog, tornando as opções invisíveis.
 
-### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
-- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
-  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
-  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
+Isso explica por que funciona em um computador e não em outro — o comportamento de stacking context de Portals pode variar entre navegadores/versões.
 
-### Arquivo a modificar
-- `src/pages/crm/BudgetDetail.tsx`
-  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
-  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
-  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
+## Solução
+
+Aumentar o `z-index` do `SelectContent` de `z-50` para `z-[200]` no componente base `src/components/ui/select.tsx`. Isso garante que o dropdown sempre aparece acima de qualquer Dialog.
+
+### Arquivo: `src/components/ui/select.tsx`
+
+Na classe do `SelectPrimitive.Content` (linha ~72), trocar `z-50` por `z-[200]`.
+
+Essa é uma alteração de 1 linha no componente base que corrige o problema em todos os lugares que usam Select dentro de Dialogs.
 
