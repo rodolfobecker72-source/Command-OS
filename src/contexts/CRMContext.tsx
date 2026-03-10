@@ -1029,10 +1029,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Hard Drive functions =============
   const addHardDrive = async (hdData: Omit<HardDrive, 'id' | 'projects' | 'createdAt'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     try {
       const { data, error } = await supabase.from('hard_drives').insert({
-        workspace_id: workspaceId, label: hdData.label, capacity_gb: hdData.capacityGB, projects: [] as any,
+        workspace_id: wsId, label: hdData.label, capacity_gb: hdData.capacityGB, projects: [] as any,
       }).select().single();
       if (error) throw error;
       setHardDrives(prev => [...prev, hardDriveFromDb(data)]);
