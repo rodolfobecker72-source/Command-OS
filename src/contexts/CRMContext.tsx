@@ -571,11 +571,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Service Category functions =============
   const addServiceCategory = async (categoryData: Omit<ServiceCategory, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     const maxOrder = Math.max(...serviceCategories.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('service_categories').insert({
-        workspace_id: workspaceId, key: categoryData.key, label: categoryData.label,
+        workspace_id: wsId, key: categoryData.key, label: categoryData.label,
         order: maxOrder + 1, is_default: categoryData.isDefault || false,
       }).select().single();
       if (error) throw error;
