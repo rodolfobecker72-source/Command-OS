@@ -165,7 +165,7 @@ function legacyProjectFromDb(row: any): LegacyProject {
 
 function scoreHistoryFromDb(row: any): ScoreHistoryEntry {
   return {
-    id: row.id, score: row.score, previousScore: row.previous_score,
+    id: row.id, clientId: row.client_id, score: row.score, previousScore: row.previous_score,
     reason: row.reason, timestamp: new Date(row.created_at),
   };
 }
