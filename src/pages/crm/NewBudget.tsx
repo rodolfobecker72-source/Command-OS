@@ -299,7 +299,7 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submittingRef.current) return;
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -316,15 +316,10 @@ export function NewBudget() {
       return;
     }
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
       console.log('Iniciando salvamento do orçamento...');
-
-      // Timeout de segurança para não travar infinitamente
-      const timeoutId = setTimeout(() => {
-        setIsSubmitting(false);
-        toast.error('O salvamento demorou demais. Verifique sua conexão e tente novamente.');
-      }, 15000);
 
       const firstService = services[0];
       const newBudget = await addBudget({
