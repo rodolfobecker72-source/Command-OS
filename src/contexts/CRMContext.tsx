@@ -791,8 +791,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteBudget = async (id: string) => {
+    const wsId = await ensureWorkspace();
     try {
-      await supabase.from('budget_versions').delete().eq('budget_id', id);
+      const { error: versionsError } = await supabase.from('budget_versions').delete().eq('budget_id', id).eq('workspace_id', wsId || '');
+      if (versionsError) console.error('[CRM] Erro ao deletar versões:', versionsError.message);
       const { error } = await supabase.from('budgets').delete().eq('id', id);
       if (error) throw error;
       setBudgets(prev => prev.filter(b => b.id !== id));
