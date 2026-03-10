@@ -279,9 +279,6 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // Ref for score recalculation debounce
   const scoreRecalcTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ref to track clients without causing dependency loops
-  const clientsRef = useRef(clients);
-  useEffect(() => { clientsRef.current = clients; }, [clients]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
