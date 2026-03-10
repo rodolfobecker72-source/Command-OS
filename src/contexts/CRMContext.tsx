@@ -512,7 +512,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
       const updates: { clientId: string; newScore: number; oldScore: number }[] = [];
       clientsToUpdate.forEach(clientId => {
-        const client = clients.find(c => c.id === clientId);
+        const client = clientsRef.current.find(c => c.id === clientId);
         if (client) {
           const scoreBreakdown = calculateClientScore(clientId, budgets);
           if (client.score !== scoreBreakdown.finalScore) {
