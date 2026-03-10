@@ -415,7 +415,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     };
 
     loadAll();
-  }, [workspaceId, authLoading]);
+  }, [workspaceId]); // Removed authLoading — workspaceId is undefined until auth finishes, so it's redundant
 
   // Helper: check workspace ready before any mutation, with DB fallback
   // Uses refs to avoid stale closures

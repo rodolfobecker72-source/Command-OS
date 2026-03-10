@@ -121,22 +121,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('[Auth] onAuthStateChange event:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         // Skip if this is the initial event (handled by getSession below)
         if (initialLoad) return;
 
-        if (newSession?.user) {
+        // Only show loading spinner for critical auth transitions
+        // TOKEN_REFRESHED and USER_UPDATED should NOT cause full reload
+        if (event === 'SIGNED_IN') {
           setIsLoading(true);
-          await loadUserData(newSession.user.id);
+          await loadUserData(newSession!.user.id);
           setIsLoading(false);
-        } else {
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setWorkspace(null);
           setMembership(null);
           setIsLoading(false);
         }
+        // For TOKEN_REFRESHED, USER_UPDATED etc. — session/user are updated above
+        // but we do NOT toggle isLoading, preventing cascade into CRM/Prospection reloads
       }
     );
 
