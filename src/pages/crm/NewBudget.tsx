@@ -299,7 +299,10 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || submittingRef.current) return;
+    if (isSubmitting || submittingRef.current) {
+      console.warn('[NewBudget] Submit bloqueado - já em andamento');
+      return;
+    }
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -318,17 +321,29 @@ export function NewBudget() {
 
     submittingRef.current = true;
     setIsSubmitting(true);
-    try {
-      console.log('Iniciando salvamento do orçamento...');
 
-      const firstService = services[0];
+    // Timeout de segurança: se demorar mais de 30s, libera o botão
+    const safetyTimeout = setTimeout(() => {
+      console.error('[NewBudget] Timeout de segurança atingido (30s)');
+      setIsSubmitting(false);
+      submittingRef.current = false;
+      toast.error('O salvamento demorou demais. Tente novamente.');
+    }, 30000);
+
+    try {
+      console.log('[NewBudget] Iniciando salvamento...');
+      console.log('[NewBudget] clientId:', formData.clientId);
+      console.log('[NewBudget] services:', services.length);
+
+      // Step 1: Create budget
+      console.log('[NewBudget] Step 1: Criando orçamento...');
       const newBudget = await addBudget({
         proposalId: formData.proposalId.trim(),
         projectName: formData.projectName,
         projectDescription: formData.projectDescription,
         clientId: formData.clientId,
-        serviceType: firstService.serviceType,
-        objective: firstService.objective as any,
+        serviceType: services[0]?.serviceType || '',
+        objective: services[0]?.objective as any || '',
         description: services.map(s => `[${s.serviceType}] ${s.description}`).join('\n\n'),
         paymentTerms: formData.paymentTerms,
         includesTax: formData.includesTax,
@@ -344,14 +359,19 @@ export function NewBudget() {
         status: formData.status,
       });
 
-      
-
       if (!newBudget) {
+        console.error('[NewBudget] addBudget retornou null');
+        clearTimeout(safetyTimeout);
         setIsSubmitting(false);
-        toast.error('Erro ao salvar orçamento. Aguarde o carregamento dos dados e tente novamente.');
+        submittingRef.current = false;
+        toast.error('Erro ao salvar orçamento. Verifique sua conexão e tente novamente.');
         return;
       }
 
+      console.log('[NewBudget] Step 1 OK - Budget ID:', newBudget.id);
+
+      // Step 2: Create budget version
+      console.log('[NewBudget] Step 2: Criando versão do orçamento...');
       await addBudgetVersion(newBudget.id, {
         services: services.map(s => ({
           id: s.id,
@@ -376,11 +396,14 @@ export function NewBudget() {
         reason: 'Versão inicial',
       });
 
+      console.log('[NewBudget] Step 2 OK - Versão criada');
+      clearTimeout(safetyTimeout);
       toast.success('Orçamento criado com sucesso!');
       navigate('/crm');
     } catch (error: any) {
-      console.error('Erro ao salvar orçamento:', error);
-      toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
+      console.error('[NewBudget] Erro no salvamento:', error);
+      clearTimeout(safetyTimeout);
+      toast.error('Erro ao salvar orçamento: ' + (error?.message || 'Erro desconhecido'));
     } finally {
       setIsSubmitting(false);
       submittingRef.current = false;
