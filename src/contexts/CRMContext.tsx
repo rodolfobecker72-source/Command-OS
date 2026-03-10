@@ -299,13 +299,22 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Load all data from DB =============
   useEffect(() => {
     if (!workspaceId) {
-      // Only set isLoading=false if auth has finished loading (no workspace means user has none)
-      if (!authLoading) setIsLoading(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Prevent re-loading if workspace hasn't changed (e.g. auth re-render)
+    if (lastLoadedWorkspaceRef.current === workspaceId) {
+      console.log('[CRM] Workspace unchanged, skipping reload');
       return;
     }
 
     const loadAll = async () => {
       setIsLoading(true);
+      const safetyTimeout = setTimeout(() => {
+        console.warn('[CRM] Safety timeout: forcing isLoading=false after 15s');
+        setIsLoading(false);
+      }, 15000);
       try {
         const [
           clientsRes, kanbanRes, catRes, objRes, projColRes,
