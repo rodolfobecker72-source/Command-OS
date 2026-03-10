@@ -513,11 +513,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     const maxOrder = Math.max(...kanbanColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('kanban_columns').insert({
-        workspace_id: workspaceId, key: columnData.key, label: columnData.label,
+        workspace_id: wsId, key: columnData.key, label: columnData.label,
         color: columnData.color, order: maxOrder + 1, is_default: columnData.isDefault || false,
       }).select().single();
       if (error) throw error;
