@@ -344,7 +344,7 @@ export function NewBudget() {
         status: formData.status,
       });
 
-      clearTimeout(timeoutId);
+      
 
       if (!newBudget) {
         setIsSubmitting(false);
