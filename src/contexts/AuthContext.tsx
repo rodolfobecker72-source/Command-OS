@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { getAllPageKeys } from '@/config/pages';
@@ -115,43 +115,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.error('[Auth] All retry attempts exhausted for loadUserData');
   };
 
+  // Track whether user data has been loaded at least once to prevent duplicate SIGNED_IN reloads
+  const hasLoadedRef = useRef(false);
+  const loadingUserDataRef = useRef(false);
+
   useEffect(() => {
     let initialLoad = true;
 
-    // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('[Auth] onAuthStateChange event:', event);
+        console.log('[Auth] onAuthStateChange event:', event, '| initialLoad:', initialLoad, '| hasLoaded:', hasLoadedRef.current);
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         // Skip if this is the initial event (handled by getSession below)
         if (initialLoad) return;
 
-        // Only show loading spinner for critical auth transitions
-        // TOKEN_REFRESHED and USER_UPDATED should NOT cause full reload
         if (event === 'SIGNED_IN') {
+          // If user data is already loaded, do NOT set isLoading=true again
+          // This prevents the spinner flash on duplicate SIGNED_IN events (tab focus, session restore)
+          if (hasLoadedRef.current) {
+            console.log('[Auth] SIGNED_IN but data already loaded — skipping reload');
+            return;
+          }
+          // Prevent concurrent loads
+          if (loadingUserDataRef.current) {
+            console.log('[Auth] SIGNED_IN but already loading — skipping');
+            return;
+          }
+          loadingUserDataRef.current = true;
           setIsLoading(true);
-          await loadUserData(newSession!.user.id);
-          setIsLoading(false);
+          try {
+            await loadUserData(newSession!.user.id);
+            hasLoadedRef.current = true;
+          } finally {
+            loadingUserDataRef.current = false;
+            setIsLoading(false);
+          }
         } else if (event === 'SIGNED_OUT') {
+          hasLoadedRef.current = false;
           setProfile(null);
           setWorkspace(null);
           setMembership(null);
           setIsLoading(false);
         }
-        // For TOKEN_REFRESHED, USER_UPDATED etc. — session/user are updated above
-        // but we do NOT toggle isLoading, preventing cascade into CRM/Prospection reloads
+        // TOKEN_REFRESHED, USER_UPDATED — session/user updated above, no loading toggle
       }
     );
 
-    // THEN get initial session
+    // Get initial session
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       initialLoad = false;
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       if (initialSession?.user) {
-        await loadUserData(initialSession.user.id);
+        loadingUserDataRef.current = true;
+        try {
+          await loadUserData(initialSession.user.id);
+          hasLoadedRef.current = true;
+        } finally {
+          loadingUserDataRef.current = false;
+        }
       }
       setIsLoading(false);
     });

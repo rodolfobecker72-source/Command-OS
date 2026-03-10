@@ -280,7 +280,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // Ref for score recalculation debounce
   const scoreRecalcTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const lastLoadedWorkspaceRef = useRef<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const clientsRef = useRef(clients);
   useEffect(() => { clientsRef.current = clients; }, [clients]);
@@ -298,13 +299,22 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Load all data from DB =============
   useEffect(() => {
     if (!workspaceId) {
-      // Only set isLoading=false if auth has finished loading (no workspace means user has none)
-      if (!authLoading) setIsLoading(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Prevent re-loading if workspace hasn't changed (e.g. auth re-render)
+    if (lastLoadedWorkspaceRef.current === workspaceId) {
+      console.log('[CRM] Workspace unchanged, skipping reload');
       return;
     }
 
     const loadAll = async () => {
       setIsLoading(true);
+      const safetyTimeout = setTimeout(() => {
+        console.warn('[CRM] Safety timeout: forcing isLoading=false after 15s');
+        setIsLoading(false);
+      }, 15000);
       try {
         const [
           clientsRes, kanbanRes, catRes, objRes, projColRes,
@@ -410,12 +420,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         console.error('Error loading CRM data:', error);
         toast.error('Erro ao carregar dados do CRM');
       } finally {
+        clearTimeout(safetyTimeout);
+        lastLoadedWorkspaceRef.current = workspaceId;
         setIsLoading(false);
       }
     };
 
     loadAll();
-  }, [workspaceId]); // Removed authLoading — workspaceId is undefined until auth finishes, so it's redundant
+  }, [workspaceId]);
 
   // Helper: check workspace ready before any mutation, with DB fallback
   // Uses refs to avoid stale closures
