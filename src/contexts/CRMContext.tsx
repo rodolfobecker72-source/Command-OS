@@ -730,9 +730,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       currentVersion = budget.currentVersion;
     } else {
       // Budget recém-criado, state ainda não atualizou - buscar do DB
-      const { data: budgetData, error: fetchError } = await supabase
+      const { data: budgetData, error: fetchError } = await withTimeout(supabase
         .from('budgets').select('current_version')
-        .eq('id', budgetId).single();
+        .eq('id', budgetId).single());
       if (fetchError) {
         toast.error('Erro ao buscar orçamento: ' + fetchError.message);
         return;
