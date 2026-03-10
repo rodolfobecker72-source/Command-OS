@@ -1336,7 +1336,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     try {
       const firstCol = [...projectColumns].sort((a, b) => a.order - b.order)[0];
       if (firstCol && col) {
-        await supabase.from('project_cards').update({ status: firstCol.key }).eq('workspace_id', workspaceId!).eq('status', col.key);
+        const { error: moveCardsError } = await supabase.from('project_cards').update({ status: firstCol.key }).eq('workspace_id', workspaceId!).eq('status', col.key);
+        if (moveCardsError) console.error('[CRM] deleteProjectColumn: erro ao mover cards:', moveCardsError.message);
         setProjectCards(prev => prev.map(card => card.status === col.key ? { ...card, status: firstCol.key } : card));
       }
       const { error } = await supabase.from('project_columns').delete().eq('id', id);
