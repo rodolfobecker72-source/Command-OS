@@ -1084,10 +1084,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Legacy Project functions =============
   const addLegacyProject = async (projectData: Omit<LegacyProject, 'id' | 'createdAt'>): Promise<LegacyProject | null> => {
-    if (!ensureWorkspace()) return null;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return null;
     try {
       const { data, error } = await supabase.from('legacy_projects').insert({
-        workspace_id: workspaceId, project_number: projectData.projectNumber,
+        workspace_id: wsId, project_number: projectData.projectNumber,
         client_id: projectData.clientId, client_name: projectData.clientName, size_gb: projectData.sizeGB,
       }).select().single();
       if (error) throw error;
