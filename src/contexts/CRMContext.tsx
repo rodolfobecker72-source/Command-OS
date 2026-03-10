@@ -958,7 +958,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const objective = approvedVersion?.services?.[0]?.objective || budget.objective || '';
         const firstColKey = [...projectColumns].sort((a, b) => a.order - b.order)[0]?.key || 'planejamento';
 
-        const { data: pcData } = await supabase.from('project_cards').insert({
+        const { data: pcData, error: pcError } = await supabase.from('project_cards').insert({
           workspace_id: workspaceId, budget_id: budgetId, proposal_id: budget.proposalId,
           project_name: budget.projectName, client_name: client?.companyName || 'Cliente não encontrado',
           client_id: budget.clientId, service_types: serviceTypes as any, objective,
@@ -966,6 +966,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           material_link: '', start_date: budget.executionStartDate?.toISOString() || null,
           end_date: budget.executionEndDate?.toISOString() || null, notes: '',
         }).select().single();
+        if (pcError) console.error('[CRM] approveBudget: erro ao criar project card:', pcError.message);
         if (pcData) setProjectCards(prev => [...prev, projectCardFromDb(pcData)]);
       }
     } catch (e: any) { toast.error('Erro ao aprovar orçamento: ' + e.message); }
