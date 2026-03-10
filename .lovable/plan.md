@@ -1,23 +1,32 @@
 
 
-# Reorganização do Resumo Financeiro por Aba
+## Diagnóstico: Orçamento não salva ao clicar em "Salvar Orçamento"
 
-## Mudanças
+### Causa raiz
 
-### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
-- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
-- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
-- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
-- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
+Os logs do console mostram o erro:
 
-### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
-- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
-  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
-  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
+```
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+```
 
-### Arquivo a modificar
-- `src/pages/crm/BudgetDetail.tsx`
-  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
-  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
-  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
+A sessão de autenticação expirou ou o token de refresh foi invalidado. Quando o `handleSubmit` tenta executar `addBudget`, a chamada ao banco falha porque o usuário não está mais autenticado. O `ensureWorkspace` (que verifica a sessão) pode não estar detectando isso corretamente, resultando em uma falha silenciosa.
+
+### Solução imediata
+
+**Faça logout e login novamente no preview.** A sessão atual está com o token expirado, por isso nenhuma operação de escrita funciona.
+
+### Correção no código para evitar falhas silenciosas
+
+**Arquivo: `src/contexts/CRMContext.tsx` (e similar em outros contextos)**
+
+Melhorar o `ensureWorkspace` para detectar tokens expirados e redirecionar automaticamente para o login, em vez de falhar silenciosamente:
+
+1. Dentro de `ensureWorkspace`, verificar se `supabase.auth.getSession()` retorna uma sessão válida
+2. Se a sessão for nula ou o token estiver expirado, mostrar um toast informativo ("Sua sessão expirou, faça login novamente") e redirecionar para `/login`
+3. Isso impede que o usuário fique clicando em "Salvar" sem entender por que nada acontece
+
+### Resumo
+- 1 arquivo modificado: `CRMContext.tsx` — melhorar detecção de sessão expirada no `ensureWorkspace`
+- O problema atual se resolve fazendo login novamente
 
