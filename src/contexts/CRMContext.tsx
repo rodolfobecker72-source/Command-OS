@@ -424,10 +424,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         .select('workspace_id')
         .eq('user_id', session.user.id)
         .limit(1)
-        .single();
-      if (error || !data) {
-        console.error('[CRM] Fallback query failed:', error?.message);
+        .maybeSingle();
+      if (error) {
+        console.error('[CRM] Fallback query failed:', error.message);
         toast.error('Workspace não encontrado. Tente recarregar a página.');
+        return null;
+      }
+      if (!data) {
+        console.error('[CRM] Fallback: nenhum workspace_member encontrado');
+        toast.error('Nenhum workspace associado à sua conta.');
         return null;
       }
       console.log('[CRM] Fallback workspace_id:', data.workspace_id);
