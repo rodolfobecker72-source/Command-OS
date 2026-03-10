@@ -79,7 +79,7 @@ export function useProspection() {
 }
 
 export function ProspectionProvider({ children }: { children: ReactNode }) {
-  const { workspace, isLoading: authLoading } = useAuth();
+  const { workspace } = useAuth();
   const workspaceId = workspace?.id;
   const [leads, setLeads] = useState<ProspectionLead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
