@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { getAllPageKeys } from '@/config/pages';
