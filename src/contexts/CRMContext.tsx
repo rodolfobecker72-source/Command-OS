@@ -591,7 +591,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const categoryObjectives = serviceObjectives.filter(o => o.categoryKey === objectiveData.categoryKey);
     const maxOrder = Math.max(...categoryObjectives.map(o => o.order), -1);
     try {
