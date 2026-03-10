@@ -268,7 +268,7 @@ interface CRMContextType {
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
 export function CRMProvider({ children }: { children: ReactNode }) {
-  const { workspace, isLoading: authLoading } = useAuth();
+  const { workspace, session, isLoading: authLoading } = useAuth();
   const workspaceId = workspace?.id;
 
   const [isLoading, setIsLoading] = useState(true);
