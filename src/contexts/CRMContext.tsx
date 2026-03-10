@@ -928,11 +928,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await supabase.from('budgets').update({
+      const { error: approveError } = await supabase.from('budgets').update({
         status: 'aprovada', approved_version: versionNumber,
         approval_date: new Date().toISOString(), final_value: approvedVersion?.fullPrice || null,
         execution: execution as any,
       }).eq('id', budgetId);
+      if (approveError) {
+        console.error('[CRM] approveBudget: erro ao atualizar budget:', approveError.message);
+        throw approveError;
+      }
 
       setBudgets(prev => prev.map(b => {
         if (b.id === budgetId) {
