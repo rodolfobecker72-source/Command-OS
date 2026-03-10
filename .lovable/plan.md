@@ -1,47 +1,23 @@
 
 
-# Diagnóstico definitivo: "Workspace não carregado"
+# Reorganização do Resumo Financeiro por Aba
 
-## Causa raiz real
+## Mudanças
 
-A mensagem "Workspace não carregado" confirma que `workspaceId` é `null` no momento do salvamento. Isso acontece porque `loadUserData` no `AuthContext` **ignora erros silenciosamente** — se qualquer query falhar (por timeout, token expirado temporariamente, ou erro de rede), as variáveis `workspace` e `membership` ficam `null` permanentemente, sem retry.
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-O banco está correto (o usuário tem workspace e membership). O problema é 100% no lado do cliente.
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-## Correções (2 arquivos)
-
-### 1. `src/contexts/AuthContext.tsx` — Retry e logging no carregamento de dados
-
-- Adicionar **log de erro detalhado** quando `workspace_members` ou `workspaces` retorna erro
-- Adicionar **retry automático** (até 3 tentativas com delay) no `loadUserData` para recuperar de falhas temporárias de rede/token
-- Verificar o `error` retornado pelas queries (atualmente é ignorado — só `data` é destructured)
-
-### 2. `src/contexts/CRMContext.tsx` — Fallback de workspace no ensureWorkspace
-
-- Tornar `ensureWorkspace` **async** e retornar o `workspaceId` diretamente
-- Se `workspaceId` (do estado) for null mas `session` existir, fazer uma query direta ao `workspace_members` como fallback
-- Usar o `workspaceId` **retornado** pela função em todas as mutações (em vez do valor do closure)
-- **Remover o `withTimeout`** — ele estava mascarando o problema real e causando falsos positivos
-
-Fluxo do novo `ensureWorkspace`:
-```text
-ensureWorkspace()
-  ├─ session null? → redirect /login, return null
-  ├─ workspaceId exists? → return workspaceId  
-  └─ workspaceId null? → query workspace_members
-       ├─ found? → return workspace_id
-       └─ not found? → toast error, return null
-```
-
-Todas as funções de mutação (`addBudget`, `addClient`, `addBudgetVersion`, etc.) passam a usar:
-```typescript
-const wsId = await ensureWorkspace();
-if (!wsId) return null;
-// usa wsId no insert em vez de workspaceId!
-```
-
-### Resumo
-- **AuthContext**: retry + error checking no carregamento de workspace (resolve a causa raiz)
-- **CRMContext**: fallback query no ensureWorkspace (resolve o sintoma — garante que mesmo que o load falhe, a mutação ainda funciona)
-- Remove `withTimeout` que estava causando complexidade desnecessária
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 
