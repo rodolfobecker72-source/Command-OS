@@ -79,14 +79,14 @@ export function useProspection() {
 }
 
 export function ProspectionProvider({ children }: { children: ReactNode }) {
-  const { workspace, isLoading: authLoading } = useAuth();
+  const { workspace } = useAuth();
   const workspaceId = workspace?.id;
   const [leads, setLeads] = useState<ProspectionLead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!workspaceId) {
-      if (!authLoading) setIsLoading(false);
+      setIsLoading(false);
       return;
     }
     const load = async () => {
@@ -101,7 +101,7 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
       } finally { setIsLoading(false); }
     };
     load();
-  }, [workspaceId, authLoading]);
+  }, [workspaceId]); // Removed authLoading — workspaceId is undefined until auth finishes
 
   const addLead = useCallback(async (data: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProspectionLead | null> => {
     if (!workspaceId) {

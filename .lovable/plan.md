@@ -1,37 +1,23 @@
 
 
-# Diagnosis: Infinite Loading on Navigation
+# Reorganização do Resumo Financeiro por Aba
 
-## Root Cause
+## Mudanças
 
-The `onAuthStateChange` listener in `AuthContext.tsx` (line 122) fires on **every** auth event, including `TOKEN_REFRESHED` which happens automatically every ~60 minutes (or more frequently under certain conditions). Each time it fires:
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-1. **AuthContext** sets `isLoading = true` (line 131)
-2. **CRMContext** has `authLoading` in its `useEffect` dependency array (line 418) → re-runs `loadAll()` → sets its own `isLoading = true` → fires 12 parallel DB queries
-3. **ProspectionContext** same pattern (line 104) → re-runs its own load
-4. **ProtectedRoute** sees `authLoading = true` → renders spinner instead of `<Outlet />`
-5. When `loadAll` finishes, `isLoading` resets — but the page has already unmounted and remounted, potentially triggering the cycle again
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-The `authLoading` dependency in both CRM and Prospection contexts means **any toggle of auth loading state causes a full data reload**, even when the workspace hasn't changed.
-
-## Secondary Issue
-
-When navigating between pages, the `ProtectedRoute` component checks `isLoading` from AuthContext. If a token refresh happens mid-navigation, the route shows a spinner and unmounts the current page. When loading finishes, the page remounts and triggers its own data loading effects.
-
-## Fix Plan (3 files)
-
-### 1. `src/contexts/AuthContext.tsx`
-- Only set `isLoading = true` for `SIGNED_IN` and `SIGNED_OUT` events, NOT for `TOKEN_REFRESHED` or `USER_UPDATED`
-- This prevents token refreshes from cascading into full app reloads
-
-### 2. `src/contexts/CRMContext.tsx`
-- Remove `authLoading` from the `loadAll` useEffect dependency array
-- The effect already depends on `workspaceId` which is `undefined` until auth loads — so `authLoading` is redundant and harmful
-- Keep the `if (!workspaceId) { if (!authLoading) setIsLoading(false); }` guard but read `authLoading` from a ref instead
-
-### 3. `src/contexts/ProspectionContext.tsx`
-- Same fix: remove `authLoading` from the useEffect dependency array
-- Use ref for the early-exit guard
-
-This eliminates the cascade where token refreshes trigger full data reloads across the entire app.
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 
