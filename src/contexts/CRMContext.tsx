@@ -593,7 +593,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       const firstColumn = kanbanColumns.find(c => c.order === 0);
       if (firstColumn && column) {
         // Move budgets from deleted column to first column
-        await supabase.from('budgets').update({ status: firstColumn.key }).eq('workspace_id', workspaceId!).eq('status', column.key);
+        const { error: moveError } = await supabase.from('budgets').update({ status: firstColumn.key }).eq('workspace_id', workspaceId!).eq('status', column.key);
+        if (moveError) console.error('[CRM] deleteKanbanColumn: erro ao mover budgets:', moveError.message);
         setBudgets(prev => prev.map(b => b.status === column.key ? { ...b, status: firstColumn.key } : b));
       }
       setKanbanColumns(prev => prev.filter(col => col.id !== id));
@@ -655,7 +656,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     if (category?.isDefault) return;
     try {
       // Delete related objectives
-      await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId!).eq('category_key', category!.key);
+      const { error: objDelError } = await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId!).eq('category_key', category!.key);
+      if (objDelError) console.error('[CRM] deleteServiceCategory: erro ao deletar objetivos:', objDelError.message);
       const { error } = await supabase.from('service_categories').delete().eq('id', id);
       if (error) throw error;
       setServiceObjectives(prev => prev.filter(obj => obj.categoryKey !== category?.key));
@@ -852,7 +854,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('[CRM] addBudgetVersion: versão criada, atualizando current_version...');
-      await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
+      const { error: cvError } = await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
+      if (cvError) console.error('[CRM] addBudgetVersion: erro ao atualizar current_version:', cvError.message);
 
       const newVersion = budgetVersionFromDb(data);
       setBudgets(prev => prev.map(b => {
@@ -927,11 +930,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await supabase.from('budgets').update({
+      const { error: approveError } = await supabase.from('budgets').update({
         status: 'aprovada', approved_version: versionNumber,
         approval_date: new Date().toISOString(), final_value: approvedVersion?.fullPrice || null,
         execution: execution as any,
       }).eq('id', budgetId);
+      if (approveError) {
+        console.error('[CRM] approveBudget: erro ao atualizar budget:', approveError.message);
+        throw approveError;
+      }
 
       setBudgets(prev => prev.map(b => {
         if (b.id === budgetId) {
@@ -951,7 +958,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const objective = approvedVersion?.services?.[0]?.objective || budget.objective || '';
         const firstColKey = [...projectColumns].sort((a, b) => a.order - b.order)[0]?.key || 'planejamento';
 
-        const { data: pcData } = await supabase.from('project_cards').insert({
+        const { data: pcData, error: pcError } = await supabase.from('project_cards').insert({
           workspace_id: workspaceId, budget_id: budgetId, proposal_id: budget.proposalId,
           project_name: budget.projectName, client_name: client?.companyName || 'Cliente não encontrado',
           client_id: budget.clientId, service_types: serviceTypes as any, objective,
@@ -959,6 +966,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           material_link: '', start_date: budget.executionStartDate?.toISOString() || null,
           end_date: budget.executionEndDate?.toISOString() || null, notes: '',
         }).select().single();
+        if (pcError) console.error('[CRM] approveBudget: erro ao criar project card:', pcError.message);
         if (pcData) setProjectCards(prev => [...prev, projectCardFromDb(pcData)]);
       }
     } catch (e: any) { toast.error('Erro ao aprovar orçamento: ' + e.message); }
@@ -1329,7 +1337,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     try {
       const firstCol = [...projectColumns].sort((a, b) => a.order - b.order)[0];
       if (firstCol && col) {
-        await supabase.from('project_cards').update({ status: firstCol.key }).eq('workspace_id', workspaceId!).eq('status', col.key);
+        const { error: moveCardsError } = await supabase.from('project_cards').update({ status: firstCol.key }).eq('workspace_id', workspaceId!).eq('status', col.key);
+        if (moveCardsError) console.error('[CRM] deleteProjectColumn: erro ao mover cards:', moveCardsError.message);
         setProjectCards(prev => prev.map(card => card.status === col.key ? { ...card, status: firstCol.key } : card));
       }
       const { error } = await supabase.from('project_columns').delete().eq('id', id);
