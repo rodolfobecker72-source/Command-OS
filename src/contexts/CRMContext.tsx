@@ -852,7 +852,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       }
 
       console.log('[CRM] addBudgetVersion: versão criada, atualizando current_version...');
-      await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
+      const { error: cvError } = await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
+      if (cvError) console.error('[CRM] addBudgetVersion: erro ao atualizar current_version:', cvError.message);
 
       const newVersion = budgetVersionFromDb(data);
       setBudgets(prev => prev.map(b => {
