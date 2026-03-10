@@ -653,8 +653,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ============= Budget functions =============
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
     const wsId = await ensureWorkspace();
-    if (!wsId) return null;
+    if (!wsId) {
+      console.error('[CRM] addBudget: ensureWorkspace retornou null');
+      return null;
+    }
     try {
+      console.log('[CRM] addBudget: inserindo no banco com workspace_id:', wsId);
       const { data, error } = await supabase.from('budgets').insert({
         workspace_id: wsId,
         proposal_id: budgetData.proposalId,
@@ -677,11 +681,19 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         location: budgetData.location ?? '',
         status: budgetData.status,
       }).select().single();
-      if (error) throw error;
+      if (error) {
+        console.error('[CRM] addBudget: erro no insert:', error.message);
+        throw error;
+      }
+      console.log('[CRM] addBudget: sucesso, id:', data.id);
       const newBudget = budgetFromDb(data, []);
       setBudgets(prev => [...prev, newBudget]);
       return newBudget;
-    } catch (e: any) { toast.error('Erro ao criar orçamento: ' + e.message); return null; }
+    } catch (e: any) {
+      console.error('[CRM] addBudget: exceção:', e.message);
+      toast.error('Erro ao criar orçamento: ' + e.message);
+      return null;
+    }
   };
 
   const updateBudget = async (id: string, updates: Partial<Budget>) => {
