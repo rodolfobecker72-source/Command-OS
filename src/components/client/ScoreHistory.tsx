@@ -11,6 +11,7 @@ import { ScoreBadge } from '@/components/common/ScoreBadge';
 
 export interface ScoreHistoryEntry {
   id: string;
+  clientId: string;
   score: number;
   previousScore: number;
   reason: string;
