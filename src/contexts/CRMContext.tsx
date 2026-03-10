@@ -741,7 +741,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
     const newVersionNum = currentVersion + 1;
     try {
-      const { data, error } = await supabase.from('budget_versions').insert({
+      const { data, error } = await withTimeout(supabase.from('budget_versions').insert({
         workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
         services: versionData.services as any, operational_costs: versionData.operationalCosts as any,
         costs: versionData.costs as any, production_cost: versionData.productionCost,
@@ -750,7 +750,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         discount4_price: versionData.discount4Price, discount5_price: versionData.discount5Price,
         margin: versionData.margin, reason: versionData.reason,
         is_rejected: versionData.isRejected || false, rejection_reason: versionData.rejectionReason || null,
-      }).select().single();
+      }).select().single());
       if (error) throw error;
 
       await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
