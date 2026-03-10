@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -165,7 +165,7 @@ function legacyProjectFromDb(row: any): LegacyProject {
 
 function scoreHistoryFromDb(row: any): ScoreHistoryEntry {
   return {
-    id: row.id, score: row.score, previousScore: row.previous_score,
+    id: row.id, clientId: row.client_id, score: row.score, previousScore: row.previous_score,
     reason: row.reason, timestamp: new Date(row.created_at),
   };
 }
@@ -206,13 +206,13 @@ interface CRMContextType {
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
   approveBudget: (budgetId: string, versionNumber: number) => Promise<void>;
 
-  updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => void;
-  updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => void;
-  addExtraCost: (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => void;
-  removeExtraCost: (budgetId: string, serviceId: string, costId: string) => void;
-  finalizeExecution: (budgetId: string, finalReport?: string) => void;
-  addDeliveryLink: (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => void;
-  removeDeliveryLink: (budgetId: string, linkId: string) => void;
+  updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => Promise<void>;
+  updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => Promise<void>;
+  addExtraCost: (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => Promise<void>;
+  removeExtraCost: (budgetId: string, serviceId: string, costId: string) => Promise<void>;
+  finalizeExecution: (budgetId: string, finalReport?: string) => Promise<void>;
+  addDeliveryLink: (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => Promise<void>;
+  removeDeliveryLink: (budgetId: string, linkId: string) => Promise<void>;
 
   kanbanColumns: KanbanColumn[];
   addKanbanColumn: (column: Omit<KanbanColumn, 'id' | 'order'>) => Promise<void>;
@@ -270,6 +270,15 @@ const CRMContext = createContext<CRMContextType | undefined>(undefined);
 export function CRMProvider({ children }: { children: ReactNode }) {
   const { workspace, session, isLoading: authLoading } = useAuth();
   const workspaceId = workspace?.id;
+
+  // Refs to avoid stale closures in ensureWorkspace
+  const sessionRef = useRef(session);
+  const workspaceIdRef = useRef(workspaceId);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { workspaceIdRef.current = workspaceId; }, [workspaceId]);
+
+  // Ref for score recalculation debounce
+  const scoreRecalcTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
@@ -407,15 +416,19 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [workspaceId, authLoading]);
 
   // Helper: check workspace ready before any mutation, with DB fallback
-  const ensureWorkspace = async (): Promise<string | null> => {
-    if (!session) {
+  // Uses refs to avoid stale closures
+  const ensureWorkspace = useCallback(async (): Promise<string | null> => {
+    const currentSession = sessionRef.current;
+    const currentWorkspaceId = workspaceIdRef.current;
+
+    if (!currentSession) {
       console.error('[CRM] Sessão não encontrada no contexto');
       toast.error('Sua sessão expirou. Faça login novamente.');
       supabase.auth.signOut();
       window.location.href = '/login';
       return null;
     }
-    if (workspaceId) return workspaceId;
+    if (currentWorkspaceId) return currentWorkspaceId;
 
     // Fallback: query workspace_members directly
     console.warn('[CRM] workspaceId is null in state, querying DB as fallback...');
@@ -423,7 +436,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('workspace_members')
         .select('workspace_id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', currentSession.user.id)
         .limit(1)
         .maybeSingle();
       if (error) {
@@ -443,7 +456,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       toast.error('Erro ao buscar workspace. Recarregue a página.');
       return null;
     }
-  };
+  }, []);
 
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
@@ -481,41 +494,67 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [budgets]);
 
   const getClientScoreHistory = useCallback((clientId: string): ScoreHistoryEntry[] => {
-    return scoreHistory.filter(e => e.id.startsWith(`${clientId}_`) || (e as any).clientId === clientId)
+    return scoreHistory.filter(e => e.clientId === clientId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [scoreHistory]);
 
-  // Score recalculation
+  // Score recalculation — debounced to avoid race conditions
   useEffect(() => {
     if (!workspaceId || isLoading) return;
-    const clientsToUpdate = new Set<string>();
-    budgets.forEach(b => clientsToUpdate.add(b.clientId));
-    clientsToUpdate.forEach(async (clientId) => {
-      const client = clients.find(c => c.id === clientId);
-      if (client) {
-        const scoreBreakdown = calculateClientScore(clientId, budgets);
-        if (client.score !== scoreBreakdown.finalScore) {
-          // Insert score history
-          const reason = scoreBreakdown.finalScore > client.score ? 'Melhoria de score' : 'Recálculo automático';
+
+    if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
+
+    scoreRecalcTimerRef.current = setTimeout(async () => {
+      const clientsToUpdate = new Set<string>();
+      budgets.forEach(b => clientsToUpdate.add(b.clientId));
+
+      const updates: { clientId: string; newScore: number; oldScore: number }[] = [];
+      clientsToUpdate.forEach(clientId => {
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          const scoreBreakdown = calculateClientScore(clientId, budgets);
+          if (client.score !== scoreBreakdown.finalScore) {
+            updates.push({ clientId, newScore: scoreBreakdown.finalScore, oldScore: client.score });
+          }
+        }
+      });
+
+      if (updates.length === 0) return;
+
+      try {
+        await Promise.all(updates.map(async ({ clientId, newScore, oldScore }) => {
+          const reason = newScore > oldScore ? 'Melhoria de score' : 'Recálculo automático';
           try {
-            const { data: historyData } = await supabase.from('score_history').insert({
+            const { data: historyData, error: histError } = await supabase.from('score_history').insert({
               workspace_id: workspaceId,
               client_id: clientId,
-              score: scoreBreakdown.finalScore,
-              previous_score: client.score,
+              score: newScore,
+              previous_score: oldScore,
               reason,
             }).select().single();
+            if (histError) console.error('[CRM] Erro ao inserir score_history:', histError.message);
             if (historyData) setScoreHistory(prev => [...prev, scoreHistoryFromDb(historyData)]);
-          } catch {}
-          // Update client score
-          await supabase.from('clients').update({ score: scoreBreakdown.finalScore }).eq('id', clientId);
-          setClients(prev => prev.map(c =>
-            c.id === clientId ? { ...c, score: scoreBreakdown.finalScore, updatedAt: new Date() } : c
-          ));
-        }
+          } catch (e: any) {
+            console.error('[CRM] Exceção ao inserir score_history:', e.message);
+          }
+          const { error: updateError } = await supabase.from('clients').update({ score: newScore }).eq('id', clientId).eq('workspace_id', workspaceId);
+          if (updateError) console.error('[CRM] Erro ao atualizar score do cliente:', updateError.message);
+        }));
+
+        // Batch update local state once
+        setClients(prev => prev.map(c => {
+          const update = updates.find(u => u.clientId === c.id);
+          return update ? { ...c, score: update.newScore, updatedAt: new Date() } : c;
+        }));
+      } catch (e: any) {
+        console.error('[CRM] Erro no recálculo de scores:', e.message);
       }
-    });
-  }, [budgets, workspaceId, isLoading]);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
+    };
+  }, [budgets, workspaceId, isLoading, clients]);
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
@@ -562,13 +601,23 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const reorderKanbanColumns = async (newColumns: KanbanColumn[]) => {
+    const previousColumns = kanbanColumns;
     const reordered = newColumns.map((col, index) => ({ ...col, order: index }));
     setKanbanColumns(reordered);
     try {
-      for (const col of reordered) {
-        await supabase.from('kanban_columns').update({ order: col.order }).eq('id', col.id);
+      const results = await Promise.all(
+        reordered.map(col => supabase.from('kanban_columns').update({ order: col.order }).eq('id', col.id))
+      );
+      const failed = results.find(r => r.error);
+      if (failed?.error) {
+        console.error('[CRM] Erro ao reordenar colunas:', failed.error.message);
+        toast.error('Erro ao reordenar colunas');
+        setKanbanColumns(previousColumns); // rollback
       }
-    } catch (e: any) { toast.error('Erro: ' + e.message); }
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+      setKanbanColumns(previousColumns); // rollback
+    }
   };
 
   const getStatusLabel = (status: CRMStatus): string => {
@@ -742,8 +791,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteBudget = async (id: string) => {
+    const wsId = await ensureWorkspace();
     try {
-      await supabase.from('budget_versions').delete().eq('budget_id', id);
+      const { error: versionsError } = await supabase.from('budget_versions').delete().eq('budget_id', id).eq('workspace_id', wsId || '');
+      if (versionsError) console.error('[CRM] Erro ao deletar versões:', versionsError.message);
       const { error } = await supabase.from('budgets').delete().eq('id', id);
       if (error) throw error;
       setBudgets(prev => prev.filter(b => b.id !== id));
@@ -914,156 +965,182 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   // ============= Execution functions (update JSONB on budget) =============
-  const persistExecution = async (budgetId: string, execution: ProjectExecution) => {
+  const persistExecution = async (budgetId: string, execution: ProjectExecution): Promise<boolean> => {
     try {
       const { error } = await supabase.from('budgets').update({ execution: execution as any }).eq('id', budgetId);
       if (error) {
-        console.error('Error persisting execution:', error);
+        console.error('[CRM] Error persisting execution:', error);
         toast.error('Erro ao salvar dados de execução: ' + error.message);
+        return false;
       }
+      return true;
     } catch (e: any) {
-      console.error('Error persisting execution:', e);
+      console.error('[CRM] Error persisting execution:', e);
       toast.error('Erro ao salvar dados de execução');
+      return false;
     }
   };
 
-  const updateExecution = (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = { ...budget.execution, ...executionUpdates, updatedAt: new Date() };
-        if (executionUpdates.nfTaxValue !== undefined) {
-          const totalServiceValue = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
-          updatedExecution.services = updatedExecution.services.map(service => ({
-            ...service, nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
-          }));
+  const updateExecution = async (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedExecution = { ...budget.execution, ...executionUpdates, updatedAt: new Date() };
+    if (executionUpdates.nfTaxValue !== undefined) {
+      const totalServiceValue = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
+      updatedExecution.services = updatedExecution.services.map(service => ({
+        ...service, nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
+      }));
+    }
+    if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
+      const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
+      const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+      const extraOpTotal = (updatedExecution.extraOperationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+      updatedExecution.realTotal = serviceTotal + opTotal + extraOpTotal;
+      const finalValue = budget.finalValue || updatedExecution.budgetedTotal;
+      updatedExecution.realMargin = finalValue > 0 ? ((finalValue - updatedExecution.realTotal) / finalValue) * 100 : 0;
+    }
+
+    // Optimistic update
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      // Rollback
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
+  };
+
+  const updateExecutionCost = async (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost = false) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        let updatedCosts = service.costs;
+        let updatedExtraCosts = service.extraCosts || [];
+        if (isExtraCost) {
+          updatedExtraCosts = updatedExtraCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
+        } else {
+          updatedCosts = updatedCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
         }
-        if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
-          const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
-          const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
-          const extraOpTotal = (updatedExecution.extraOperationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
-          updatedExecution.realTotal = serviceTotal + opTotal + extraOpTotal;
-          const finalValue = budget.finalValue || updatedExecution.budgetedTotal;
-          updatedExecution.realMargin = finalValue > 0 ? ((finalValue - updatedExecution.realTotal) / finalValue) * 100 : 0;
-        }
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+        const realTotal = updatedCosts.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, costs: updatedCosts, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const updateExecutionCost = (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost = false) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            let updatedCosts = service.costs;
-            let updatedExtraCosts = service.extraCosts || [];
-            if (isExtraCost) {
-              updatedExtraCosts = updatedExtraCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
-            } else {
-              updatedCosts = updatedCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
-            }
-            const realTotal = updatedCosts.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, costs: updatedCosts, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+  const addExtraCost = async (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        const newCost: ExecutionCostItem = { ...cost, id: uuidv4(), budgetedValue: 0 };
+        const updatedExtraCosts = [...(service.extraCosts || []), newCost];
+        const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const addExtraCost = (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            const newCost: ExecutionCostItem = { ...cost, id: uuidv4(), budgetedValue: 0 };
-            const updatedExtraCosts = [...(service.extraCosts || []), newCost];
-            const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+  const removeExtraCost = async (budgetId: string, serviceId: string, costId: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        const updatedExtraCosts = (service.extraCosts || []).filter(c => c.id !== costId);
+        const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const removeExtraCost = (budgetId: string, serviceId: string, costId: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            const updatedExtraCosts = (service.extraCosts || []).filter(c => c.id !== costId);
-            const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+  const finalizeExecution = async (budgetId: string, finalReport?: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedExecution = {
+      ...budget.execution, isFinalized: true, finalizedAt: new Date(),
+      finalReport: finalReport || budget.execution.finalReport, updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const finalizeExecution = (budgetId: string, finalReport?: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = {
-          ...budget.execution, isFinalized: true, finalizedAt: new Date(),
-          finalReport: finalReport || budget.execution.finalReport, updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+  const addDeliveryLink = async (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const newLink: DeliveryLink = { ...link, id: uuidv4(), createdAt: new Date() };
+    const updatedExecution = {
+      ...budget.execution, deliveryLinks: [...budget.execution.deliveryLinks, newLink], updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const addDeliveryLink = (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const newLink: DeliveryLink = { ...link, id: uuidv4(), createdAt: new Date() };
-        const updatedExecution = {
-          ...budget.execution, deliveryLinks: [...budget.execution.deliveryLinks, newLink], updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
-  };
+  const removeDeliveryLink = async (budgetId: string, linkId: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
 
-  const removeDeliveryLink = (budgetId: string, linkId: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = {
-          ...budget.execution, deliveryLinks: budget.execution.deliveryLinks.filter(l => l.id !== linkId), updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+    const updatedExecution = {
+      ...budget.execution, deliveryLinks: budget.execution.deliveryLinks.filter(l => l.id !== linkId), updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
   // ============= Hard Drive functions =============
@@ -1250,7 +1327,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     const col = projectColumns.find(c => c.id === id);
     if (col?.isDefault) return;
     try {
-      const firstCol = projectColumns.sort((a, b) => a.order - b.order)[0];
+      const firstCol = [...projectColumns].sort((a, b) => a.order - b.order)[0];
       if (firstCol && col) {
         await supabase.from('project_cards').update({ status: firstCol.key }).eq('workspace_id', workspaceId!).eq('status', col.key);
         setProjectCards(prev => prev.map(card => card.status === col.key ? { ...card, status: firstCol.key } : card));
