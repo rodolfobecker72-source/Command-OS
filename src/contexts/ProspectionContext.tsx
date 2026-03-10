@@ -90,6 +90,7 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
       return;
     }
     const load = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase.from('prospection_leads').select('*').eq('workspace_id', workspaceId);
         if (error) throw error;
