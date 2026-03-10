@@ -593,7 +593,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       const firstColumn = kanbanColumns.find(c => c.order === 0);
       if (firstColumn && column) {
         // Move budgets from deleted column to first column
-        await supabase.from('budgets').update({ status: firstColumn.key }).eq('workspace_id', workspaceId!).eq('status', column.key);
+        const { error: moveError } = await supabase.from('budgets').update({ status: firstColumn.key }).eq('workspace_id', workspaceId!).eq('status', column.key);
+        if (moveError) console.error('[CRM] deleteKanbanColumn: erro ao mover budgets:', moveError.message);
         setBudgets(prev => prev.map(b => b.status === column.key ? { ...b, status: firstColumn.key } : b));
       }
       setKanbanColumns(prev => prev.filter(col => col.id !== id));
