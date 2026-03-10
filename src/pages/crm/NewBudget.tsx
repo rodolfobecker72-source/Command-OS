@@ -136,6 +136,7 @@ export function NewBudget() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // Sincronizar proposalId quando budgets carregam
   useEffect(() => {

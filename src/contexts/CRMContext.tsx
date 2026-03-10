@@ -643,7 +643,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
     if (!ensureWorkspace()) return null;
     try {
-      const { data, error } = await supabase.from('budgets').insert({
+      const { data, error } = await withTimeout(supabase.from('budgets').insert({
         workspace_id: workspaceId,
         proposal_id: budgetData.proposalId,
         project_name: budgetData.projectName,
@@ -664,7 +664,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         execution_end_date: budgetData.executionEndDate?.toISOString() || null,
         location: budgetData.location ?? '',
         status: budgetData.status,
-      }).select().single();
+      }).select().single());
       if (error) throw error;
       const newBudget = budgetFromDb(data, []);
       setBudgets(prev => [...prev, newBudget]);
