@@ -271,6 +271,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const { workspace, session, isLoading: authLoading } = useAuth();
   const workspaceId = workspace?.id;
 
+  // Refs to avoid stale closures in ensureWorkspace
+  const sessionRef = useRef(session);
+  const workspaceIdRef = useRef(workspaceId);
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { workspaceIdRef.current = workspaceId; }, [workspaceId]);
+
+  // Ref for score recalculation debounce
+  const scoreRecalcTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
