@@ -556,7 +556,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     return () => {
       if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
     };
-  }, [budgets, workspaceId, isLoading, clients]);
+  }, [budgets, workspaceId, isLoading]);
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
