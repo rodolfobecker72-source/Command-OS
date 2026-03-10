@@ -135,6 +135,7 @@ export function NewBudget() {
   const [clientSearch, setClientSearch] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sincronizar proposalId quando budgets carregam
   useEffect(() => {
@@ -297,7 +298,7 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit chamado', { crmLoading, formData, servicesCount: services.length });
+    if (isSubmitting) return;
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -305,7 +306,6 @@ export function NewBudget() {
       toast.error('Preencha os campos obrigatórios', {
         description: errorMessages.join(', '),
       });
-      // Scroll to first error field
       const firstErrorKey = Object.keys(validationErrors)[0];
       const el = document.getElementById(firstErrorKey);
       if (el) {
@@ -315,10 +315,16 @@ export function NewBudget() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      console.log('Iniciando salvamento do orçamento...', { formData, services, operationalCosts });
-      
-      // Criar orçamento para cada serviço ou um orçamento com todos os serviços
+      console.log('Iniciando salvamento do orçamento...');
+
+      // Timeout de segurança para não travar infinitamente
+      const timeoutId = setTimeout(() => {
+        setIsSubmitting(false);
+        toast.error('O salvamento demorou demais. Verifique sua conexão e tente novamente.');
+      }, 15000);
+
       const firstService = services[0];
       const newBudget = await addBudget({
         proposalId: formData.proposalId.trim(),
@@ -342,14 +348,14 @@ export function NewBudget() {
         status: formData.status,
       });
 
-      console.log('Resultado addBudget:', newBudget);
+      clearTimeout(timeoutId);
 
       if (!newBudget) {
+        setIsSubmitting(false);
         toast.error('Erro ao salvar orçamento. Aguarde o carregamento dos dados e tente novamente.');
         return;
       }
 
-      // Criar versão com todos os custos e serviços
       await addBudgetVersion(newBudget.id, {
         services: services.map(s => ({
           id: s.id,
@@ -379,6 +385,8 @@ export function NewBudget() {
     } catch (error: any) {
       console.error('Erro ao salvar orçamento:', error);
       toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1407,9 +1415,9 @@ export function NewBudget() {
               <Download className="w-4 h-4 mr-2" />
               Gerar PDF
             </Button>
-            <Button type="submit" className="flex-1 btn-hero">
+            <Button type="submit" className="flex-1 btn-hero" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              Salvar Orçamento
+              {isSubmitting ? 'Salvando...' : 'Salvar Orçamento'}
             </Button>
           </div>
         </form>

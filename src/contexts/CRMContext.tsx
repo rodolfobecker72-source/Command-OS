@@ -405,12 +405,26 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
-  // Helper: check workspace ready before any mutation
-  const ensureWorkspace = (): boolean => {
-    if (!session) {
-      console.error('[CRM] Sessão expirada - sem session no contexto');
-      toast.error('Sua sessão expirou. Faça login novamente.');
-      supabase.auth.signOut();
+  // Helper: check workspace ready before any mutation (async with timeout)
+  const ensureWorkspace = async (): Promise<boolean> => {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('session_check_timeout')), 5000)
+      );
+      const sessionPromise = supabase.auth.getSession();
+      const { data: { session: currentSession } } = await Promise.race([sessionPromise, timeoutPromise]);
+
+      if (!currentSession) {
+        console.error('[CRM] Sessão expirada - getSession retornou null');
+        toast.error('Sua sessão expirou. Faça login novamente.');
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+        return false;
+      }
+    } catch (err) {
+      console.error('[CRM] Erro ao verificar sessão:', err);
+      toast.error('Erro ao verificar sessão. Faça login novamente.');
+      await supabase.auth.signOut();
       window.location.href = '/login';
       return false;
     }
@@ -424,7 +438,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId!) }).select().single();
       if (error) throw error;
@@ -495,7 +509,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const maxOrder = Math.max(...kanbanColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('kanban_columns').insert({
@@ -552,7 +566,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Service Category functions =============
   const addServiceCategory = async (categoryData: Omit<ServiceCategory, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const maxOrder = Math.max(...serviceCategories.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('service_categories').insert({
@@ -589,7 +603,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const categoryObjectives = serviceObjectives.filter(o => o.categoryKey === objectiveData.categoryKey);
     const maxOrder = Math.max(...categoryObjectives.map(o => o.order), -1);
     try {
@@ -631,7 +645,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Budget functions =============
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('budgets').insert({
         workspace_id: workspaceId,
@@ -713,7 +727,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
     if (budget) {
@@ -1006,7 +1020,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Hard Drive functions =============
   const addHardDrive = async (hdData: Omit<HardDrive, 'id' | 'projects' | 'createdAt'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     try {
       const { data, error } = await supabase.from('hard_drives').insert({
         workspace_id: workspaceId, label: hdData.label, capacity_gb: hdData.capacityGB, projects: [] as any,
@@ -1060,7 +1074,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Legacy Project functions =============
   const addLegacyProject = async (projectData: Omit<LegacyProject, 'id' | 'createdAt'>): Promise<LegacyProject | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('legacy_projects').insert({
         workspace_id: workspaceId, project_number: projectData.projectNumber,
@@ -1092,7 +1106,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Asset functions =============
   const addAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('assets').insert({
         workspace_id: workspaceId, name: assetData.name, description: assetData.description,
@@ -1156,7 +1170,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addProjectColumn = async (colData: Omit<ProjectColumn, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const maxOrder = Math.max(...projectColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('project_columns').insert({
