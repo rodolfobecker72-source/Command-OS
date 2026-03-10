@@ -1156,7 +1156,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addProjectColumn = async (colData: Omit<ProjectColumn, 'id' | 'order'>) => {
-    if (!(await ensureWorkspace())) return;
+    if (!ensureWorkspace()) return;
     const maxOrder = Math.max(...projectColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('project_columns').insert({
