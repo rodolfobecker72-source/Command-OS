@@ -735,16 +735,17 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
     if (budget) {
       currentVersion = budget.currentVersion;
     } else {
       // Budget recém-criado, state ainda não atualizou - buscar do DB
-      const { data: budgetData, error: fetchError } = await withTimeout(supabase
+      const { data: budgetData, error: fetchError } = await supabase
         .from('budgets').select('current_version')
-        .eq('id', budgetId).single());
+        .eq('id', budgetId).single();
       if (fetchError) {
         toast.error('Erro ao buscar orçamento: ' + fetchError.message);
         return;
@@ -753,8 +754,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
     const newVersionNum = currentVersion + 1;
     try {
-      const { data, error } = await withTimeout(supabase.from('budget_versions').insert({
-        workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
+      const { data, error } = await supabase.from('budget_versions').insert({
+        workspace_id: wsId, budget_id: budgetId, version: newVersionNum,
         services: versionData.services as any, operational_costs: versionData.operationalCosts as any,
         costs: versionData.costs as any, production_cost: versionData.productionCost,
         fixed_cost_percentage: versionData.fixedCostPercentage, nf_cost_percentage: versionData.nfCostPercentage,
