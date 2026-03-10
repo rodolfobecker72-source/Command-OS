@@ -383,6 +383,7 @@ export function NewBudget() {
       toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
