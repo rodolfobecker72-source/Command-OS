@@ -405,12 +405,26 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
-  // Helper: check workspace ready before any mutation
-  const ensureWorkspace = (): boolean => {
-    if (!session) {
-      console.error('[CRM] Sessão expirada - sem session no contexto');
-      toast.error('Sua sessão expirou. Faça login novamente.');
-      supabase.auth.signOut();
+  // Helper: check workspace ready before any mutation (async with timeout)
+  const ensureWorkspace = async (): Promise<boolean> => {
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('session_check_timeout')), 5000)
+      );
+      const sessionPromise = supabase.auth.getSession();
+      const { data: { session: currentSession } } = await Promise.race([sessionPromise, timeoutPromise]);
+
+      if (!currentSession) {
+        console.error('[CRM] Sessão expirada - getSession retornou null');
+        toast.error('Sua sessão expirou. Faça login novamente.');
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+        return false;
+      }
+    } catch (err) {
+      console.error('[CRM] Erro ao verificar sessão:', err);
+      toast.error('Erro ao verificar sessão. Faça login novamente.');
+      await supabase.auth.signOut();
       window.location.href = '/login';
       return false;
     }
