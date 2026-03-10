@@ -119,9 +119,11 @@ export function UsersPage() {
     setIsLoading(false);
   };
 
+  const workspaceId = workspace?.id;
+
   useEffect(() => {
     loadMembers();
-  }, [workspace]);
+  }, [workspaceId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

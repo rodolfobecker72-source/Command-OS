@@ -420,12 +420,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         console.error('Error loading CRM data:', error);
         toast.error('Erro ao carregar dados do CRM');
       } finally {
+        clearTimeout(safetyTimeout);
+        lastLoadedWorkspaceRef.current = workspaceId;
         setIsLoading(false);
       }
     };
 
     loadAll();
-  }, [workspaceId]); // Removed authLoading — workspaceId is undefined until auth finishes, so it's redundant
+  }, [workspaceId]);
 
   // Helper: check workspace ready before any mutation, with DB fallback
   // Uses refs to avoid stale closures
