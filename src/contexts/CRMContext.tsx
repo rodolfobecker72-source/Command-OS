@@ -1092,7 +1092,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Asset functions =============
   const addAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>): Promise<Asset | null> => {
-    if (!(await ensureWorkspace())) return null;
+    if (!ensureWorkspace()) return null;
     try {
       const { data, error } = await supabase.from('assets').insert({
         workspace_id: workspaceId, name: assetData.name, description: assetData.description,
