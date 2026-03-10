@@ -1182,11 +1182,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addProjectColumn = async (colData: Omit<ProjectColumn, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     const maxOrder = Math.max(...projectColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('project_columns').insert({
-        workspace_id: workspaceId, key: colData.key, label: colData.label,
+        workspace_id: wsId, key: colData.key, label: colData.label,
         color: colData.color, order: maxOrder + 1, is_default: colData.isDefault || false,
       }).select().single();
       if (error) throw error;
