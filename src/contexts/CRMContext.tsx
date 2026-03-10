@@ -405,6 +405,16 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
+  // Helper: wraps a supabase promise with a timeout to prevent infinite hangs
+  const withTimeout = <T,>(promise: PromiseLike<T>, ms = 15000): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error('A operação excedeu o tempo limite. Faça logout e login novamente.')), ms)
+      ),
+    ]);
+  };
+
   // Helper: check workspace ready before any mutation (uses in-memory session)
   const ensureWorkspace = (): boolean => {
     if (!session) {
