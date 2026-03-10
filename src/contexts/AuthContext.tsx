@@ -54,43 +54,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const role = membership?.role as AppRole | null;
 
-  const loadUserData = async (userId: string) => {
-    try {
-      // Load profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      setProfile(profileData as Profile | null);
-
-      // Load workspace membership
-      const { data: memberData } = await supabase
-        .from('workspace_members')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1)
-        .single();
-
-      if (memberData) {
-        setMembership(memberData as unknown as WorkspaceMember);
-
-        // Load workspace
-        const { data: wsData } = await supabase
-          .from('workspaces')
+  const loadUserData = async (userId: string, retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Load profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
           .select('*')
-          .eq('id', (memberData as any).workspace_id)
+          .eq('id', userId)
+          .single();
+        
+        if (profileError) {
+          console.error(`[Auth] Attempt ${attempt}: Failed to load profile:`, profileError.message);
+          if (attempt < retries) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+        }
+        setProfile(profileData as Profile | null);
+
+        // Load workspace membership
+        const { data: memberData, error: memberError } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .eq('user_id', userId)
+          .limit(1)
           .single();
 
-        setWorkspace(wsData as Workspace | null);
-      } else {
-        setMembership(null);
-        setWorkspace(null);
+        if (memberError) {
+          console.error(`[Auth] Attempt ${attempt}: Failed to load workspace_members:`, memberError.message);
+          if (attempt < retries) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+        }
+
+        if (memberData) {
+          setMembership(memberData as unknown as WorkspaceMember);
+
+          // Load workspace
+          const { data: wsData, error: wsError } = await supabase
+            .from('workspaces')
+            .select('*')
+            .eq('id', (memberData as any).workspace_id)
+            .single();
+
+          if (wsError) {
+            console.error(`[Auth] Attempt ${attempt}: Failed to load workspace:`, wsError.message);
+            if (attempt < retries) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+          }
+
+          setWorkspace(wsData as Workspace | null);
+          console.log('[Auth] User data loaded successfully. Workspace:', (wsData as any)?.id);
+        } else {
+          setMembership(null);
+          setWorkspace(null);
+          console.warn('[Auth] No workspace membership found for user:', userId);
+        }
+        // Success — break the retry loop
+        return;
+      } catch (error) {
+        console.error(`[Auth] Attempt ${attempt}: Unexpected error loading user data:`, error);
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
       }
-    } catch (error) {
-      console.error('Error loading user data:', error);
     }
+    console.error('[Auth] All retry attempts exhausted for loadUserData');
   };
 
   useEffect(() => {

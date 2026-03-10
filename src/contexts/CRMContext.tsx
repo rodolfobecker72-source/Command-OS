@@ -405,31 +405,38 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
-  // Helper: wraps a supabase promise with a timeout to prevent infinite hangs
-  const withTimeout = <T,>(promise: PromiseLike<T>, ms = 15000): Promise<T> => {
-    return Promise.race([
-      promise,
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error('A operação excedeu o tempo limite. Faça logout e login novamente.')), ms)
-      ),
-    ]);
-  };
-
-  // Helper: check workspace ready before any mutation (uses in-memory session)
-  const ensureWorkspace = (): boolean => {
+  // Helper: check workspace ready before any mutation, with DB fallback
+  const ensureWorkspace = async (): Promise<string | null> => {
     if (!session) {
       console.error('[CRM] Sessão não encontrada no contexto');
       toast.error('Sua sessão expirou. Faça login novamente.');
       supabase.auth.signOut();
       window.location.href = '/login';
-      return false;
+      return null;
     }
-    if (!workspaceId) {
-      console.error('[CRM] workspaceId é null - operação bloqueada');
-      toast.error('Workspace não carregado. Tente recarregar a página.');
-      return false;
+    if (workspaceId) return workspaceId;
+
+    // Fallback: query workspace_members directly
+    console.warn('[CRM] workspaceId is null in state, querying DB as fallback...');
+    try {
+      const { data, error } = await supabase
+        .from('workspace_members')
+        .select('workspace_id')
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .single();
+      if (error || !data) {
+        console.error('[CRM] Fallback query failed:', error?.message);
+        toast.error('Workspace não encontrado. Tente recarregar a página.');
+        return null;
+      }
+      console.log('[CRM] Fallback workspace_id:', data.workspace_id);
+      return data.workspace_id;
+    } catch (e: any) {
+      console.error('[CRM] Fallback exception:', e.message);
+      toast.error('Erro ao buscar workspace. Recarregue a página.');
+      return null;
     }
-    return true;
   };
 
   // ============= Client functions =============
