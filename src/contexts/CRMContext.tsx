@@ -727,7 +727,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
   const addBudgetVersion = async (budgetId: string, versionData: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     let currentVersion: number;
     const budget = budgets.find(b => b.id === budgetId);
     if (budget) {
