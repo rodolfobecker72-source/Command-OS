@@ -633,7 +633,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Budget functions =============
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('budgets').insert({
         workspace_id: workspaceId,
