@@ -282,6 +282,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
+  const clientsRef = useRef(clients);
+  useEffect(() => { clientsRef.current = clients; }, [clients]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [kanbanColumns, setKanbanColumns] = useState<KanbanColumn[]>([]);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
