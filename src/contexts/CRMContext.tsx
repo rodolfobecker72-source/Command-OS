@@ -416,15 +416,19 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [workspaceId, authLoading]);
 
   // Helper: check workspace ready before any mutation, with DB fallback
-  const ensureWorkspace = async (): Promise<string | null> => {
-    if (!session) {
+  // Uses refs to avoid stale closures
+  const ensureWorkspace = useCallback(async (): Promise<string | null> => {
+    const currentSession = sessionRef.current;
+    const currentWorkspaceId = workspaceIdRef.current;
+
+    if (!currentSession) {
       console.error('[CRM] Sessão não encontrada no contexto');
       toast.error('Sua sessão expirou. Faça login novamente.');
       supabase.auth.signOut();
       window.location.href = '/login';
       return null;
     }
-    if (workspaceId) return workspaceId;
+    if (currentWorkspaceId) return currentWorkspaceId;
 
     // Fallback: query workspace_members directly
     console.warn('[CRM] workspaceId is null in state, querying DB as fallback...');
@@ -432,7 +436,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('workspace_members')
         .select('workspace_id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', currentSession.user.id)
         .limit(1)
         .maybeSingle();
       if (error) {
@@ -452,7 +456,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       toast.error('Erro ao buscar workspace. Recarregue a página.');
       return null;
     }
-  };
+  }, []);
 
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
