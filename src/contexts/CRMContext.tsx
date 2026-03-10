@@ -763,7 +763,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         discount4_price: versionData.discount4Price, discount5_price: versionData.discount5Price,
         margin: versionData.margin, reason: versionData.reason,
         is_rejected: versionData.isRejected || false, rejection_reason: versionData.rejectionReason || null,
-      }).select().single());
+      }).select().single();
       if (error) throw error;
 
       await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
