@@ -609,12 +609,13 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    const wsId = await ensureWorkspace();
+    if (!wsId) return;
     const categoryObjectives = serviceObjectives.filter(o => o.categoryKey === objectiveData.categoryKey);
     const maxOrder = Math.max(...categoryObjectives.map(o => o.order), -1);
     try {
       const { data, error } = await supabase.from('service_objectives').insert({
-        workspace_id: workspaceId, category_key: objectiveData.categoryKey,
+        workspace_id: wsId, category_key: objectiveData.categoryKey,
         key: objectiveData.key, label: objectiveData.label, order: maxOrder + 1,
       }).select().single();
       if (error) throw error;
