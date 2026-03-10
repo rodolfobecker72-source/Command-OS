@@ -656,7 +656,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     if (category?.isDefault) return;
     try {
       // Delete related objectives
-      await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId!).eq('category_key', category!.key);
+      const { error: objDelError } = await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId!).eq('category_key', category!.key);
+      if (objDelError) console.error('[CRM] deleteServiceCategory: erro ao deletar objetivos:', objDelError.message);
       const { error } = await supabase.from('service_categories').delete().eq('id', id);
       if (error) throw error;
       setServiceObjectives(prev => prev.filter(obj => obj.categoryKey !== category?.key));
