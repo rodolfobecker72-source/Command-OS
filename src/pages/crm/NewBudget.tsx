@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -136,6 +136,7 @@ export function NewBudget() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // Sincronizar proposalId quando budgets carregam
   useEffect(() => {
@@ -298,7 +299,7 @@ export function NewBudget() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submittingRef.current) return;
 
     const validationErrors = validateForm();
     if (validationErrors) {
@@ -315,15 +316,10 @@ export function NewBudget() {
       return;
     }
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
       console.log('Iniciando salvamento do orçamento...');
-
-      // Timeout de segurança para não travar infinitamente
-      const timeoutId = setTimeout(() => {
-        setIsSubmitting(false);
-        toast.error('O salvamento demorou demais. Verifique sua conexão e tente novamente.');
-      }, 15000);
 
       const firstService = services[0];
       const newBudget = await addBudget({
@@ -348,7 +344,7 @@ export function NewBudget() {
         status: formData.status,
       });
 
-      clearTimeout(timeoutId);
+      
 
       if (!newBudget) {
         setIsSubmitting(false);
@@ -387,6 +383,7 @@ export function NewBudget() {
       toast.error('Erro ao salvar orçamento: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsSubmitting(false);
+      submittingRef.current = false;
     }
   };
 

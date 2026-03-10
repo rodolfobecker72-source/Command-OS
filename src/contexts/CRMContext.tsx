@@ -405,6 +405,16 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     loadAll();
   }, [workspaceId, authLoading]);
 
+  // Helper: wraps a supabase promise with a timeout to prevent infinite hangs
+  const withTimeout = <T,>(promise: PromiseLike<T>, ms = 15000): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error('A operação excedeu o tempo limite. Faça logout e login novamente.')), ms)
+      ),
+    ]);
+  };
+
   // Helper: check workspace ready before any mutation (uses in-memory session)
   const ensureWorkspace = (): boolean => {
     if (!session) {
@@ -426,7 +436,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
     if (!ensureWorkspace()) return null;
     try {
-      const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId!) }).select().single();
+      const { data, error } = await withTimeout(supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId!) }).select().single());
       if (error) throw error;
       const newClient = clientFromDb(data);
       setClients(prev => [...prev, newClient]);
@@ -633,7 +643,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const addBudget = async (budgetData: Omit<Budget, 'id' | 'versions' | 'currentVersion' | 'approvedVersion' | 'approvalDate' | 'finalValue' | 'contractUrl' | 'nfUrl' | 'execution' | 'createdAt' | 'updatedAt'>): Promise<Budget | null> => {
     if (!ensureWorkspace()) return null;
     try {
-      const { data, error } = await supabase.from('budgets').insert({
+      const { data, error } = await withTimeout(supabase.from('budgets').insert({
         workspace_id: workspaceId,
         proposal_id: budgetData.proposalId,
         project_name: budgetData.projectName,
@@ -654,7 +664,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         execution_end_date: budgetData.executionEndDate?.toISOString() || null,
         location: budgetData.location ?? '',
         status: budgetData.status,
-      }).select().single();
+      }).select().single());
       if (error) throw error;
       const newBudget = budgetFromDb(data, []);
       setBudgets(prev => [...prev, newBudget]);
@@ -720,9 +730,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       currentVersion = budget.currentVersion;
     } else {
       // Budget recém-criado, state ainda não atualizou - buscar do DB
-      const { data: budgetData, error: fetchError } = await supabase
+      const { data: budgetData, error: fetchError } = await withTimeout(supabase
         .from('budgets').select('current_version')
-        .eq('id', budgetId).single();
+        .eq('id', budgetId).single());
       if (fetchError) {
         toast.error('Erro ao buscar orçamento: ' + fetchError.message);
         return;
@@ -731,7 +741,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
     const newVersionNum = currentVersion + 1;
     try {
-      const { data, error } = await supabase.from('budget_versions').insert({
+      const { data, error } = await withTimeout(supabase.from('budget_versions').insert({
         workspace_id: workspaceId, budget_id: budgetId, version: newVersionNum,
         services: versionData.services as any, operational_costs: versionData.operationalCosts as any,
         costs: versionData.costs as any, production_cost: versionData.productionCost,
@@ -740,7 +750,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         discount4_price: versionData.discount4Price, discount5_price: versionData.discount5Price,
         margin: versionData.margin, reason: versionData.reason,
         is_rejected: versionData.isRejected || false, rejection_reason: versionData.rejectionReason || null,
-      }).select().single();
+      }).select().single());
       if (error) throw error;
 
       await supabase.from('budgets').update({ current_version: newVersionNum }).eq('id', budgetId);
