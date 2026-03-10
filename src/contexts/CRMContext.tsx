@@ -406,13 +406,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [workspaceId, authLoading]);
 
   // Helper: check workspace ready before any mutation
-  const ensureWorkspace = async (): Promise<boolean> => {
-    // Check auth session first
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (!currentSession) {
-      console.error('[CRM] Sessão expirada - redirecionando para login');
+  const ensureWorkspace = (): boolean => {
+    if (!session) {
+      console.error('[CRM] Sessão expirada - sem session no contexto');
       toast.error('Sua sessão expirou. Faça login novamente.');
-      await supabase.auth.signOut();
+      supabase.auth.signOut();
       window.location.href = '/login';
       return false;
     }
