@@ -497,7 +497,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
-    if (!ensureWorkspace()) return;
+    if (!(await ensureWorkspace())) return;
     const maxOrder = Math.max(...kanbanColumns.map(c => c.order), -1);
     try {
       const { data, error } = await supabase.from('kanban_columns').insert({
