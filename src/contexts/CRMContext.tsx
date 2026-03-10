@@ -206,13 +206,13 @@ interface CRMContextType {
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
   approveBudget: (budgetId: string, versionNumber: number) => Promise<void>;
 
-  updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => void;
-  updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => void;
-  addExtraCost: (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => void;
-  removeExtraCost: (budgetId: string, serviceId: string, costId: string) => void;
-  finalizeExecution: (budgetId: string, finalReport?: string) => void;
-  addDeliveryLink: (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => void;
-  removeDeliveryLink: (budgetId: string, linkId: string) => void;
+  updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => Promise<void>;
+  updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => Promise<void>;
+  addExtraCost: (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => Promise<void>;
+  removeExtraCost: (budgetId: string, serviceId: string, costId: string) => Promise<void>;
+  finalizeExecution: (budgetId: string, finalReport?: string) => Promise<void>;
+  addDeliveryLink: (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => Promise<void>;
+  removeDeliveryLink: (budgetId: string, linkId: string) => Promise<void>;
 
   kanbanColumns: KanbanColumn[];
   addKanbanColumn: (column: Omit<KanbanColumn, 'id' | 'order'>) => Promise<void>;
