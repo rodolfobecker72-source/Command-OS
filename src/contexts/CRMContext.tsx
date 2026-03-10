@@ -953,156 +953,182 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   // ============= Execution functions (update JSONB on budget) =============
-  const persistExecution = async (budgetId: string, execution: ProjectExecution) => {
+  const persistExecution = async (budgetId: string, execution: ProjectExecution): Promise<boolean> => {
     try {
       const { error } = await supabase.from('budgets').update({ execution: execution as any }).eq('id', budgetId);
       if (error) {
-        console.error('Error persisting execution:', error);
+        console.error('[CRM] Error persisting execution:', error);
         toast.error('Erro ao salvar dados de execução: ' + error.message);
+        return false;
       }
+      return true;
     } catch (e: any) {
-      console.error('Error persisting execution:', e);
+      console.error('[CRM] Error persisting execution:', e);
       toast.error('Erro ao salvar dados de execução');
+      return false;
     }
   };
 
-  const updateExecution = (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = { ...budget.execution, ...executionUpdates, updatedAt: new Date() };
-        if (executionUpdates.nfTaxValue !== undefined) {
-          const totalServiceValue = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
-          updatedExecution.services = updatedExecution.services.map(service => ({
-            ...service, nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
-          }));
+  const updateExecution = async (budgetId: string, executionUpdates: Partial<ProjectExecution>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedExecution = { ...budget.execution, ...executionUpdates, updatedAt: new Date() };
+    if (executionUpdates.nfTaxValue !== undefined) {
+      const totalServiceValue = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
+      updatedExecution.services = updatedExecution.services.map(service => ({
+        ...service, nfTaxProportion: totalServiceValue > 0 ? (service.realTotal / totalServiceValue) * executionUpdates.nfTaxValue! : 0,
+      }));
+    }
+    if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
+      const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
+      const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+      const extraOpTotal = (updatedExecution.extraOperationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
+      updatedExecution.realTotal = serviceTotal + opTotal + extraOpTotal;
+      const finalValue = budget.finalValue || updatedExecution.budgetedTotal;
+      updatedExecution.realMargin = finalValue > 0 ? ((finalValue - updatedExecution.realTotal) / finalValue) * 100 : 0;
+    }
+
+    // Optimistic update
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      // Rollback
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
+  };
+
+  const updateExecutionCost = async (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost = false) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        let updatedCosts = service.costs;
+        let updatedExtraCosts = service.extraCosts || [];
+        if (isExtraCost) {
+          updatedExtraCosts = updatedExtraCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
+        } else {
+          updatedCosts = updatedCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
         }
-        if (executionUpdates.operationalCosts || executionUpdates.extraOperationalCosts) {
-          const serviceTotal = updatedExecution.services.reduce((sum, s) => sum + s.realTotal, 0);
-          const opTotal = (updatedExecution.operationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
-          const extraOpTotal = (updatedExecution.extraOperationalCosts || []).reduce((sum, c) => sum + c.realValue, 0);
-          updatedExecution.realTotal = serviceTotal + opTotal + extraOpTotal;
-          const finalValue = budget.finalValue || updatedExecution.budgetedTotal;
-          updatedExecution.realMargin = finalValue > 0 ? ((finalValue - updatedExecution.realTotal) / finalValue) * 100 : 0;
-        }
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+        const realTotal = updatedCosts.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, costs: updatedCosts, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const updateExecutionCost = (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost = false) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            let updatedCosts = service.costs;
-            let updatedExtraCosts = service.extraCosts || [];
-            if (isExtraCost) {
-              updatedExtraCosts = updatedExtraCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
-            } else {
-              updatedCosts = updatedCosts.map(cost => cost.id === costId ? { ...cost, ...updates } : cost);
-            }
-            const realTotal = updatedCosts.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, costs: updatedCosts, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+  const addExtraCost = async (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        const newCost: ExecutionCostItem = { ...cost, id: uuidv4(), budgetedValue: 0 };
+        const updatedExtraCosts = [...(service.extraCosts || []), newCost];
+        const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const addExtraCost = (budgetId: string, serviceId: string, cost: Omit<ExecutionCostItem, 'id' | 'budgetedValue'>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            const newCost: ExecutionCostItem = { ...cost, id: uuidv4(), budgetedValue: 0 };
-            const updatedExtraCosts = [...(service.extraCosts || []), newCost];
-            const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
+  const removeExtraCost = async (budgetId: string, serviceId: string, costId: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedServices = budget.execution.services.map(service => {
+      if (service.id === serviceId) {
+        const updatedExtraCosts = (service.extraCosts || []).filter(c => c.id !== costId);
+        const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
+        return { ...service, extraCosts: updatedExtraCosts, realTotal };
       }
-      return budget;
-    }));
+      return service;
+    });
+    const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
+    const finalValue = budget.finalValue || budget.execution.budgetedTotal;
+    const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
+    const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const removeExtraCost = (budgetId: string, serviceId: string, costId: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedServices = budget.execution.services.map(service => {
-          if (service.id === serviceId) {
-            const updatedExtraCosts = (service.extraCosts || []).filter(c => c.id !== costId);
-            const realTotal = service.costs.reduce((sum, c) => sum + c.realValue, 0) + updatedExtraCosts.reduce((sum, c) => sum + c.realValue, 0);
-            return { ...service, extraCosts: updatedExtraCosts, realTotal };
-          }
-          return service;
-        });
-        const realTotal = updatedServices.reduce((sum, s) => sum + s.realTotal, 0);
-        const finalValue = budget.finalValue || budget.execution.budgetedTotal;
-        const realMargin = finalValue > 0 ? ((finalValue - realTotal) / finalValue) * 100 : 0;
-        const updatedExecution = { ...budget.execution, services: updatedServices, realTotal, realMargin, updatedAt: new Date() };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+  const finalizeExecution = async (budgetId: string, finalReport?: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const updatedExecution = {
+      ...budget.execution, isFinalized: true, finalizedAt: new Date(),
+      finalReport: finalReport || budget.execution.finalReport, updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const finalizeExecution = (budgetId: string, finalReport?: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = {
-          ...budget.execution, isFinalized: true, finalizedAt: new Date(),
-          finalReport: finalReport || budget.execution.finalReport, updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+  const addDeliveryLink = async (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
+
+    const newLink: DeliveryLink = { ...link, id: uuidv4(), createdAt: new Date() };
+    const updatedExecution = {
+      ...budget.execution, deliveryLinks: [...budget.execution.deliveryLinks, newLink], updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
-  const addDeliveryLink = (budgetId: string, link: Omit<DeliveryLink, 'id' | 'createdAt'>) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const newLink: DeliveryLink = { ...link, id: uuidv4(), createdAt: new Date() };
-        const updatedExecution = {
-          ...budget.execution, deliveryLinks: [...budget.execution.deliveryLinks, newLink], updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
-  };
+  const removeDeliveryLink = async (budgetId: string, linkId: string) => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget?.execution) return;
 
-  const removeDeliveryLink = (budgetId: string, linkId: string) => {
-    setBudgets(prev => prev.map(budget => {
-      if (budget.id === budgetId && budget.execution) {
-        const updatedExecution = {
-          ...budget.execution, deliveryLinks: budget.execution.deliveryLinks.filter(l => l.id !== linkId), updatedAt: new Date(),
-        };
-        persistExecution(budgetId, updatedExecution);
-        return { ...budget, execution: updatedExecution, updatedAt: new Date() };
-      }
-      return budget;
-    }));
+    const updatedExecution = {
+      ...budget.execution, deliveryLinks: budget.execution.deliveryLinks.filter(l => l.id !== linkId), updatedAt: new Date(),
+    };
+
+    setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: updatedExecution, updatedAt: new Date() } : b));
+
+    const success = await persistExecution(budgetId, updatedExecution);
+    if (!success) {
+      setBudgets(prev => prev.map(b => b.id === budgetId ? { ...b, execution: budget.execution, updatedAt: budget.updatedAt } : b));
+    }
   };
 
   // ============= Hard Drive functions =============
