@@ -601,13 +601,23 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   };
 
   const reorderKanbanColumns = async (newColumns: KanbanColumn[]) => {
+    const previousColumns = kanbanColumns;
     const reordered = newColumns.map((col, index) => ({ ...col, order: index }));
     setKanbanColumns(reordered);
     try {
-      for (const col of reordered) {
-        await supabase.from('kanban_columns').update({ order: col.order }).eq('id', col.id);
+      const results = await Promise.all(
+        reordered.map(col => supabase.from('kanban_columns').update({ order: col.order }).eq('id', col.id))
+      );
+      const failed = results.find(r => r.error);
+      if (failed?.error) {
+        console.error('[CRM] Erro ao reordenar colunas:', failed.error.message);
+        toast.error('Erro ao reordenar colunas');
+        setKanbanColumns(previousColumns); // rollback
       }
-    } catch (e: any) { toast.error('Erro: ' + e.message); }
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+      setKanbanColumns(previousColumns); // rollback
+    }
   };
 
   const getStatusLabel = (status: CRMStatus): string => {
