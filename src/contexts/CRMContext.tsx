@@ -282,6 +282,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
+  const clientsRef = useRef(clients);
+  useEffect(() => { clientsRef.current = clients; }, [clients]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [kanbanColumns, setKanbanColumns] = useState<KanbanColumn[]>([]);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
@@ -510,7 +512,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
       const updates: { clientId: string; newScore: number; oldScore: number }[] = [];
       clientsToUpdate.forEach(clientId => {
-        const client = clients.find(c => c.id === clientId);
+        const client = clientsRef.current.find(c => c.id === clientId);
         if (client) {
           const scoreBreakdown = calculateClientScore(clientId, budgets);
           if (client.score !== scoreBreakdown.finalScore) {
@@ -554,7 +556,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     return () => {
       if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
     };
-  }, [budgets, workspaceId, isLoading, clients]);
+  }, [budgets, workspaceId, isLoading]);
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {

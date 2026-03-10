@@ -1,35 +1,23 @@
 
 
-# Fix: Infinite Loading Loop from Score Recalculation
+# Reorganização do Resumo Financeiro por Aba
 
-## Root Cause
+## Mudanças
 
-`CRMContext.tsx` line 557:
-```typescript
-}, [budgets, workspaceId, isLoading, clients]);
-//                                    ^^^^^^^ THIS
-```
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-The `useEffect` depends on `clients`, but inside it calls `setClients` (line 545-548). After the 500ms debounce fires and updates client scores, `clients` reference changes, which re-triggers the effect, which recalculates again, creating an infinite loop.
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-Timeline:
-1. Budgets load → effect fires (debounced 500ms)
-2. Scores recalculated → `setClients` called with new scores
-3. `clients` reference changes → effect fires again
-4. After 500ms, scores match → no update → loop stops... temporarily
-5. Any state change that causes re-render restarts the cycle
-
-Over time this builds up and the loading state gets stuck in a perpetual cycle.
-
-## Fix (1 file, 1 change)
-
-### `src/contexts/CRMContext.tsx`
-
-**Remove `clients` from the dependency array** and use a `useRef` for clients inside the score calculation instead:
-
-1. Add a `clientsRef` that tracks the current clients value
-2. Use `clientsRef.current` inside the effect to read client scores without depending on `clients`
-3. Change dependency array to `[budgets, workspaceId, isLoading]` only
-
-This breaks the circular dependency while still reading the latest client data.
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 
