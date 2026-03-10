@@ -494,41 +494,67 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [budgets]);
 
   const getClientScoreHistory = useCallback((clientId: string): ScoreHistoryEntry[] => {
-    return scoreHistory.filter(e => e.id.startsWith(`${clientId}_`) || (e as any).clientId === clientId)
+    return scoreHistory.filter(e => e.clientId === clientId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [scoreHistory]);
 
-  // Score recalculation
+  // Score recalculation — debounced to avoid race conditions
   useEffect(() => {
     if (!workspaceId || isLoading) return;
-    const clientsToUpdate = new Set<string>();
-    budgets.forEach(b => clientsToUpdate.add(b.clientId));
-    clientsToUpdate.forEach(async (clientId) => {
-      const client = clients.find(c => c.id === clientId);
-      if (client) {
-        const scoreBreakdown = calculateClientScore(clientId, budgets);
-        if (client.score !== scoreBreakdown.finalScore) {
-          // Insert score history
-          const reason = scoreBreakdown.finalScore > client.score ? 'Melhoria de score' : 'Recálculo automático';
+
+    if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
+
+    scoreRecalcTimerRef.current = setTimeout(async () => {
+      const clientsToUpdate = new Set<string>();
+      budgets.forEach(b => clientsToUpdate.add(b.clientId));
+
+      const updates: { clientId: string; newScore: number; oldScore: number }[] = [];
+      clientsToUpdate.forEach(clientId => {
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          const scoreBreakdown = calculateClientScore(clientId, budgets);
+          if (client.score !== scoreBreakdown.finalScore) {
+            updates.push({ clientId, newScore: scoreBreakdown.finalScore, oldScore: client.score });
+          }
+        }
+      });
+
+      if (updates.length === 0) return;
+
+      try {
+        await Promise.all(updates.map(async ({ clientId, newScore, oldScore }) => {
+          const reason = newScore > oldScore ? 'Melhoria de score' : 'Recálculo automático';
           try {
-            const { data: historyData } = await supabase.from('score_history').insert({
+            const { data: historyData, error: histError } = await supabase.from('score_history').insert({
               workspace_id: workspaceId,
               client_id: clientId,
-              score: scoreBreakdown.finalScore,
-              previous_score: client.score,
+              score: newScore,
+              previous_score: oldScore,
               reason,
             }).select().single();
+            if (histError) console.error('[CRM] Erro ao inserir score_history:', histError.message);
             if (historyData) setScoreHistory(prev => [...prev, scoreHistoryFromDb(historyData)]);
-          } catch {}
-          // Update client score
-          await supabase.from('clients').update({ score: scoreBreakdown.finalScore }).eq('id', clientId);
-          setClients(prev => prev.map(c =>
-            c.id === clientId ? { ...c, score: scoreBreakdown.finalScore, updatedAt: new Date() } : c
-          ));
-        }
+          } catch (e: any) {
+            console.error('[CRM] Exceção ao inserir score_history:', e.message);
+          }
+          const { error: updateError } = await supabase.from('clients').update({ score: newScore }).eq('id', clientId).eq('workspace_id', workspaceId);
+          if (updateError) console.error('[CRM] Erro ao atualizar score do cliente:', updateError.message);
+        }));
+
+        // Batch update local state once
+        setClients(prev => prev.map(c => {
+          const update = updates.find(u => u.clientId === c.id);
+          return update ? { ...c, score: update.newScore, updatedAt: new Date() } : c;
+        }));
+      } catch (e: any) {
+        console.error('[CRM] Erro no recálculo de scores:', e.message);
       }
-    });
-  }, [budgets, workspaceId, isLoading]);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (scoreRecalcTimerRef.current) clearTimeout(scoreRecalcTimerRef.current);
+    };
+  }, [budgets, workspaceId, isLoading, clients]);
 
   // ============= Kanban Column functions =============
   const addKanbanColumn = async (columnData: Omit<KanbanColumn, 'id' | 'order'>) => {
