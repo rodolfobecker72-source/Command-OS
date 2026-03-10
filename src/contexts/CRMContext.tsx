@@ -426,7 +426,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   // ============= Client functions =============
   const addClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client | null> => {
-    if (!ensureWorkspace()) return null;
+    if (!(await ensureWorkspace())) return null;
     try {
       const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, workspaceId!) }).select().single();
       if (error) throw error;
