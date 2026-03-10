@@ -128,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (initialLoad) return;
 
         if (newSession?.user) {
+          setIsLoading(true);
           await loadUserData(newSession.user.id);
           setIsLoading(false);
         } else {

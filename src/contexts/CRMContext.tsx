@@ -293,6 +293,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
 
     const loadAll = async () => {
+      setIsLoading(true);
       try {
         const [
           clientsRes, kanbanRes, catRes, objRes, projColRes,
