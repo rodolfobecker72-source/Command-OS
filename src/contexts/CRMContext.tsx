@@ -480,7 +480,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.from('clients').insert({ ...clientToDb(clientData, wsId) }).select().single();
       if (error) throw error;
       const newClient = clientFromDb(data);
-      setClients(prev => [...prev, newClient]);
+      setClients(prev => [...prev, newClient].sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR')));
       return newClient;
     } catch (e: any) { toast.error('Erro ao criar cliente: ' + e.message); return null; }
   };
