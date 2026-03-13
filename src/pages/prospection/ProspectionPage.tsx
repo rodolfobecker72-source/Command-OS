@@ -636,14 +636,13 @@ export function ProspectionPage() {
           </Card>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {[
               { label: 'Total Leads', value: metrics.total, icon: Users, color: 'bg-primary/10 text-primary' },
               { label: 'Leads Ativos', value: metrics.active, icon: Target, color: 'bg-success/10 text-success' },
               { label: 'Reuniões', value: metrics.meetings, icon: CalendarCheck, color: 'bg-warning/10 text-warning' },
               { label: 'Propostas', value: metrics.proposals, icon: FileText, color: 'bg-info/10 text-info' },
               { label: 'Perdidos', value: metrics.lost, icon: XCircle, color: 'bg-destructive/10 text-destructive' },
-              { label: 'Volume (R$)', value: `R$ ${metrics.volume.toLocaleString('pt-BR')}`, icon: DollarSign, color: 'bg-primary/10 text-primary' },
             ].map((card) => (
               <Card key={card.label} className="border-0 shadow-sm rounded-2xl">
                 <CardContent className="p-4">
@@ -699,13 +698,7 @@ export function ProspectionPage() {
           </div>
 
           {/* Extra Insights Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Ticket Médio Estimado</p>
-                <p className="text-lg font-bold">R$ {panelMetrics.avgPotential.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Card className="border-0 shadow-sm rounded-2xl">
               <CardContent className="p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">Outbound / Inbound</p>
