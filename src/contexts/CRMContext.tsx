@@ -356,7 +356,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         }
 
         // Clients
-        setClients((clientsRes.data || []).map(clientFromDb));
+        setClients((clientsRes.data || []).map(clientFromDb).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR')));
 
         // Settings - seed defaults if empty
         let kanbanData = kanbanRes.data || [];
