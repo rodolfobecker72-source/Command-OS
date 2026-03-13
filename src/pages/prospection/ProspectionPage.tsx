@@ -990,34 +990,6 @@ export function ProspectionPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Potencial Estimado (R$)</Label>
-              <Input type="number" value={formData.estimatedPotential || ''} onChange={e => setFormData(p => ({ ...p, estimatedPotential: Number(e.target.value) || 0 }))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Prioridade</Label>
-              <Select value={formData.priority} onValueChange={(v: LeadPriority) => setFormData(p => ({ ...p, priority: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(LEAD_PRIORITY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Responsibles */}
-            <div className="space-y-3 md:col-span-2 pt-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> Responsáveis
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Responsável Prospecção</Label>
-              <Input value={formData.prospectionResponsible} onChange={e => setFormData(p => ({ ...p, prospectionResponsible: e.target.value }))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Responsável Fechamento</Label>
-              <Input value={formData.closingResponsible} onChange={e => setFormData(p => ({ ...p, closingResponsible: e.target.value }))} />
-            </div>
 
             {/* Follow-up */}
             <div className="space-y-3 md:col-span-2 pt-2">
