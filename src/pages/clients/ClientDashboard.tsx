@@ -67,7 +67,7 @@ export function ClientDashboard() {
     else if (scoreFilter === 'low') matchesScore = client.score < 40;
 
     return matchesSearch && matchesScore;
-  });
+  }).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR'));
 
   // Calculate stats
   const totalClients = clients.length;
