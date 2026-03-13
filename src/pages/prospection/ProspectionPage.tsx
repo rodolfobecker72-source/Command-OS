@@ -698,13 +698,7 @@ export function ProspectionPage() {
           </div>
 
           {/* Extra Insights Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Ticket Médio Estimado</p>
-                <p className="text-lg font-bold">R$ {panelMetrics.avgPotential.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Card className="border-0 shadow-sm rounded-2xl">
               <CardContent className="p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">Outbound / Inbound</p>
