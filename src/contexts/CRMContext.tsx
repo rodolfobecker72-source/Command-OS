@@ -105,6 +105,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     status: row.status,
     versions,
     currentVersion: row.current_version,
+    executionMonth: row.execution_month || null,
     approvedVersion: row.approved_version,
     approvalDate: row.approval_date ? new Date(row.approval_date) : null,
     finalValue: row.final_value,
