@@ -164,9 +164,9 @@ export function NewBudget() {
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setFormData(prev => ({
+           setFormData(prev => ({
             ...prev,
-            fixedCostPercentage: Number(data.default_fixed_cost_percentage),
+            fixedCostPercentage: 0, // deprecated, always 0
             nfCostPercentage: Number(data.default_nf_percentage),
             targetMargin: Number(data.default_target_margin_percentage),
           }));
