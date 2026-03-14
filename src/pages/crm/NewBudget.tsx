@@ -138,6 +138,7 @@ export function NewBudget() {
   const [clientOpen, setClientOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [selectorServiceId, setSelectorServiceId] = useState<string | null>(null);
+  const [opCostSelectorOpen, setOpCostSelectorOpen] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1300,28 +1301,39 @@ export function NewBudget() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setOperationalCosts([
-                        ...operationalCosts,
-                        {
-                          id: uuidv4(),
-                          description: '',
-                          quantity: 1,
-                          unitValue: 0,
-                          value: 0,
-                          paymentStatus: 'pendente' as PaymentStatus,
-                          paymentDate: null,
-                        },
-                      ]);
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Adicionar
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setOpCostSelectorOpen(true)}
+                    >
+                      <Layers className="w-4 h-4 mr-1" />
+                      Catálogo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setOperationalCosts([
+                          ...operationalCosts,
+                          {
+                            id: uuidv4(),
+                            description: '',
+                            quantity: 1,
+                            unitValue: 0,
+                            value: 0,
+                            paymentStatus: 'pendente' as PaymentStatus,
+                            paymentDate: null,
+                          },
+                        ]);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Manual
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1548,6 +1560,28 @@ export function NewBudget() {
             />
           );
         })()}
+
+        {/* Operational Costs Selector */}
+        <ServiceItemSelector
+          open={opCostSelectorOpen}
+          onOpenChange={setOpCostSelectorOpen}
+          categoryKey="despesas_operacionais"
+          onSelect={(item) => {
+            setOperationalCosts([
+              ...operationalCosts,
+              {
+                id: uuidv4(),
+                description: item.description,
+                quantity: 1,
+                unitValue: item.unitValue,
+                value: item.unitValue,
+                paymentStatus: 'pendente' as PaymentStatus,
+                paymentDate: null,
+              },
+            ]);
+            setOpCostSelectorOpen(false);
+          }}
+        />
       </div>
     </div>
   );
