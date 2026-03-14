@@ -37,7 +37,7 @@ async function loadImageAsBase64(url: string): Promise<{ base64: string; width: 
   });
 }
 
-export async function generateFinancialReportPDF({ budget, client, userName }: FinancialReportParams): Promise<void> {
+export async function generateFinancialReportPDF({ budget, client, userName, layoutSettings }: FinancialReportParams): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
