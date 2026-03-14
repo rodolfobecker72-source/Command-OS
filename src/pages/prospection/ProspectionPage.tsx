@@ -874,7 +874,7 @@ export function ProspectionPage() {
             <Card className="border-0 shadow-sm rounded-2xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <LayoutGrid className="w-4 h-4" /> Segmento
+                  <LayoutGrid className="w-4 h-4" /> Setor
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 max-h-[200px] overflow-y-auto">
