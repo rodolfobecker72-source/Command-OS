@@ -9,7 +9,8 @@ import {
   ChevronDown,
   Briefcase,
   Target,
-  Info } from
+  Info,
+  Package } from
 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +35,8 @@ const navGroups: NavGroup[] = [
   { name: 'Prospecção', href: '/prospeccao', icon: Target, pageKey: 'prospeccao' },
   { name: 'Clientes', href: '/clientes', icon: Users, pageKey: 'clientes' },
   { name: 'CRM', href: '/crm', icon: LayoutGrid, pageKey: 'crm' },
-  { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' }]
+  { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
+  { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' }]
 
 }];
 

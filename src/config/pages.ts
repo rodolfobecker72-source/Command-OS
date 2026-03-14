@@ -14,6 +14,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial' },
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial' },
   { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Comercial' },
+  { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Comercial' },
   
   // Sistema
   { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema' },

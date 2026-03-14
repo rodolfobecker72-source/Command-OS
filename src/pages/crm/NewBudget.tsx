@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { ServiceItemSelector } from '@/components/crm/ServiceItemSelector';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import { Header } from '@/components/layout/Header';
@@ -133,6 +134,7 @@ export function NewBudget() {
   const [operationalCosts, setOperationalCosts] = useState<CostItem[]>([]);
   const [clientOpen, setClientOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
+  const [selectorServiceId, setSelectorServiceId] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1087,15 +1089,26 @@ export function NewBudget() {
                             <Calculator className="w-4 h-4" />
                             Itens de Custo
                           </Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addCostItem(service.id)}
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Adicionar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectorServiceId(service.id)}
+                            >
+                              <Layers className="w-4 h-4 mr-1" />
+                              Catálogo
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addCostItem(service.id)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Manual
+                            </Button>
+                          </div>
                         </div>
 
                         {service.costs.length > 0 ? (
@@ -1441,6 +1454,42 @@ export function NewBudget() {
             </Button>
           </div>
         </form>
+
+        {/* Service Item Selector */}
+        {selectorServiceId && (() => {
+          const svc = services.find(s => s.id === selectorServiceId);
+          if (!svc) return null;
+          return (
+            <ServiceItemSelector
+              open={!!selectorServiceId}
+              onOpenChange={(open) => { if (!open) setSelectorServiceId(null); }}
+              categoryKey={svc.serviceType}
+              onSelect={(item) => {
+                setServices(services.map(s => {
+                  if (s.id === selectorServiceId) {
+                    return {
+                      ...s,
+                      costs: [
+                        ...s.costs,
+                        {
+                          id: uuidv4(),
+                          description: item.description,
+                          quantity: 1,
+                          unitValue: item.unitValue,
+                          value: item.unitValue,
+                          paymentStatus: 'pendente' as any,
+                          paymentDate: null,
+                        },
+                      ],
+                    };
+                  }
+                  return s;
+                }));
+                setSelectorServiceId(null);
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );
