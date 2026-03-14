@@ -17,6 +17,7 @@ import { NewClient } from "@/pages/clients/NewClient";
 import { EditClient } from "@/pages/clients/EditClient";
 import { ClientDetail } from "@/pages/clients/ClientDetail";
 import { CRMKanban } from "@/pages/crm/CRMKanban";
+import { CRMDashboard } from "@/pages/crm/CRMDashboard";
 import { NewBudget } from "@/pages/crm/NewBudget";
 import { BudgetDetail } from "@/pages/crm/BudgetDetail";
 import { ServiceCategories } from "@/pages/crm/ServiceCategories";
