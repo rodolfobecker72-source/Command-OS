@@ -91,9 +91,11 @@ export async function generateProposalPDF({
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
   
   // Load logos
+  // Load header logo: use layout settings if available, else default
   let logoData: { base64: string; width: number; height: number } | null = null;
+  const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
-    logoData = await loadImageAsBase64('/images/hero-logo-black.png');
+    logoData = await loadImageAsBase64(headerLogoUrl);
   } catch (error) {
     console.warn('Could not load logo:', error);
   }
