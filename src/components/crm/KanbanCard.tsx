@@ -97,14 +97,20 @@ export function KanbanCard({ card }: KanbanCardProps) {
             )}
           </div>
 
-          {/* Value */}
-          {card.value && (
-            <div className="flex items-center justify-between">
+          {/* Value & Execution Month */}
+          <div className="flex items-center justify-between flex-wrap gap-1">
+            {card.value && (
               <span className="text-sm font-semibold text-accent">
                 {formatCurrency(card.value)}
               </span>
-            </div>
-          )}
+            )}
+            {card.executionMonth && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                <Calendar className="w-2.5 h-2.5" />
+                {formatExecutionMonth(card.executionMonth)}
+              </Badge>
+            )}
+          </div>
 
           {/* Actions (visible on hover) */}
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
