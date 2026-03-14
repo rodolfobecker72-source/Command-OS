@@ -797,7 +797,7 @@ export function BudgetDetail() {
                               </div>
 
                               {/* Service Calculations */}
-                              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                              <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
                                 <div>
                                   <p className="text-xs text-muted-foreground">Subtotal</p>
                                   <p className="font-bold text-lg text-blue-500">{formatCurrency(calc.finalValue)}</p>
@@ -805,6 +805,10 @@ export function BudgetDetail() {
                                 <div>
                                   <p className="text-xs text-muted-foreground">Custo de Produção</p>
                                   <p className="font-semibold text-orange-500">{formatCurrency(calc.totalCost)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Margem</p>
+                                  <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{calc.margin.toFixed(1)}%</p>
                                 </div>
                               </div>
                             </CardContent>
