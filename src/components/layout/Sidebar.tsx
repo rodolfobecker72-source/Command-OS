@@ -12,8 +12,9 @@ import {
   TrendingUp,
   Info,
   Package,
-  Settings } from
-'lucide-react';
+  Settings,
+  Scale,
+} from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_PAGES } from '@/config/pages';
