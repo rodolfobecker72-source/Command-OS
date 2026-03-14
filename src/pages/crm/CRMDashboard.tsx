@@ -126,26 +126,37 @@ export function CRMDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
-        <div className="flex gap-2 flex-1">
-          <div className="space-y-1 flex-1 sm:flex-none">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">De</label>
-            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm sm:w-40" />
+      {/* Filters - collapsed by default */}
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Filter className="w-3.5 h-3.5" />
+            Filtros
+            <ChevronDown className="w-3 h-3" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
+            <div className="flex gap-2 flex-1">
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">De</label>
+                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm sm:w-40" />
+              </div>
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Até</label>
+                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm sm:w-40" />
+              </div>
+            </div>
+            <div className="space-y-1 flex-1 sm:max-w-xs">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1 flex-1 sm:flex-none">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Até</label>
-            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm sm:w-40" />
-          </div>
-        </div>
-        <div className="space-y-1 flex-1 sm:max-w-xs">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
-          </div>
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
