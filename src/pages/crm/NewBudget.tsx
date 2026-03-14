@@ -196,16 +196,12 @@ export function NewBudget() {
   // Cliente selecionado
   const selectedClient = clients.find(c => c.id === formData.clientId);
 
-  // Cálculos por serviço (apenas custo de produção e custo fixo)
+  // Cálculos por serviço (apenas custo de produção)
   const calculateService = (service: ServiceItem) => {
     const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
-    const fixedCost = productionCost * (formData.fixedCostPercentage / 100);
-    const totalCost = productionCost + fixedCost;
-
     return {
       productionCost,
-      fixedCost,
-      totalCost,
+      totalCost: productionCost,
     };
   };
 
