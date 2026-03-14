@@ -1944,10 +1944,12 @@ export function BudgetDetail() {
                           size="sm"
                           onClick={async () => {
                             try {
+                              const layoutSettings = await fetchLayoutSettings();
                               await generateFinancialReportPDF({
                                 budget,
                                 client,
                                 userName: profile?.name || '',
+                                layoutSettings,
                               });
                               toast.success('Relatório financeiro gerado!');
                             } catch (err) {
