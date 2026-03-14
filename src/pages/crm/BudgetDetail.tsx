@@ -878,6 +878,8 @@ export function BudgetDetail() {
                     return { service, subtotal: calc.finalValue };
                   });
                   const nfValue = currentVersionData.fullPrice * (currentVersionData.nfCostPercentage / 100);
+                  const totalCosts = currentVersionData.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0) + operationalTotal;
+                  const marginValue = currentVersionData.fullPrice - totalCosts - nfValue;
                   const isApproved = budget.status === 'aprovada';
                   const bgClass = isApproved ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200';
 
@@ -935,7 +937,7 @@ export function BudgetDetail() {
                               <div className="flex items-center justify-between mt-1">
                                 <span className="text-sm text-muted-foreground">Margem projetada</span>
                                 <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
-                                  {currentVersionData.margin.toFixed(1)}%
+                                  {formatCurrency(marginValue)} ({currentVersionData.margin.toFixed(1)}%)
                                 </span>
                               </div>
                             </div>
