@@ -122,7 +122,7 @@ export function BudgetDetail() {
   const [newVersionReason, setNewVersionReason] = useState('');
   const [newVersionServices, setNewVersionServices] = useState<ServiceItem[]>([]);
   const [newVersionOperationalCosts, setNewVersionOperationalCosts] = useState<CostItem[]>([]);
-  const [newVersionFixedCostPct, setNewVersionFixedCostPct] = useState(20);
+  const [newVersionFixedCostPct, setNewVersionFixedCostPct] = useState(0); // deprecated, always 0
   const [newVersionNfPct, setNewVersionNfPct] = useState(13);
   const [newVersionTargetMargin, setNewVersionTargetMargin] = useState(0);
   const [approveOpen, setApproveOpen] = useState(false);
