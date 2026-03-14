@@ -1,23 +1,40 @@
 
 
-# Reorganização do Resumo Financeiro por Aba
+## Plan: Enhance User Management with Photo and Name Editing
 
-## Mudanças
+### Current State
+- Edit dialog only allows changing the member's **role**
+- Avatar is displayed in the list but there's no upload mechanism
+- No storage bucket exists for avatar images
+- Profile update RLS only allows users to update their **own** profile (`auth.uid() = id`), so the owner cannot update other members' profiles directly
 
-### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
-- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
-- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
-- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
-- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
+### What Needs to Change
 
-### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
-- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
-  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
-  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
+**1. Database: Create `avatars` storage bucket**
+- Create a public storage bucket for member photos
+- Add RLS policies: authenticated users can upload to their own folder, owner/admin can upload to any folder, public read access
 
-### Arquivo a modificar
-- `src/pages/crm/BudgetDetail.tsx`
-  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
-  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
-  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
+**2. Database: Add RLS policy for owner to update member profiles**
+- Add a new UPDATE policy on `profiles` that allows workspace owners to update profiles of members in the same workspace (using `has_role` + workspace membership check)
+
+**3. Frontend: Enhance Edit Member Dialog (`UsersPage.tsx`)**
+- Add avatar preview with click-to-upload functionality (file input)
+- Add editable **name** field
+- Keep existing **role** selector
+- On save: upload photo to `avatars/{user_id}` bucket if changed, update `profiles` table (name + photo_url), update `workspace_members` table (role)
+- Show loading state during upload/save
+
+**4. Edge function approach (alternative to RLS)**
+- Since the owner needs to update OTHER users' profiles, create a small edge function `update-member-profile` that uses the service role key to update the profile, after verifying the caller is the workspace owner
+- This is more secure than broadening RLS policies
+
+### Implementation Summary
+
+| Change | File/Resource |
+|--------|--------------|
+| Storage bucket `avatars` | SQL migration |
+| Edge function `update-member-profile` | `supabase/functions/update-member-profile/index.ts` |
+| Enhanced edit dialog with photo + name | `src/pages/users/UsersPage.tsx` |
+
+The edit dialog will show the member's current avatar (clickable to change), a name input, and the role selector. Photo uploads go to the `avatars` bucket via direct client upload, then the edge function updates the profile record.
 
