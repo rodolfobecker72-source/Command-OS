@@ -61,6 +61,7 @@ export async function generateProposalPDF({
   version,
   client,
   responsibleUser,
+  layoutSettings,
 }: PDFGeneratorParams): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
