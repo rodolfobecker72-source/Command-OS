@@ -1306,16 +1306,7 @@ export function BudgetDetail() {
                                             </CardTitle>
                                           </CardHeader>
                                           <CardContent className="space-y-4">
-                                            <div className="grid grid-cols-3 gap-4">
-                                              <div className="space-y-2">
-                                                <Label>Custo Fixo (%)</Label>
-                                                <Input
-                                                  type="number"
-                                                  min={0}
-                                                  value={newVersionFixedCostPct}
-                                                  onChange={(e) => setNewVersionFixedCostPct(parseFloat(e.target.value) || 0)}
-                                                />
-                                              </div>
+                                            <div className="grid grid-cols-2 gap-4">
                                               <div className="space-y-2">
                                                 <Label>Nota Fiscal (%)</Label>
                                                 <Input
