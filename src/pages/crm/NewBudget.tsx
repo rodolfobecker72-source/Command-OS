@@ -99,6 +99,7 @@ interface ServiceItem {
 
 export function NewBudget() {
   const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets, isLoading: crmLoading } = useCRM();
+  const { workspace } = useAuth();
   const navigate = useNavigate();
 
   // Auto-generate next proposalId starting from 900
