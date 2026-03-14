@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { ServiceItemSelector } from '@/components/crm/ServiceItemSelector';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import { Header } from '@/components/layout/Header';
