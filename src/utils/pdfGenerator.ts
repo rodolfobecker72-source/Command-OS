@@ -15,11 +15,19 @@ interface PDFUser {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+export interface PDFLayoutSettings {
+  logoUrl: string;
+  companyName: string;
+  website: string;
+  email: string;
+}
+
 interface PDFGeneratorParams {
   budget: Budget;
   version: BudgetVersion;
   client: Client;
   responsibleUser: PDFUser | null;
+  layoutSettings?: PDFLayoutSettings | null;
 }
 
 // Helper function to load image as base64 with dimensions
