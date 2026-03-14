@@ -235,7 +235,7 @@ export function BudgetDetail() {
     setNewVersionOperationalCosts(
       (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
     );
-    setNewVersionFixedCostPct(currentVersionData?.fixedCostPercentage ?? 20);
+    setNewVersionFixedCostPct(0); // deprecated
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
   };
