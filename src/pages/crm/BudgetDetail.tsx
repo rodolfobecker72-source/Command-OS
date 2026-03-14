@@ -172,9 +172,8 @@ export function BudgetDetail() {
     const productionCost = newVersionServices.reduce((sum, service) => {
       return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
     }, 0);
-    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
     const operationalTotal = newVersionOperationalTotal;
-    const totalCosts = productionCost + fixedCost + operationalTotal;
+    const totalCosts = productionCost + operationalTotal;
 
     const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
     const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
