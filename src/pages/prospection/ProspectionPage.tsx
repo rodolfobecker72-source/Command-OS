@@ -260,6 +260,7 @@ export function ProspectionPage() {
       email: lead.email,
       phone: lead.phone,
       leadOrigin: mapOriginToCRM(lead.origin),
+      sector: lead.segment || '',
       score: 0,
     });
     if (newClient) {
