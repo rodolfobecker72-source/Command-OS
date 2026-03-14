@@ -14,14 +14,21 @@ export type LeadOriginType =
   | 'outro';
 
 export type LeadSegment =
-  | 'construcao'
+  | 'construcao_imobiliario'
   | 'industria'
-  | 'agro'
+  | 'agronegocio'
   | 'saude'
-  | 'tecnologia'
   | 'educacao'
-  | 'cooperativa'
-  | 'outro';
+  | 'tecnologia'
+  | 'financeiro'
+  | 'varejo'
+  | 'gastronomia'
+  | 'turismo_hotelaria'
+  | 'energia'
+  | 'eventos'
+  | 'servicos'
+  | 'setor_publico'
+  | 'terceiro_setor';
 
 export type LeadFunnelStatus =
   | 'mapeado'
