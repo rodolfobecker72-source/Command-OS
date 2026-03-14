@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceItemSelector } from '@/components/crm/ServiceItemSelector';
@@ -97,6 +99,7 @@ interface ServiceItem {
 
 export function NewBudget() {
   const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets, isLoading: crmLoading } = useCRM();
+  const { workspace } = useAuth();
   const navigate = useNavigate();
 
   // Auto-generate next proposalId starting from 900
@@ -140,10 +143,46 @@ export function NewBudget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
+  // Payment terms from commercial rules
+  const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
+
   // Sincronizar proposalId quando budgets carregam
   useEffect(() => {
     setFormData(prev => ({ ...prev, proposalId: nextProposalId }));
   }, [nextProposalId]);
+
+  // Load commercial rules (workspace settings + payment terms)
+  useEffect(() => {
+    if (!workspace?.id) return;
+    
+    // Load cost settings
+    supabase
+      .from('workspace_settings')
+      .select('*')
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setFormData(prev => ({
+            ...prev,
+            fixedCostPercentage: Number(data.default_fixed_cost_percentage),
+            nfCostPercentage: Number(data.default_nf_percentage),
+            targetMargin: Number(data.default_target_margin_percentage),
+          }));
+        }
+      });
+
+    // Load payment terms
+    supabase
+      .from('payment_terms')
+      .select('id, name')
+      .eq('workspace_id', workspace.id)
+      .eq('active', true)
+      .order('created_at')
+      .then(({ data }) => {
+        if (data) setAvailablePaymentTerms(data);
+      });
+  }, [workspace?.id]);
 
   // Filtrar clientes pela busca
   const filteredClients = useMemo(() => {
@@ -715,14 +754,32 @@ export function NewBudget() {
                   {/* Payment Terms */}
                   <div className="space-y-2">
                     <Label htmlFor="paymentTerms">Condição de Pagamento</Label>
-                    <Input
-                      id="paymentTerms"
-                      placeholder="Ex: 50% entrada + 50% na entrega"
-                      value={formData.paymentTerms}
-                      onChange={(e) =>
-                        setFormData({ ...formData, paymentTerms: e.target.value })
-                      }
-                    />
+                    {availablePaymentTerms.length > 0 ? (
+                      <Select
+                        value={formData.paymentTerms}
+                        onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma condição" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePaymentTerms.map((term) => (
+                            <SelectItem key={term.id} value={term.name}>
+                              {term.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="paymentTerms"
+                        placeholder="Ex: 50% entrada + 50% na entrega"
+                        value={formData.paymentTerms}
+                        onChange={(e) =>
+                          setFormData({ ...formData, paymentTerms: e.target.value })
+                        }
+                      />
+                    )}
                   </div>
 
                   {/* Location */}

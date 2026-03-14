@@ -12,8 +12,9 @@ import {
   TrendingUp,
   Info,
   Package,
-  Settings } from
-'lucide-react';
+  Settings,
+  Scale,
+} from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_PAGES } from '@/config/pages';
@@ -44,7 +45,8 @@ const navGroups: NavGroup[] = [
   icon: Settings,
   items: [
   { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
-  { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' }]
+  { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' },
+  { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' }]
 }];
 
 

@@ -25,6 +25,7 @@ import { UsersPage } from "@/pages/users/UsersPage";
 import { ServiceItemsPage } from "@/pages/crm/ServiceItemsPage";
 import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
+import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import NotFound from "./pages/NotFound";
@@ -77,6 +78,9 @@ const App = () => (
                   
                   {/* Users */}
                   <Route path="/usuarios" element={<PageGuard pageKey="usuarios"><UsersPage /></PageGuard>} />
+                  
+                  {/* Settings */}
+                  <Route path="/configuracoes/regras-comerciais" element={<PageGuard pageKey="regras-comerciais"><CommercialRulesPage /></PageGuard>} />
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
