@@ -19,9 +19,18 @@ function formatMonthLabel(ym: string) {
 export function CRMDashboard() {
   const { budgets, clients, kanbanColumns } = useCRM();
 
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const [filterMonth, setFilterMonth] = useState(String(currentMonth));
+  const [filterYear, setFilterYear] = useState(String(currentYear));
   const [clientSearch, setClientSearch] = useState('');
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    budgets.forEach(b => years.add(new Date(b.createdAt).getFullYear()));
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => b - a);
+  }, [budgets, currentYear]);
 
   const clientMap = useMemo(() => {
     const map: Record<string, typeof clients[0]> = {};
@@ -31,12 +40,9 @@ export function CRMDashboard() {
 
   const filtered = useMemo(() => {
     return budgets.filter(b => {
-      if (dateFrom && new Date(b.createdAt) < new Date(dateFrom)) return false;
-      if (dateTo) {
-        const to = new Date(dateTo);
-        to.setHours(23, 59, 59);
-        if (new Date(b.createdAt) > to) return false;
-      }
+      const d = new Date(b.createdAt);
+      if (filterMonth !== 'all' && (d.getMonth() + 1) !== Number(filterMonth)) return false;
+      if (filterYear !== 'all' && d.getFullYear() !== Number(filterYear)) return false;
       if (clientSearch) {
         const q = clientSearch.toLowerCase();
         const client = clientMap[b.clientId];
@@ -46,7 +52,7 @@ export function CRMDashboard() {
       }
       return true;
     });
-  }, [budgets, dateFrom, dateTo, clientSearch, clientMap]);
+  }, [budgets, filterMonth, filterYear, clientSearch, clientMap]);
 
   // KPIs
   const totalProposals = filtered.length;
