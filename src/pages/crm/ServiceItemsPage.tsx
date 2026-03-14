@@ -200,7 +200,7 @@ export function ServiceItemsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {[...serviceCategories].sort((a, b) => a.order - b.order).map(cat => (
+                {allCategories.map(cat => (
                   <SelectItem key={cat.key} value={cat.key}>{cat.label}</SelectItem>
                 ))}
               </SelectContent>
