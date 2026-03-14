@@ -63,8 +63,9 @@ export async function generateFinancialReportPDF({ budget, client, userName, lay
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
 
   let logoData: { base64: string; width: number; height: number } | null = null;
+  const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
-    logoData = await loadImageAsBase64('/images/hero-logo-black.png');
+    logoData = await loadImageAsBase64(headerLogoUrl);
   } catch (e) {
     console.warn('Could not load logo:', e);
   }
