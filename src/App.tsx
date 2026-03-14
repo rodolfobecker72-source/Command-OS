@@ -17,6 +17,7 @@ import { NewClient } from "@/pages/clients/NewClient";
 import { EditClient } from "@/pages/clients/EditClient";
 import { ClientDetail } from "@/pages/clients/ClientDetail";
 import { CRMKanban } from "@/pages/crm/CRMKanban";
+import { CRMDashboard } from "@/pages/crm/CRMDashboard";
 import { NewBudget } from "@/pages/crm/NewBudget";
 import { BudgetDetail } from "@/pages/crm/BudgetDetail";
 import { ServiceCategories } from "@/pages/crm/ServiceCategories";
@@ -64,6 +65,7 @@ const App = () => (
                   
                   {/* CRM */}
                   <Route path="/crm" element={<PageGuard pageKey="crm"><CRMKanban /></PageGuard>} />
+                  <Route path="/crm/dashboard" element={<PageGuard pageKey="crm"><CRMDashboard /></PageGuard>} />
                   <Route path="/crm/orcamento/novo" element={<PageGuard pageKey="crm"><NewBudget /></PageGuard>} />
                   <Route path="/crm/orcamento/:id" element={<PageGuard pageKey="crm"><BudgetDetail /></PageGuard>} />
                   
