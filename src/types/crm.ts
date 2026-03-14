@@ -169,6 +169,7 @@ export interface Client {
   email: string;
   phone: string;
   leadOrigin: LeadOrigin;
+  sector: string;
   score: number;
   createdAt: Date;
   updatedAt: Date;

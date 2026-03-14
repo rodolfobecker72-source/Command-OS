@@ -62,6 +62,7 @@ function clientToDb(c: Partial<Client>, workspaceId?: string): any {
   if (c.email !== undefined) row.email = c.email;
   if (c.phone !== undefined) row.phone = c.phone;
   if (c.leadOrigin !== undefined) row.lead_origin = c.leadOrigin;
+  if (c.sector !== undefined) row.sector = c.sector;
   if (c.score !== undefined) row.score = c.score;
   return row;
 }
