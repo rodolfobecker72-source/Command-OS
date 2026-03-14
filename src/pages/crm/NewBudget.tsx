@@ -754,14 +754,32 @@ export function NewBudget() {
                   {/* Payment Terms */}
                   <div className="space-y-2">
                     <Label htmlFor="paymentTerms">Condição de Pagamento</Label>
-                    <Input
-                      id="paymentTerms"
-                      placeholder="Ex: 50% entrada + 50% na entrega"
-                      value={formData.paymentTerms}
-                      onChange={(e) =>
-                        setFormData({ ...formData, paymentTerms: e.target.value })
-                      }
-                    />
+                    {availablePaymentTerms.length > 0 ? (
+                      <Select
+                        value={formData.paymentTerms}
+                        onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma condição" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePaymentTerms.map((term) => (
+                            <SelectItem key={term.id} value={term.name}>
+                              {term.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="paymentTerms"
+                        placeholder="Ex: 50% entrada + 50% na entrega"
+                        value={formData.paymentTerms}
+                        onChange={(e) =>
+                          setFormData({ ...formData, paymentTerms: e.target.value })
+                        }
+                      />
+                    )}
                   </div>
 
                   {/* Location */}
