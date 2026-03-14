@@ -711,6 +711,47 @@ export type Database = {
           },
         ]
       }
+      service_items: {
+        Row: {
+          category_key: string
+          created_at: string
+          default_price: number
+          description: string
+          id: string
+          name: string
+          unit: string
+          workspace_id: string
+        }
+        Insert: {
+          category_key?: string
+          created_at?: string
+          default_price?: number
+          description?: string
+          id?: string
+          name?: string
+          unit?: string
+          workspace_id: string
+        }
+        Update: {
+          category_key?: string
+          created_at?: string
+          default_price?: number
+          description?: string
+          id?: string
+          name?: string
+          unit?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_objectives: {
         Row: {
           category_key: string
