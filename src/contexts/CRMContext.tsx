@@ -205,7 +205,7 @@ interface CRMContextType {
 
   addBudgetVersion: (budgetId: string, version: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => Promise<void>;
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
-  approveBudget: (budgetId: string, versionNumber: number) => Promise<void>;
+  approveBudget: (budgetId: string, versionNumber: number, executionMonth?: string) => Promise<void>;
 
   updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => Promise<void>;
   updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => Promise<void>;
