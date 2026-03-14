@@ -1301,6 +1301,20 @@ export function BudgetDetail() {
                                         </p>
                                       </div>
 
+                                      <div>
+                                        <Label htmlFor="execution-month">Mês de Execução</Label>
+                                        <Input
+                                          id="execution-month"
+                                          type="month"
+                                          value={approveExecutionMonth}
+                                          onChange={(e) => setApproveExecutionMonth(e.target.value)}
+                                          className="mt-1"
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Mês previsto para execução do projeto (opcional)
+                                        </p>
+                                      </div>
+
                                       <p className="text-xs text-muted-foreground">
                                         Uma planilha de execução será criada automaticamente para acompanhar os custos reais.
                                       </p>
