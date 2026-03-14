@@ -159,6 +159,7 @@ export type Database = {
           description: string
           execution: Json | null
           execution_end_date: string | null
+          execution_month: string | null
           execution_start_date: string | null
           final_value: number | null
           has_execution_date: boolean
@@ -191,6 +192,7 @@ export type Database = {
           description?: string
           execution?: Json | null
           execution_end_date?: string | null
+          execution_month?: string | null
           execution_start_date?: string | null
           final_value?: number | null
           has_execution_date?: boolean
@@ -223,6 +225,7 @@ export type Database = {
           description?: string
           execution?: Json | null
           execution_end_date?: string | null
+          execution_month?: string | null
           execution_start_date?: string | null
           final_value?: number | null
           has_execution_date?: boolean
