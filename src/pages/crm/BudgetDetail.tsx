@@ -885,6 +885,82 @@ export function BudgetDetail() {
                   </motion.div>
                 )}
 
+                {/* Composição do Investimento */}
+                {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
+                  const operationalTotal = (currentVersionData.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
+                  const servicesSubtotals = currentVersionData.services.map(service => {
+                    const calc = calculateServiceTotals(service);
+                    return { service, subtotal: calc.finalValue };
+                  });
+                  const nfValue = currentVersionData.fullPrice * (currentVersionData.nfCostPercentage / 100);
+                  const isApproved = budget.status === 'aprovada';
+                  const bgClass = isApproved ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200';
+
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.18 }}
+                    >
+                      <Card className={`card-elevated border ${bgClass}`}>
+                        <CardHeader>
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-foreground/5">
+                              <Calculator className="w-6 h-6 text-foreground" />
+                            </div>
+                            <div>
+                              <CardTitle>Composição do Investimento</CardTitle>
+                              <CardDescription>Resumo financeiro do projeto</CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {servicesSubtotals.map((item, idx) => {
+                              const objectives = getObjectivesForCategory(item.service.serviceType);
+                              const objLabel = objectives.find(o => o.value === item.service.objective)?.label || item.service.objective;
+                              return (
+                                <div key={item.service.id} className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {idx + 1}. <span className="font-medium">{item.service.serviceType}</span>
+                                    {objLabel ? ` — ${objLabel}` : ''}
+                                  </span>
+                                  <span className="font-medium text-sm">{formatCurrency(item.subtotal)}</span>
+                                </div>
+                              );
+                            })}
+
+                            {operationalTotal > 0 && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Despesas Operacionais</span>
+                                <span className="font-medium text-sm">{formatCurrency(operationalTotal)}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">Nota Fiscal ({currentVersionData.nfCostPercentage}%)</span>
+                              <span className="font-medium text-sm">{formatCurrency(nfValue)}</span>
+                            </div>
+
+                            <div className="border-t pt-3 mt-3">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-base">INVESTIMENTO TOTAL</span>
+                                <span className="font-bold text-lg">{formatCurrency(currentVersionData.fullPrice)}</span>
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-sm text-muted-foreground">Margem projetada</span>
+                                <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
+                                  {currentVersionData.margin.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })()}
+
                 {/* Version History */}
                 {budget.versions.length > 0 && (
                   <motion.div
