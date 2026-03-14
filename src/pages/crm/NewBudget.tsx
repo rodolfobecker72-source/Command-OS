@@ -1227,21 +1227,13 @@ export function NewBudget() {
                       </div>
 
                       {/* Summary */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
                             Custo de Produção
                           </p>
                           <p className="font-semibold">
                             {formatCurrency(calc.productionCost)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Custo Fixo ({formData.fixedCostPercentage}%)
-                          </p>
-                          <p className="font-semibold">
-                            {formatCurrency(calc.fixedCost)}
                           </p>
                         </div>
                         <div>
