@@ -192,54 +192,29 @@ export function CRMDashboard() {
             <KPICard icon={DollarSign} iconBg="bg-warning/10" iconColor="text-warning" label="Valor Vendido" value={formatCurrency(totalValueSold)} small />
           </div>
 
-          {/* Pipeline + Sales */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            <Card className="lg:col-span-3">
-              <CardHeader className="pb-1 pt-4 px-4">
-                <CardTitle className="text-sm font-semibold">Pipeline</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <div className="h-56 sm:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pipelineData} layout="vertical" margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
-                        {pipelineData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-1 pt-4 px-4">
-                <CardTitle className="text-sm font-semibold">Vendas por Mês</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                {salesByMonth.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-16 text-center">Nenhuma venda no período</p>
-                ) : (
-                  <div className="h-56 sm:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={salesByMonth} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                        <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
-                        <Bar dataKey="value" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          {/* Pipeline */}
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold">Pipeline</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="h-56 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={pipelineData} layout="vertical" margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                    <Tooltip contentStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
+                      {pipelineData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Follow-up */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
