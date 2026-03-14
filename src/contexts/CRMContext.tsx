@@ -960,7 +960,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (b.id === budgetId) {
           return {
             ...b, status: 'aprovada' as CRMStatus, approvedVersion: versionNumber,
-            approvalDate: new Date(), finalValue: approvedVersion?.fullPrice || null, execution, updatedAt: new Date(),
+            approvalDate: new Date(), finalValue: approvedVersion?.fullPrice || null, execution,
+            executionMonth: executionMonth || null, updatedAt: new Date(),
           };
         }
         return b;
