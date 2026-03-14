@@ -751,7 +751,7 @@ export function BudgetDetail() {
                                       </span>
                                       {objectiveLabel}
                                     </CardTitle>
-                                    <CardDescription>
+                                    <CardDescription className="whitespace-pre-wrap">
                                       {service.description || 'Sem descrição'}
                                     </CardDescription>
                                   </div>
