@@ -594,6 +594,11 @@ export function BudgetDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={budget.status} />
+                      {budget.executionMonth && (
+                        <Badge variant="outline" className="text-xs">
+                          Execução: {formatExecutionMonth(budget.executionMonth)}
+                        </Badge>
+                      )}
                       {!isEditing && budget.status !== 'aprovada' && (
                         <Button
                           variant="ghost"
