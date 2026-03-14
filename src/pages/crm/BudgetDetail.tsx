@@ -782,15 +782,6 @@ export function BudgetDetail() {
                                         </TableCell>
                                       </TableRow>
                                     ))}
-                                    {/* Fixed Cost Row */}
-                                    <TableRow className="bg-muted/30">
-                                      <TableCell colSpan={3} className="text-muted-foreground">
-                                        Custo Fixo ({service.fixedCostPercentage}%)
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium text-muted-foreground">
-                                        {formatCurrency(calc.fixedCost)}
-                                      </TableCell>
-                                    </TableRow>
                                   </TableBody>
                                 </Table>
                               </div>
