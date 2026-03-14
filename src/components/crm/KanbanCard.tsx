@@ -18,6 +18,14 @@ const serviceIcons: Record<string, typeof Film> = {
   MOBILE: Smartphone,
 };
 
+const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function formatExecutionMonth(ym: string): string {
+  const [year, month] = ym.split('-');
+  const idx = parseInt(month, 10) - 1;
+  return `${MONTH_NAMES_PT[idx] || month}/${year}`;
+}
+
 export function KanbanCard({ card }: KanbanCardProps) {
   const navigate = useNavigate();
   const { getCategoryLabel } = useCRM();
