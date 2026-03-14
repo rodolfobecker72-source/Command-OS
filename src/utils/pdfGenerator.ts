@@ -498,7 +498,9 @@ export async function generateProposalPDF({
     const weight = totalProductionCost > 0 ? serviceCost / totalProductionCost : 0;
     const serviceValue = weight * totalToDistribute;
 
-    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}`;
+    const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
+    const objLabel = objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
+    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}${objLabel ? ` — ${objLabel}` : ''}`;
     doc.text(label, margin, y);
     doc.text(formatCurrency(serviceValue), pageWidth - margin, y, { align: 'right' });
     y += 7;
