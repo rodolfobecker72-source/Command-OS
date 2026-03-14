@@ -180,8 +180,8 @@ export function BudgetDetail() {
     const nfValue = totalProjectValue * (newVersionNfPct / 100);
     const marginValue = totalProjectValue - totalCosts - nfValue;
 
-    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
-  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
+    return { productionCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
+  }, [newVersionServices, newVersionOperationalTotal, newVersionNfPct, newVersionTargetMargin]);
 
   if (!budget || !client) {
     return (
