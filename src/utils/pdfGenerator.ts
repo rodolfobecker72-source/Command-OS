@@ -140,12 +140,14 @@ export async function generateProposalPDF({
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     setColor(lightGray);
-    doc.text(
-      'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br',
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: 'center' }
-    );
+    const footerParts: string[] = [];
+    if (layoutSettings?.companyName) footerParts.push(layoutSettings.companyName.toUpperCase());
+    if (layoutSettings?.website) footerParts.push(layoutSettings.website);
+    if (layoutSettings?.email) footerParts.push(layoutSettings.email);
+    const footerText = footerParts.length > 0
+      ? footerParts.join(' • ')
+      : 'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br';
+    doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   };
 
   /** If the next block of `neededHeight` won't fit, adds a new page and returns the new Y */
