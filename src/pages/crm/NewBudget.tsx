@@ -128,7 +128,7 @@ export function NewBudget() {
     executionStartDate: null as Date | null,
     executionEndDate: null as Date | null,
     location: '',
-    fixedCostPercentage: 0,
+    fixedCostPercentage: 0, // deprecated, always 0
     nfCostPercentage: 0,
     targetMargin: 0,
   });
