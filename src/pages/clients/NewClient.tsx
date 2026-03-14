@@ -7,6 +7,7 @@ import {
   LeadOrigin,
   LEAD_ORIGIN_LABELS,
 } from '@/types/crm';
+import { LEAD_SEGMENT_LABELS, LeadSegment } from '@/types/prospection';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
