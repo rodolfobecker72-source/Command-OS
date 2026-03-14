@@ -1454,6 +1454,42 @@ export function NewBudget() {
             </Button>
           </div>
         </form>
+
+        {/* Service Item Selector */}
+        {selectorServiceId && (() => {
+          const svc = services.find(s => s.id === selectorServiceId);
+          if (!svc) return null;
+          return (
+            <ServiceItemSelector
+              open={!!selectorServiceId}
+              onOpenChange={(open) => { if (!open) setSelectorServiceId(null); }}
+              categoryKey={svc.serviceType}
+              onSelect={(item) => {
+                setServices(services.map(s => {
+                  if (s.id === selectorServiceId) {
+                    return {
+                      ...s,
+                      costs: [
+                        ...s.costs,
+                        {
+                          id: uuidv4(),
+                          description: item.description,
+                          quantity: 1,
+                          unitValue: item.unitValue,
+                          value: item.unitValue,
+                          paymentStatus: 'pendente' as any,
+                          paymentDate: null,
+                        },
+                      ],
+                    };
+                  }
+                  return s;
+                }));
+                setSelectorServiceId(null);
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );
