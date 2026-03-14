@@ -915,7 +915,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro ao atualizar versão: ' + e.message); }
   };
 
-  const approveBudget = async (budgetId: string, versionNumber: number) => {
+  const approveBudget = async (budgetId: string, versionNumber: number, executionMonth?: string) => {
     const budget = budgets.find(b => b.id === budgetId);
     if (!budget) return;
 
