@@ -792,15 +792,6 @@ export function BudgetDetail() {
                                         {formatCurrency(calc.fixedCost)}
                                       </TableCell>
                                     </TableRow>
-                                    {/* NF Cost Row */}
-                                    <TableRow className="bg-muted/30">
-                                      <TableCell colSpan={3} className="text-muted-foreground">
-                                        Imposto NF ({service.nfCostPercentage}%)
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium text-muted-foreground">
-                                        {formatCurrency(calc.nfCost)}
-                                      </TableCell>
-                                    </TableRow>
                                   </TableBody>
                                 </Table>
                               </div>
