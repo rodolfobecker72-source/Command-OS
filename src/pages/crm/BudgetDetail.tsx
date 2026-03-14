@@ -803,7 +803,7 @@ export function BudgetDetail() {
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Margem</p>
-                                  <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{calc.margin.toFixed(1)}%</p>
+                                  <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{formatCurrency(serviceMarginValue)} ({calc.margin.toFixed(1)}%)</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Subtotal</p>
