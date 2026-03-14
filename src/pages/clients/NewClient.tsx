@@ -40,6 +40,7 @@ export function NewClient() {
     email: '',
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
+    sector: '' as LeadSegment | '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
