@@ -883,13 +883,18 @@ export function BudgetDetail() {
                 {/* Composição do Investimento */}
                 {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
                   const operationalTotal = (currentVersionData.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
-                  const servicesSubtotals = currentVersionData.services.map(service => {
-                    const calc = calculateServiceTotals(service);
-                    return { service, subtotal: calc.finalValue };
-                  });
+                  const totalProdCost = currentVersionData.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
                   const nfValue = currentVersionData.fullPrice * (currentVersionData.nfCostPercentage / 100);
-                  const totalCosts = currentVersionData.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0) + operationalTotal;
+                  const totalCosts = totalProdCost + operationalTotal;
                   const marginValue = currentVersionData.fullPrice - totalCosts - nfValue;
+
+                  const servicesSubtotals = currentVersionData.services.map(service => {
+                    const prodCost = service.costs.reduce((sum, c) => sum + c.value, 0);
+                    const weight = totalProdCost > 0 ? prodCost / totalProdCost : 0;
+                    const svcMargin = weight * marginValue;
+                    return { service, subtotal: prodCost + svcMargin };
+                  });
+
                   const isApproved = budget.status === 'aprovada';
                   const bgClass = isApproved ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200';
 
@@ -945,7 +950,7 @@ export function BudgetDetail() {
                                 <span className="font-bold text-lg">{formatCurrency(currentVersionData.fullPrice)}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-sm text-muted-foreground">Margem projetada</span>
+                                <span className="text-sm text-muted-foreground">Margem total projetada</span>
                                 <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
                                   {formatCurrency(marginValue)} ({currentVersionData.margin.toFixed(1)}%)
                                 </span>
