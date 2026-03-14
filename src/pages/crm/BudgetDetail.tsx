@@ -950,7 +950,7 @@ export function BudgetDetail() {
                                 <span className="font-bold text-lg">{formatCurrency(currentVersionData.fullPrice)}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-sm text-muted-foreground">Margem projetada</span>
+                                <span className="text-sm text-muted-foreground">Margem total projetada</span>
                                 <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
                                   {formatCurrency(marginValue)} ({currentVersionData.margin.toFixed(1)}%)
                                 </span>
