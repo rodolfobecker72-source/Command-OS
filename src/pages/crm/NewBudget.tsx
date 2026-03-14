@@ -138,6 +138,7 @@ export function NewBudget() {
   const [clientOpen, setClientOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [selectorServiceId, setSelectorServiceId] = useState<string | null>(null);
+  const [opCostSelectorOpen, setOpCostSelectorOpen] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
