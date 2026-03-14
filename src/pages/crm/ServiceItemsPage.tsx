@@ -53,6 +53,11 @@ const UNIT_LABELS: Record<string, string> = {
 
 const UNIT_OPTIONS = Object.entries(UNIT_LABELS).map(([value, label]) => ({ value, label }));
 
+const SPECIAL_CATEGORIES = [
+  { key: 'universal', label: 'Universal (todos os serviços)', order: 9990 },
+  { key: 'despesas_operacionais', label: 'Despesas Operacionais', order: 9991 },
+];
+
 function itemFromDb(row: any): ServiceItemRecord {
   return {
     id: row.id,
@@ -164,8 +169,12 @@ export function ServiceItemsPage() {
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
+  const allCategories = useMemo(() => {
+    return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
+  }, [serviceCategories]);
+
   const getCategoryLabel = (key: string) => {
-    return serviceCategories.find(c => c.key === key)?.label || key;
+    return allCategories.find(c => c.key === key)?.label || key;
   };
 
   return (
@@ -191,7 +200,7 @@ export function ServiceItemsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {[...serviceCategories].sort((a, b) => a.order - b.order).map(cat => (
+                {allCategories.map(cat => (
                   <SelectItem key={cat.key} value={cat.key}>{cat.label}</SelectItem>
                 ))}
               </SelectContent>
@@ -285,7 +294,7 @@ export function ServiceItemsPage() {
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {[...serviceCategories].sort((a, b) => a.order - b.order).map(cat => (
+                  {allCategories.map(cat => (
                     <SelectItem key={cat.key} value={cat.key}>{cat.label}</SelectItem>
                   ))}
                 </SelectContent>
