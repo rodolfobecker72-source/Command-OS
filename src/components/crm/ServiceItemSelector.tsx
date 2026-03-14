@@ -45,11 +45,14 @@ export function ServiceItemSelector({ open, onOpenChange, categoryKey, onSelect 
     if (!open || !workspace?.id) return;
     setSearch('');
     const load = async () => {
+      const categories = categoryKey === 'despesas_operacionais'
+        ? [categoryKey, 'universal']
+        : [categoryKey, 'universal'];
       const { data } = await supabase
         .from('service_items')
         .select('*')
         .eq('workspace_id', workspace.id)
-        .in('category_key', [categoryKey, 'universal', 'despesas_operacionais'])
+        .in('category_key', categories)
         .order('name');
       setItems((data || []).map((r: any) => ({
         id: r.id,
