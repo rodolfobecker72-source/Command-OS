@@ -1301,38 +1301,39 @@ export function NewBudget() {
                       </CardDescription>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setOpCostSelectorOpen(true)}
-                  >
-                    <Layers className="w-4 h-4 mr-1" />
-                    Catálogo
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setOperationalCosts([
-                        ...operationalCosts,
-                        {
-                          id: uuidv4(),
-                          description: '',
-                          quantity: 1,
-                          unitValue: 0,
-                          value: 0,
-                          paymentStatus: 'pendente' as PaymentStatus,
-                          paymentDate: null,
-                        },
-                      ]);
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Manual
-                  </Button>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setOpCostSelectorOpen(true)}
+                    >
+                      <Layers className="w-4 h-4 mr-1" />
+                      Catálogo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setOperationalCosts([
+                          ...operationalCosts,
+                          {
+                            id: uuidv4(),
+                            description: '',
+                            quantity: 1,
+                            unitValue: 0,
+                            value: 0,
+                            paymentStatus: 'pendente' as PaymentStatus,
+                            paymentDate: null,
+                          },
+                        ]);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Manual
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
