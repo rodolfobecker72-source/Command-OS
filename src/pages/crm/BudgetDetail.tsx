@@ -1334,10 +1334,6 @@ export function BudgetDetail() {
                                                 <span className="font-medium">{formatCurrency(newVersionTotals.productionCost)}</span>
                                               </div>
                                               <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Custo Fixo ({newVersionFixedCostPct}%)</span>
-                                                <span className="font-medium">{formatCurrency(newVersionTotals.fixedCost)}</span>
-                                              </div>
-                                              <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Despesas Operacionais</span>
                                                 <span className="font-medium">{formatCurrency(newVersionTotals.operationalTotal)}</span>
                                               </div>

@@ -480,16 +480,14 @@ export async function generateProposalPDF({
   y += 10;
 
   const versionNfPercentage = version.nfCostPercentage || 13;
-  const versionFixedCostPct = version.fixedCostPercentage || 0;
   const versionMarginPct = version.margin || 0;
 
-  const fixedCostValue = totalProductionCost * (versionFixedCostPct / 100);
-  const totalCosts = totalProductionCost + fixedCostValue + operationalTotal;
+  const totalCosts = totalProductionCost + operationalTotal;
   const divisor = 1 - (versionMarginPct / 100) - (versionNfPercentage / 100);
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-  const totalToDistribute = totalProductionCost + fixedCostValue + marginValue;
+  const totalToDistribute = totalProductionCost + marginValue;
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
