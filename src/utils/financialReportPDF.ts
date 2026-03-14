@@ -7,11 +7,13 @@ import {
 } from '@/types/crm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { PDFLayoutSettings } from '@/utils/pdfGenerator';
 
 interface FinancialReportParams {
   budget: Budget;
   client: Client;
   userName: string;
+  layoutSettings?: PDFLayoutSettings | null;
 }
 
 async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
