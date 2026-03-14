@@ -357,18 +357,17 @@ export function formatPhone(phone: string): string {
 // Calculate service totals
 export function calculateServiceTotals(service: ServiceItem) {
   const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
-  const nfCost = productionCost * (service.nfCostPercentage / 100);
-  const totalCost = productionCost + nfCost;
   
+  // Subtotal = Custo de Produção + Margem (sem NF — NF aparece apenas na Composição do Investimento)
   const finalValue = service.targetMargin > 0 && service.targetMargin < 100
-    ? totalCost / (1 - service.targetMargin / 100)
-    : totalCost;
+    ? productionCost / (1 - service.targetMargin / 100)
+    : productionCost;
 
   return {
     productionCost,
     fixedCost: 0, // deprecated
-    nfCost,
-    totalCost,
+    nfCost: 0, // deprecated — NF é calculado no nível do projeto
+    totalCost: productionCost,
     finalValue,
     margin: service.targetMargin,
   };
