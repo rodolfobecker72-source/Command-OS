@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Briefcase,
   Target,
+  TrendingUp,
   Info,
   Package } from
 'lucide-react';
