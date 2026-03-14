@@ -1421,10 +1421,6 @@ export function NewBudget() {
                       <span className="font-semibold">{formatCurrency(totals.productionCost)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-background/70">Custo Fixo ({formData.fixedCostPercentage}%)</span>
-                      <span className="font-semibold">{formatCurrency(totals.fixedCost)}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-background/70">Despesas Operacionais</span>
                       <span className="font-semibold">{formatCurrency(totals.operationalCosts)}</span>
                     </div>
