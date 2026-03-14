@@ -1378,6 +1378,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         clientId: budget.clientId, serviceType: budget.serviceType, serviceTypes,
         value: currentVersionData?.fullPrice || null, status: budget.status,
         clientScore: client?.score || 0, currentVersion: budget.currentVersion,
+        executionMonth: budget.executionMonth,
       };
     });
   };
