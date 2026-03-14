@@ -94,6 +94,7 @@ export function NewClient() {
         email: formData.email.trim(),
         phone: formData.phone.replace(/\D/g, ''),
         leadOrigin: formData.leadOrigin as LeadOrigin,
+        sector: formData.sector || '',
         score: 0,
       });
 
