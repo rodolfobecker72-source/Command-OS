@@ -872,6 +872,47 @@ export type Database = {
           },
         ]
       }
+      workspace_layout: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string
+          id: string
+          logo_url: string
+          updated_at: string
+          website: string
+          workspace_id: string
+        }
+        Insert: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          logo_url?: string
+          updated_at?: string
+          website?: string
+          workspace_id: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          logo_url?: string
+          updated_at?: string
+          website?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_layout_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           id: string
