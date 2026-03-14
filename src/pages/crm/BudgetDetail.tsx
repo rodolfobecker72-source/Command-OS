@@ -14,6 +14,7 @@ import {
   CostItem,
   PaymentStatus,
   PAYMENT_STATUS_LABELS,
+  SERVICE_TYPE_LABELS,
   formatCurrency,
   formatCNPJ,
   formatPhone,
@@ -23,6 +24,7 @@ import {
   BudgetVersion,
   PaymentStatus as PaymentStatusType,
 } from '@/types/crm';
+import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
