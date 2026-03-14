@@ -802,12 +802,12 @@ export function BudgetDetail() {
                                   <p className="font-semibold text-orange-500">{formatCurrency(calc.productionCost)}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground">Margem</p>
+                                  <p className="text-xs text-muted-foreground">Margem para este serviço</p>
                                   <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{formatCurrency(serviceMarginValue)} ({calc.margin.toFixed(1)}%)</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Subtotal</p>
-                                  <p className="font-bold text-lg text-blue-500">{formatCurrency(calc.finalValue)}</p>
+                                  <p className="font-bold text-lg text-blue-500">{formatCurrency(calc.productionCost + serviceMarginValue)}</p>
                                 </div>
                               </div>
                             </CardContent>
