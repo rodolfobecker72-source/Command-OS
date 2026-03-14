@@ -787,6 +787,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.executionStartDate !== undefined) dbUpdates.execution_start_date = updates.executionStartDate?.toISOString() || null;
       if (updates.executionEndDate !== undefined) dbUpdates.execution_end_date = updates.executionEndDate?.toISOString() || null;
       if (updates.location !== undefined) dbUpdates.location = updates.location;
+      if (updates.executionMonth !== undefined) dbUpdates.execution_month = updates.executionMonth;
       if (updates.contractUrl !== undefined) dbUpdates.contract_url = updates.contractUrl;
       if (updates.nfUrl !== undefined) dbUpdates.nf_url = updates.nfUrl;
       if (updates.approvedVersion !== undefined) dbUpdates.approved_version = updates.approvedVersion;

@@ -319,6 +319,7 @@ export interface CRMCard {
   status: CRMStatus;
   clientScore: number;
   currentVersion: number;
+  executionMonth?: string | null;
 }
 
 // Utility functions
