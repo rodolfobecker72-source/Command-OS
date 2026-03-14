@@ -37,10 +37,14 @@ const navGroups: NavGroup[] = [
   { name: 'Prospecção', href: '/prospeccao', icon: Target, pageKey: 'prospeccao' },
   { name: 'Clientes', href: '/clientes', icon: Users, pageKey: 'clientes' },
   { name: 'CRM', href: '/crm', icon: LayoutGrid, pageKey: 'crm' },
-  { name: 'Dashboard', href: '/crm/dashboard', icon: TrendingUp, pageKey: 'crm' },
+  { name: 'Dashboard', href: '/crm/dashboard', icon: TrendingUp, pageKey: 'crm' }]
+},
+{
+  label: 'Configurações',
+  icon: Settings,
+  items: [
   { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
   { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' }]
-
 }];
 
 
