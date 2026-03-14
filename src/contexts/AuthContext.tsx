@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { getAllPageKeys } from '@/config/pages';
+import { getAllPageKeys, isRoleRestricted } from '@/config/pages';
 
 export type AppRole = 'owner' | 'admin' | 'vendedor' | 'visualizador';
 
