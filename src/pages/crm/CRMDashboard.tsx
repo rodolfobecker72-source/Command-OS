@@ -77,20 +77,28 @@ export function CRMDashboard() {
       .sort((a, b) => b.daysSince - a.daysSince);
   }, [filtered, clientMap]);
 
-  // Execution forecast
+  // Execution forecast — independent of date/search filters, uses ALL approved budgets
   const executionForecast = useMemo(() => {
-    const map: Record<string, { count: number; value: number }> = {};
-    approved.forEach(b => {
+    const allApproved = budgets.filter(b => b.status === 'aprovada');
+    const map: Record<string, { count: number; value: number; projects: { name: string; client: string; value: number }[] }> = {};
+    allApproved.forEach(b => {
       const month = b.executionMonth;
       if (!month) return;
-      if (!map[month]) map[month] = { count: 0, value: 0 };
+      if (!map[month]) map[month] = { count: 0, value: 0, projects: [] };
       map[month].count++;
       map[month].value += b.finalValue || 0;
+      map[month].projects.push({
+        name: b.projectName || b.proposalId,
+        client: clientMap[b.clientId]?.companyName || '—',
+        value: b.finalValue || 0,
+      });
     });
     return Object.entries(map)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, data]) => ({ month, label: formatMonthLabel(month), ...data }));
-  }, [approved]);
+  }, [budgets, clientMap]);
+
+  const executionTotalValue = useMemo(() => executionForecast.reduce((s, f) => s + f.value, 0), [executionForecast]);
 
   // Sales by month
   const salesByMonth = useMemo(() => {
