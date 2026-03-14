@@ -816,7 +816,8 @@ export function BudgetDetail() {
                       );
                     })}
                   </AnimatePresence>
-                )}
+                  );
+                })()}
 
                 {/* Operational Costs in Budget View */}
                 {currentVersionData && (currentVersionData.operationalCosts || []).length > 0 && (
