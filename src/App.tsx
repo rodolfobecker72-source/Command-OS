@@ -21,6 +21,7 @@ import { NewBudget } from "@/pages/crm/NewBudget";
 import { BudgetDetail } from "@/pages/crm/BudgetDetail";
 import { ServiceCategories } from "@/pages/crm/ServiceCategories";
 import { UsersPage } from "@/pages/users/UsersPage";
+import { ServiceItemsPage } from "@/pages/crm/ServiceItemsPage";
 import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
