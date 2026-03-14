@@ -1089,15 +1089,26 @@ export function NewBudget() {
                             <Calculator className="w-4 h-4" />
                             Itens de Custo
                           </Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addCostItem(service.id)}
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Adicionar
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectorServiceId(service.id)}
+                            >
+                              <Layers className="w-4 h-4 mr-1" />
+                              Catálogo
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addCostItem(service.id)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Manual
+                            </Button>
+                          </div>
                         </div>
 
                         {service.costs.length > 0 ? (
