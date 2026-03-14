@@ -18,15 +18,60 @@ import { KanbanColumnManager } from '@/components/crm/KanbanColumnManager';
 import { useCRM } from '@/contexts/CRMContext';
 import { CRMCard, CRMStatus } from '@/types/crm';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function formatExecutionMonth(ym: string): string {
+  const [year, month] = ym.split('-');
+  const idx = parseInt(month, 10) - 1;
+  return `${MONTH_NAMES_PT[idx] || month}/${year}`;
+}
 
 export function CRMKanban() {
   const { getCRMCards, moveCard, kanbanColumns, approveBudget } = useCRM();
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
+  const [monthFilter, setMonthFilter] = useState<string>('all');
+
+  // Approval via drag states
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(null);
+  const [pendingApprovalVersion, setPendingApprovalVersion] = useState<number>(0);
+  const [dragApproveMonth, setDragApproveMonth] = useState('');
 
   const cards = getCRMCards();
+
+  // Get unique execution months for filter
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    cards.forEach(c => { if (c.executionMonth) months.add(c.executionMonth); });
+    return [...months].sort();
+  }, [cards]);
+
+  // Filter cards by month
+  const filteredCards = useMemo(() => {
+    if (monthFilter === 'all') return cards;
+    return cards.filter(c => c.executionMonth === monthFilter);
+  }, [cards, monthFilter]);
 
   // Sort columns by order
   const sortedColumns = useMemo(() => {
@@ -47,7 +92,7 @@ export function CRMKanban() {
     });
 
     // Group cards
-    cards.forEach((card) => {
+    filteredCards.forEach((card) => {
       if (grouped[card.status]) {
         grouped[card.status].push(card);
       } else {
@@ -60,7 +105,7 @@ export function CRMKanban() {
     });
 
     return grouped;
-  }, [cards, kanbanColumns, sortedColumns]);
+  }, [filteredCards, kanbanColumns, sortedColumns]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -105,20 +150,29 @@ export function CRMKanban() {
 
     if (!targetStatus) return;
 
-    // If dropping on "aprovada", auto-approve and navigate to execution
+    // If dropping on "aprovada", show dialog to collect execution month
     if (targetStatus === 'aprovada') {
       const card = cards.find(c => c.id === activeId);
-      if (card && card.status !== 'aprovada') {
-        const budget = getCRMCards().find(c => c.id === activeId);
-        if (budget && budget.currentVersion > 0) {
-          approveBudget(activeId, budget.currentVersion);
-          navigate(`/crm/orcamento/${activeId}`);
-          return;
-        }
+      if (card && card.status !== 'aprovada' && card.currentVersion > 0) {
+        setPendingApprovalId(activeId);
+        setPendingApprovalVersion(card.currentVersion);
+        setDragApproveMonth('');
+        setApproveDialogOpen(true);
+        return;
       }
     }
 
     moveCard(activeId, targetStatus as CRMStatus);
+  };
+
+  const handleConfirmDragApprove = async () => {
+    if (pendingApprovalId) {
+      await approveBudget(pendingApprovalId, pendingApprovalVersion, dragApproveMonth || undefined);
+      navigate(`/crm/orcamento/${pendingApprovalId}`);
+    }
+    setApproveDialogOpen(false);
+    setPendingApprovalId(null);
+    setDragApproveMonth('');
   };
 
   return (
@@ -133,9 +187,22 @@ export function CRMKanban() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <p className="text-muted-foreground">
-              {cards.length} projeto(s) no pipeline
+              {filteredCards.length} projeto(s) no pipeline
             </p>
             <KanbanColumnManager />
+            {availableMonths.length > 0 && (
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar por mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os meses</SelectItem>
+                  {availableMonths.map(m => (
+                    <SelectItem key={m} value={m}>{formatExecutionMonth(m)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
@@ -173,6 +240,39 @@ export function CRMKanban() {
             ) : null}
           </DragOverlay>
         </DndContext>
+
+        {/* Approval Dialog for Drag */}
+        <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Aprovar Orçamento</DialogTitle>
+              <DialogDescription>
+                Confirme a aprovação e informe o mês previsto de execução.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="drag-execution-month">Mês de Execução</Label>
+              <Input
+                id="drag-execution-month"
+                type="month"
+                value={dragApproveMonth}
+                onChange={(e) => setDragApproveMonth(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Mês previsto para execução do projeto (opcional)
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button className="bg-success hover:bg-success/90" onClick={handleConfirmDragApprove}>
+                Confirmar Aprovação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
