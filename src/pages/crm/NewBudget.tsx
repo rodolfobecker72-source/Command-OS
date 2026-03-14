@@ -1560,6 +1560,28 @@ export function NewBudget() {
             />
           );
         })()}
+
+        {/* Operational Costs Selector */}
+        <ServiceItemSelector
+          open={opCostSelectorOpen}
+          onOpenChange={setOpCostSelectorOpen}
+          categoryKey="despesas_operacionais"
+          onSelect={(item) => {
+            setOperationalCosts([
+              ...operationalCosts,
+              {
+                id: uuidv4(),
+                description: item.description,
+                quantity: 1,
+                unitValue: item.unitValue,
+                value: item.unitValue,
+                paymentStatus: 'pendente' as PaymentStatus,
+                paymentDate: null,
+              },
+            ]);
+            setOpCostSelectorOpen(false);
+          }}
+        />
       </div>
     </div>
   );
