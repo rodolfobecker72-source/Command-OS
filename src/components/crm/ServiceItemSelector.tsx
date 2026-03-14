@@ -49,7 +49,7 @@ export function ServiceItemSelector({ open, onOpenChange, categoryKey, onSelect 
         .from('service_items')
         .select('*')
         .eq('workspace_id', workspace.id)
-        .eq('category_key', categoryKey)
+        .in('category_key', [categoryKey, 'universal', 'despesas_operacionais'])
         .order('name');
       setItems((data || []).map((r: any) => ({
         id: r.id,
