@@ -300,6 +300,7 @@ export interface Budget {
   finalValue: number | null;
   contractUrl: string | null;
   nfUrl: string | null;
+  executionMonth: string | null; // YYYY-MM format
   execution: ProjectExecution | null; // Execution tracking when approved
   createdAt: Date;
   updatedAt: Date;
