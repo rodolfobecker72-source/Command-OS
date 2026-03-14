@@ -948,7 +948,7 @@ export function ProspectionPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Segmento</Label>
+              <Label className="text-xs">Setor</Label>
               <Select value={formData.segment} onValueChange={(v: LeadSegment) => setFormData(p => ({ ...p, segment: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
