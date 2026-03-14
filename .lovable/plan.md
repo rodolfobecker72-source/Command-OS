@@ -1,62 +1,23 @@
 
 
-## Plan: Create "Layout" Settings Page for PDF Customization
+# Reorganização do Resumo Financeiro por Aba
 
-### What exists today
-- PDFs use a **hardcoded header logo** (`/images/hero-logo-black.png`) and **hardcoded footer text** (`HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br`)
-- Both `pdfGenerator.ts` and `financialReportPDF.ts` share this same pattern
-- The "Configurações" group in the sidebar already exists with Categorias, Itens de Serviço, and Regras Comerciais
+## Mudanças
 
-### What will be built
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-**1. Database: `workspace_layout` table**
-- Columns: `id`, `workspace_id`, `logo_url`, `company_name`, `website`, `email`, `created_at`, `updated_at`
-- RLS: workspace access check (same pattern as other tables)
-- One row per workspace
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-**2. Storage: use existing `avatars` bucket or create `logos` bucket**
-- Create a dedicated `logos` public bucket for company logos
-- RLS policies for authenticated upload within workspace
-
-**3. New page: `src/pages/settings/LayoutPage.tsx`**
-- Logo upload area with 1:1 proportion guidance
-- Fields: company name, website, email
-- Save/update functionality
-- Only accessible by `owner` role
-
-**4. Config & routing updates**
-- Add `layout` page to `APP_PAGES` in `src/config/pages.ts` with `restrictedFrom: ['vendedor', 'admin', 'visualizador']` (owner-only)
-- Add route in `App.tsx`
-- Add sidebar item in `Sidebar.tsx` under Configurações
-
-**5. Update PDF generators**
-- Both `pdfGenerator.ts` and `financialReportPDF.ts` will accept layout settings as a parameter
-- Header: render uploaded logo (preserving aspect ratio, no distortion)
-- Footer: render company name, website, email dynamically
-- Callers (BudgetDetail.tsx) will fetch `workspace_layout` before generating PDF
-
-### Technical details
-
-**Database migration:**
-```sql
-CREATE TABLE public.workspace_layout (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workspace_id uuid NOT NULL,
-  logo_url text DEFAULT '',
-  company_name text DEFAULT '',
-  website text DEFAULT '',
-  email text DEFAULT '',
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-ALTER TABLE public.workspace_layout ENABLE ROW LEVEL SECURITY;
--- Standard CRUD policies with has_workspace_access
--- Storage bucket for logos
-INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true);
--- Storage RLS policies
-```
-
-**Page access:** restricted to owner only via `restrictedFrom: ['vendedor', 'admin', 'visualizador']` in `APP_PAGES`.
-
-**PDF integration:** Both generators will receive an optional `layoutSettings` parameter. If present, use custom logo/footer; if not, fall back to current defaults (backward compatible).
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 

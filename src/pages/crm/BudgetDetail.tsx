@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateProposalPDF } from '@/utils/pdfGenerator';
+import type { PDFLayoutSettings } from '@/utils/pdfGenerator';
 import { generateFinancialReportPDF } from '@/utils/financialReportPDF';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { useCRM } from '@/contexts/CRMContext';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -115,7 +117,7 @@ function formatExecutionMonth(ym: string): string {
 export function BudgetDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, workspace } = useAuth();
   const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget } = useCRM();
 
   const budget = getBudget(id || '');
@@ -460,6 +462,28 @@ export function BudgetDetail() {
     toast.success('Link removido!');
   };
 
+  const fetchLayoutSettings = async (): Promise<PDFLayoutSettings | null> => {
+    if (!workspace) return null;
+    try {
+      const { data } = await supabase
+        .from('workspace_layout')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .maybeSingle();
+      if (data) {
+        return {
+          logoUrl: (data as any).logo_url || '',
+          companyName: (data as any).company_name || '',
+          website: (data as any).website || '',
+          email: (data as any).email || '',
+        };
+      }
+    } catch (err) {
+      console.warn('Could not load layout settings:', err);
+    }
+    return null;
+  };
+
   const generatePDFForVersion = async (version: BudgetVersion) => {
     if (!version.services || version.services.length === 0) {
       toast.error('Versão não possui serviços');
@@ -467,11 +491,13 @@ export function BudgetDetail() {
     }
 
     try {
+      const layoutSettings = await fetchLayoutSettings();
       await generateProposalPDF({
         budget,
         version,
         client,
         responsibleUser: profile ? { id: profile.id, name: profile.name, photo: profile.photo_url || '' } : null,
+        layoutSettings,
       });
       toast.success(`PDF V${version.version} gerado com sucesso!`);
     } catch (error) {
@@ -1918,10 +1944,12 @@ export function BudgetDetail() {
                           size="sm"
                           onClick={async () => {
                             try {
+                              const layoutSettings = await fetchLayoutSettings();
                               await generateFinancialReportPDF({
                                 budget,
                                 client,
                                 userName: profile?.name || '',
+                                layoutSettings,
                               });
                               toast.success('Relatório financeiro gerado!');
                             } catch (err) {

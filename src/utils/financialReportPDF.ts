@@ -7,11 +7,13 @@ import {
 } from '@/types/crm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { PDFLayoutSettings } from '@/utils/pdfGenerator';
 
 interface FinancialReportParams {
   budget: Budget;
   client: Client;
   userName: string;
+  layoutSettings?: PDFLayoutSettings | null;
 }
 
 async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
@@ -35,7 +37,7 @@ async function loadImageAsBase64(url: string): Promise<{ base64: string; width: 
   });
 }
 
-export async function generateFinancialReportPDF({ budget, client, userName }: FinancialReportParams): Promise<void> {
+export async function generateFinancialReportPDF({ budget, client, userName, layoutSettings }: FinancialReportParams): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -61,8 +63,9 @@ export async function generateFinancialReportPDF({ budget, client, userName }: F
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
 
   let logoData: { base64: string; width: number; height: number } | null = null;
+  const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
-    logoData = await loadImageAsBase64('/images/hero-logo-black.png');
+    logoData = await loadImageAsBase64(headerLogoUrl);
   } catch (e) {
     console.warn('Could not load logo:', e);
   }
@@ -106,12 +109,14 @@ export async function generateFinancialReportPDF({ budget, client, userName }: F
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     setColor(lightGray);
-    doc.text(
-      'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br',
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: 'center' }
-    );
+    const footerParts: string[] = [];
+    if (layoutSettings?.companyName) footerParts.push(layoutSettings.companyName.toUpperCase());
+    if (layoutSettings?.website) footerParts.push(layoutSettings.website);
+    if (layoutSettings?.email) footerParts.push(layoutSettings.email);
+    const footerText = footerParts.length > 0
+      ? footerParts.join(' • ')
+      : 'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br';
+    doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   };
 
   const ensureSpace = (neededHeight: number): number => {

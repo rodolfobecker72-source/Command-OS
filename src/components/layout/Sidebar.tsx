@@ -14,6 +14,7 @@ import {
   Package,
   Settings,
   Scale,
+  FileImage,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,7 +47,8 @@ const navGroups: NavGroup[] = [
   items: [
   { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
   { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' },
-  { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' }]
+  { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' },
+  { name: 'Layout do PDF', href: '/configuracoes/layout', icon: FileImage, pageKey: 'layout' }]
 }];
 
 

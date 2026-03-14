@@ -15,11 +15,19 @@ interface PDFUser {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+export interface PDFLayoutSettings {
+  logoUrl: string;
+  companyName: string;
+  website: string;
+  email: string;
+}
+
 interface PDFGeneratorParams {
   budget: Budget;
   version: BudgetVersion;
   client: Client;
   responsibleUser: PDFUser | null;
+  layoutSettings?: PDFLayoutSettings | null;
 }
 
 // Helper function to load image as base64 with dimensions
@@ -53,6 +61,7 @@ export async function generateProposalPDF({
   version,
   client,
   responsibleUser,
+  layoutSettings,
 }: PDFGeneratorParams): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -82,9 +91,11 @@ export async function generateProposalPDF({
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
   
   // Load logos
+  // Load header logo: use layout settings if available, else default
   let logoData: { base64: string; width: number; height: number } | null = null;
+  const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
-    logoData = await loadImageAsBase64('/images/hero-logo-black.png');
+    logoData = await loadImageAsBase64(headerLogoUrl);
   } catch (error) {
     console.warn('Could not load logo:', error);
   }
@@ -129,12 +140,14 @@ export async function generateProposalPDF({
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     setColor(lightGray);
-    doc.text(
-      'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br',
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: 'center' }
-    );
+    const footerParts: string[] = [];
+    if (layoutSettings?.companyName) footerParts.push(layoutSettings.companyName.toUpperCase());
+    if (layoutSettings?.website) footerParts.push(layoutSettings.website);
+    if (layoutSettings?.email) footerParts.push(layoutSettings.email);
+    const footerText = footerParts.length > 0
+      ? footerParts.join(' • ')
+      : 'HERO AUDIOVISUAL • www.hero.rec.br • comercial@hero.rec.br';
+    doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   };
 
   /** If the next block of `neededHeight` won't fit, adds a new page and returns the new Y */
