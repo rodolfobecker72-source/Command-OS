@@ -127,6 +127,8 @@ export function BudgetDetail() {
   const [newVersionTargetMargin, setNewVersionTargetMargin] = useState(0);
   const [approveOpen, setApproveOpen] = useState(false);
   const [approveExecutionMonth, setApproveExecutionMonth] = useState('');
+  const [isEditingExecutionMonth, setIsEditingExecutionMonth] = useState(false);
+  const [editedExecutionMonth, setEditedExecutionMonth] = useState('');
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
