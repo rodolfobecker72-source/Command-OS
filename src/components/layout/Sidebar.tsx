@@ -48,7 +48,7 @@ const navGroups: NavGroup[] = [
   { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
   { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' },
   { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' },
-  { name: 'Layout do PDF', href: '/configuracoes/layout', icon: Layers, pageKey: 'layout' }]
+  { name: 'Layout do PDF', href: '/configuracoes/layout', icon: FileImage, pageKey: 'layout' }]
 }];
 
 
