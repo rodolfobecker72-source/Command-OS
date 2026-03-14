@@ -343,8 +343,9 @@ export function BudgetDetail() {
 
   const handleApprove = async () => {
     if (budget.currentVersion > 0) {
-      await approveBudget(budget.id, budget.currentVersion);
+      await approveBudget(budget.id, budget.currentVersion, approveExecutionMonth || undefined);
       setApproveOpen(false);
+      setApproveExecutionMonth('');
       toast.success('Orçamento aprovado! Planilha de execução criada.');
     }
   };
