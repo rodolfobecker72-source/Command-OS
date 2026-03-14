@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useCRM } from '@/contexts/CRMContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/types/crm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search, Filter, ChevronDown } from 'lucide-react';
+import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -20,9 +19,18 @@ function formatMonthLabel(ym: string) {
 export function CRMDashboard() {
   const { budgets, clients, kanbanColumns } = useCRM();
 
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const [filterMonth, setFilterMonth] = useState(String(currentMonth));
+  const [filterYear, setFilterYear] = useState(String(currentYear));
   const [clientSearch, setClientSearch] = useState('');
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    budgets.forEach(b => years.add(new Date(b.createdAt).getFullYear()));
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => b - a);
+  }, [budgets, currentYear]);
 
   const clientMap = useMemo(() => {
     const map: Record<string, typeof clients[0]> = {};
@@ -32,12 +40,9 @@ export function CRMDashboard() {
 
   const filtered = useMemo(() => {
     return budgets.filter(b => {
-      if (dateFrom && new Date(b.createdAt) < new Date(dateFrom)) return false;
-      if (dateTo) {
-        const to = new Date(dateTo);
-        to.setHours(23, 59, 59);
-        if (new Date(b.createdAt) > to) return false;
-      }
+      const d = new Date(b.createdAt);
+      if (filterMonth !== 'all' && (d.getMonth() + 1) !== Number(filterMonth)) return false;
+      if (filterYear !== 'all' && d.getFullYear() !== Number(filterYear)) return false;
       if (clientSearch) {
         const q = clientSearch.toLowerCase();
         const client = clientMap[b.clientId];
@@ -47,7 +52,7 @@ export function CRMDashboard() {
       }
       return true;
     });
-  }, [budgets, dateFrom, dateTo, clientSearch, clientMap]);
+  }, [budgets, filterMonth, filterYear, clientSearch, clientMap]);
 
   // KPIs
   const totalProposals = filtered.length;
@@ -126,37 +131,46 @@ export function CRMDashboard() {
         </div>
       </div>
 
-      {/* Filters - collapsed by default */}
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-            <Filter className="w-3.5 h-3.5" />
-            Filtros
-            <ChevronDown className="w-3 h-3" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-2">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
-            <div className="flex gap-2 flex-1">
-              <div className="space-y-1 flex-1 sm:flex-none">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">De</label>
-                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm sm:w-40" />
-              </div>
-              <div className="space-y-1 flex-1 sm:flex-none">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Até</label>
-                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm sm:w-40" />
-              </div>
-            </div>
-            <div className="space-y-1 flex-1 sm:max-w-xs">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
-              </div>
-            </div>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
+        <div className="flex gap-2">
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Mês</label>
+            <Select value={filterMonth} onValueChange={setFilterMonth}>
+              <SelectTrigger className="h-9 text-sm w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {MONTH_NAMES.map((m, i) => (
+                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Ano</label>
+            <Select value={filterYear} onValueChange={setFilterYear}>
+              <SelectTrigger className="h-9 text-sm w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {availableYears.map(y => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-1 flex-1 sm:max-w-xs">
+          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
+          </div>
+        </div>
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
