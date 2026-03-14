@@ -740,7 +740,7 @@ export function NewBudget() {
 
                   {/* Project Description */}
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="projectDescription">Descrição Geral do Projeto</Label>
+                    <Label htmlFor="projectDescription">Briefing do Projeto</Label>
                     <Textarea
                       id="projectDescription"
                       placeholder="Descreva o projeto de forma geral..."
