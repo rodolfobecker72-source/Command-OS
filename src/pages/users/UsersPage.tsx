@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { useAuth, type AppRole, type Profile } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
@@ -84,6 +84,11 @@ export function UsersPage() {
   const [deletingMember, setDeletingMember] = useState<MemberWithProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -93,6 +98,7 @@ export function UsersPage() {
   });
 
   const [editForm, setEditForm] = useState({
+    name: '',
     role: 'vendedor' as AppRole,
   });
 
@@ -189,27 +195,94 @@ export function UsersPage() {
 
   const handleEditMember = (member: MemberWithProfile) => {
     setEditingMember(member);
-    setEditForm({ role: member.role });
+    setEditForm({ name: member.profile?.name || '', role: member.role });
+    setAvatarFile(null);
+    setAvatarPreview(member.profile?.photo_url || null);
     setIsEditOpen(true);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 2MB.');
+      return;
+    }
+
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleSaveEdit = async () => {
     if (!editingMember) return;
+    setIsSavingEdit(true);
 
-    const { error } = await supabase
-      .from('workspace_members')
-      .update({ role: editForm.role })
-      .eq('id', editingMember.id);
+    try {
+      let photoUrl: string | undefined = undefined;
 
-    if (error) {
-      toast.error('Erro ao atualizar: ' + error.message);
-      return;
+      // Upload avatar if changed
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop() || 'png';
+        const filePath = `${editingMember.user_id}/avatar.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) {
+          toast.error('Erro ao fazer upload da foto: ' + uploadError.message);
+          setIsSavingEdit(false);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        photoUrl = publicUrlData.publicUrl + '?t=' + Date.now();
+      }
+
+      // Call edge function to update profile + role
+      const response = await supabase.functions.invoke('update-member-profile', {
+        body: {
+          targetUserId: editingMember.user_id,
+          name: editForm.name.trim(),
+          photoUrl,
+          role: editForm.role,
+        },
+      });
+
+      if (response.error) {
+        toast.error('Erro ao atualizar: ' + (response.error.message || 'Erro desconhecido'));
+        setIsSavingEdit(false);
+        return;
+      }
+
+      const result = response.data;
+      if (result?.error) {
+        toast.error('Erro ao atualizar: ' + result.error);
+        setIsSavingEdit(false);
+        return;
+      }
+
+      toast.success('Membro atualizado com sucesso!');
+      setIsEditOpen(false);
+      setEditingMember(null);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      loadMembers();
+    } catch (err: any) {
+      toast.error('Erro ao atualizar: ' + err.message);
     }
-
-    toast.success('Membro atualizado!');
-    setIsEditOpen(false);
-    setEditingMember(null);
-    loadMembers();
+    setIsSavingEdit(false);
   };
 
   const handleConfirmRemove = async () => {
@@ -402,20 +475,71 @@ export function UsersPage() {
         </Card>
 
         {/* Edit Member Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <Dialog open={isEditOpen} onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) {
+            setAvatarFile(null);
+            setAvatarPreview(null);
+          }
+        }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Editar Membro</DialogTitle>
               <DialogDescription>
-                Altere o papel de {editingMember?.profile?.name || 'membro'}.
+                Altere as informações de {editingMember?.profile?.name || 'membro'}.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Avatar Upload */}
+              <div className="flex flex-col items-center gap-3">
+                <div
+                  className="relative group cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={avatarPreview || undefined} />
+                    <AvatarFallback className="text-lg">
+                      {editingMember?.profile ? getInitials(editingMember.profile.name) : '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Alterar foto
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  type="text"
+                  placeholder="Nome do membro"
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+
+              {/* Role */}
               <div className="space-y-2">
                 <Label>Papel</Label>
                 <Select
                   value={editForm.role}
-                  onValueChange={(v: AppRole) => setEditForm({ role: v })}
+                  onValueChange={(v: AppRole) => setEditForm({ ...editForm, role: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -427,9 +551,14 @@ export function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
+
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>
-                <Button onClick={handleSaveEdit}>Salvar</Button>
+                <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSavingEdit}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={isSavingEdit || editForm.name.trim().length === 0}>
+                  {isSavingEdit ? 'Salvando...' : 'Salvar'}
+                </Button>
               </DialogFooter>
             </div>
           </DialogContent>
