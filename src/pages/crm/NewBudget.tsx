@@ -143,10 +143,46 @@ export function NewBudget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
+  // Payment terms from commercial rules
+  const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
+
   // Sincronizar proposalId quando budgets carregam
   useEffect(() => {
     setFormData(prev => ({ ...prev, proposalId: nextProposalId }));
   }, [nextProposalId]);
+
+  // Load commercial rules (workspace settings + payment terms)
+  useEffect(() => {
+    if (!workspace?.id) return;
+    
+    // Load cost settings
+    supabase
+      .from('workspace_settings')
+      .select('*')
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setFormData(prev => ({
+            ...prev,
+            fixedCostPercentage: Number(data.default_fixed_cost_percentage),
+            nfCostPercentage: Number(data.default_nf_percentage),
+            targetMargin: Number(data.default_target_margin_percentage),
+          }));
+        }
+      });
+
+    // Load payment terms
+    supabase
+      .from('payment_terms')
+      .select('id, name')
+      .eq('workspace_id', workspace.id)
+      .eq('active', true)
+      .order('created_at')
+      .then(({ data }) => {
+        if (data) setAvailablePaymentTerms(data);
+      });
+  }, [workspace?.id]);
 
   // Filtrar clientes pela busca
   const filteredClients = useMemo(() => {
