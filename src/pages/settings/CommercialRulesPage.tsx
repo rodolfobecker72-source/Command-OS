@@ -240,28 +240,7 @@ export function CommercialRulesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="fixedCost">Custo Fixo (%)</Label>
-                <div className="relative">
-                  <Input
-                    id="fixedCost"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={costSettings.default_fixed_cost_percentage}
-                    onChange={(e) =>
-                      setCostSettings(prev => ({
-                        ...prev,
-                        default_fixed_cost_percentage: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
-                      }))
-                    }
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="nfCost">Custo NF (%)</Label>
                 <div className="relative">

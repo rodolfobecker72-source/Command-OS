@@ -878,27 +878,13 @@ export function NewBudget() {
                     </div>
                   </div>
 
-                  {/* Cost Configuration - Project Level */}
+                   {/* Cost Configuration - Project Level */}
                   <div className="space-y-3 md:col-span-2">
                     <Label className="flex items-center gap-1 font-semibold">
                       <Calculator className="w-4 h-4" />
                       Configurações de Custo (gerais do projeto)
                     </Label>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Custo Fixo (%)</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={formData.fixedCostPercentage}
-                            onChange={(e) =>
-                              setFormData({ ...formData, fixedCostPercentage: parseFloat(e.target.value) || 0 })
-                            }
-                            className="w-24"
-                          />
-                          <span className="text-muted-foreground">%</span>
-                        </div>
-                      </div>
                       <div className="space-y-2">
                         <Label>Custo NF (%)</Label>
                         <div className="flex items-center gap-2">
