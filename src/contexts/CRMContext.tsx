@@ -46,6 +46,7 @@ function clientFromDb(row: any): Client {
     email: row.email,
     phone: row.phone,
     leadOrigin: row.lead_origin as LeadOrigin,
+    sector: row.sector || '',
     score: row.score,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
