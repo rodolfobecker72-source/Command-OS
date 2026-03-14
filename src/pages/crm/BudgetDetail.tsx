@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateProposalPDF } from '@/utils/pdfGenerator';
+import { generateFinancialReportPDF } from '@/utils/financialReportPDF';
 import { Header } from '@/components/layout/Header';
 import { useCRM } from '@/contexts/CRMContext';
 import { StatusBadge } from '@/components/common/StatusBadge';
