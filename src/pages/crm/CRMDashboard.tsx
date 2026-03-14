@@ -3,10 +3,12 @@ import { useCRM } from '@/contexts/CRMContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/types/crm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search } from 'lucide-react';
+import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search, Filter, ChevronDown } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -77,20 +79,28 @@ export function CRMDashboard() {
       .sort((a, b) => b.daysSince - a.daysSince);
   }, [filtered, clientMap]);
 
-  // Execution forecast
+  // Execution forecast — independent of date/search filters, uses ALL approved budgets
   const executionForecast = useMemo(() => {
-    const map: Record<string, { count: number; value: number }> = {};
-    approved.forEach(b => {
+    const allApproved = budgets.filter(b => b.status === 'aprovada');
+    const map: Record<string, { count: number; value: number; projects: { name: string; client: string; value: number }[] }> = {};
+    allApproved.forEach(b => {
       const month = b.executionMonth;
       if (!month) return;
-      if (!map[month]) map[month] = { count: 0, value: 0 };
+      if (!map[month]) map[month] = { count: 0, value: 0, projects: [] };
       map[month].count++;
       map[month].value += b.finalValue || 0;
+      map[month].projects.push({
+        name: b.projectName || b.proposalId,
+        client: clientMap[b.clientId]?.companyName || '—',
+        value: b.finalValue || 0,
+      });
     });
     return Object.entries(map)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, data]) => ({ month, label: formatMonthLabel(month), ...data }));
-  }, [approved]);
+  }, [budgets, clientMap]);
+
+  const executionTotalValue = useMemo(() => executionForecast.reduce((s, f) => s + f.value, 0), [executionForecast]);
 
   // Sales by month
   const salesByMonth = useMemo(() => {
@@ -116,26 +126,37 @@ export function CRMDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
-        <div className="flex gap-2 flex-1">
-          <div className="space-y-1 flex-1 sm:flex-none">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">De</label>
-            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm sm:w-40" />
+      {/* Filters - collapsed by default */}
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Filter className="w-3.5 h-3.5" />
+            Filtros
+            <ChevronDown className="w-3 h-3" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
+            <div className="flex gap-2 flex-1">
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">De</label>
+                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="h-9 text-sm sm:w-40" />
+              </div>
+              <div className="space-y-1 flex-1 sm:flex-none">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Até</label>
+                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm sm:w-40" />
+              </div>
+            </div>
+            <div className="space-y-1 flex-1 sm:max-w-xs">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1 flex-1 sm:flex-none">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Até</label>
-            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-9 text-sm sm:w-40" />
-          </div>
-        </div>
-        <div className="space-y-1 flex-1 sm:max-w-xs">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
-          </div>
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -236,18 +257,39 @@ export function CRMDashboard() {
             )}
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              Previsão de Execução
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            {executionForecast.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
-            ) : (
+      {/* Execution Forecast — independent section */}
+      <Card>
+        <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            Previsão de Execução
+          </CardTitle>
+          {executionTotalValue > 0 && (
+            <Badge variant="outline" className="text-xs font-semibold">
+              Total: {formatCurrency(executionTotalValue)}
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {executionForecast.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Chart */}
+              <div className="h-56 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={executionForecast} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
+                    <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="value" name="Valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Table */}
               <div className="max-h-64 overflow-auto -mx-1 px-1">
                 <Table>
                   <TableHeader>
@@ -270,10 +312,10 @@ export function CRMDashboard() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
