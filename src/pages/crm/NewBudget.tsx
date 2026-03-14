@@ -216,11 +216,8 @@ export function NewBudget() {
       return sum + service.costs.reduce((s, cost) => s + cost.value, 0);
     }, 0);
 
-    // Custo Fixo = X% do custo de produção
-    const fixedCost = productionCost * (formData.fixedCostPercentage / 100);
-
-    // Total dos Custos = Produção + Fixo + Operacionais
-    const totalCosts = productionCost + fixedCost + operationalCostsTotal;
+    // Total dos Custos = Produção + Operacionais
+    const totalCosts = productionCost + operationalCostsTotal;
 
     // Margem e NF
     const marginPct = formData.targetMargin;
@@ -232,8 +229,8 @@ export function NewBudget() {
     const nfValue = totalProjectValue * (nfPct / 100);
     const marginValue = totalProjectValue - totalCosts - nfValue;
 
-    return { productionCost, fixedCost, operationalCosts: operationalCostsTotal, totalCosts, totalProjectValue, nfValue, marginValue, marginPct };
-  }, [services, operationalCostsTotal, formData.fixedCostPercentage, formData.nfCostPercentage, formData.targetMargin]);
+    return { productionCost, operationalCosts: operationalCostsTotal, totalCosts, totalProjectValue, nfValue, marginValue, marginPct };
+  }, [services, operationalCostsTotal, formData.nfCostPercentage, formData.targetMargin]);
 
   // Adicionar serviço
   const addService = (serviceType: ServiceType) => {
