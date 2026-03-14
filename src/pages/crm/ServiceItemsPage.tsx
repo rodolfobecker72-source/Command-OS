@@ -53,6 +53,11 @@ const UNIT_LABELS: Record<string, string> = {
 
 const UNIT_OPTIONS = Object.entries(UNIT_LABELS).map(([value, label]) => ({ value, label }));
 
+const SPECIAL_CATEGORIES = [
+  { key: 'universal', label: 'Universal (todos os serviços)', order: 9990 },
+  { key: 'despesas_operacionais', label: 'Despesas Operacionais', order: 9991 },
+];
+
 function itemFromDb(row: any): ServiceItemRecord {
   return {
     id: row.id,
