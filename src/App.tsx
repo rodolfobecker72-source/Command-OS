@@ -25,6 +25,7 @@ import { UsersPage } from "@/pages/users/UsersPage";
 import { ServiceItemsPage } from "@/pages/crm/ServiceItemsPage";
 import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
+import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import NotFound from "./pages/NotFound";
