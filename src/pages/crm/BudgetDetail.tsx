@@ -675,7 +675,7 @@ export function BudgetDetail() {
 
                     {/* Descrição Geral do Projeto */}
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Descrição Geral do Projeto</p>
+                      <p className="text-sm text-muted-foreground mb-1">Briefing do Projeto</p>
                       {isEditing ? (
                         <Textarea
                           value={editedProjectDescription}
