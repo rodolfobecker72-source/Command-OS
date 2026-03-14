@@ -675,7 +675,7 @@ export function BudgetDetail() {
 
                     {/* Descrição Geral do Projeto */}
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Descrição Geral do Projeto</p>
+                      <p className="text-sm text-muted-foreground mb-1">Briefing do Projeto</p>
                       {isEditing ? (
                         <Textarea
                           value={editedProjectDescription}
@@ -684,7 +684,7 @@ export function BudgetDetail() {
                           rows={3}
                         />
                       ) : (
-                        <p className="font-medium">{budget.projectDescription || 'Não definido'}</p>
+                        <p className="font-medium whitespace-pre-wrap">{budget.projectDescription || 'Não definido'}</p>
                       )}
                     </div>
                     
@@ -751,7 +751,7 @@ export function BudgetDetail() {
                                       </span>
                                       {objectiveLabel}
                                     </CardTitle>
-                                    <CardDescription>
+                                    <CardDescription className="whitespace-pre-wrap">
                                       {service.description || 'Sem descrição'}
                                     </CardDescription>
                                   </div>
