@@ -105,6 +105,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     status: row.status,
     versions,
     currentVersion: row.current_version,
+    executionMonth: row.execution_month || null,
     approvedVersion: row.approved_version,
     approvalDate: row.approval_date ? new Date(row.approval_date) : null,
     finalValue: row.final_value,
@@ -204,7 +205,7 @@ interface CRMContextType {
 
   addBudgetVersion: (budgetId: string, version: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => Promise<void>;
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
-  approveBudget: (budgetId: string, versionNumber: number) => Promise<void>;
+  approveBudget: (budgetId: string, versionNumber: number, executionMonth?: string) => Promise<void>;
 
   updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => Promise<void>;
   updateExecutionCost: (budgetId: string, serviceId: string, costId: string, updates: Partial<ExecutionCostItem>, isExtraCost?: boolean) => Promise<void>;
@@ -786,6 +787,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.executionStartDate !== undefined) dbUpdates.execution_start_date = updates.executionStartDate?.toISOString() || null;
       if (updates.executionEndDate !== undefined) dbUpdates.execution_end_date = updates.executionEndDate?.toISOString() || null;
       if (updates.location !== undefined) dbUpdates.location = updates.location;
+      if (updates.executionMonth !== undefined) dbUpdates.execution_month = updates.executionMonth;
       if (updates.contractUrl !== undefined) dbUpdates.contract_url = updates.contractUrl;
       if (updates.nfUrl !== undefined) dbUpdates.nf_url = updates.nfUrl;
       if (updates.approvedVersion !== undefined) dbUpdates.approved_version = updates.approvedVersion;
@@ -914,7 +916,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro ao atualizar versão: ' + e.message); }
   };
 
-  const approveBudget = async (budgetId: string, versionNumber: number) => {
+  const approveBudget = async (budgetId: string, versionNumber: number, executionMonth?: string) => {
     const budget = budgets.find(b => b.id === budgetId);
     if (!budget) return;
 
@@ -948,6 +950,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         status: 'aprovada', approved_version: versionNumber,
         approval_date: new Date().toISOString(), final_value: approvedVersion?.fullPrice || null,
         execution: execution as any,
+        execution_month: executionMonth || null,
       }).eq('id', budgetId);
       if (approveError) {
         console.error('[CRM] approveBudget: erro ao atualizar budget:', approveError.message);
@@ -958,7 +961,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (b.id === budgetId) {
           return {
             ...b, status: 'aprovada' as CRMStatus, approvedVersion: versionNumber,
-            approvalDate: new Date(), finalValue: approvedVersion?.fullPrice || null, execution, updatedAt: new Date(),
+            approvalDate: new Date(), finalValue: approvedVersion?.fullPrice || null, execution,
+            executionMonth: executionMonth || null, updatedAt: new Date(),
           };
         }
         return b;
@@ -1375,6 +1379,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         clientId: budget.clientId, serviceType: budget.serviceType, serviceTypes,
         value: currentVersionData?.fullPrice || null, status: budget.status,
         clientScore: client?.score || 0, currentVersion: budget.currentVersion,
+        executionMonth: budget.executionMonth,
       };
     });
   };

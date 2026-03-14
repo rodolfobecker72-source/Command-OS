@@ -101,6 +101,14 @@ const SERVICE_ICONS: Record<string, typeof Film> = {
   MOBILE: Smartphone,
 };
 
+const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function formatExecutionMonth(ym: string): string {
+  const [year, month] = ym.split('-');
+  const idx = parseInt(month, 10) - 1;
+  return `${MONTH_NAMES_PT[idx] || month}/${year}`;
+}
+
 export function BudgetDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -118,6 +126,7 @@ export function BudgetDetail() {
   const [newVersionNfPct, setNewVersionNfPct] = useState(13);
   const [newVersionTargetMargin, setNewVersionTargetMargin] = useState(0);
   const [approveOpen, setApproveOpen] = useState(false);
+  const [approveExecutionMonth, setApproveExecutionMonth] = useState('');
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -342,8 +351,9 @@ export function BudgetDetail() {
 
   const handleApprove = async () => {
     if (budget.currentVersion > 0) {
-      await approveBudget(budget.id, budget.currentVersion);
+      await approveBudget(budget.id, budget.currentVersion, approveExecutionMonth || undefined);
       setApproveOpen(false);
+      setApproveExecutionMonth('');
       toast.success('Orçamento aprovado! Planilha de execução criada.');
     }
   };
@@ -592,6 +602,11 @@ export function BudgetDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={budget.status} />
+                      {budget.executionMonth && (
+                        <Badge variant="outline" className="text-xs">
+                          Execução: {formatExecutionMonth(budget.executionMonth)}
+                        </Badge>
+                      )}
                       {!isEditing && budget.status !== 'aprovada' && (
                         <Button
                           variant="ghost"
@@ -1296,6 +1311,20 @@ export function BudgetDetail() {
                                           <span className="font-bold">
                                             {formatCurrency(currentVersionData?.fullPrice || 0)}
                                           </span>
+                                        </p>
+                                      </div>
+
+                                      <div>
+                                        <Label htmlFor="execution-month">Mês de Execução</Label>
+                                        <Input
+                                          id="execution-month"
+                                          type="month"
+                                          value={approveExecutionMonth}
+                                          onChange={(e) => setApproveExecutionMonth(e.target.value)}
+                                          className="mt-1"
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Mês previsto para execução do projeto (opcional)
                                         </p>
                                       </div>
 

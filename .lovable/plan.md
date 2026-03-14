@@ -1,44 +1,23 @@
 
 
-# Add "Execution Month" field to budgets
+# Reorganização do Resumo Financeiro por Aba
 
-## Overview
-Add a simple `execution_month` field (stored as `YYYY-MM`) to budgets, prompted on approval, displayed in budget details and CRM cards, with a filter in the Kanban view.
+## Mudanças
 
-## Database Change
-**Migration**: Add `execution_month` column to `budgets` table:
-```sql
-ALTER TABLE public.budgets ADD COLUMN execution_month text DEFAULT NULL;
-```
+### 1. Valores Reais — mover para ANTES de "Gestão do Projeto" (não mais dentro de "Finalizado")
+- Remover o bloco "Valores Reais" de dentro do `isFinalized` (linhas 1927-1980)
+- Inserir um novo bloco **antes** de "Gestão do Projeto" (antes da linha 1834), visível sempre na aba execução
+- Background verde sutil (`bg-green-50 dark:bg-green-950/20 border-green-200`)
+- Ordem dos campos: **Imposto NF Real** (editável) → **Custo Real** (calculado) → **Margem Real**
 
-## Code Changes
+### 2. Sidebar "Resumo Financeiro" — dinâmico por aba
+- O card lateral (linhas 2112-2164) deve mudar conforme `activeTab`:
+  - **Aba "budget"**: mostrar dados da última versão ou versão aprovada (Valor Final, Custo Total, Margem) — comportamento atual
+  - **Aba "execution"**: mostrar dados reais (Custo Real, Imposto NF Real, Margem Real)
 
-### 1. `src/types/crm.ts` — Budget interface
-- Add `executionMonth: string | null` to the `Budget` interface
-- Add `executionMonth?: string | null` to the `CRMCard` interface
-
-### 2. `src/contexts/CRMContext.tsx`
-- **`budgetFromDb`**: Map `execution_month` → `executionMonth`
-- **`approveBudget`**: Accept a third parameter `executionMonth: string`, save it to DB alongside approval
-- **`getCRMCards`**: Include `executionMonth` from budget in the CRMCard
-
-### 3. `src/pages/crm/BudgetDetail.tsx` — Approval dialog
-- In the approve dialog, add a month/year input (MM/YYYY format) before confirming
-- Pass the selected month to `approveBudget(budgetId, version, executionMonth)`
-- Display the execution month badge in the budget detail header when set
-
-### 4. `src/pages/crm/CRMKanban.tsx` — Approval via drag
-- When dragging to "aprovada", show a small dialog to collect the execution month before calling `approveBudget`
-
-### 5. `src/components/crm/KanbanCard.tsx` — Badge
-- If `card.executionMonth` exists, show a badge like "Execução: Mar/2026" using formatted month name in Portuguese
-
-### 6. `src/pages/crm/CRMKanban.tsx` — Filter
-- Add a month filter dropdown (showing months that exist in current cards) above the Kanban board
-- Filter cards by `executionMonth` when selected
-
-## Display Format
-- Internal storage: `"2026-04"` (YYYY-MM)
-- Display: `"Abr/2026"` using Portuguese month abbreviations
-- Input: month/year selector or MM/YYYY text input
+### Arquivo a modificar
+- `src/pages/crm/BudgetDetail.tsx`
+  - Mover bloco "Valores Reais" para antes de "Gestão do Projeto" com bg verde
+  - Reordenar campos: Imposto NF Real → Custo Real → Margem Real
+  - Sidebar: condicionar conteúdo do card "Resumo Financeiro" ao `activeTab`
 

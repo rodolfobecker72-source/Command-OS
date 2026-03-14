@@ -3,7 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
-import { GripVertical, Film, Camera, Smartphone, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { GripVertical, Film, Camera, Smartphone, FileText, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
 
@@ -16,6 +17,14 @@ const serviceIcons: Record<string, typeof Film> = {
   FOTO: Camera,
   MOBILE: Smartphone,
 };
+
+const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function formatExecutionMonth(ym: string): string {
+  const [year, month] = ym.split('-');
+  const idx = parseInt(month, 10) - 1;
+  return `${MONTH_NAMES_PT[idx] || month}/${year}`;
+}
 
 export function KanbanCard({ card }: KanbanCardProps) {
   const navigate = useNavigate();
@@ -88,14 +97,20 @@ export function KanbanCard({ card }: KanbanCardProps) {
             )}
           </div>
 
-          {/* Value */}
-          {card.value && (
-            <div className="flex items-center justify-between">
+          {/* Value & Execution Month */}
+          <div className="flex items-center justify-between flex-wrap gap-1">
+            {card.value && (
               <span className="text-sm font-semibold text-accent">
                 {formatCurrency(card.value)}
               </span>
-            </div>
-          )}
+            )}
+            {card.executionMonth && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                <Calendar className="w-2.5 h-2.5" />
+                {formatExecutionMonth(card.executionMonth)}
+              </Badge>
+            )}
+          </div>
 
           {/* Actions (visible on hover) */}
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
