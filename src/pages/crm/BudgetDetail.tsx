@@ -122,7 +122,7 @@ export function BudgetDetail() {
   const [newVersionReason, setNewVersionReason] = useState('');
   const [newVersionServices, setNewVersionServices] = useState<ServiceItem[]>([]);
   const [newVersionOperationalCosts, setNewVersionOperationalCosts] = useState<CostItem[]>([]);
-  const [newVersionFixedCostPct, setNewVersionFixedCostPct] = useState(20);
+  const [newVersionFixedCostPct, setNewVersionFixedCostPct] = useState(0); // deprecated, always 0
   const [newVersionNfPct, setNewVersionNfPct] = useState(13);
   const [newVersionTargetMargin, setNewVersionTargetMargin] = useState(0);
   const [approveOpen, setApproveOpen] = useState(false);
@@ -172,17 +172,16 @@ export function BudgetDetail() {
     const productionCost = newVersionServices.reduce((sum, service) => {
       return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
     }, 0);
-    const fixedCost = productionCost * (newVersionFixedCostPct / 100);
     const operationalTotal = newVersionOperationalTotal;
-    const totalCosts = productionCost + fixedCost + operationalTotal;
+    const totalCosts = productionCost + operationalTotal;
 
     const divisor = 1 - (newVersionTargetMargin / 100) - (newVersionNfPct / 100);
     const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
     const nfValue = totalProjectValue * (newVersionNfPct / 100);
     const marginValue = totalProjectValue - totalCosts - nfValue;
 
-    return { productionCost, fixedCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
-  }, [newVersionServices, newVersionOperationalTotal, newVersionFixedCostPct, newVersionNfPct, newVersionTargetMargin]);
+    return { productionCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
+  }, [newVersionServices, newVersionOperationalTotal, newVersionNfPct, newVersionTargetMargin]);
 
   if (!budget || !client) {
     return (
@@ -236,7 +235,7 @@ export function BudgetDetail() {
     setNewVersionOperationalCosts(
       (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
     );
-    setNewVersionFixedCostPct(currentVersionData?.fixedCostPercentage ?? 20);
+    setNewVersionFixedCostPct(0); // deprecated
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
   };
@@ -783,15 +782,6 @@ export function BudgetDetail() {
                                         </TableCell>
                                       </TableRow>
                                     ))}
-                                    {/* Fixed Cost Row */}
-                                    <TableRow className="bg-muted/30">
-                                      <TableCell colSpan={3} className="text-muted-foreground">
-                                        Custo Fixo ({service.fixedCostPercentage}%)
-                                      </TableCell>
-                                      <TableCell className="text-right font-medium text-muted-foreground">
-                                        {formatCurrency(calc.fixedCost)}
-                                      </TableCell>
-                                    </TableRow>
                                   </TableBody>
                                 </Table>
                               </div>
@@ -1316,16 +1306,7 @@ export function BudgetDetail() {
                                             </CardTitle>
                                           </CardHeader>
                                           <CardContent className="space-y-4">
-                                            <div className="grid grid-cols-3 gap-4">
-                                              <div className="space-y-2">
-                                                <Label>Custo Fixo (%)</Label>
-                                                <Input
-                                                  type="number"
-                                                  min={0}
-                                                  value={newVersionFixedCostPct}
-                                                  onChange={(e) => setNewVersionFixedCostPct(parseFloat(e.target.value) || 0)}
-                                                />
-                                              </div>
+                                            <div className="grid grid-cols-2 gap-4">
                                               <div className="space-y-2">
                                                 <Label>Nota Fiscal (%)</Label>
                                                 <Input
@@ -1351,10 +1332,6 @@ export function BudgetDetail() {
                                               <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Custo de Produção</span>
                                                 <span className="font-medium">{formatCurrency(newVersionTotals.productionCost)}</span>
-                                              </div>
-                                              <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Custo Fixo ({newVersionFixedCostPct}%)</span>
-                                                <span className="font-medium">{formatCurrency(newVersionTotals.fixedCost)}</span>
                                               </div>
                                               <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Despesas Operacionais</span>

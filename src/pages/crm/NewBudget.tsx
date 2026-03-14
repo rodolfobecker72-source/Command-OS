@@ -128,7 +128,7 @@ export function NewBudget() {
     executionStartDate: null as Date | null,
     executionEndDate: null as Date | null,
     location: '',
-    fixedCostPercentage: 0,
+    fixedCostPercentage: 0, // deprecated, always 0
     nfCostPercentage: 0,
     targetMargin: 0,
   });
@@ -164,9 +164,9 @@ export function NewBudget() {
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setFormData(prev => ({
+           setFormData(prev => ({
             ...prev,
-            fixedCostPercentage: Number(data.default_fixed_cost_percentage),
+            fixedCostPercentage: 0, // deprecated, always 0
             nfCostPercentage: Number(data.default_nf_percentage),
             targetMargin: Number(data.default_target_margin_percentage),
           }));
@@ -196,16 +196,12 @@ export function NewBudget() {
   // Cliente selecionado
   const selectedClient = clients.find(c => c.id === formData.clientId);
 
-  // Cálculos por serviço (apenas custo de produção e custo fixo)
+  // Cálculos por serviço (apenas custo de produção)
   const calculateService = (service: ServiceItem) => {
     const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
-    const fixedCost = productionCost * (formData.fixedCostPercentage / 100);
-    const totalCost = productionCost + fixedCost;
-
     return {
       productionCost,
-      fixedCost,
-      totalCost,
+      totalCost: productionCost,
     };
   };
 
@@ -220,11 +216,8 @@ export function NewBudget() {
       return sum + service.costs.reduce((s, cost) => s + cost.value, 0);
     }, 0);
 
-    // Custo Fixo = X% do custo de produção
-    const fixedCost = productionCost * (formData.fixedCostPercentage / 100);
-
-    // Total dos Custos = Produção + Fixo + Operacionais
-    const totalCosts = productionCost + fixedCost + operationalCostsTotal;
+    // Total dos Custos = Produção + Operacionais
+    const totalCosts = productionCost + operationalCostsTotal;
 
     // Margem e NF
     const marginPct = formData.targetMargin;
@@ -236,8 +229,8 @@ export function NewBudget() {
     const nfValue = totalProjectValue * (nfPct / 100);
     const marginValue = totalProjectValue - totalCosts - nfValue;
 
-    return { productionCost, fixedCost, operationalCosts: operationalCostsTotal, totalCosts, totalProjectValue, nfValue, marginValue, marginPct };
-  }, [services, operationalCostsTotal, formData.fixedCostPercentage, formData.nfCostPercentage, formData.targetMargin]);
+    return { productionCost, operationalCosts: operationalCostsTotal, totalCosts, totalProjectValue, nfValue, marginValue, marginPct };
+  }, [services, operationalCostsTotal, formData.nfCostPercentage, formData.targetMargin]);
 
   // Adicionar serviço
   const addService = (serviceType: ServiceType) => {
@@ -885,27 +878,13 @@ export function NewBudget() {
                     </div>
                   </div>
 
-                  {/* Cost Configuration - Project Level */}
+                   {/* Cost Configuration - Project Level */}
                   <div className="space-y-3 md:col-span-2">
                     <Label className="flex items-center gap-1 font-semibold">
                       <Calculator className="w-4 h-4" />
                       Configurações de Custo (gerais do projeto)
                     </Label>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Custo Fixo (%)</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={formData.fixedCostPercentage}
-                            onChange={(e) =>
-                              setFormData({ ...formData, fixedCostPercentage: parseFloat(e.target.value) || 0 })
-                            }
-                            className="w-24"
-                          />
-                          <span className="text-muted-foreground">%</span>
-                        </div>
-                      </div>
                       <div className="space-y-2">
                         <Label>Custo NF (%)</Label>
                         <div className="flex items-center gap-2">
@@ -1248,21 +1227,13 @@ export function NewBudget() {
                       </div>
 
                       {/* Summary */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
                             Custo de Produção
                           </p>
                           <p className="font-semibold">
                             {formatCurrency(calc.productionCost)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">
-                            Custo Fixo ({formData.fixedCostPercentage}%)
-                          </p>
-                          <p className="font-semibold">
-                            {formatCurrency(calc.fixedCost)}
                           </p>
                         </div>
                         <div>
@@ -1448,10 +1419,6 @@ export function NewBudget() {
                     <div className="flex justify-between">
                       <span className="text-background/70">Custo de Produção</span>
                       <span className="font-semibold">{formatCurrency(totals.productionCost)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-background/70">Custo Fixo ({formData.fixedCostPercentage}%)</span>
-                      <span className="font-semibold">{formatCurrency(totals.fixedCost)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-background/70">Despesas Operacionais</span>

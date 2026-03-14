@@ -302,16 +302,14 @@ export async function generateProposalPDF({
 
   // Pre-compute values needed for per-service pricing
   const preNfPct = version.nfCostPercentage || 13;
-  const preFixedPct = version.fixedCostPercentage || 0;
   const preMarginPct = version.margin || 0;
-  const preFixedValue = totalProductionCost * (preFixedPct / 100);
   const preOpTotal = (version.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
-  const preTotalCosts = totalProductionCost + preFixedValue + preOpTotal;
+  const preTotalCosts = totalProductionCost + preOpTotal;
   const preDivisor = 1 - (preMarginPct / 100) - (preNfPct / 100);
   const preTotalProject = preDivisor > 0 ? preTotalCosts / preDivisor : preTotalCosts;
   const preNfValue = preTotalProject * (preNfPct / 100);
   const preMarginValue = preTotalProject - preTotalCosts - preNfValue;
-  const preToDistribute = totalProductionCost + preFixedValue + preMarginValue;
+  const preToDistribute = totalProductionCost + preMarginValue;
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -482,16 +480,14 @@ export async function generateProposalPDF({
   y += 10;
 
   const versionNfPercentage = version.nfCostPercentage || 13;
-  const versionFixedCostPct = version.fixedCostPercentage || 0;
   const versionMarginPct = version.margin || 0;
 
-  const fixedCostValue = totalProductionCost * (versionFixedCostPct / 100);
-  const totalCosts = totalProductionCost + fixedCostValue + operationalTotal;
+  const totalCosts = totalProductionCost + operationalTotal;
   const divisor = 1 - (versionMarginPct / 100) - (versionNfPercentage / 100);
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-  const totalToDistribute = totalProductionCost + fixedCostValue + marginValue;
+  const totalToDistribute = totalProductionCost + marginValue;
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
