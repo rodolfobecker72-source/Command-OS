@@ -949,6 +949,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         status: 'aprovada', approved_version: versionNumber,
         approval_date: new Date().toISOString(), final_value: approvedVersion?.fullPrice || null,
         execution: execution as any,
+        execution_month: executionMonth || null,
       }).eq('id', budgetId);
       if (approveError) {
         console.error('[CRM] approveBudget: erro ao atualizar budget:', approveError.message);
