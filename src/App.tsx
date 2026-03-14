@@ -70,6 +70,9 @@ const App = () => (
                   {/* Service Categories */}
                   <Route path="/categorias" element={<PageGuard pageKey="categorias"><ServiceCategories /></PageGuard>} />
                   
+                  {/* Service Items */}
+                  <Route path="/itens-servico" element={<PageGuard pageKey="itens-servico"><ServiceItemsPage /></PageGuard>} />
+                  
                   {/* Users */}
                   <Route path="/usuarios" element={<PageGuard pageKey="usuarios"><UsersPage /></PageGuard>} />
                   
