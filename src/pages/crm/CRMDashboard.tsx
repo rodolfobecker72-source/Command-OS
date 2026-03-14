@@ -257,18 +257,39 @@ export function CRMDashboard() {
             )}
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              Previsão de Execução
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            {executionForecast.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
-            ) : (
+      {/* Execution Forecast — independent section */}
+      <Card>
+        <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            Previsão de Execução
+          </CardTitle>
+          {executionTotalValue > 0 && (
+            <Badge variant="outline" className="text-xs font-semibold">
+              Total: {formatCurrency(executionTotalValue)}
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {executionForecast.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Chart */}
+              <div className="h-56 sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={executionForecast} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
+                    <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="value" name="Valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Table */}
               <div className="max-h-64 overflow-auto -mx-1 px-1">
                 <Table>
                   <TableHeader>
@@ -291,10 +312,10 @@ export function CRMDashboard() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
