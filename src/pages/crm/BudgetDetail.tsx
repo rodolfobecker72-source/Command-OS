@@ -462,6 +462,28 @@ export function BudgetDetail() {
     toast.success('Link removido!');
   };
 
+  const fetchLayoutSettings = async (): Promise<PDFLayoutSettings | null> => {
+    if (!workspace) return null;
+    try {
+      const { data } = await supabase
+        .from('workspace_layout')
+        .select('*')
+        .eq('workspace_id', workspace.id)
+        .maybeSingle();
+      if (data) {
+        return {
+          logoUrl: (data as any).logo_url || '',
+          companyName: (data as any).company_name || '',
+          website: (data as any).website || '',
+          email: (data as any).email || '',
+        };
+      }
+    } catch (err) {
+      console.warn('Could not load layout settings:', err);
+    }
+    return null;
+  };
+
   const generatePDFForVersion = async (version: BudgetVersion) => {
     if (!version.services || version.services.length === 0) {
       toast.error('Versão não possui serviços');
@@ -469,11 +491,13 @@ export function BudgetDetail() {
     }
 
     try {
+      const layoutSettings = await fetchLayoutSettings();
       await generateProposalPDF({
         budget,
         version,
         client,
         responsibleUser: profile ? { id: profile.id, name: profile.name, photo: profile.photo_url || '' } : null,
+        layoutSettings,
       });
       toast.success(`PDF V${version.version} gerado com sucesso!`);
     } catch (error) {
