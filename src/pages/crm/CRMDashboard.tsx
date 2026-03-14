@@ -132,205 +132,220 @@ export function CRMDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
-        <div className="flex gap-2">
-          <div className="space-y-1">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Mês</label>
-            <Select value={filterMonth} onValueChange={setFilterMonth}>
-              <SelectTrigger className="h-9 text-sm w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {MONTH_NAMES.map((m, i) => (
-                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Ano</label>
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="h-9 text-sm w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {availableYears.map(y => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="space-y-1 flex-1 sm:max-w-xs">
-          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard icon={FileText} iconBg="bg-primary/10" iconColor="text-primary" label="Total Propostas" value={String(totalProposals)} />
-        <KPICard icon={CheckCircle2} iconBg="bg-success/10" iconColor="text-success" label="Aprovadas" value={String(approvedCount)} />
-        <KPICard icon={TrendingUp} iconBg="bg-accent/10" iconColor="text-accent" label="Conversão" value={`${conversionRate}%`} />
-        <KPICard icon={DollarSign} iconBg="bg-warning/10" iconColor="text-warning" label="Valor Vendido" value={formatCurrency(totalValueSold)} small />
-      </div>
-
-      {/* Pipeline + Sales */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-        <Card className="lg:col-span-3">
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold">Pipeline</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="h-56 sm:h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pipelineData} layout="vertical" margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
-                    {pipelineData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold">Vendas por Mês</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            {salesByMonth.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-16 text-center">Nenhuma venda no período</p>
-            ) : (
-              <div className="h-56 sm:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesByMonth} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="value" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Follow-up + Execution Forecast */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <Card>
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-warning" />
-              Follow-up Necessário
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            {followUps.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-10 text-center">Nenhuma proposta pendente</p>
-            ) : (
-              <div className="max-h-64 overflow-auto -mx-1 px-1">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Projeto</TableHead>
-                      <TableHead className="text-xs">Cliente</TableHead>
-                      <TableHead className="text-xs text-right">Dias</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {followUps.map(f => (
-                      <TableRow key={f.id}>
-                        <TableCell className="text-xs font-medium py-2 max-w-[180px] truncate">
-                          {f.proposalId} - {f.projectName}
-                        </TableCell>
-                        <TableCell className="text-xs py-2">{f.clientName}</TableCell>
-                        <TableCell className="text-right py-2">
-                          <Badge variant={f.daysSince > 7 ? 'destructive' : f.daysSince > 3 ? 'secondary' : 'outline'} className="text-[10px] px-1.5">
-                            {f.daysSince}d
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Execution Forecast — independent section */}
-      <Card>
-        <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-primary" />
+      <Tabs defaultValue="visao-geral" className="space-y-5">
+        <TabsList>
+          <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
+          <TabsTrigger value="previsao-execucao" className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
             Previsão de Execução
-          </CardTitle>
-          {executionTotalValue > 0 && (
-            <Badge variant="outline" className="text-xs font-semibold">
-              Total: {formatCurrency(executionTotalValue)}
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="px-4 pb-4">
-          {executionForecast.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Chart */}
-              <div className="h-56 sm:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={executionForecast} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="value" name="Valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Table */}
-              <div className="max-h-64 overflow-auto -mx-1 px-1">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Mês</TableHead>
-                      <TableHead className="text-xs text-center">Projetos</TableHead>
-                      <TableHead className="text-xs text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {executionForecast.map(f => (
-                      <TableRow key={f.month}>
-                        <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
-                        <TableCell className="text-center py-2">
-                          <Badge variant="outline" className="text-[10px] px-1.5">{f.count}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
-                      </TableRow>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Visão Geral */}
+        <TabsContent value="visao-geral" className="space-y-5 mt-0">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
+            <div className="flex gap-2">
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Mês</label>
+                <Select value={filterMonth} onValueChange={setFilterMonth}>
+                  <SelectTrigger className="h-9 text-sm w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {MONTH_NAMES.map((m, i) => (
+                      <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Ano</label>
+                <Select value={filterYear} onValueChange={setFilterYear}>
+                  <SelectTrigger className="h-9 text-sm w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {availableYears.map(y => (
+                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-1 flex-1 sm:max-w-xs">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input placeholder="Cliente ou projeto..." value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="h-9 text-sm pl-8" />
+              </div>
+            </div>
+          </div>
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KPICard icon={FileText} iconBg="bg-primary/10" iconColor="text-primary" label="Total Propostas" value={String(totalProposals)} />
+            <KPICard icon={CheckCircle2} iconBg="bg-success/10" iconColor="text-success" label="Aprovadas" value={String(approvedCount)} />
+            <KPICard icon={TrendingUp} iconBg="bg-accent/10" iconColor="text-accent" label="Conversão" value={`${conversionRate}%`} />
+            <KPICard icon={DollarSign} iconBg="bg-warning/10" iconColor="text-warning" label="Valor Vendido" value={formatCurrency(totalValueSold)} small />
+          </div>
+
+          {/* Pipeline + Sales */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+            <Card className="lg:col-span-3">
+              <CardHeader className="pb-1 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold">Pipeline</CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <div className="h-56 sm:h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={pipelineData} layout="vertical" margin={{ left: 0, right: 12, top: 4, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
+                        {pipelineData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-1 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold">Vendas por Mês</CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                {salesByMonth.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-16 text-center">Nenhuma venda no período</p>
+                ) : (
+                  <div className="h-56 sm:h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={salesByMonth} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
+                        <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
+                        <Bar dataKey="value" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Follow-up */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <Card>
+              <CardHeader className="pb-1 pt-4 px-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-warning" />
+                  Follow-up Necessário
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                {followUps.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-10 text-center">Nenhuma proposta pendente</p>
+                ) : (
+                  <div className="max-h-64 overflow-auto -mx-1 px-1">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Projeto</TableHead>
+                          <TableHead className="text-xs">Cliente</TableHead>
+                          <TableHead className="text-xs text-right">Dias</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {followUps.map(f => (
+                          <TableRow key={f.id}>
+                            <TableCell className="text-xs font-medium py-2 max-w-[180px] truncate">
+                              {f.proposalId} - {f.projectName}
+                            </TableCell>
+                            <TableCell className="text-xs py-2">{f.clientName}</TableCell>
+                            <TableCell className="text-right py-2">
+                              <Badge variant={f.daysSince > 7 ? 'destructive' : f.daysSince > 3 ? 'secondary' : 'outline'} className="text-[10px] px-1.5">
+                                {f.daysSince}d
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab: Previsão de Execução */}
+        <TabsContent value="previsao-execucao" className="space-y-5 mt-0">
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                Previsão de Execução
+              </CardTitle>
+              {executionTotalValue > 0 && (
+                <Badge variant="outline" className="text-xs font-semibold">
+                  Total: {formatCurrency(executionTotalValue)}
+                </Badge>
+              )}
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              {executionForecast.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Chart */}
+                  <div className="h-56 sm:h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={executionForecast} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                        <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
+                        <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
+                        <Bar dataKey="value" name="Valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Table */}
+                  <div className="max-h-64 overflow-auto -mx-1 px-1">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Mês</TableHead>
+                          <TableHead className="text-xs text-center">Projetos</TableHead>
+                          <TableHead className="text-xs text-right">Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {executionForecast.map(f => (
+                          <TableRow key={f.month}>
+                            <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
+                            <TableCell className="text-center py-2">
+                              <Badge variant="outline" className="text-[10px] px-1.5">{f.count}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
