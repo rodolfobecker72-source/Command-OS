@@ -604,9 +604,39 @@ export function BudgetDetail() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={budget.status} />
-                      {budget.executionMonth && (
-                        <Badge variant="outline" className="text-xs">
-                          Execução: {formatExecutionMonth(budget.executionMonth)}
+                      {isEditingExecutionMonth ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="month"
+                            value={editedExecutionMonth}
+                            onChange={(e) => setEditedExecutionMonth(e.target.value)}
+                            className="h-7 w-40 text-xs"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={async () => {
+                              await updateBudget(budget.id, { executionMonth: editedExecutionMonth || null });
+                              setIsEditingExecutionMonth(false);
+                              toast.success('Mês de execução atualizado!');
+                            }}
+                          >
+                            <Save className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-xs cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => {
+                            setEditedExecutionMonth(budget.executionMonth || '');
+                            setIsEditingExecutionMonth(true);
+                          }}
+                        >
+                          {budget.executionMonth
+                            ? `Execução: ${formatExecutionMonth(budget.executionMonth)}`
+                            : '+ Mês de execução'}
                         </Badge>
                       )}
                       {!isEditing && budget.status !== 'aprovada' && (
