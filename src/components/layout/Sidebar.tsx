@@ -45,7 +45,8 @@ const navGroups: NavGroup[] = [
   icon: Settings,
   items: [
   { name: 'Categorias de Serviço', href: '/categorias', icon: Layers, pageKey: 'categorias' },
-  { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' }]
+  { name: 'Itens de Serviço', href: '/itens-servico', icon: Package, pageKey: 'itens-servico' },
+  { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' }]
 }];
 
 

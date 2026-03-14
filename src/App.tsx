@@ -79,6 +79,9 @@ const App = () => (
                   {/* Users */}
                   <Route path="/usuarios" element={<PageGuard pageKey="usuarios"><UsersPage /></PageGuard>} />
                   
+                  {/* Settings */}
+                  <Route path="/configuracoes/regras-comerciais" element={<PageGuard pageKey="regras-comerciais"><CommercialRulesPage /></PageGuard>} />
+                  
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
                 </Route>
