@@ -357,9 +357,8 @@ export function formatPhone(phone: string): string {
 // Calculate service totals
 export function calculateServiceTotals(service: ServiceItem) {
   const productionCost = service.costs.reduce((sum, cost) => sum + cost.value, 0);
-  const fixedCost = productionCost * (service.fixedCostPercentage / 100);
   const nfCost = productionCost * (service.nfCostPercentage / 100);
-  const totalCost = productionCost + fixedCost + nfCost;
+  const totalCost = productionCost + nfCost;
   
   const finalValue = service.targetMargin > 0 && service.targetMargin < 100
     ? totalCost / (1 - service.targetMargin / 100)
@@ -367,7 +366,7 @@ export function calculateServiceTotals(service: ServiceItem) {
 
   return {
     productionCost,
-    fixedCost,
+    fixedCost: 0, // deprecated
     nfCost,
     totalCost,
     finalValue,
