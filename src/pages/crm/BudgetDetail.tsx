@@ -721,13 +721,22 @@ export function BudgetDetail() {
             {activeTab === 'budget' && (
               <>
                 {/* Services by Type */}
-                {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (
+                {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
+                  const cvd = currentVersionData;
+                  const opTotal = (cvd.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
+                  const totalProdCost = cvd.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
+                  const projNfValue = cvd.fullPrice * (cvd.nfCostPercentage / 100);
+                  const projMarginValue = cvd.fullPrice - totalProdCost - opTotal - projNfValue;
+
+                  return (
                   <AnimatePresence mode="popLayout">
-                    {currentVersionData.services.map((service, index) => {
+                    {cvd.services.map((service, index) => {
                       const Icon = SERVICE_ICONS[service.serviceType];
                       const objectives = getObjectivesForCategory(service.serviceType);
                       const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
                       const calc = calculateServiceTotals(service);
+                      const serviceWeight = totalProdCost > 0 ? calc.productionCost / totalProdCost : 0;
+                      const serviceMarginValue = serviceWeight * projMarginValue;
 
                       return (
                         <motion.div
@@ -794,7 +803,7 @@ export function BudgetDetail() {
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Margem</p>
-                                  <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{calc.margin.toFixed(1)}%</p>
+                                  <p className={`font-semibold ${getMarginColor(calc.margin)}`}>{formatCurrency(serviceMarginValue)} ({calc.margin.toFixed(1)}%)</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground">Subtotal</p>
@@ -807,7 +816,8 @@ export function BudgetDetail() {
                       );
                     })}
                   </AnimatePresence>
-                )}
+                  );
+                })()}
 
                 {/* Operational Costs in Budget View */}
                 {currentVersionData && (currentVersionData.operationalCosts || []).length > 0 && (
