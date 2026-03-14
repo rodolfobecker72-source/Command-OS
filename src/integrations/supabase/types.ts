@@ -269,6 +269,7 @@ export type Database = {
           phone: string
           responsible_person: string
           score: number
+          sector: string
           updated_at: string
           workspace_id: string
         }
@@ -282,6 +283,7 @@ export type Database = {
           phone?: string
           responsible_person?: string
           score?: number
+          sector?: string
           updated_at?: string
           workspace_id: string
         }
@@ -295,6 +297,7 @@ export type Database = {
           phone?: string
           responsible_person?: string
           score?: number
+          sector?: string
           updated_at?: string
           workspace_id?: string
         }

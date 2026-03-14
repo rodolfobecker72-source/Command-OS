@@ -46,6 +46,7 @@ function clientFromDb(row: any): Client {
     email: row.email,
     phone: row.phone,
     leadOrigin: row.lead_origin as LeadOrigin,
+    sector: row.sector || '',
     score: row.score,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -61,6 +62,7 @@ function clientToDb(c: Partial<Client>, workspaceId?: string): any {
   if (c.email !== undefined) row.email = c.email;
   if (c.phone !== undefined) row.phone = c.phone;
   if (c.leadOrigin !== undefined) row.lead_origin = c.leadOrigin;
+  if (c.sector !== undefined) row.sector = c.sector;
   if (c.score !== undefined) row.score = c.score;
   return row;
 }

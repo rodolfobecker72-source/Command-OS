@@ -7,6 +7,7 @@ import {
   LeadOrigin,
   LEAD_ORIGIN_LABELS,
 } from '@/types/crm';
+import { LEAD_SEGMENT_LABELS, LeadSegment } from '@/types/prospection';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -39,6 +40,7 @@ export function NewClient() {
     email: '',
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
+    sector: '' as LeadSegment | '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,6 +94,7 @@ export function NewClient() {
         email: formData.email.trim(),
         phone: formData.phone.replace(/\D/g, ''),
         leadOrigin: formData.leadOrigin as LeadOrigin,
+        sector: formData.sector || '',
         score: 0,
       });
 
@@ -324,6 +327,28 @@ export function NewClient() {
                   )}
                 </div>
 
+
+                {/* Sector */}
+                <div className="space-y-2">
+                  <Label htmlFor="sector">Setor</Label>
+                  <Select
+                    value={formData.sector}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, sector: value as LeadSegment })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(LEAD_SEGMENT_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">

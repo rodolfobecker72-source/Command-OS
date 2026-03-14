@@ -80,6 +80,7 @@ export function LegacyProjectDialog() {
       email: '',
       phone: newPhone.trim(),
       leadOrigin: newLeadOrigin,
+      sector: '',
       score: 0,
     });
 

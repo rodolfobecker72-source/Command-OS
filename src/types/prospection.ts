@@ -14,14 +14,21 @@ export type LeadOriginType =
   | 'outro';
 
 export type LeadSegment =
-  | 'construcao'
+  | 'construcao_imobiliario'
   | 'industria'
-  | 'agro'
+  | 'agronegocio'
   | 'saude'
-  | 'tecnologia'
   | 'educacao'
-  | 'cooperativa'
-  | 'outro';
+  | 'tecnologia'
+  | 'financeiro'
+  | 'varejo'
+  | 'gastronomia'
+  | 'turismo_hotelaria'
+  | 'energia'
+  | 'eventos'
+  | 'servicos'
+  | 'setor_publico'
+  | 'terceiro_setor';
 
 export type LeadFunnelStatus =
   | 'mapeado'
@@ -78,14 +85,21 @@ export const LEAD_ORIGIN_LABELS: Record<LeadOriginType, string> = {
 };
 
 export const LEAD_SEGMENT_LABELS: Record<LeadSegment, string> = {
-  construcao: 'Construção',
+  construcao_imobiliario: 'Construção e Imobiliário',
   industria: 'Indústria',
-  agro: 'Agro',
+  agronegocio: 'Agronegócio',
   saude: 'Saúde',
-  tecnologia: 'Tecnologia',
   educacao: 'Educação',
-  cooperativa: 'Cooperativa',
-  outro: 'Outro',
+  tecnologia: 'Tecnologia',
+  financeiro: 'Financeiro',
+  varejo: 'Varejo',
+  gastronomia: 'Gastronomia',
+  turismo_hotelaria: 'Turismo e Hotelaria',
+  energia: 'Energia',
+  eventos: 'Eventos',
+  servicos: 'Serviços',
+  setor_publico: 'Setor Público',
+  terceiro_setor: 'Terceiro Setor',
 };
 
 export const LEAD_TEMPERATURE_LABELS: Record<LeadTemperature, string> = {

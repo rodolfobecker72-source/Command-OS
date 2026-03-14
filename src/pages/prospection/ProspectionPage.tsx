@@ -260,6 +260,7 @@ export function ProspectionPage() {
       email: lead.email,
       phone: lead.phone,
       leadOrigin: mapOriginToCRM(lead.origin),
+      sector: lead.segment || '',
       score: 0,
     });
     if (newClient) {
@@ -873,7 +874,7 @@ export function ProspectionPage() {
             <Card className="border-0 shadow-sm rounded-2xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <LayoutGrid className="w-4 h-4" /> Segmento
+                  <LayoutGrid className="w-4 h-4" /> Setor
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 max-h-[200px] overflow-y-auto">
@@ -947,7 +948,7 @@ export function ProspectionPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Segmento</Label>
+              <Label className="text-xs">Setor</Label>
               <Select value={formData.segment} onValueChange={(v: LeadSegment) => setFormData(p => ({ ...p, segment: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -1048,7 +1049,7 @@ export function ProspectionPage() {
                   <div><span className="text-muted-foreground text-xs">Telefone:</span><p>{detailLead.phone || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">E-mail:</span><p>{detailLead.email || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Origem:</span><p>{LEAD_ORIGIN_LABELS[detailLead.origin]}</p></div>
-                  <div><span className="text-muted-foreground text-xs">Segmento:</span><p>{LEAD_SEGMENT_LABELS[detailLead.segment]}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Setor:</span><p>{LEAD_SEGMENT_LABELS[detailLead.segment]}</p></div>
                   <div><span className="text-muted-foreground text-xs">Potencial:</span><p className="font-semibold">R$ {detailLead.estimatedPotential.toLocaleString('pt-BR')}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Prospecção:</span><p>{detailLead.prospectionResponsible || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Fechamento:</span><p>{detailLead.closingResponsible || '-'}</p></div>
