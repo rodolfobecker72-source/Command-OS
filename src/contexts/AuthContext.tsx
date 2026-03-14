@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { getAllPageKeys } from '@/config/pages';
+import { getAllPageKeys, isRoleRestricted } from '@/config/pages';
 
 export type AppRole = 'owner' | 'admin' | 'vendedor' | 'visualizador';
 
@@ -226,6 +226,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPageAccess = (pageKey: string): boolean => {
     if (!membership) return false;
+    // Check role-based restrictions first (e.g. vendedor cannot access Configurações pages)
+    if (role && isRoleRestricted(pageKey, role)) return false;
     // Owner and admin have access to everything
     if (role === 'owner' || role === 'admin') return true;
     // If no specific permissions set, grant all access

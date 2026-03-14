@@ -6,6 +6,7 @@ export interface AppPage {
   label: string;    // Display name
   href: string;     // Route path
   group: string;    // Navigation group name
+  restrictedFrom?: string[]; // Roles that should NEVER access this page
 }
 
 export const APP_PAGES: AppPage[] = [
@@ -13,9 +14,9 @@ export const APP_PAGES: AppPage[] = [
   { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial' },
   { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial' },
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial' },
-  { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Comercial' },
-  { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Comercial' },
-  { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações' },
+  { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Configurações', restrictedFrom: ['vendedor'] },
+  { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Configurações', restrictedFrom: ['vendedor'] },
+  { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações', restrictedFrom: ['vendedor'] },
   
   // Sistema
   { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema' },
@@ -24,6 +25,12 @@ export const APP_PAGES: AppPage[] = [
 // Get all page keys (useful for setting "all access" by default)
 export function getAllPageKeys(): string[] {
   return APP_PAGES.map(p => p.key);
+}
+
+// Check if a role is restricted from a page
+export function isRoleRestricted(pageKey: string, role: string): boolean {
+  const page = APP_PAGES.find(p => p.key === pageKey);
+  return page?.restrictedFrom?.includes(role) ?? false;
 }
 
 // Group pages by their group name for display
