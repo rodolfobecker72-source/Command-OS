@@ -328,6 +328,28 @@ export function NewClient() {
                 </div>
 
 
+                {/* Sector */}
+                <div className="space-y-2">
+                  <Label htmlFor="sector">Setor</Label>
+                  <Select
+                    value={formData.sector}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, sector: value as LeadSegment })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(LEAD_SEGMENT_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">
                   <Button
