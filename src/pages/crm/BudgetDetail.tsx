@@ -1903,15 +1903,56 @@ export function BudgetDetail() {
                       );
                     })()}
 
-                    {/* Valores Reais - sempre visível na aba execução */}
+                    {/* Consolidação Final do Projeto */}
                     <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-green-600" />
-                        Valores Reais
+                        Consolidação final do projeto
                       </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Imposto NF Real</p>
+                      
+                      <div className="space-y-2 mb-4">
+                        {/* Investimento Total */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-sm font-medium">Investimento Total</span>
+                          <span className="font-bold text-lg">{formatCurrency(budget.finalValue || 0)}</span>
+                        </div>
+
+                        <Separator />
+
+                        {/* Custo Real por entrega */}
+                        {budget.execution?.services?.map((svc, idx) => {
+                          const svcRealTotal = svc.costs?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const extraCostsTotal = svc.extraCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const objLabel = svc.objective || '';
+                          return (
+                            <div key={svc.id || idx} className="flex justify-between items-center py-1">
+                              <span className="text-sm text-muted-foreground">
+                                {idx + 1}. {SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType}{objLabel ? ` — ${objLabel}` : ''} (Custo Real)
+                              </span>
+                              <span className="font-semibold text-destructive">{formatCurrency(svcRealTotal + extraCostsTotal)}</span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Despesas Operacionais Reais */}
+                        {(() => {
+                          const opReal = budget.execution?.operationalCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const extraOpReal = budget.execution?.extraOperationalCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const totalOpReal = opReal + extraOpReal;
+                          if (totalOpReal > 0) {
+                            return (
+                              <div className="flex justify-between items-center py-1">
+                                <span className="text-sm text-muted-foreground">Despesas Operacionais (Real)</span>
+                                <span className="font-semibold text-destructive">{formatCurrency(totalOpReal)}</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        {/* Imposto NF */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-sm text-muted-foreground">Imposto NF</span>
                           {isEditingNf ? (
                             <div className="flex items-center gap-2">
                               <Input
@@ -1926,7 +1967,7 @@ export function BudgetDetail() {
                             </div>
                           ) : (
                             <div 
-                              className="font-bold text-lg cursor-pointer hover:text-primary flex items-center gap-1"
+                              className="font-semibold cursor-pointer hover:text-primary flex items-center gap-1"
                               onClick={() => {
                                 setExecutionNfValue(budget.execution?.nfTaxValue || 0);
                                 setIsEditingNf(true);
@@ -1937,27 +1978,26 @@ export function BudgetDetail() {
                             </div>
                           )}
                         </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Custo Real</p>
-                          <p className="font-bold text-lg text-destructive">
-                            {formatCurrency(budget.execution?.realTotal || 0)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Margem Real</p>
-                          {(() => {
-                            const investimento = budget.finalValue || 0;
-                            const custoRealComImposto = (budget.execution?.realTotal || 0) + (budget.execution?.nfTaxValue || 0);
-                            const margemReal = investimento > 0 
-                              ? ((investimento - custoRealComImposto) / investimento) * 100 
-                              : 0;
-                            return (
-                              <p className={`font-bold text-lg ${getMarginColor(margemReal)}`}>
-                                {margemReal.toFixed(1)}%
-                              </p>
-                            );
-                          })()}
-                        </div>
+
+                        <Separator />
+
+                        {/* Margem Real */}
+                        {(() => {
+                          const investimento = budget.finalValue || 0;
+                          const custoRealTotal = (budget.execution?.realTotal || 0) + (budget.execution?.nfTaxValue || 0);
+                          const margemReais = investimento - custoRealTotal;
+                          const margemPercent = investimento > 0 
+                            ? ((margemReais) / investimento) * 100 
+                            : 0;
+                          return (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-sm font-medium">Margem Real</span>
+                              <span className={`font-bold text-lg ${getMarginColor(margemPercent)}`}>
+                                {formatCurrency(margemReais)} ({margemPercent.toFixed(1)}%)
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
