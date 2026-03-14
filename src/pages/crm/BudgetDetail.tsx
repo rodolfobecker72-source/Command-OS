@@ -684,7 +684,7 @@ export function BudgetDetail() {
                           rows={3}
                         />
                       ) : (
-                        <p className="font-medium">{budget.projectDescription || 'Não definido'}</p>
+                        <p className="font-medium whitespace-pre-wrap">{budget.projectDescription || 'Não definido'}</p>
                       )}
                     </div>
                     
