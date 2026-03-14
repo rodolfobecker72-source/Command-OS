@@ -1305,6 +1305,15 @@ export function NewBudget() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={() => setOpCostSelectorOpen(true)}
+                  >
+                    <Layers className="w-4 h-4 mr-1" />
+                    Catálogo
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       setOperationalCosts([
                         ...operationalCosts,
@@ -1321,8 +1330,9 @@ export function NewBudget() {
                     }}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Adicionar
+                    Manual
                   </Button>
+                </div>
                 </div>
               </CardHeader>
               <CardContent>
