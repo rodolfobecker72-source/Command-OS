@@ -18,6 +18,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -71,6 +81,7 @@ export function UsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberWithProfile | null>(null);
+  const [deletingMember, setDeletingMember] = useState<MemberWithProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -87,6 +98,11 @@ export function UsersPage() {
 
   const canManage = currentRole === 'owner';
 
+  const isCreateFormValid =
+    createForm.name.trim().length > 0 &&
+    createForm.email.trim().length > 0 &&
+    createForm.password.length >= 6;
+
   const loadMembers = async () => {
     if (!workspace) return;
     setIsLoading(true);
@@ -96,24 +112,31 @@ export function UsersPage() {
       .select('*')
       .eq('workspace_id', workspace.id);
 
-    if (memberData) {
-      const membersWithProfiles: MemberWithProfile[] = [];
-      for (const m of memberData) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', m.user_id)
-          .single();
+    if (memberData && memberData.length > 0) {
+      const userIds = memberData.map(m => m.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
 
-        membersWithProfiles.push({
-          id: m.id,
-          user_id: m.user_id,
-          role: m.role as AppRole,
-          joined_at: m.joined_at,
-          profile: profileData as Profile | null,
-        });
+      const profilesMap = new Map<string, Profile>();
+      if (profilesData) {
+        for (const p of profilesData) {
+          profilesMap.set(p.id, p as Profile);
+        }
       }
+
+      const membersWithProfiles: MemberWithProfile[] = memberData.map(m => ({
+        id: m.id,
+        user_id: m.user_id,
+        role: m.role as AppRole,
+        joined_at: m.joined_at,
+        profile: profilesMap.get(m.user_id) || null,
+      }));
+
       setMembers(membersWithProfiles);
+    } else {
+      setMembers([]);
     }
 
     setIsLoading(false);
@@ -127,17 +150,16 @@ export function UsersPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createForm.email || !createForm.password || !createForm.name) return;
+    if (!isCreateFormValid) return;
 
     setIsCreating(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const response = await supabase.functions.invoke('create-member', {
         body: {
-          email: createForm.email,
+          email: createForm.email.trim(),
           password: createForm.password,
-          name: createForm.name,
+          name: createForm.name.trim(),
           role: createForm.role,
         },
       });
@@ -155,7 +177,7 @@ export function UsersPage() {
         return;
       }
 
-      toast.success(`Membro ${createForm.name} criado com sucesso!`);
+      toast.success(`Membro ${createForm.name.trim()} criado com sucesso!`);
       setIsCreateOpen(false);
       setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
       loadMembers();
@@ -190,24 +212,21 @@ export function UsersPage() {
     loadMembers();
   };
 
-  const handleRemoveMember = async (member: MemberWithProfile) => {
-    if (member.role === 'owner') {
-      toast.error('Não é possível remover o proprietário');
-      return;
-    }
+  const handleConfirmRemove = async () => {
+    if (!deletingMember) return;
 
     const { error } = await supabase
       .from('workspace_members')
       .delete()
-      .eq('id', member.id);
+      .eq('id', deletingMember.id);
 
     if (error) {
       toast.error('Erro ao remover: ' + error.message);
-      return;
+    } else {
+      toast.success('Membro removido!');
+      loadMembers();
     }
-
-    toast.success('Membro removido!');
-    loadMembers();
+    setDeletingMember(null);
   };
 
   const getInitials = (name: string) => {
@@ -231,7 +250,10 @@ export function UsersPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Membros ({members.length})</CardTitle>
             {canManage && (
-              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <Dialog open={isCreateOpen} onOpenChange={(open) => {
+                setIsCreateOpen(open);
+                if (!open) setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
+              }}>
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="w-4 h-4 mr-2" />
@@ -247,7 +269,7 @@ export function UsersPage() {
                   </DialogHeader>
                   <form onSubmit={handleCreate} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="create-name">Nome</Label>
+                      <Label htmlFor="create-name">Nome <span className="text-destructive">*</span></Label>
                       <Input
                         id="create-name"
                         type="text"
@@ -258,7 +280,7 @@ export function UsersPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="create-email">Email</Label>
+                      <Label htmlFor="create-email">Email <span className="text-destructive">*</span></Label>
                       <Input
                         id="create-email"
                         type="email"
@@ -269,7 +291,7 @@ export function UsersPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="create-password">Senha</Label>
+                      <Label htmlFor="create-password">Senha <span className="text-destructive">*</span></Label>
                       <PasswordInput
                         id="create-password"
                         placeholder="Mínimo 6 caracteres"
@@ -278,6 +300,9 @@ export function UsersPage() {
                         required
                         minLength={6}
                       />
+                      {createForm.password.length > 0 && createForm.password.length < 6 && (
+                        <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>Papel</Label>
@@ -299,7 +324,7 @@ export function UsersPage() {
                       <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={isCreating}>
+                      <Button type="submit" disabled={isCreating || !isCreateFormValid}>
                         {isCreating ? 'Criando...' : 'Criar Membro'}
                       </Button>
                     </DialogFooter>
@@ -358,7 +383,7 @@ export function UsersPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="text-destructive hover:text-destructive"
-                                    onClick={() => handleRemoveMember(member)}
+                                    onClick={() => setDeletingMember(member)}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -409,6 +434,24 @@ export function UsersPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deletingMember} onOpenChange={(open) => { if (!open) setDeletingMember(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover membro</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover <strong>{deletingMember?.profile?.name || 'este membro'}</strong> da equipe? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
