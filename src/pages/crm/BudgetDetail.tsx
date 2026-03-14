@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateProposalPDF } from '@/utils/pdfGenerator';
+import { generateFinancialReportPDF } from '@/utils/financialReportPDF';
 import { Header } from '@/components/layout/Header';
 import { useCRM } from '@/contexts/CRMContext';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -1907,10 +1908,32 @@ export function BudgetDetail() {
 
                     {/* Consolidação Final do Projeto */}
                     <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                      <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                        Consolidação final do projeto
-                      </h4>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-semibold flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                          Consolidação final do projeto
+                        </h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await generateFinancialReportPDF({
+                                budget,
+                                client,
+                                userName: profile?.name || '',
+                              });
+                              toast.success('Relatório financeiro gerado!');
+                            } catch (err) {
+                              console.error(err);
+                              toast.error('Erro ao gerar relatório');
+                            }
+                          }}
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1.5" />
+                          Exportar Relatório
+                        </Button>
+                      </div>
                       
                       <div className="space-y-2 mb-4">
                         {/* Investimento Total */}
