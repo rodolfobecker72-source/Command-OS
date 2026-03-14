@@ -26,6 +26,7 @@ import { ServiceItemsPage } from "@/pages/crm/ServiceItemsPage";
 import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
 import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
+import { LayoutPage } from "@/pages/settings/LayoutPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import NotFound from "./pages/NotFound";
