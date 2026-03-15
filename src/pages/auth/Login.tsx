@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import commandLogo from '@/assets/command-logo.png';
+import loginBg from '@/assets/login-bg.jpg';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -33,14 +34,17 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-4 gap-8">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4 gap-8 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${loginBg})` }}
+    >
       <img 
         src={commandLogo} 
-        alt="Command CRM" 
-        className="h-14 w-auto"
+        alt="Command OS" 
+        className="h-14 w-auto brightness-0 invert"
       />
 
-      <Card className="w-full max-w-md bg-card border-border">
+      <Card className="w-full max-w-md bg-card/95 backdrop-blur-sm border-border">
         <CardHeader className="text-center space-y-1.5 pb-2">
           <CardTitle className="text-2xl text-foreground">Bem-vindo ao Command OS</CardTitle>
           <CardDescription className="text-muted-foreground leading-relaxed">
