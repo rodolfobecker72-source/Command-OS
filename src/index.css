@@ -2,78 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* HERO CRM Design System - Black & White Professional Theme */
+/* Command OS Design System - Brand Blue #002cbe */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
     /* Core Brand Colors */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 10%;
+    --background: 225 20% 96%;
+    --foreground: 227 40% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 227 40% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 227 40% 12%;
 
-    /* Primary - Pure Black */
-    --primary: 0 0% 10%;
+    /* Primary - Brand Blue #002cbe */
+    --primary: 227 100% 37%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Light Gray */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
+    /* Secondary - Light Blue Tint */
+    --secondary: 225 30% 95%;
+    --secondary-foreground: 227 100% 37%;
 
-    /* Muted - Subtle Gray */
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
+    /* Muted - Cool Gray */
+    --muted: 225 15% 93%;
+    --muted-foreground: 225 10% 45%;
 
-    /* Accent - Black */
-    --accent: 0 0% 10%;
+    /* Accent - Lighter Blue */
+    --accent: 227 85% 50%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success - For approvals */
+    /* Success */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning - For follow-ups */
+    /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
     /* Info */
-    --info: 0 0% 35%;
+    --info: 227 60% 55%;
     --info-foreground: 0 0% 100%;
 
     /* Border & Input */
-    --border: 0 0% 91%;
-    --input: 0 0% 91%;
-    --ring: 0 0% 10%;
+    --border: 225 15% 90%;
+    --input: 225 15% 90%;
+    --ring: 227 100% 37%;
 
     --radius: 0.875rem;
 
-    /* Sidebar - Light Clean */
+    /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 0 0% 10%;
+    --sidebar-foreground: 227 40% 12%;
+    --sidebar-primary: 227 100% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 0 0% 10%;
-    --sidebar-muted: 0 0% 50%;
+    --sidebar-accent: 225 40% 96%;
+    --sidebar-accent-foreground: 227 100% 37%;
+    --sidebar-border: 225 15% 92%;
+    --sidebar-ring: 227 100% 37%;
+    --sidebar-muted: 225 10% 50%;
 
-    /* Kanban Status Colors - Monochrome with subtle variations */
-    --status-opportunity: 0 0% 60%;
-    --status-proposal: 0 0% 50%;
-    --status-ready: 0 0% 40%;
-    --status-sent: 0 0% 30%;
-    --status-followup: 0 0% 25%;
+    /* Kanban Status Colors */
+    --status-opportunity: 225 20% 65%;
+    --status-proposal: 227 40% 55%;
+    --status-ready: 227 60% 48%;
+    --status-sent: 227 80% 42%;
+    --status-followup: 227 100% 37%;
     --status-rejected: 0 84% 60%;
     --status-approved: 142 76% 36%;
 
@@ -83,8 +83,8 @@
     --score-high: 142 76% 36%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(0 0% 10%) 0%, hsl(0 0% 25%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(0 0% 15%) 0%, hsl(0 0% 35%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(227 100% 37%) 0%, hsl(227 85% 50%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(227 100% 37%) 0%, hsl(240 70% 55%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(160 84% 39%) 100%);
     --gradient-sidebar: none;
 
@@ -94,41 +94,41 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 12px -4px rgb(0 0 0 / 0.06);
-    --shadow-kanban: 0 4px 12px -2px rgb(0 0 0 / 0.12), 0 2px 6px -2px rgb(0 0 0 / 0.08);
+    --shadow-card: 0 2px 8px -2px rgb(0 44 190 / 0.06), 0 4px 12px -4px rgb(0 44 190 / 0.04);
+    --shadow-kanban: 0 4px 12px -2px rgb(0 44 190 / 0.1), 0 2px 6px -2px rgb(0 44 190 / 0.06);
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 98%;
+    --background: 227 30% 6%;
+    --foreground: 225 15% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 227 25% 10%;
+    --card-foreground: 225 15% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 227 25% 10%;
+    --popover-foreground: 225 15% 95%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 227 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 227 20% 18%;
+    --secondary-foreground: 225 15% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 227 15% 18%;
+    --muted-foreground: 225 10% 65%;
 
-    --accent: 0 0% 98%;
-    --accent-foreground: 0 0% 5%;
+    --accent: 227 85% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 98%;
+    --border: 227 15% 20%;
+    --input: 227 15% 20%;
+    --ring: 227 100% 50%;
 
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 227 30% 5%;
+    --sidebar-foreground: 225 15% 95%;
   }
 }
 

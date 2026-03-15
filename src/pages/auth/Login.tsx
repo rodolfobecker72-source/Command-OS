@@ -33,7 +33,7 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-sidebar-background flex flex-col items-center justify-center p-4 gap-8">
+    <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-4 gap-8">
       <img 
         src={commandLogo} 
         alt="Command CRM" 
