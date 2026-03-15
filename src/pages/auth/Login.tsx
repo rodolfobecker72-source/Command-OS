@@ -46,7 +46,7 @@ export function Login() {
           <CardDescription className="text-muted-foreground leading-relaxed">
             Gestão comercial para audiovisual<br />
             CRM • Propostas • Clientes<br />
-            Digite suas credenciais para acessar.
+            Para produtoras e criadores
           </CardDescription>
         </CardHeader>
         <CardContent>
