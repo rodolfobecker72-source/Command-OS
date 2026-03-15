@@ -29,6 +29,7 @@ import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { LayoutPage } from "@/pages/settings/LayoutPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
+import { MaintenancePage } from "@/pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,9 @@ const App = () => (
           <CRMProvider>
             <ProspectionProvider>
             <Routes>
+              {/* Root - Maintenance page */}
+              <Route path="/" element={<MaintenancePage />} />
+
               {/* Auth */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -51,8 +55,6 @@ const App = () => (
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
-                {/* Redirect root to clients dashboard */}
-                <Route path="/" element={<Navigate to="/crm" replace />} />
                 
                 {/* App routes with sidebar layout */}
                 <Route element={<AppLayout />}>
