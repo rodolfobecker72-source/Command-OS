@@ -42,10 +42,11 @@ export function Login() {
 
       <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="text-center space-y-1.5 pb-2">
-          <CardTitle className="text-2xl text-foreground">Bem-vindo ao Command CRM</CardTitle>
+          <CardTitle className="text-2xl text-foreground">Bem-vindo ao Command OS</CardTitle>
           <CardDescription className="text-muted-foreground leading-relaxed">
-            Sistema interno de gestão da produtora.<br />
-            Digite suas credenciais para acessar.
+            Gestão comercial para audiovisual<br />
+            CRM • Propostas • Clientes<br />
+            Para produtoras e criadores
           </CardDescription>
         </CardHeader>
         <CardContent>
