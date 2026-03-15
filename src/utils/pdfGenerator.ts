@@ -123,7 +123,7 @@ export async function generateProposalPDF({
 
   const addHeader = () => {
     if (logoData) {
-      const logoHeight = 28;
+      const logoHeight = 20;
       const aspectRatio = logoData.width / logoData.height;
       const logoWidth = logoHeight * aspectRatio;
       doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
