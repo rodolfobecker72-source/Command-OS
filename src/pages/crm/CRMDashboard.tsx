@@ -266,6 +266,39 @@ export function CRMDashboard() {
 
         {/* Tab: Previsão de Execução */}
         <TabsContent value="previsao-execucao" className="space-y-5 mt-0">
+          {/* Goal Summary Cards */}
+          {(() => {
+            const totalGoal = executionForecast.reduce((s, f) => {
+              const g = getGoalForMonth(f.month);
+              return s + (g || 0);
+            }, 0);
+            const overallProgress = totalGoal > 0 ? (executionTotalValue / totalGoal) * 100 : 0;
+            const goalStatus = overallProgress >= 100 ? 'Meta atingida' : overallProgress >= 80 ? 'Quase atingida' : 'Abaixo da meta';
+            const goalStatusVariant = overallProgress >= 100 ? 'default' : overallProgress >= 80 ? 'secondary' : 'destructive';
+
+            return totalGoal > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <KPICard icon={Target} iconBg="bg-primary/10" iconColor="text-primary" label="Meta Total" value={formatCurrency(totalGoal)} small />
+                <KPICard icon={DollarSign} iconBg="bg-success/10" iconColor="text-success" label="Valor Previsto" value={formatCurrency(executionTotalValue)} small />
+                <Card>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-accent/10 shrink-0">
+                      <TrendingUp className="w-4 h-4 text-accent" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Progresso Geral</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-foreground text-base sm:text-lg">{overallProgress.toFixed(1)}%</p>
+                        <Badge variant={goalStatusVariant as any} className="text-[10px]">{goalStatus}</Badge>
+                      </div>
+                      <Progress value={Math.min(overallProgress, 100)} className="h-1.5 mt-1" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : null;
+          })()}
+
           <Card>
             <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
@@ -295,7 +328,7 @@ export function CRMDashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  {/* Table */}
+                  {/* Table with goals */}
                   <div className="max-h-64 overflow-auto -mx-1 px-1">
                     <Table>
                       <TableHeader>
@@ -303,18 +336,43 @@ export function CRMDashboard() {
                           <TableHead className="text-xs">Mês</TableHead>
                           <TableHead className="text-xs text-center">Projetos</TableHead>
                           <TableHead className="text-xs text-right">Valor</TableHead>
+                          <TableHead className="text-xs text-right">Meta</TableHead>
+                          <TableHead className="text-xs text-center">Progresso</TableHead>
+                          <TableHead className="text-xs text-center">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {executionForecast.map(f => (
-                          <TableRow key={f.month}>
-                            <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
-                            <TableCell className="text-center py-2">
-                              <Badge variant="outline" className="text-[10px] px-1.5">{f.count}</Badge>
-                            </TableCell>
-                            <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {executionForecast.map(f => {
+                          const goal = getGoalForMonth(f.month);
+                          const progress = goal ? (f.value / goal) * 100 : null;
+                          const status = progress === null ? null : progress >= 100 ? 'atingida' : progress >= 80 ? 'quase' : 'abaixo';
+                          return (
+                            <TableRow key={f.month}>
+                              <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
+                              <TableCell className="text-center py-2">
+                                <Badge variant="outline" className="text-[10px] px-1.5">{f.count}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
+                              <TableCell className="text-right text-xs py-2">
+                                {goal !== null ? formatCurrency(goal) : <span className="text-muted-foreground italic">Não definida</span>}
+                              </TableCell>
+                              <TableCell className="text-center text-xs py-2">
+                                {progress !== null ? (
+                                  <div className="flex items-center gap-1.5 justify-center">
+                                    <Progress value={Math.min(progress, 100)} className="h-1.5 w-12" />
+                                    <span className="text-[10px] font-medium">{progress.toFixed(1)}%</span>
+                                  </div>
+                                ) : '—'}
+                              </TableCell>
+                              <TableCell className="text-center py-2">
+                                {status === 'atingida' && <Badge className="text-[10px] px-1.5 bg-success/15 text-success border-success/30" variant="outline">Meta atingida</Badge>}
+                                {status === 'quase' && <Badge className="text-[10px] px-1.5" variant="secondary">Quase atingida</Badge>}
+                                {status === 'abaixo' && <Badge className="text-[10px] px-1.5" variant="destructive">Abaixo da meta</Badge>}
+                                {status === null && <span className="text-[10px] text-muted-foreground">—</span>}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
