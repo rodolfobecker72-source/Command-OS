@@ -422,6 +422,41 @@ export type Database = {
           },
         ]
       }
+      monthly_goals: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          updated_at: string
+          value: number
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month?: string
+          updated_at?: string
+          value?: number
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          updated_at?: string
+          value?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_goals_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_terms: {
         Row: {
           active: boolean

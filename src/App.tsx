@@ -27,6 +27,7 @@ import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
 import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { LayoutPage } from "@/pages/settings/LayoutPage";
+import { GoalsPage } from "@/pages/settings/GoalsPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
@@ -85,6 +86,7 @@ const App = () => (
                   {/* Settings */}
                   <Route path="/configuracoes/regras-comerciais" element={<PageGuard pageKey="regras-comerciais"><CommercialRulesPage /></PageGuard>} />
                   <Route path="/configuracoes/layout" element={<PageGuard pageKey="layout"><LayoutPage /></PageGuard>} />
+                  <Route path="/configuracoes/metas" element={<PageGuard pageKey="metas"><GoalsPage /></PageGuard>} />
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
