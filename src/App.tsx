@@ -27,6 +27,7 @@ import { ProspectionPage } from "@/pages/prospection/ProspectionPage";
 import { AboutPage } from "@/pages/about/AboutPage";
 import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { LayoutPage } from "@/pages/settings/LayoutPage";
+import { GoalsPage } from "@/pages/settings/GoalsPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
