@@ -1,108 +1,86 @@
 
 
-## Análise do Projeto Command OS
+# Script SQL Consolidado -- Migração Completa Command OS
 
-### O que existe hoje no Lovable Cloud (Supabase)
+## Objetivo
 
-O projeto já usa Supabase integralmente como backend. Lovable Cloud **é** Supabase por baixo. A migração consiste em apontar o projeto para um Supabase externo que você controla.
+Gerar um arquivo `docs/migration-full-consolidated.sql` contendo um script unico e pronto para colar no SQL Editor de um novo projeto Supabase limpo. O script replica 100% do estado atual do banco.
 
-**Componentes em uso:**
+## Estrutura do Script
 
-| Componente | Detalhes |
-|---|---|
-| **Auth** | signUp, signInWithPassword, signOut, resetPasswordForEmail, updateUser, admin.createUser, admin.deleteUser, admin.updateUserById, admin.listUsers |
-| **Database (17 tabelas)** | profiles, workspaces, workspace_members, workspace_invites, workspace_settings, workspace_layout, clients, budgets, budget_versions, project_cards, kanban_columns, project_columns, service_categories, service_objectives, service_items, payment_terms, prospection_leads, monthly_goals, assets, hard_drives, legacy_projects, score_history, landing_leads |
-| **RLS Policies** | Todas as tabelas com RLS ativo, usando funções `has_workspace_access`, `get_user_role`, `has_role` |
-| **DB Functions (7)** | `handle_new_user`, `handle_signup_workspace`, `has_workspace_access`, `has_role`, `get_user_role`, `get_user_workspace`, `accept_invite`, `update_updated_at_column` |
-| **DB Trigger** | `handle_new_user` on auth.users (cria profile automático) |
-| **Edge Functions (3)** | `create-member`, `reset-user-password`, `update-member-profile` |
-| **Storage Buckets (2)** | `avatars` (público), `logos` (público) |
-| **Secrets (6)** | SUPABASE_SERVICE_ROLE_KEY, SUPABASE_DB_URL, SUPABASE_PUBLISHABLE_KEY, LOVABLE_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY |
+O script sera organizado em blocos sequenciais com comentarios claros:
 
----
+```text
+1. ENUM app_role
+2. FUNCOES AUXILIARES (security definer) -- criadas antes das tabelas pois as RLS dependem delas
+3. TABELAS (na ordem correta de dependencias):
+   - profiles
+   - workspaces
+   - workspace_members
+   - workspace_invites
+   - workspace_settings (UNIQUE workspace_id)
+   - workspace_layout (UNIQUE workspace_id)
+   - clients
+   - budgets (depende de workspaces)
+   - budget_versions (depende de budgets + workspaces)
+   - prospection_leads
+   - kanban_columns
+   - project_columns
+   - project_cards (depende de budgets)
+   - service_categories
+   - service_objectives
+   - service_items
+   - payment_terms
+   - score_history (depende de clients)
+   - assets
+   - hard_drives
+   - legacy_projects
+   - monthly_goals (UNIQUE workspace_id + month)
+   - landing_leads (sem workspace_id -- publica)
+4. RLS POLICIES (todas PERMISSIVE, estado final)
+5. TRIGGER handle_new_user (on auth.users)
+6. TRIGGER update_updated_at (workspace_layout)
+7. FUNCOES DE NEGOCIO (handle_signup_workspace, accept_invite)
+8. FUNCAO update_updated_at_column
+9. INDICES
+10. STORAGE BUCKETS (avatars, logos) + policies
+11. CHECKLIST DE VALIDACAO (como comentarios SQL)
+```
 
-### Plano de Migração (em etapas)
+## Tabelas reconstruidas a partir do schema atual
 
-#### Etapa 0 — Preparar o Supabase externo
+As tabelas que nao tinham CREATE TABLE nos migration files serao reconstruidas com base no schema real extraido do banco (types.ts + contexto fornecido). Sao elas:
 
-Configuração manual no dashboard do Supabase:
+- **clients**: id, workspace_id, company_name, cnpj, responsible_person, email, phone, lead_origin, sector, score, created_at, updated_at
+- **budgets**: id, workspace_id, client_id, proposal_id, project_name, project_description, service_type, objective, description, payment_terms, location, status, includes_tax, includes_logistics, includes_accommodation, includes_meals, includes_raw_material, includes_technical_visit, has_execution_date, execution_start_date, execution_end_date, execution_month, current_version, approved_version, approval_date, final_value, execution (jsonb), contract_url, nf_url, created_at, updated_at
+- **budget_versions**: id, workspace_id, budget_id (FK budgets), version, services (jsonb), operational_costs (jsonb), costs (jsonb), production_cost, fixed_cost_percentage, nf_cost_percentage, total_cost, full_price, discount4_price, discount5_price, margin, is_rejected, reason, rejection_reason, created_at
+- **prospection_leads**: id, workspace_id, company_name, contact_name, contact_role, phone, email, city, origin, segment, acquisition_type, estimated_potential, temperature, funnel_status, prospection_responsible, closing_responsible, last_contact_date, next_action, next_action_date, priority, strategic_notes, created_at, updated_at
+- **kanban_columns**: id, workspace_id, key, label, color, order, is_default
+- **project_columns**: id, workspace_id, key, label, color, order, is_default
+- **project_cards**: id, workspace_id, budget_id (FK budgets), proposal_id, project_name, client_name, client_id, objective, status, service_types (jsonb), progress, tasks (jsonb), links (jsonb), comments (jsonb), material_link, notes, start_date, end_date, created_at, updated_at
+- **service_categories**: id, workspace_id, key, label, order, is_default
+- **service_objectives**: id, workspace_id, key, label, category_key, order
+- **score_history**: id, workspace_id, client_id (FK clients), score, previous_score, reason, created_at
+- **assets**: id, workspace_id, name, description, serial_number, hero_asset_number, photo, reference_link, assigned_to, value, created_at, updated_at
+- **hard_drives**: id, workspace_id, label, capacity_gb, projects (jsonb), created_at
+- **legacy_projects**: id, workspace_id, project_number, client_id, client_name, size_gb, created_at
 
-1. Criar projeto no supabase.com
-2. Anotar: `Project URL`, `anon key`, `service_role_key`
-3. Em Auth → Settings: configurar Site URL e Redirect URLs (`https://command.hero.rec.br`, `/reset-password`)
-4. Criar os storage buckets `avatars` e `logos` (ambos públicos)
-5. Configurar secrets no Edge Functions: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
+## Politicas RLS (estado final)
 
-#### Etapa 1 — Schema do banco (SQL)
+Todas as policies usam os nomes finais (ex: `clients_select`, `budgets_insert`) e sao PERMISSIVE. Tabelas com logica especial:
 
-Executar as 17 migrações em ordem no SQL Editor do Supabase externo. Isso cria:
-- Enum `app_role`
-- Todas as 23 tabelas
-- Todas as 7 funções (handle_new_user, has_workspace_access, etc.)
-- Trigger `handle_new_user` em `auth.users`
-- Todas as RLS policies
+- **workspace_members**: 2 policies INSERT (admin + owner self-insert), DELETE/UPDATE restrito a owner/admin
+- **workspace_invites**: write ops restritas a owner/admin
+- **monthly_goals**: write ops restritas a owner
+- **profiles**: SELECT own + SELECT peers (via workspace_members join)
+- **landing_leads**: INSERT para anon+authenticated, SELECT para authenticated
+- **score_history**: sem UPDATE policy (intencional)
 
-**Ação manual**: Copiar e executar cada arquivo de `supabase/migrations/` em sequência no SQL Editor.
+## Storage
 
-#### Etapa 2 — Edge Functions
+Buckets `avatars` e `logos` com policies para upload, update, delete e leitura publica.
 
-Fazer deploy das 3 Edge Functions via CLI do Supabase:
-- `create-member`
-- `reset-user-password`
-- `update-member-profile`
+## Entregavel
 
-**Ação manual**: Instalar `supabase` CLI, linkar ao projeto, e executar `supabase functions deploy`.
-
-#### Etapa 3 — Atualizar credenciais no código
-
-Alterar o arquivo `.env` (ou variáveis de ambiente no hosting) para apontar para o novo projeto:
-- `VITE_SUPABASE_URL` → nova URL
-- `VITE_SUPABASE_PUBLISHABLE_KEY` → nova anon key
-- `VITE_SUPABASE_PROJECT_ID` → novo project ID
-
-**Nenhuma mudança de código** é necessária. O `client.ts` já lê das variáveis de ambiente.
-
-#### Etapa 4 — Migrar dados (se necessário)
-
-Se houver dados existentes (usuários, clientes, orçamentos):
-1. Exportar dados do Lovable Cloud (via Cloud UI → Database → Export)
-2. Importar no novo Supabase via SQL ou CSV import
-3. Para usuários Auth: usar `supabase auth admin` ou recriar contas manualmente
-
-#### Etapa 5 — Validação
-
-Testar em ordem:
-1. Login/Signup/Reset Password
-2. Criação de workspace e membros
-3. CRUD de clientes
-4. CRM (orçamentos, kanban, versões)
-5. Prospecção
-6. Metas e regras comerciais
-7. Upload de avatars e logos
-8. Landing page (captação de leads)
-
----
-
-### Resumo: o que precisa ser feito manualmente no Supabase
-
-| Item | Onde |
-|---|---|
-| Criar projeto | supabase.com |
-| Executar migrações SQL (17 arquivos) | SQL Editor |
-| Criar buckets `avatars` e `logos` (públicos) | Storage |
-| Configurar Site URL e Redirects | Auth → URL Configuration |
-| Deploy Edge Functions (3) | Supabase CLI |
-| Configurar secrets das Edge Functions | Dashboard → Edge Functions → Secrets |
-| Exportar/importar dados existentes | Dashboard |
-| Atualizar 3 variáveis de ambiente no hosting | `.env` ou plataforma de deploy |
-
-### O que NÃO muda
-
-- Nenhum componente React
-- Nenhuma rota
-- Nenhum layout ou estilo
-- A lógica de negócio do frontend permanece idêntica
-- Edge Functions permanecem idênticas
-
-O código já é 100% Supabase. A migração é essencialmente de infraestrutura, não de código.
+Um unico arquivo `docs/migration-full-consolidated.sql` pronto para copiar e colar.
 
