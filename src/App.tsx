@@ -85,6 +85,7 @@ const App = () => (
                   {/* Settings */}
                   <Route path="/configuracoes/regras-comerciais" element={<PageGuard pageKey="regras-comerciais"><CommercialRulesPage /></PageGuard>} />
                   <Route path="/configuracoes/layout" element={<PageGuard pageKey="layout"><LayoutPage /></PageGuard>} />
+                  <Route path="/configuracoes/metas" element={<PageGuard pageKey="metas"><GoalsPage /></PageGuard>} />
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
