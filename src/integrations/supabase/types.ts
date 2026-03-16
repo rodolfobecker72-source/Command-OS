@@ -384,6 +384,36 @@ export type Database = {
           },
         ]
       }
+      landing_leads: {
+        Row: {
+          company: string
+          created_at: string
+          email: string
+          id: string
+          instagram: string
+          name: string
+          whatsapp: string
+        }
+        Insert: {
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string
+          name?: string
+          whatsapp?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string
+          name?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       legacy_projects: {
         Row: {
           client_id: string
