@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import commandLogo from '@/assets/command-logo.png';
-import loginBg from '@/assets/login-bg.jpg';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
