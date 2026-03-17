@@ -52,7 +52,7 @@ export function MaintenancePage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8"
-      style={{ background: 'radial-gradient(ellipse at 30% 50%, #0039d8 0%, #001a6b 40%, #00053d 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #0039d8 0%, #00053d 100%)' }}
     >
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
