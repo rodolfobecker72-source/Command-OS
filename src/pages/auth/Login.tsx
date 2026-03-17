@@ -25,7 +25,7 @@ export function Login() {
     
     if (!error) {
       toast.success('Login realizado com sucesso!');
-      navigate('/clientes');
+      navigate('/crm/dashboard');
     } else {
       toast.error(error);
     }
