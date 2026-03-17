@@ -57,7 +57,8 @@ CREATE TABLE public.workspace_members (
   user_id UUID NOT NULL,
   role public.app_role NOT NULL DEFAULT 'visualizador',
   joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  page_permissions TEXT[] NOT NULL DEFAULT '{}'
+  page_permissions TEXT[] NOT NULL DEFAULT '{}',
+  UNIQUE (workspace_id, user_id)
 );
 ALTER TABLE public.workspace_members ENABLE ROW LEVEL SECURITY;
 
