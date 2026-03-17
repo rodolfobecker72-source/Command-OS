@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import commandLogo from '@/assets/command-logo.png';
-import loginBg from '@/assets/login-bg.jpg';
+
 
 export function Login() {
   const [email, setEmail] = useState('');
