@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import commandLogo from '@/assets/command-logo.png';
-import loginBg from '@/assets/login-bg.jpg';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -51,8 +51,8 @@ export function MaintenancePage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${loginBg})` }}
+      className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8"
+      style={{ background: 'radial-gradient(ellipse at 30% 50%, #1a237e 0%, #0a1045 40%, #060d2e 100%)' }}
     >
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
