@@ -126,7 +126,7 @@ export function CRMDashboard() {
   }, [approved]);
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>

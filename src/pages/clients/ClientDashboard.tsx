@@ -101,9 +101,9 @@ export function ClientDashboard() {
     <div className="min-h-screen bg-background">
       <Header title="Clientes" subtitle="Gerencie sua base de clientes" />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -175,8 +175,8 @@ export function ClientDashboard() {
             </div>
 
             {/* Table */}
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
+            <div className="rounded-lg border overflow-x-auto">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead>Empresa</TableHead>

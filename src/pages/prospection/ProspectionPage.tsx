@@ -337,14 +337,14 @@ export function ProspectionPage() {
   }, [filteredLeads]);
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-8">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Prospecção</h1>
-          <p className="text-muted-foreground text-sm mt-1">Módulo pré-CRM de aquisição e qualificação de leads</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Prospecção</h1>
+          <p className="text-muted-foreground text-xs md:text-sm mt-1">Módulo pré-CRM de aquisição e qualificação</p>
         </div>
-        <Button onClick={openCreate} size="lg" className="gap-2 rounded-xl shadow-sm">
+        <Button onClick={openCreate} size="default" className="gap-2 rounded-xl shadow-sm w-full sm:w-auto">
           <Plus className="w-4 h-4" /> Novo Lead
         </Button>
       </motion.div>
@@ -372,56 +372,58 @@ export function ProspectionPage() {
           {/* Filters */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex-1 min-w-[240px]">
+              <CardContent className="p-4 md:p-5">
+                <div className="flex flex-col gap-3">
+                  <div className="w-full">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder="Buscar empresa, contato ou cidade..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl" />
+                      <Input placeholder="Buscar empresa, contato ou cidade..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl text-sm" />
                     </div>
                   </div>
-                  <Select value={filterYear} onValueChange={setFilterYear}>
-                    <SelectTrigger className="w-[100px] h-10 rounded-xl"><SelectValue placeholder="Ano" /></SelectTrigger>
-                    <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Select value={filterMonth} onValueChange={setFilterMonth}>
-                    <SelectTrigger className="w-[140px] h-10 rounded-xl"><SelectValue placeholder="Mês" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os meses</SelectItem>
-                      {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterOrigin} onValueChange={setFilterOrigin}>
-                    <SelectTrigger className="w-[150px] h-10 rounded-xl"><SelectValue placeholder="Origem" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas origens</SelectItem>
-                      {Object.entries(LEAD_ORIGIN_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterAcquisition} onValueChange={setFilterAcquisition}>
-                    <SelectTrigger className="w-[140px] h-10 rounded-xl"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="outbound">Outbound</SelectItem>
-                      <SelectItem value="inbound">Inbound</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {uniqueResponsibles.length > 0 && (
-                    <Select value={filterResponsible} onValueChange={setFilterResponsible}>
-                      <SelectTrigger className="w-[150px] h-10 rounded-xl"><SelectValue placeholder="Responsável" /></SelectTrigger>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={filterYear} onValueChange={setFilterYear}>
+                      <SelectTrigger className="w-[90px] h-9 rounded-xl text-sm"><SelectValue placeholder="Ano" /></SelectTrigger>
+                      <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Select value={filterMonth} onValueChange={setFilterMonth}>
+                      <SelectTrigger className="w-[120px] h-9 rounded-xl text-sm"><SelectValue placeholder="Mês" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {uniqueResponsibles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        <SelectItem value="all">Todos os meses</SelectItem>
+                        {MONTHS.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                  )}
-                  <div className="flex gap-1 ml-auto">
-                    <Button variant={view === 'table' ? 'default' : 'outline'} size="icon" className="rounded-xl" onClick={() => setView('table')}>
-                      <List className="w-4 h-4" />
-                    </Button>
-                    <Button variant={view === 'kanban' ? 'default' : 'outline'} size="icon" className="rounded-xl" onClick={() => setView('kanban')}>
-                      <LayoutGrid className="w-4 h-4" />
-                    </Button>
+                    <Select value={filterOrigin} onValueChange={setFilterOrigin}>
+                      <SelectTrigger className="w-[120px] h-9 rounded-xl text-sm"><SelectValue placeholder="Origem" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas origens</SelectItem>
+                        {Object.entries(LEAD_ORIGIN_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filterAcquisition} onValueChange={setFilterAcquisition}>
+                      <SelectTrigger className="w-[110px] h-9 rounded-xl text-sm"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="outbound">Outbound</SelectItem>
+                        <SelectItem value="inbound">Inbound</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {uniqueResponsibles.length > 0 && (
+                      <Select value={filterResponsible} onValueChange={setFilterResponsible}>
+                        <SelectTrigger className="w-[120px] h-9 rounded-xl text-sm"><SelectValue placeholder="Responsável" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          {uniqueResponsibles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <div className="flex gap-1 ml-auto">
+                      <Button variant={view === 'table' ? 'default' : 'outline'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setView('table')}>
+                        <List className="w-4 h-4" />
+                      </Button>
+                      <Button variant={view === 'kanban' ? 'default' : 'outline'} size="icon" className="rounded-xl h-9 w-9" onClick={() => setView('kanban')}>
+                        <LayoutGrid className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

@@ -183,17 +183,17 @@ export function CRMKanban() {
         subtitle="Gerencie suas oportunidades e propostas"
       />
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <p className="text-muted-foreground">
-              {filteredCards.length} projeto(s) no pipeline
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+            <p className="text-sm text-muted-foreground">
+              {filteredCards.length} projeto(s)
             </p>
             <KanbanColumnManager />
             {availableMonths.length > 0 && (
               <Select value={monthFilter} onValueChange={setMonthFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-40 md:w-48 h-9">
                   <SelectValue placeholder="Filtrar por mês" />
                 </SelectTrigger>
                 <SelectContent>
@@ -207,7 +207,7 @@ export function CRMKanban() {
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
-            className="btn-hero"
+            className="btn-hero w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             Novo Orçamento
