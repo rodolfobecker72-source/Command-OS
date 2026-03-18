@@ -377,8 +377,10 @@ export function ProspectionPage() {
                   <div className="w-full">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder="Buscar empresa, contato ou cidade..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl" />
+                      <Input placeholder="Buscar empresa, contato ou cidade..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl text-sm" />
                     </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
                   </div>
                   <Select value={filterYear} onValueChange={setFilterYear}>
                     <SelectTrigger className="w-[100px] h-10 rounded-xl"><SelectValue placeholder="Ano" /></SelectTrigger>
