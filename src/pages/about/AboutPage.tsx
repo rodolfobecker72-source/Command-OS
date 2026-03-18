@@ -1,8 +1,11 @@
 import commandLogo from '@/assets/command-logo.png';
+import { Header } from '@/components/layout/Header';
 
 export function AboutPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
+    <div className="min-h-screen bg-background">
+      <Header title="Sobre" subtitle="Sobre o Command OS" />
+      <div className="flex items-center justify-center p-8">
       <div className="max-w-xl text-center space-y-8">
         <img src={commandLogo} alt="Command OS" className="h-20 w-auto mx-auto" />
 
@@ -17,6 +20,7 @@ export function AboutPage() {
             Simples, estruturado e pensado para a realidade das produtoras, o Command OS transforma o comercial em processo — e processo em crescimento.
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

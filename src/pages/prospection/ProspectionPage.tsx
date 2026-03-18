@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Header } from '@/components/layout/Header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -337,12 +338,12 @@ export function ProspectionPage() {
   }, [filteredLeads]);
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-8">
+    <div className="min-h-screen bg-background">
+      <Header title="Prospecção" subtitle="Módulo pré-CRM de aquisição e qualificação" />
+      <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Prospecção</h1>
-          <p className="text-muted-foreground text-xs md:text-sm mt-1">Módulo pré-CRM de aquisição e qualificação</p>
         </div>
         <Button onClick={openCreate} size="default" className="gap-2 rounded-xl shadow-sm w-full sm:w-auto">
           <Plus className="w-4 h-4" /> Novo Lead
@@ -1100,6 +1101,7 @@ export function ProspectionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

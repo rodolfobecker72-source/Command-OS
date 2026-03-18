@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useCRM } from '@/contexts/CRMContext';
 import { useMonthlyGoals } from '@/hooks/useMonthlyGoals';
+import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -126,14 +127,10 @@ export function CRMDashboard() {
   }, [approved]);
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard Comercial</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">Visão geral do desempenho comercial</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header title="Dashboard Comercial" subtitle="Visão geral do desempenho comercial" />
+      <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
+
 
       <Tabs defaultValue="visao-geral" className="space-y-5">
         <TabsList>
@@ -382,6 +379,7 @@ export function CRMDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

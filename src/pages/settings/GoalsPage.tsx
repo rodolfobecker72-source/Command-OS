@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -119,14 +120,9 @@ export function GoalsPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-          <Target className="w-5 h-5 text-primary" />
-          Metas Mensais
-        </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm">Defina as metas de faturamento por mês</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header title="Metas Mensais" subtitle="Defina as metas de faturamento por mês" />
+      <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
 
       {/* Add new goal */}
       <Card>
@@ -207,6 +203,7 @@ export function GoalsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
