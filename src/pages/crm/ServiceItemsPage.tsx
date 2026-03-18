@@ -104,6 +104,10 @@ export function ServiceItemsPage() {
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
+  const allCategories = useMemo(() => {
+    return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
+  }, [serviceCategories]);
+
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchesSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase());
@@ -111,6 +115,17 @@ export function ServiceItemsPage() {
       return matchesSearch && matchesCategory;
     });
   }, [items, search, filterCategory]);
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, ServiceItemRecord[]> = {};
+    for (const item of filteredItems) {
+      if (!groups[item.categoryKey]) groups[item.categoryKey] = [];
+      groups[item.categoryKey].push(item);
+    }
+    return allCategories
+      .filter(cat => groups[cat.key])
+      .map(cat => ({ category: cat, items: groups[cat.key] }));
+  }, [filteredItems, allCategories]);
 
   const openNew = () => {
     setEditingItem(null);
@@ -169,9 +184,6 @@ export function ServiceItemsPage() {
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
-  const allCategories = useMemo(() => {
-    return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
-  }, [serviceCategories]);
 
   const getCategoryLabel = (key: string) => {
     return allCategories.find(c => c.key === key)?.label || key;
@@ -225,44 +237,48 @@ export function ServiceItemsPage() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Nome do Item</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Valor Padrão</TableHead>
-                  <TableHead>Unidade</TableHead>
-                  <TableHead className="hidden md:table-cell">Descrição</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map(item => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>
-                      <span className="service-badge service-badge-cine text-xs">{getCategoryLabel(item.categoryKey)}</span>
-                    </TableCell>
-                    <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
-                    <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
-                    <TableCell className="hidden md:table-cell max-w-[200px] truncate text-muted-foreground text-sm">
-                      {item.description || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="space-y-6">
+            {groupedItems.map(({ category, items: catItems }) => (
+              <div key={category.key} className="rounded-lg border overflow-hidden">
+                <div className="bg-muted/60 px-4 py-3 flex items-center justify-between border-b">
+                  <h3 className="font-semibold text-sm">{category.label}</h3>
+                  <span className="text-xs text-muted-foreground">{catItems.length} {catItems.length === 1 ? 'item' : 'itens'}</span>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/20">
+                      <TableHead>Nome do Item</TableHead>
+                      <TableHead>Valor Padrão</TableHead>
+                      <TableHead>Unidade</TableHead>
+                      <TableHead className="hidden md:table-cell">Descrição</TableHead>
+                      <TableHead className="w-24">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {catItems.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
+                        <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
+                        <TableCell className="hidden md:table-cell max-w-[200px] truncate text-muted-foreground text-sm">
+                          {item.description || '—'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ))}
           </div>
         )}
       </div>
