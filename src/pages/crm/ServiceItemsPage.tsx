@@ -280,6 +280,7 @@ export function ServiceItemsPage() {
               </div>
             ))}
           </div>
+        )}
       </div>
 
       {/* Dialog */}
