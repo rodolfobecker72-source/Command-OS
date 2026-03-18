@@ -21,6 +21,7 @@ export function AboutPage() {
           </p>
         </div>
       </div>
+      </div>
     </div>
   );
 }

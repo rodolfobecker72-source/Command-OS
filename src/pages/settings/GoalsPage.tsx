@@ -202,6 +202,7 @@ export function GoalsPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

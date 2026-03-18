@@ -381,6 +381,7 @@ export function CRMDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

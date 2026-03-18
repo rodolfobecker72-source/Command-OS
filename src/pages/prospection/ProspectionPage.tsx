@@ -1100,6 +1100,7 @@ export function ProspectionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
