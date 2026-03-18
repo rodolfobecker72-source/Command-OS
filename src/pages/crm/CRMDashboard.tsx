@@ -126,13 +126,12 @@ export function CRMDashboard() {
   }, [approved]);
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
+      <Header title="Dashboard Comercial" subtitle="Visão geral do desempenho comercial" />
+      <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard Comercial</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm">Visão geral do desempenho comercial</p>
-        </div>
       </div>
 
       <Tabs defaultValue="visao-geral" className="space-y-5">
