@@ -288,16 +288,28 @@ export function UsersPage() {
   const handleConfirmRemove = async () => {
     if (!deletingMember) return;
 
-    const { error } = await supabase
-      .from('workspace_members')
-      .delete()
-      .eq('id', deletingMember.id);
+    try {
+      const response = await supabase.functions.invoke('delete-member', {
+        body: { targetUserId: deletingMember.user_id },
+      });
 
-    if (error) {
-      toast.error('Erro ao remover: ' + error.message);
-    } else {
+      if (response.error) {
+        toast.error('Erro ao remover: ' + (response.error.message || 'Erro desconhecido'));
+        setDeletingMember(null);
+        return;
+      }
+
+      const result = response.data;
+      if (result?.error) {
+        toast.error('Erro ao remover: ' + result.error);
+        setDeletingMember(null);
+        return;
+      }
+
       toast.success('Membro removido!');
       loadMembers();
+    } catch (err: any) {
+      toast.error('Erro ao remover: ' + err.message);
     }
     setDeletingMember(null);
   };
