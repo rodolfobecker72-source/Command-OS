@@ -112,6 +112,18 @@ export function ServiceItemsPage() {
     });
   }, [items, search, filterCategory]);
 
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, ServiceItemRecord[]> = {};
+    for (const item of filteredItems) {
+      if (!groups[item.categoryKey]) groups[item.categoryKey] = [];
+      groups[item.categoryKey].push(item);
+    }
+    // Sort groups by category order
+    return allCategories
+      .filter(cat => groups[cat.key])
+      .map(cat => ({ category: cat, items: groups[cat.key] }));
+  }, [filteredItems, allCategories]);
+
   const openNew = () => {
     setEditingItem(null);
     setForm({ name: '', categoryKey: serviceCategories[0]?.key || '', defaultPrice: 0, unit: 'diaria', description: '' });
