@@ -104,6 +104,10 @@ export function ServiceItemsPage() {
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
+  const allCategories = useMemo(() => {
+    return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
+  }, [serviceCategories]);
+
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchesSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase());
@@ -118,7 +122,6 @@ export function ServiceItemsPage() {
       if (!groups[item.categoryKey]) groups[item.categoryKey] = [];
       groups[item.categoryKey].push(item);
     }
-    // Sort groups by category order
     return allCategories
       .filter(cat => groups[cat.key])
       .map(cat => ({ category: cat, items: groups[cat.key] }));
