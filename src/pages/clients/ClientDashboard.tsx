@@ -175,8 +175,8 @@ export function ClientDashboard() {
             </div>
 
             {/* Table */}
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
+            <div className="rounded-lg border overflow-x-auto">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead>Empresa</TableHead>
