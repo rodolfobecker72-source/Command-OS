@@ -237,46 +237,49 @@ export function ServiceItemsPage() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Nome do Item</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Valor Padrão</TableHead>
-                  <TableHead>Unidade</TableHead>
-                  <TableHead className="hidden md:table-cell">Descrição</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map(item => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>
-                      <span className="service-badge service-badge-cine text-xs">{getCategoryLabel(item.categoryKey)}</span>
-                    </TableCell>
-                    <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
-                    <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
-                    <TableCell className="hidden md:table-cell max-w-[200px] truncate text-muted-foreground text-sm">
-                      {item.description || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="space-y-6">
+            {groupedItems.map(({ category, items: catItems }) => (
+              <div key={category.key} className="rounded-lg border overflow-hidden">
+                <div className="bg-muted/60 px-4 py-3 flex items-center justify-between border-b">
+                  <h3 className="font-semibold text-sm">{category.label}</h3>
+                  <span className="text-xs text-muted-foreground">{catItems.length} {catItems.length === 1 ? 'item' : 'itens'}</span>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/20">
+                      <TableHead>Nome do Item</TableHead>
+                      <TableHead>Valor Padrão</TableHead>
+                      <TableHead>Unidade</TableHead>
+                      <TableHead className="hidden md:table-cell">Descrição</TableHead>
+                      <TableHead className="w-24">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {catItems.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
+                        <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
+                        <TableCell className="hidden md:table-cell max-w-[200px] truncate text-muted-foreground text-sm">
+                          {item.description || '—'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ))}
           </div>
-        )}
       </div>
 
       {/* Dialog */}
