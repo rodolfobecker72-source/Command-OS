@@ -372,9 +372,9 @@ export function ProspectionPage() {
           {/* Filters */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex-1 min-w-[240px]">
+              <CardContent className="p-4 md:p-5">
+                <div className="flex flex-col gap-3">
+                  <div className="w-full">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input placeholder="Buscar empresa, contato ou cidade..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl" />
