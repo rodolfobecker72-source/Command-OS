@@ -36,7 +36,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: card.id });
+  } = useSortable({ id: card.id, resizeObserverConfig: { disabled: true } });
 
   const style = {
     transform: CSS.Transform.toString(transform),

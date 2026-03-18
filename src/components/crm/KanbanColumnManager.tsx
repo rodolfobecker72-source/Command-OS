@@ -65,7 +65,7 @@ function SortableColumnItem({ column, editingColumn, setEditingColumn, handleUpd
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: column.id });
+  } = useSortable({ id: column.id, resizeObserverConfig: { disabled: true } });
 
   const style = {
     transform: CSS.Transform.toString(transform),
