@@ -383,13 +383,6 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         setServiceCategories(catData.map(serviceCategoryFromDb));
 
         let objData = objRes.data || [];
-        if (objData.length === 0) {
-          const defaults = DEFAULT_SERVICE_OBJECTIVES.map(o => ({
-            workspace_id: workspaceId, category_key: o.categoryKey, key: o.key, label: o.label, order: o.order,
-          }));
-          const { data } = await supabase.from('service_objectives').insert(defaults).select();
-          objData = data || [];
-        }
         setServiceObjectives(objData.map(serviceObjectiveFromDb));
 
         let projColData = projColRes.data || [];
