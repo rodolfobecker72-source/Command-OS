@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Header } from '@/components/layout/Header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
