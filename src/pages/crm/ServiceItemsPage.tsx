@@ -184,9 +184,6 @@ export function ServiceItemsPage() {
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
-  const allCategories = useMemo(() => {
-    return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
-  }, [serviceCategories]);
 
   const getCategoryLabel = (key: string) => {
     return allCategories.find(c => c.key === key)?.label || key;
