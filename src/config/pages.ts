@@ -21,7 +21,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'metas', label: 'Metas', href: '/configuracoes/metas', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
   
   // Sistema
-  { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema' },
+  { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema', restrictedFrom: ['admin', 'vendedor', 'visualizador'] },
 ];
 
 // Get all page keys (useful for setting "all access" by default)
