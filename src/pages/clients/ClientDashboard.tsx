@@ -275,6 +275,14 @@ export function ClientDashboard() {
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setClientToDelete({ id: client.id, name: client.companyName })}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </motion.tr>
