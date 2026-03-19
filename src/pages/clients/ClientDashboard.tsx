@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
+import { useToast } from '@/hooks/use-toast';
 import { useCRM } from '@/contexts/CRMContext';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { StatusBadge } from '@/components/common/StatusBadge';
