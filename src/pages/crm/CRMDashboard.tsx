@@ -7,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/types/crm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search, Target } from 'lucide-react';
+import { TrendingUp, FileText, CheckCircle2, DollarSign, AlertTriangle, Calendar, Search } from 'lucide-react';
+import { ExecutionForecast } from '@/components/crm/ExecutionForecast';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -89,7 +89,7 @@ export function CRMDashboard() {
       .sort((a, b) => b.daysSince - a.daysSince);
   }, [filtered, clientMap]);
 
-  // Execution forecast — independent of date/search filters, uses ALL approved budgets
+  // Execution forecast
   const executionForecast = useMemo(() => {
     const allApproved = budgets.filter(b => b.status === 'aprovada');
     const map: Record<string, { count: number; value: number; projects: { name: string; client: string; value: number }[] }> = {};
@@ -112,25 +112,10 @@ export function CRMDashboard() {
 
   const executionTotalValue = useMemo(() => executionForecast.reduce((s, f) => s + f.value, 0), [executionForecast]);
 
-  // Sales by month
-  const salesByMonth = useMemo(() => {
-    const map: Record<string, number> = {};
-    approved.forEach(b => {
-      if (!b.approvalDate) return;
-      const d = new Date(b.approvalDate);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map[key] = (map[key] || 0) + (b.finalValue || 0);
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, value]) => ({ month, label: formatMonthLabel(month), value }));
-  }, [approved]);
-
   return (
     <div className="min-h-screen bg-background">
       <Header title="Dashboard Comercial" subtitle="Visão geral do desempenho comercial" />
       <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
-
 
       <Tabs defaultValue="visao-geral" className="space-y-5">
         <TabsList>
@@ -263,120 +248,11 @@ export function CRMDashboard() {
 
         {/* Tab: Previsão de Execução */}
         <TabsContent value="previsao-execucao" className="space-y-5 mt-0">
-          {/* Goal Summary Cards */}
-          {(() => {
-            const totalGoal = executionForecast.reduce((s, f) => {
-              const g = getGoalForMonth(f.month);
-              return s + (g || 0);
-            }, 0);
-            const overallProgress = totalGoal > 0 ? (executionTotalValue / totalGoal) * 100 : 0;
-            const goalStatus = overallProgress >= 100 ? 'Meta atingida' : overallProgress >= 80 ? 'Quase atingida' : 'Abaixo da meta';
-            const goalStatusVariant = overallProgress >= 100 ? 'default' : overallProgress >= 80 ? 'secondary' : 'destructive';
-
-            return totalGoal > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <KPICard icon={Target} iconBg="bg-primary/10" iconColor="text-primary" label="Meta Total" value={formatCurrency(totalGoal)} small />
-                <KPICard icon={DollarSign} iconBg="bg-success/10" iconColor="text-success" label="Valor Previsto" value={formatCurrency(executionTotalValue)} small />
-                <Card>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-accent/10 shrink-0">
-                      <TrendingUp className="w-4 h-4 text-accent" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Progresso Geral</p>
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-foreground text-base sm:text-lg">{overallProgress.toFixed(1)}%</p>
-                        <Badge variant={goalStatusVariant as any} className="text-[10px]">{goalStatus}</Badge>
-                      </div>
-                      <Progress value={Math.min(overallProgress, 100)} className="h-1.5 mt-1" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : null;
-          })()}
-
-          <Card>
-            <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-                Previsão de Execução
-              </CardTitle>
-              {executionTotalValue > 0 && (
-                <Badge variant="outline" className="text-xs font-semibold">
-                  Total: {formatCurrency(executionTotalValue)}
-                </Badge>
-              )}
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              {executionForecast.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução</p>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Chart */}
-                  <div className="h-56 sm:h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={executionForecast} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                        <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
-                        <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ fontSize: 12 }} />
-                        <Bar dataKey="value" name="Valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  {/* Table with goals */}
-                  <div className="max-h-64 overflow-auto -mx-1 px-1">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Mês</TableHead>
-                          <TableHead className="text-xs text-center">Projetos</TableHead>
-                          <TableHead className="text-xs text-right">Valor</TableHead>
-                          <TableHead className="text-xs text-right">Meta</TableHead>
-                          <TableHead className="text-xs text-center">Progresso</TableHead>
-                          <TableHead className="text-xs text-center">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {executionForecast.map(f => {
-                          const goal = getGoalForMonth(f.month);
-                          const progress = goal ? (f.value / goal) * 100 : null;
-                          const status = progress === null ? null : progress >= 100 ? 'atingida' : progress >= 80 ? 'quase' : 'abaixo';
-                          return (
-                            <TableRow key={f.month}>
-                              <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
-                              <TableCell className="text-center py-2">
-                                <Badge variant="outline" className="text-[10px] px-1.5">{f.count}</Badge>
-                              </TableCell>
-                              <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
-                              <TableCell className="text-right text-xs py-2">
-                                {goal !== null ? formatCurrency(goal) : <span className="text-muted-foreground italic">Não definida</span>}
-                              </TableCell>
-                              <TableCell className="text-center text-xs py-2">
-                                {progress !== null ? (
-                                  <div className="flex items-center gap-1.5 justify-center">
-                                    <Progress value={Math.min(progress, 100)} className="h-1.5 w-12" />
-                                    <span className="text-[10px] font-medium">{progress.toFixed(1)}%</span>
-                                  </div>
-                                ) : '—'}
-                              </TableCell>
-                              <TableCell className="text-center py-2">
-                                {status === 'atingida' && <Badge className="text-[10px] px-1.5 bg-success/15 text-success border-success/30" variant="outline">Meta atingida</Badge>}
-                                {status === 'quase' && <Badge className="text-[10px] px-1.5" variant="secondary">Quase atingida</Badge>}
-                                {status === 'abaixo' && <Badge className="text-[10px] px-1.5" variant="destructive">Abaixo da meta</Badge>}
-                                {status === null && <span className="text-[10px] text-muted-foreground">—</span>}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ExecutionForecast
+            executionForecast={executionForecast}
+            executionTotalValue={executionTotalValue}
+            getGoalForMonth={getGoalForMonth}
+          />
         </TabsContent>
       </Tabs>
       </div>
