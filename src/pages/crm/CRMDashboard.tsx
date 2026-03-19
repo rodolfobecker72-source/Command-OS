@@ -69,11 +69,15 @@ export function CRMDashboard() {
   // Pipeline
   const sortedColumns = useMemo(() => [...kanbanColumns].sort((a, b) => a.order - b.order), [kanbanColumns]);
   const pipelineData = useMemo(() => {
-    return sortedColumns.map(col => ({
-      name: col.label,
-      count: filtered.filter(b => b.status === col.key).length,
-      color: col.key === 'aprovada' ? 'hsl(var(--success))' : col.key === 'nao_aprovada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
-    }));
+    return sortedColumns.map(col => {
+      const colBudgets = filtered.filter(b => b.status === col.key);
+      return {
+        name: col.label,
+        count: colBudgets.length,
+        value: colBudgets.reduce((sum, b) => sum + (b.finalValue || 0), 0),
+        color: col.key === 'aprovada' ? 'hsl(var(--success))' : col.key === 'nao_aprovada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
+      };
+    });
   }, [filtered, sortedColumns]);
 
   // Follow-up needed
