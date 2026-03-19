@@ -172,13 +172,23 @@ export function ClientDetail() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/clientes/${client.id}/editar`)}
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Editar Cliente
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/clientes/${client.id}/editar`)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar Cliente
+            </Button>
+            <Button
+              variant="outline"
+              className="text-destructive border-destructive/50 hover:bg-destructive/10"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
