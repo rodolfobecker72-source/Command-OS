@@ -23,7 +23,9 @@ export function AppLayout() {
       )}
 
       <main className={`min-h-screen ${isMobile ? 'ml-0' : 'ml-64'}`}>
-        <Outlet context={{ onOpenMobileMenu: () => setMobileOpen(true) }} />
+        <ErrorBoundary>
+          <Outlet context={{ onOpenMobileMenu: () => setMobileOpen(true) }} />
+        </ErrorBoundary>
       </main>
     </div>
   );
