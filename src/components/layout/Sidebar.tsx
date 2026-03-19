@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Info,
   Package,
+  Award,
   Settings,
   Scale,
   FileImage,
