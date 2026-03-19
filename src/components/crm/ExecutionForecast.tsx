@@ -11,11 +11,6 @@ import { Calendar, Target, DollarSign, TrendingUp, FolderOpen } from 'lucide-rea
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-function formatMonthLabel(ym: string) {
-  const [y, m] = ym.split('-');
-  return `${MONTH_NAMES[Number(m) - 1]}/${y}`;
-}
-
 interface ForecastEntry {
   month: string;
   label: string;
@@ -64,7 +59,6 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
     return Array.from(years).sort((a, b) => b - a);
   }, [executionForecast, currentYear]);
 
-  // Filtered data
   const filtered = useMemo(() => {
     return executionForecast.filter(f => {
       const [y, m] = f.month.split('-');
@@ -77,7 +71,6 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
   const filteredTotalValue = useMemo(() => filtered.reduce((s, f) => s + f.value, 0), [filtered]);
   const filteredTotalProjects = useMemo(() => filtered.reduce((s, f) => s + f.count, 0), [filtered]);
 
-  // Goal summary
   const totalGoal = useMemo(() => filtered.reduce((s, f) => {
     const g = getGoalForMonth(f.month);
     return s + (g || 0);
@@ -121,10 +114,20 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
             </Select>
           </div>
         </div>
+        {filteredTotalProjects > 0 && (
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <Badge variant="outline" className="text-xs">
+              {filteredTotalProjects} projeto{filteredTotalProjects !== 1 ? 's' : ''}
+            </Badge>
+            <Badge variant="outline" className="text-xs font-semibold">
+              Total: {formatCurrency(filteredTotalValue)}
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
-      {totalGoal > 0 ? (
+      {totalGoal > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <KPICard icon={Target} iconBg="bg-primary/10" iconColor="text-primary" label="Meta Total" value={formatCurrency(totalGoal)} />
           <KPICard icon={DollarSign} iconBg="bg-success/10" iconColor="text-success" label="Valor Previsto" value={formatCurrency(filteredTotalValue)} />
@@ -144,37 +147,28 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
             </CardContent>
           </Card>
         </div>
-      ) : null}
+      )}
 
-      {/* Main Card */}
-      <Card>
-        <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-primary" />
-            Previsão de Execução
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {filteredTotalProjects > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {filteredTotalProjects} projeto{filteredTotalProjects !== 1 ? 's' : ''}
-              </Badge>
-            )}
-            {filteredTotalValue > 0 && (
-              <Badge variant="outline" className="text-xs font-semibold">
-                Total: {formatCurrency(filteredTotalValue)}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-4">
-          {filtered.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-10 text-center">Nenhum projeto com mês de execução para o período selecionado</p>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Chart */}
-              <div className="h-56 sm:h-64">
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <p className="text-sm text-muted-foreground text-center">Nenhum projeto com mês de execução para o período selecionado</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Chart — separated */}
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                Previsão por Mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="h-56 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={filtered} margin={{ left: 4, right: 4, top: 4, bottom: 4 }}>
+                  <BarChart data={filtered} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={40} />
@@ -183,8 +177,19 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              {/* Table */}
-              <div className="max-h-64 overflow-auto -mx-1 px-1">
+            </CardContent>
+          </Card>
+
+          {/* Table — separated */}
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                <FolderOpen className="w-3.5 h-3.5 text-primary" />
+                Detalhamento Mensal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -203,33 +208,33 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                       const status = progress === null ? null : progress >= 100 ? 'atingida' : progress >= 80 ? 'quase' : 'abaixo';
                       return (
                         <TableRow key={f.month}>
-                          <TableCell className="text-xs font-medium py-2">{f.label}</TableCell>
-                          <TableCell className="text-center py-2">
+                          <TableCell className="text-xs font-medium py-2.5">{f.label}</TableCell>
+                          <TableCell className="text-center py-2.5">
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 cursor-pointer hover:bg-primary/10 transition-colors"
+                              className="text-[10px] px-2 py-0.5 cursor-pointer hover:bg-primary/10 transition-colors"
                               onClick={() => setProjectsDialog({ label: f.label, projects: f.projects })}
                             >
-                              <FolderOpen className="w-3 h-3 mr-0.5" />
-                              {f.count}
+                              <FolderOpen className="w-3 h-3 mr-1" />
+                              {f.count} projeto{f.count !== 1 ? 's' : ''}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(f.value)}</TableCell>
-                          <TableCell className="text-right text-xs py-2">
+                          <TableCell className="text-right text-xs font-medium py-2.5">{formatCurrency(f.value)}</TableCell>
+                          <TableCell className="text-right text-xs py-2.5">
                             {goal !== null ? formatCurrency(goal) : <span className="text-muted-foreground italic">Não definida</span>}
                           </TableCell>
-                          <TableCell className="text-center text-xs py-2">
+                          <TableCell className="text-center text-xs py-2.5">
                             {progress !== null ? (
                               <div className="flex items-center gap-1.5 justify-center">
-                                <Progress value={Math.min(progress, 100)} className="h-1.5 w-12" />
+                                <Progress value={Math.min(progress, 100)} className="h-1.5 w-16" />
                                 <span className="text-[10px] font-medium">{progress.toFixed(1)}%</span>
                               </div>
                             ) : '—'}
                           </TableCell>
-                          <TableCell className="text-center py-2">
+                          <TableCell className="text-center py-2.5">
                             {status === 'atingida' && <Badge className="text-[10px] px-1.5 bg-success/15 text-success border-success/30" variant="outline">Meta atingida</Badge>}
-                            {status === 'quase' && <Badge className="text-[10px] px-1.5" variant="secondary">Quase atingida</Badge>}
-                            {status === 'abaixo' && <Badge className="text-[10px] px-1.5" variant="destructive">Abaixo da meta</Badge>}
+                            {status === 'quase' && <Badge className="text-[10px] px-1.5" variant="secondary">Quase</Badge>}
+                            {status === 'abaixo' && <Badge className="text-[10px] px-1.5" variant="destructive">Abaixo</Badge>}
                             {status === null && <span className="text-[10px] text-muted-foreground">—</span>}
                           </TableCell>
                         </TableRow>
@@ -238,21 +243,21 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                   </TableBody>
                 </Table>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-      {/* Projects Dialog */}
+      {/* Projects Dialog — larger */}
       <Dialog open={!!projectsDialog} onOpenChange={() => setProjectsDialog(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl w-[95vw]">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold flex items-center gap-1.5">
-              <FolderOpen className="w-4 h-4 text-primary" />
+            <DialogTitle className="text-base font-semibold flex items-center gap-2">
+              <FolderOpen className="w-5 h-5 text-primary" />
               Projetos — {projectsDialog?.label}
             </DialogTitle>
           </DialogHeader>
-          <div className="max-h-72 overflow-auto">
+          <div className="max-h-[60vh] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -264,22 +269,23 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
               <TableBody>
                 {projectsDialog?.projects.map((p, i) => (
                   <TableRow key={i}>
-                    <TableCell className="text-xs font-medium py-2">{p.name}</TableCell>
-                    <TableCell className="text-xs py-2">{p.client}</TableCell>
-                    <TableCell className="text-right text-xs font-medium py-2">{formatCurrency(p.value)}</TableCell>
+                    <TableCell className="text-sm font-medium py-3">{p.name}</TableCell>
+                    <TableCell className="text-sm py-3">{p.client}</TableCell>
+                    <TableCell className="text-right text-sm font-semibold py-3">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
                 ))}
                 {projectsDialog?.projects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-xs text-muted-foreground text-center py-4">Nenhum projeto</TableCell>
+                    <TableCell colSpan={3} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
           {projectsDialog && projectsDialog.projects.length > 0 && (
-            <div className="text-right text-xs font-semibold text-muted-foreground pt-1 border-t">
-              Total: {formatCurrency(projectsDialog.projects.reduce((s, p) => s + p.value, 0))}
+            <div className="flex justify-between items-center text-sm font-semibold pt-3 border-t">
+              <span className="text-muted-foreground">{projectsDialog.projects.length} projeto{projectsDialog.projects.length !== 1 ? 's' : ''}</span>
+              <span>Total: {formatCurrency(projectsDialog.projects.reduce((s, p) => s + p.value, 0))}</span>
             </div>
           )}
         </DialogContent>
