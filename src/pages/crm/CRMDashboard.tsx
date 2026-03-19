@@ -66,6 +66,13 @@ export function CRMDashboard() {
   const conversionRate = totalProposals > 0 ? ((approvedCount / totalProposals) * 100).toFixed(1) : '0';
   const totalValueSold = approved.reduce((sum, b) => sum + (b.finalValue || 0), 0);
 
+  // Helper to get the best available value for a budget
+  const getBudgetValue = (b: typeof budgets[0]) => {
+    if (b.finalValue) return b.finalValue;
+    const latestVersion = b.versions?.length ? b.versions[b.versions.length - 1] : null;
+    return latestVersion?.fullPrice || 0;
+  };
+
   // Pipeline
   const sortedColumns = useMemo(() => [...kanbanColumns].sort((a, b) => a.order - b.order), [kanbanColumns]);
   const pipelineData = useMemo(() => {
