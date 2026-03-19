@@ -76,9 +76,23 @@ import {
 export function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, budgets, getClientScoreBreakdown, legacyProjects, hardDrives, getClientScoreHistory } = useCRM();
+  const { getClient, budgets, getClientScoreBreakdown, legacyProjects, hardDrives, getClientScoreHistory, deleteClient } = useCRM();
+  const { toast } = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const client = getClient(id || '');
+
+  const handleDeleteClient = async () => {
+    if (!client) return;
+    try {
+      await deleteClient(client.id);
+      toast({ title: 'Cliente excluído com sucesso' });
+      navigate('/clientes');
+    } catch {
+      toast({ title: 'Erro ao excluir cliente', variant: 'destructive' });
+    }
+    setShowDeleteDialog(false);
+  };
 
   if (!client) {
     return (
