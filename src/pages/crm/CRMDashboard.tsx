@@ -69,11 +69,15 @@ export function CRMDashboard() {
   // Pipeline
   const sortedColumns = useMemo(() => [...kanbanColumns].sort((a, b) => a.order - b.order), [kanbanColumns]);
   const pipelineData = useMemo(() => {
-    return sortedColumns.map(col => ({
-      name: col.label,
-      count: filtered.filter(b => b.status === col.key).length,
-      color: col.key === 'aprovada' ? 'hsl(var(--success))' : col.key === 'nao_aprovada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
-    }));
+    return sortedColumns.map(col => {
+      const colBudgets = filtered.filter(b => b.status === col.key);
+      return {
+        name: col.label,
+        count: colBudgets.length,
+        value: colBudgets.reduce((sum, b) => sum + (b.finalValue || 0), 0),
+        color: col.key === 'aprovada' ? 'hsl(var(--success))' : col.key === 'nao_aprovada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
+      };
+    });
   }, [filtered, sortedColumns]);
 
   // Follow-up needed
@@ -189,7 +193,14 @@ export function CRMDashboard() {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12 }}
+                      formatter={(_val: number, _name: string, props: any) => {
+                        const entry = props.payload;
+                        return [`${entry.count} propostas — ${formatCurrency(entry.value)}`, ''];
+                      }}
+                      labelStyle={{ fontWeight: 600, marginBottom: 2 }}
+                    />
                     <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
                       {pipelineData.map((entry, i) => (
                         <Cell key={i} fill={entry.color} />
