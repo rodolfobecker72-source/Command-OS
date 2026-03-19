@@ -164,25 +164,6 @@ export function ClientDashboard() {
                 Novo Cliente
               </Button>
             </div>
-
-        {/* Filters and Actions */}
-        <Card className="card-elevated">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <CardTitle>Lista de Clientes</CardTitle>
-                <CardDescription>
-                  {filteredClients.length} cliente(s) encontrado(s)
-                </CardDescription>
-              </div>
-              <Button
-                onClick={() => navigate('/clientes/novo')}
-                className="btn-hero"
-              >
-                <Plus className="w-4 h-4" />
-                Novo Cliente
-              </Button>
-            </div>
           </CardHeader>
           <CardContent>
             {/* Tabs */}
