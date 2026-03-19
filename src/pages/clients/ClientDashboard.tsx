@@ -187,7 +187,10 @@ export function ClientDashboard() {
           <CardContent>
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="todos">
+                  Todos ({clients.length})
+                </TabsTrigger>
                 <TabsTrigger value="ativos">
                   Ativos ({activeCount})
                 </TabsTrigger>
