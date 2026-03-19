@@ -194,6 +194,18 @@ export function ClientDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsTrigger value="ativos">
+                  Ativos ({activeCount})
+                </TabsTrigger>
+                <TabsTrigger value="inativos">
+                  Inativos ({inactiveCount})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
