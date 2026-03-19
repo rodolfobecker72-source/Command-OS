@@ -28,6 +28,7 @@ import { AboutPage } from "@/pages/about/AboutPage";
 import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { LayoutPage } from "@/pages/settings/LayoutPage";
 import { GoalsPage } from "@/pages/settings/GoalsPage";
+import { ScorePage } from "@/pages/settings/ScorePage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
@@ -87,6 +88,7 @@ const App = () => (
                   <Route path="/configuracoes/regras-comerciais" element={<PageGuard pageKey="regras-comerciais"><CommercialRulesPage /></PageGuard>} />
                   <Route path="/configuracoes/layout" element={<PageGuard pageKey="layout"><LayoutPage /></PageGuard>} />
                   <Route path="/configuracoes/metas" element={<PageGuard pageKey="metas"><GoalsPage /></PageGuard>} />
+                  <Route path="/configuracoes/score" element={<PageGuard pageKey="score"><ScorePage /></PageGuard>} />
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
