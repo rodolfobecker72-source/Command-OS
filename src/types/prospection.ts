@@ -85,21 +85,21 @@ export const LEAD_ORIGIN_LABELS: Record<LeadOriginType, string> = {
 };
 
 export const LEAD_SEGMENT_LABELS: Record<LeadSegment, string> = {
-  construcao_imobiliario: 'Construção e Imobiliário',
-  industria: 'Indústria',
   agronegocio: 'Agronegócio',
-  saude: 'Saúde',
+  construcao_imobiliario: 'Construção e Imobiliário',
   educacao: 'Educação',
-  tecnologia: 'Tecnologia',
-  financeiro: 'Financeiro',
-  varejo: 'Varejo',
-  gastronomia: 'Gastronomia',
-  turismo_hotelaria: 'Turismo e Hotelaria',
   energia: 'Energia',
   eventos: 'Eventos',
+  financeiro: 'Financeiro',
+  gastronomia: 'Gastronomia',
+  industria: 'Indústria',
+  saude: 'Saúde',
   servicos: 'Serviços',
   setor_publico: 'Setor Público',
+  tecnologia: 'Tecnologia',
   terceiro_setor: 'Terceiro Setor',
+  turismo_hotelaria: 'Turismo e Hotelaria',
+  varejo: 'Varejo',
 };
 
 export const LEAD_TEMPERATURE_LABELS: Record<LeadTemperature, string> = {
