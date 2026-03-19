@@ -60,10 +60,23 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 export function ClientDashboard() {
-  const { clients, budgets, getClient, legacyProjects } = useCRM();
+  const { clients, budgets, getClient, legacyProjects, deleteClient } = useCRM();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [scoreFilter, setScoreFilter] = useState<string>('all');
+  const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+    try {
+      await deleteClient(clientToDelete.id);
+      toast({ title: 'Cliente excluído com sucesso' });
+    } catch {
+      toast({ title: 'Erro ao excluir cliente', variant: 'destructive' });
+    }
+    setClientToDelete(null);
+  };
 
   // Filter clients
   const filteredClients = clients.filter((client) => {
