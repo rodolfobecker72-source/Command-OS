@@ -81,7 +81,7 @@ export function CRMDashboard() {
       return {
         name: col.label,
         count: colBudgets.length,
-        value: colBudgets.reduce((sum, b) => sum + (b.finalValue || 0), 0),
+        value: colBudgets.reduce((sum, b) => sum + getBudgetValue(b), 0),
         color: col.key === 'aprovada' ? 'hsl(var(--success))' : col.key === 'nao_aprovada' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))',
       };
     });
