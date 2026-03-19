@@ -66,7 +66,7 @@ export function ClientDashboard() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [scoreFilter, setScoreFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('ativos');
+  const [activeTab, setActiveTab] = useState<string>('todos');
   const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteClient = async () => {
@@ -105,7 +105,7 @@ export function ClientDashboard() {
     else if (scoreFilter === 'low') matchesScore = client.score < 40;
 
     const isActive = activeClientIds.has(client.id);
-    const matchesTab = activeTab === 'ativos' ? isActive : !isActive;
+    const matchesTab = activeTab === 'todos' ? true : activeTab === 'ativos' ? isActive : !isActive;
 
     return matchesSearch && matchesScore && matchesTab;
   }).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR'));
@@ -146,34 +146,6 @@ export function ClientDashboard() {
       <Header title="Clientes" subtitle="Gerencie sua base de clientes" />
 
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="card-elevated">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                      <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
         {/* Filters and Actions */}
         <Card className="card-elevated">
           <CardHeader className="pb-4">
@@ -196,7 +168,10 @@ export function ClientDashboard() {
           <CardContent>
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="todos">
+                  Todos ({clients.length})
+                </TabsTrigger>
                 <TabsTrigger value="ativos">
                   Ativos ({activeCount})
                 </TabsTrigger>
