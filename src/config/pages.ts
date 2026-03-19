@@ -19,6 +19,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações', restrictedFrom: ['vendedor'] },
   { key: 'layout', label: 'Layout do PDF', href: '/configuracoes/layout', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
   { key: 'metas', label: 'Metas', href: '/configuracoes/metas', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
+  { key: 'score', label: 'Score', href: '/configuracoes/score', group: 'Configurações' },
   
   // Sistema
   { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema', restrictedFrom: ['admin', 'vendedor', 'visualizador'] },
