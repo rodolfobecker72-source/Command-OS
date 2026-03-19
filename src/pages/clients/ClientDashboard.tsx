@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
+import { useToast } from '@/hooks/use-toast';
 import { useCRM } from '@/contexts/CRMContext';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -44,14 +45,38 @@ import {
   Eye,
   Pencil,
   Phone,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 
 export function ClientDashboard() {
-  const { clients, budgets, getClient, legacyProjects } = useCRM();
+  const { clients, budgets, getClient, legacyProjects, deleteClient } = useCRM();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [scoreFilter, setScoreFilter] = useState<string>('all');
+  const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return;
+    try {
+      await deleteClient(clientToDelete.id);
+      toast({ title: 'Cliente excluído com sucesso' });
+    } catch {
+      toast({ title: 'Erro ao excluir cliente', variant: 'destructive' });
+    }
+    setClientToDelete(null);
+  };
 
   // Filter clients
   const filteredClients = clients.filter((client) => {
@@ -250,6 +275,14 @@ export function ClientDashboard() {
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setClientToDelete({ id: client.id, name: client.companyName })}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </motion.tr>
@@ -267,6 +300,23 @@ export function ClientDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cliente <strong>{clientToDelete?.name}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteClient} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

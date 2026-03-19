@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
@@ -53,7 +54,19 @@ import {
   HardDrive as HardDriveIcon,
   History,
   ChevronDown,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   Collapsible,
   CollapsibleContent,
@@ -63,9 +76,23 @@ import {
 export function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, budgets, getClientScoreBreakdown, legacyProjects, hardDrives, getClientScoreHistory } = useCRM();
+  const { getClient, budgets, getClientScoreBreakdown, legacyProjects, hardDrives, getClientScoreHistory, deleteClient } = useCRM();
+  const { toast } = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const client = getClient(id || '');
+
+  const handleDeleteClient = async () => {
+    if (!client) return;
+    try {
+      await deleteClient(client.id);
+      toast({ title: 'Cliente excluído com sucesso' });
+      navigate('/clientes');
+    } catch {
+      toast({ title: 'Erro ao excluir cliente', variant: 'destructive' });
+    }
+    setShowDeleteDialog(false);
+  };
 
   if (!client) {
     return (
@@ -145,13 +172,23 @@ export function ClientDetail() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/clientes/${client.id}/editar`)}
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Editar Cliente
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/clientes/${client.id}/editar`)}
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar Cliente
+            </Button>
+            <Button
+              variant="outline"
+              className="text-destructive border-destructive/50 hover:bg-destructive/10"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -646,6 +683,23 @@ export function ClientDetail() {
           </Card>
         </motion.div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cliente <strong>{client.companyName}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteClient} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
