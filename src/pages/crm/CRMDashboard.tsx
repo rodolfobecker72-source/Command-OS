@@ -193,7 +193,14 @@ export function CRMDashboard() {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12 }}
+                      formatter={(_val: number, _name: string, props: any) => {
+                        const entry = props.payload;
+                        return [`${entry.count} propostas — ${formatCurrency(entry.value)}`, ''];
+                      }}
+                      labelStyle={{ fontWeight: 600, marginBottom: 2 }}
+                    />
                     <Bar dataKey="count" name="Propostas" radius={[0, 4, 4, 0]} barSize={20}>
                       {pipelineData.map((entry, i) => (
                         <Cell key={i} fill={entry.color} />
