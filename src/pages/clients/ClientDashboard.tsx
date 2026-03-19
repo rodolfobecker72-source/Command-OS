@@ -146,33 +146,24 @@ export function ClientDashboard() {
       <Header title="Clientes" subtitle="Gerencie sua base de clientes" />
 
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="card-elevated">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                      <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+        {/* Filters and Actions */}
+        <Card className="card-elevated">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <CardTitle>Lista de Clientes</CardTitle>
+                <CardDescription>
+                  {filteredClients.length} cliente(s) encontrado(s)
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => navigate('/clientes/novo')}
+                className="btn-hero"
+              >
+                <Plus className="w-4 h-4" />
+                Novo Cliente
+              </Button>
+            </div>
 
         {/* Filters and Actions */}
         <Card className="card-elevated">
