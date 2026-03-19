@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Info,
   Package,
+  Award,
   Settings,
   Scale,
   FileImage,
@@ -53,6 +54,7 @@ const navGroups: NavGroup[] = [
       { name: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', icon: Scale, pageKey: 'regras-comerciais' },
       { name: 'Layout do PDF', href: '/configuracoes/layout', icon: FileImage, pageKey: 'layout' },
       { name: 'Metas', href: '/configuracoes/metas', icon: Target, pageKey: 'metas' },
+      { name: 'Score', href: '/configuracoes/score', icon: Award, pageKey: 'score' },
     ],
   },
 ];
