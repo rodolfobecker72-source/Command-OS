@@ -34,7 +34,7 @@ export function ScorePage() {
               <div className="space-y-1">
                 <p className="font-medium">Como funciona o Score?</p>
                 <p className="text-sm text-muted-foreground">
-                  O <strong>Hero Client Score</strong> é calculado automaticamente com base em 3 pilares:
+                  O <strong>Client Score</strong> é calculado automaticamente com base em 3 pilares:
                   recorrência de projetos, margem real média e penalidade comercial.
                   O score varia de <strong>0 a 100 pontos</strong> e é atualizado sempre que um orçamento muda de status.
                 </p>
