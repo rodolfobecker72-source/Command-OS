@@ -97,12 +97,21 @@ export function CRMKanban() {
       if (grouped[card.status]) {
         grouped[card.status].push(card);
       } else {
-        // If status doesn't exist, put in first column
         const firstKey = sortedColumns[0]?.key;
         if (firstKey && grouped[firstKey]) {
           grouped[firstKey].push(card);
         }
       }
+    });
+
+    // Sort cards within each column by proposal number (ascending)
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a, b) => {
+        const numA = parseInt(a.projectName, 10);
+        const numB = parseInt(b.projectName, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.projectName.localeCompare(b.projectName);
+      });
     });
 
     return grouped;
