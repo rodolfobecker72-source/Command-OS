@@ -105,7 +105,7 @@ export function ClientDashboard() {
     else if (scoreFilter === 'low') matchesScore = client.score < 40;
 
     const isActive = activeClientIds.has(client.id);
-    const matchesTab = activeTab === 'ativos' ? isActive : !isActive;
+    const matchesTab = activeTab === 'todos' ? true : activeTab === 'ativos' ? isActive : !isActive;
 
     return matchesSearch && matchesScore && matchesTab;
   }).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR'));
