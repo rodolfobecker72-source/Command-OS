@@ -7,7 +7,15 @@ interface PageGuardProps {
 }
 
 export function PageGuard({ pageKey, children }: PageGuardProps) {
-  const { hasPageAccess } = useAuth();
+  const { hasPageAccess, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   if (!hasPageAccess(pageKey)) {
     return <Navigate to="/" replace />;
