@@ -57,6 +57,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
 export function ClientDashboard() {
@@ -65,6 +66,7 @@ export function ClientDashboard() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [scoreFilter, setScoreFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('ativos');
   const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteClient = async () => {
@@ -77,6 +79,17 @@ export function ClientDashboard() {
     }
     setClientToDelete(null);
   };
+
+  // Determine active/inactive clients
+  const activeClientIds = new Set(
+    budgets
+      .filter((b) => b.status === 'aprovada')
+      .map((b) => b.clientId)
+  );
+  // Also count legacy projects as executed
+  legacyProjects.forEach((lp) => {
+    if (lp.clientId) activeClientIds.add(lp.clientId);
+  });
 
   // Filter clients
   const filteredClients = clients.filter((client) => {
@@ -91,8 +104,14 @@ export function ClientDashboard() {
       matchesScore = client.score >= 40 && client.score < 70;
     else if (scoreFilter === 'low') matchesScore = client.score < 40;
 
-    return matchesSearch && matchesScore;
+    const isActive = activeClientIds.has(client.id);
+    const matchesTab = activeTab === 'ativos' ? isActive : !isActive;
+
+    return matchesSearch && matchesScore && matchesTab;
   }).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR'));
+
+  const activeCount = clients.filter((c) => activeClientIds.has(c.id)).length;
+  const inactiveCount = clients.length - activeCount;
 
   // Calculate stats
   const totalClients = clients.length;
@@ -175,6 +194,18 @@ export function ClientDashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsTrigger value="ativos">
+                  Ativos ({activeCount})
+                </TabsTrigger>
+                <TabsTrigger value="inativos">
+                  Inativos ({inactiveCount})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
