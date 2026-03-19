@@ -66,7 +66,7 @@ export function ClientDashboard() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [scoreFilter, setScoreFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('ativos');
+  const [activeTab, setActiveTab] = useState<string>('todos');
   const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const handleDeleteClient = async () => {
