@@ -45,7 +45,18 @@ import {
   Eye,
   Pencil,
   Phone,
+  Trash2,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 
 export function ClientDashboard() {
