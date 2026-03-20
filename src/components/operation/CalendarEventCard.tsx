@@ -1,5 +1,6 @@
-import { Budget, formatCurrency } from '@/types/crm';
+import { Budget } from '@/types/crm';
 import { useCRM } from '@/contexts/CRMContext';
+import { cn } from '@/lib/utils';
 
 interface CalendarEventCardProps {
   budget: Budget;
@@ -7,29 +8,38 @@ interface CalendarEventCardProps {
   onClick?: () => void;
 }
 
-const STATUS_DOT_COLORS: Record<string, string> = {
-  oportunidade_mapeada: 'bg-info',
-  fazer_proposta: 'bg-purple-500',
-  pronta_enviar: 'bg-warning',
-  proposta_enviada: 'bg-accent',
-  fazer_followup: 'bg-orange-500',
-  nao_aprovada: 'bg-destructive',
-  aprovada: 'bg-success',
-};
+function getStatusStyle(status: string) {
+  if (status === 'aprovada') return 'bg-success/15 border-success/30 text-success';
+  if (status === 'nao_aprovada') return 'bg-destructive/15 border-destructive/30 text-destructive';
+  // "Em negociação" = all other active statuses
+  return 'bg-warning/15 border-warning/30 text-warning';
+}
+
+function getDotColor(status: string) {
+  if (status === 'aprovada') return 'bg-success';
+  if (status === 'nao_aprovada') return 'bg-destructive';
+  return 'bg-warning';
+}
 
 export function CalendarEventCard({ budget, compact = false, onClick }: CalendarEventCardProps) {
-  const { clients, getStatusLabel } = useCRM();
+  const { clients } = useCRM();
   const client = clients.find(c => c.id === budget.clientId);
-  const dotColor = STATUS_DOT_COLORS[budget.status] || 'bg-muted-foreground';
+  const statusStyle = getStatusStyle(budget.status);
+  const dotColor = getDotColor(budget.status);
 
   if (compact) {
     return (
       <button
         onClick={onClick}
-        className="w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight font-medium truncate flex items-center gap-1 hover:opacity-80 transition-opacity active:scale-[0.97] bg-card border border-border shadow-sm"
+        className={cn(
+          'w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate flex items-center gap-1 hover:opacity-80 transition-opacity active:scale-[0.97] border',
+          statusStyle,
+        )}
       >
-        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-        <span className="truncate">{budget.proposalId}</span>
+        <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+        <span className="truncate text-foreground">
+          {budget.proposalId} - {budget.projectName}
+        </span>
       </button>
     );
   }
@@ -37,19 +47,19 @@ export function CalendarEventCard({ budget, compact = false, onClick }: Calendar
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-2 py-1.5 rounded-md bg-card border border-border shadow-sm hover:shadow-md transition-shadow active:scale-[0.97] space-y-0.5"
+      className={cn(
+        'w-full text-left px-2 py-1.5 rounded-md border shadow-sm hover:shadow-md transition-shadow active:scale-[0.97] space-y-0.5',
+        statusStyle,
+      )}
     >
       <div className="flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
+        <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />
         <span className="text-xs font-semibold truncate text-foreground">
-          {budget.proposalId}
+          {budget.proposalId} - {budget.projectName}
         </span>
       </div>
-      <p className="text-[11px] text-muted-foreground truncate pl-3.5">
-        {budget.projectName}
-      </p>
       {client && (
-        <p className="text-[10px] text-muted-foreground/70 truncate pl-3.5">
+        <p className="text-[10px] text-muted-foreground truncate pl-3.5">
           {client.companyName}
         </p>
       )}
