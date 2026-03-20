@@ -17,6 +17,8 @@ import {
   Scale,
   FileImage,
   LogOut,
+  CalendarDays,
+  Wrench,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +45,13 @@ const navGroups: NavGroup[] = [
       { name: 'Clientes', href: '/clientes', icon: Users, pageKey: 'clientes' },
       { name: 'CRM', href: '/crm', icon: LayoutGrid, pageKey: 'crm' },
       { name: 'Dashboard', href: '/crm/dashboard', icon: TrendingUp, pageKey: 'crm' },
+    ],
+  },
+  {
+    label: 'Operação',
+    icon: Wrench,
+    items: [
+      { name: 'Calendário', href: '/calendario', icon: CalendarDays, pageKey: 'calendario' },
     ],
   },
   {

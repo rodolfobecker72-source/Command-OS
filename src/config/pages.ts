@@ -14,6 +14,11 @@ export const APP_PAGES: AppPage[] = [
   { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial' },
   { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial' },
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial' },
+
+  // Operação
+  { key: 'calendario', label: 'Calendário', href: '/calendario', group: 'Operação' },
+
+  // Configurações
   { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Configurações', restrictedFrom: ['vendedor'] },
   { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Configurações', restrictedFrom: ['vendedor'] },
   { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações', restrictedFrom: ['vendedor'] },
