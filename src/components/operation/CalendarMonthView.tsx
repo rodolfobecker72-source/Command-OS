@@ -28,7 +28,7 @@ function getEventsForDay(day: Date, events: Budget[]): Budget[] {
     if (!b.executionStartDate) return false;
     const start = new Date(b.executionStartDate);
     start.setHours(0, 0, 0, 0);
-    const end = b.executionEndDate ? new Date(b.executionEndDate) : start;
+    const end = b.executionEndDate ? new Date(b.executionEndDate) : new Date(start);
     end.setHours(23, 59, 59, 999);
     const d = new Date(day);
     d.setHours(12, 0, 0, 0);
