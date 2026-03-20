@@ -699,6 +699,15 @@ export function BudgetDetail() {
                             setEditedProjectName(budget.projectName);
                             setEditedProjectDescription(budget.projectDescription || '');
                             setEditedProposalId(budget.proposalId);
+                            setEditedIncludesTax(budget.includesTax);
+                            setEditedIncludesLogistics(budget.includesLogistics);
+                            setEditedIncludesAccommodation(budget.includesAccommodation);
+                            setEditedIncludesMeals(budget.includesMeals);
+                            setEditedIncludesRawMaterial(budget.includesRawMaterial);
+                            setEditedIncludesTechnicalVisit(budget.includesTechnicalVisit);
+                            setEditedHasExecutionDate(budget.hasExecutionDate);
+                            setEditedExecutionStartDate(budget.executionStartDate);
+                            setEditedExecutionEndDate(budget.executionEndDate);
                             setIsEditing(true);
                           }}
                         >
