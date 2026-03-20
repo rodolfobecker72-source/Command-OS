@@ -761,6 +761,140 @@ export function BudgetDetail() {
                         <p className="font-medium">{budget.paymentTerms || 'Não definido'}</p>
                       )}
                     </div>
+
+                    {/* Data para Execução - always visible */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Data para Execução</p>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="editHasExecutionDate"
+                                checked={editedHasExecutionDate}
+                                onCheckedChange={(checked) => {
+                                  setEditedHasExecutionDate(checked === true);
+                                  if (!checked) {
+                                    setEditedExecutionStartDate(null);
+                                    setEditedExecutionEndDate(null);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor="editHasExecutionDate" className="text-sm font-normal cursor-pointer">
+                                Data definida
+                              </Label>
+                            </div>
+                            <span className="text-xs text-muted-foreground">A definir</span>
+                          </div>
+                          {editedHasExecutionDate && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-xs h-8">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {editedExecutionStartDate
+                                      ? format(new Date(editedExecutionStartDate), 'dd/MM/yyyy')
+                                      : 'Início'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={editedExecutionStartDate ? new Date(editedExecutionStartDate) : undefined}
+                                    onSelect={(date) => setEditedExecutionStartDate(date || null)}
+                                    locale={ptBR}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <span className="text-xs text-muted-foreground">até</span>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-xs h-8">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {editedExecutionEndDate
+                                      ? format(new Date(editedExecutionEndDate), 'dd/MM/yyyy')
+                                      : 'Fim (opcional)'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={editedExecutionEndDate ? new Date(editedExecutionEndDate) : undefined}
+                                    onSelect={(date) => setEditedExecutionEndDate(date || null)}
+                                    locale={ptBR}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="font-medium">
+                          {budget.hasExecutionDate && budget.executionStartDate
+                            ? `${format(new Date(budget.executionStartDate), 'dd/MM/yyyy')}${budget.executionEndDate ? ` — ${format(new Date(budget.executionEndDate), 'dd/MM/yyyy')}` : ''}`
+                            : 'A definir'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Material Bruto */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Material Bruto na Entrega</p>
+                      {isEditing ? (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="editIncludesRawMaterial"
+                            checked={editedIncludesRawMaterial}
+                            onCheckedChange={(checked) => setEditedIncludesRawMaterial(checked === true)}
+                          />
+                          <Label htmlFor="editIncludesRawMaterial" className="text-sm font-normal cursor-pointer">
+                            Material bruto incluso
+                          </Label>
+                        </div>
+                      ) : (
+                        <p className="font-medium">{budget.includesRawMaterial ? 'Incluso' : 'Não incluso'}</p>
+                      )}
+                    </div>
+
+                    {/* Inclusões na proposta */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">O que está incluso na proposta</p>
+                      {isEditing ? (
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesTax" checked={editedIncludesTax} onCheckedChange={(c) => setEditedIncludesTax(c === true)} />
+                            <Label htmlFor="editIncludesTax" className="text-sm font-normal cursor-pointer">Imposto incluso</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesLogistics" checked={editedIncludesLogistics} onCheckedChange={(c) => setEditedIncludesLogistics(c === true)} />
+                            <Label htmlFor="editIncludesLogistics" className="text-sm font-normal cursor-pointer">Logística inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesAccommodation" checked={editedIncludesAccommodation} onCheckedChange={(c) => setEditedIncludesAccommodation(c === true)} />
+                            <Label htmlFor="editIncludesAccommodation" className="text-sm font-normal cursor-pointer">Hospedagem inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesMeals" checked={editedIncludesMeals} onCheckedChange={(c) => setEditedIncludesMeals(c === true)} />
+                            <Label htmlFor="editIncludesMeals" className="text-sm font-normal cursor-pointer">Alimentação da equipe inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesTechnicalVisit" checked={editedIncludesTechnicalVisit} onCheckedChange={(c) => setEditedIncludesTechnicalVisit(c === true)} />
+                            <Label htmlFor="editIncludesTechnicalVisit" className="text-sm font-normal cursor-pointer">Visita técnica inclusa</Label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {budget.includesTax && <Badge variant="secondary" className="text-xs">Imposto</Badge>}
+                          {budget.includesLogistics && <Badge variant="secondary" className="text-xs">Logística</Badge>}
+                          {budget.includesAccommodation && <Badge variant="secondary" className="text-xs">Hospedagem</Badge>}
+                          {budget.includesMeals && <Badge variant="secondary" className="text-xs">Alimentação</Badge>}
+                          {budget.includesTechnicalVisit && <Badge variant="secondary" className="text-xs">Visita técnica</Badge>}
+                          {!budget.includesTax && !budget.includesLogistics && !budget.includesAccommodation && !budget.includesMeals && !budget.includesTechnicalVisit && (
+                            <span className="text-sm text-muted-foreground">Nenhuma inclusão</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     
                     {isEditing && (
                       <div className="flex gap-2 pt-2">
