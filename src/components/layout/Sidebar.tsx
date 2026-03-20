@@ -17,6 +17,8 @@ import {
   Scale,
   FileImage,
   LogOut,
+  CalendarDays,
+  Wrench,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
