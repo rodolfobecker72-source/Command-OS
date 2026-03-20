@@ -29,6 +29,7 @@ import { CommercialRulesPage } from "@/pages/settings/CommercialRulesPage";
 import { LayoutPage } from "@/pages/settings/LayoutPage";
 import { GoalsPage } from "@/pages/settings/GoalsPage";
 import { ScorePage } from "@/pages/settings/ScorePage";
+import { CalendarPage } from "@/pages/operation/CalendarPage";
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
