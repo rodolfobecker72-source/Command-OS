@@ -20,9 +20,9 @@ export function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
 
-  // Filter budgets with execution dates
+  // Filter budgets that have execution start date set (regardless of hasExecutionDate flag)
   const calendarEvents = useMemo(
-    () => budgets.filter(b => b.hasExecutionDate && b.executionStartDate),
+    () => budgets.filter(b => b.executionStartDate),
     [budgets],
   );
 
