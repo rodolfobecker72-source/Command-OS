@@ -146,6 +146,15 @@ export function BudgetDetail() {
   const [editedProjectName, setEditedProjectName] = useState('');
   const [editedProjectDescription, setEditedProjectDescription] = useState('');
   const [editedProposalId, setEditedProposalId] = useState('');
+  const [editedIncludesTax, setEditedIncludesTax] = useState(false);
+  const [editedIncludesLogistics, setEditedIncludesLogistics] = useState(false);
+  const [editedIncludesAccommodation, setEditedIncludesAccommodation] = useState(false);
+  const [editedIncludesMeals, setEditedIncludesMeals] = useState(false);
+  const [editedIncludesRawMaterial, setEditedIncludesRawMaterial] = useState(false);
+  const [editedIncludesTechnicalVisit, setEditedIncludesTechnicalVisit] = useState(false);
+  const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
+  const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
+  const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('budget');
   const [deleteOpen, setDeleteOpen] = useState(false);
   
