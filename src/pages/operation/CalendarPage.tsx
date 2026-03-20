@@ -11,12 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { Header } from '@/components/layout/Header';
-import { useOutletContext } from 'react-router-dom';
 
 export function CalendarPage() {
   const { budgets, clients, getStatusLabel } = useCRM();
   const navigate = useNavigate();
-  const { onOpenMobileMenu } = useOutletContext<{ onOpenMobileMenu: () => void }>();
 
   const [view, setView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
