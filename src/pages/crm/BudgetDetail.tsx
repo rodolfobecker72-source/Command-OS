@@ -229,6 +229,15 @@ export function BudgetDetail() {
         paymentTerms: editedPaymentTerms,
         projectName: editedProjectName,
         projectDescription: editedProjectDescription,
+        includesTax: editedIncludesTax,
+        includesLogistics: editedIncludesLogistics,
+        includesAccommodation: editedIncludesAccommodation,
+        includesMeals: editedIncludesMeals,
+        includesRawMaterial: editedIncludesRawMaterial,
+        includesTechnicalVisit: editedIncludesTechnicalVisit,
+        hasExecutionDate: editedHasExecutionDate,
+        executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
+        executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
       });
       setIsEditing(false);
       toast.success('Informações atualizadas!');
