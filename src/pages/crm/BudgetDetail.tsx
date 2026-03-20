@@ -99,6 +99,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const SERVICE_ICONS: Record<string, typeof Film> = {
   CINE: Film,
@@ -141,6 +146,15 @@ export function BudgetDetail() {
   const [editedProjectName, setEditedProjectName] = useState('');
   const [editedProjectDescription, setEditedProjectDescription] = useState('');
   const [editedProposalId, setEditedProposalId] = useState('');
+  const [editedIncludesTax, setEditedIncludesTax] = useState(false);
+  const [editedIncludesLogistics, setEditedIncludesLogistics] = useState(false);
+  const [editedIncludesAccommodation, setEditedIncludesAccommodation] = useState(false);
+  const [editedIncludesMeals, setEditedIncludesMeals] = useState(false);
+  const [editedIncludesRawMaterial, setEditedIncludesRawMaterial] = useState(false);
+  const [editedIncludesTechnicalVisit, setEditedIncludesTechnicalVisit] = useState(false);
+  const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
+  const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
+  const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('budget');
   const [deleteOpen, setDeleteOpen] = useState(false);
   
@@ -215,6 +229,15 @@ export function BudgetDetail() {
         paymentTerms: editedPaymentTerms,
         projectName: editedProjectName,
         projectDescription: editedProjectDescription,
+        includesTax: editedIncludesTax,
+        includesLogistics: editedIncludesLogistics,
+        includesAccommodation: editedIncludesAccommodation,
+        includesMeals: editedIncludesMeals,
+        includesRawMaterial: editedIncludesRawMaterial,
+        includesTechnicalVisit: editedIncludesTechnicalVisit,
+        hasExecutionDate: editedHasExecutionDate,
+        executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
+        executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
       });
       setIsEditing(false);
       toast.success('Informações atualizadas!');
@@ -676,6 +699,15 @@ export function BudgetDetail() {
                             setEditedProjectName(budget.projectName);
                             setEditedProjectDescription(budget.projectDescription || '');
                             setEditedProposalId(budget.proposalId);
+                            setEditedIncludesTax(budget.includesTax);
+                            setEditedIncludesLogistics(budget.includesLogistics);
+                            setEditedIncludesAccommodation(budget.includesAccommodation);
+                            setEditedIncludesMeals(budget.includesMeals);
+                            setEditedIncludesRawMaterial(budget.includesRawMaterial);
+                            setEditedIncludesTechnicalVisit(budget.includesTechnicalVisit);
+                            setEditedHasExecutionDate(budget.hasExecutionDate);
+                            setEditedExecutionStartDate(budget.executionStartDate);
+                            setEditedExecutionEndDate(budget.executionEndDate);
                             setIsEditing(true);
                           }}
                         >
@@ -727,6 +759,140 @@ export function BudgetDetail() {
                         />
                       ) : (
                         <p className="font-medium">{budget.paymentTerms || 'Não definido'}</p>
+                      )}
+                    </div>
+
+                    {/* Data para Execução - always visible */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Data para Execução</p>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="editHasExecutionDate"
+                                checked={editedHasExecutionDate}
+                                onCheckedChange={(checked) => {
+                                  setEditedHasExecutionDate(checked === true);
+                                  if (!checked) {
+                                    setEditedExecutionStartDate(null);
+                                    setEditedExecutionEndDate(null);
+                                  }
+                                }}
+                              />
+                              <Label htmlFor="editHasExecutionDate" className="text-sm font-normal cursor-pointer">
+                                Data definida
+                              </Label>
+                            </div>
+                            <span className="text-xs text-muted-foreground">A definir</span>
+                          </div>
+                          {editedHasExecutionDate && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-xs h-8">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {editedExecutionStartDate
+                                      ? format(new Date(editedExecutionStartDate), 'dd/MM/yyyy')
+                                      : 'Início'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={editedExecutionStartDate ? new Date(editedExecutionStartDate) : undefined}
+                                    onSelect={(date) => setEditedExecutionStartDate(date || null)}
+                                    locale={ptBR}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <span className="text-xs text-muted-foreground">até</span>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-xs h-8">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {editedExecutionEndDate
+                                      ? format(new Date(editedExecutionEndDate), 'dd/MM/yyyy')
+                                      : 'Fim (opcional)'}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={editedExecutionEndDate ? new Date(editedExecutionEndDate) : undefined}
+                                    onSelect={(date) => setEditedExecutionEndDate(date || null)}
+                                    locale={ptBR}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="font-medium">
+                          {budget.hasExecutionDate && budget.executionStartDate
+                            ? `${format(new Date(budget.executionStartDate), 'dd/MM/yyyy')}${budget.executionEndDate ? ` — ${format(new Date(budget.executionEndDate), 'dd/MM/yyyy')}` : ''}`
+                            : 'A definir'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Material Bruto */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Material Bruto na Entrega</p>
+                      {isEditing ? (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="editIncludesRawMaterial"
+                            checked={editedIncludesRawMaterial}
+                            onCheckedChange={(checked) => setEditedIncludesRawMaterial(checked === true)}
+                          />
+                          <Label htmlFor="editIncludesRawMaterial" className="text-sm font-normal cursor-pointer">
+                            Material bruto incluso
+                          </Label>
+                        </div>
+                      ) : (
+                        <p className="font-medium">{budget.includesRawMaterial ? 'Incluso' : 'Não incluso'}</p>
+                      )}
+                    </div>
+
+                    {/* Inclusões na proposta */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">O que está incluso na proposta</p>
+                      {isEditing ? (
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesTax" checked={editedIncludesTax} onCheckedChange={(c) => setEditedIncludesTax(c === true)} />
+                            <Label htmlFor="editIncludesTax" className="text-sm font-normal cursor-pointer">Imposto incluso</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesLogistics" checked={editedIncludesLogistics} onCheckedChange={(c) => setEditedIncludesLogistics(c === true)} />
+                            <Label htmlFor="editIncludesLogistics" className="text-sm font-normal cursor-pointer">Logística inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesAccommodation" checked={editedIncludesAccommodation} onCheckedChange={(c) => setEditedIncludesAccommodation(c === true)} />
+                            <Label htmlFor="editIncludesAccommodation" className="text-sm font-normal cursor-pointer">Hospedagem inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesMeals" checked={editedIncludesMeals} onCheckedChange={(c) => setEditedIncludesMeals(c === true)} />
+                            <Label htmlFor="editIncludesMeals" className="text-sm font-normal cursor-pointer">Alimentação da equipe inclusa</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="editIncludesTechnicalVisit" checked={editedIncludesTechnicalVisit} onCheckedChange={(c) => setEditedIncludesTechnicalVisit(c === true)} />
+                            <Label htmlFor="editIncludesTechnicalVisit" className="text-sm font-normal cursor-pointer">Visita técnica inclusa</Label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {budget.includesTax && <Badge variant="secondary" className="text-xs">Imposto</Badge>}
+                          {budget.includesLogistics && <Badge variant="secondary" className="text-xs">Logística</Badge>}
+                          {budget.includesAccommodation && <Badge variant="secondary" className="text-xs">Hospedagem</Badge>}
+                          {budget.includesMeals && <Badge variant="secondary" className="text-xs">Alimentação</Badge>}
+                          {budget.includesTechnicalVisit && <Badge variant="secondary" className="text-xs">Visita técnica</Badge>}
+                          {!budget.includesTax && !budget.includesLogistics && !budget.includesAccommodation && !budget.includesMeals && !budget.includesTechnicalVisit && (
+                            <span className="text-sm text-muted-foreground">Nenhuma inclusão</span>
+                          )}
+                        </div>
                       )}
                     </div>
                     
