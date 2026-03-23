@@ -168,7 +168,7 @@ export function ProspectionPage() {
     const convMeetingToCRM = meetingsTotal > 0 ? ((qualifiedCRM / Math.max(meetingsTotal + qualifiedCRM, 1)) * 100) : 0;
     const lossRate = total > 0 ? ((lost / total) * 100) : 0;
 
-    return { total, active, meetings, proposals, lost, volume, convMappedToMeeting, convMeetingToCRM, lossRate };
+    return { total, active, meetings, lost, volume, convMappedToMeeting, convMeetingToCRM, lossRate };
   }, [filteredLeads]);
 
   const dashboardCards = [
