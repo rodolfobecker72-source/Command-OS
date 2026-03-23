@@ -71,11 +71,8 @@ function PriorityBadge({ priority }: { priority: LeadPriority }) {
 function FunnelStatusBadge({ status }: { status: LeadFunnelStatus }) {
   const colorMap: Record<LeadFunnelStatus, string> = {
     mapeado: 'bg-muted text-muted-foreground',
-    tentativa_contato: 'bg-info/15 text-info border-info/20',
     contato_realizado: 'bg-primary/10 text-primary border-primary/20',
     reuniao_agendada: 'bg-warning/15 text-warning border-warning/20',
-    reuniao_realizada: 'bg-warning/20 text-warning border-warning/30',
-    proposta_solicitada: 'bg-success/10 text-success border-success/20',
     qualificado_crm: 'bg-success/20 text-success border-success/30',
     perdido: 'bg-destructive/15 text-destructive border-destructive/20',
     nutricao: 'bg-primary/5 text-muted-foreground border-primary/10',
