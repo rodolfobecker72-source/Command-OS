@@ -1685,6 +1685,21 @@ export function BudgetDetail() {
                                       <XCircle className="w-4 h-4" />
                                     </Button>
                                   )}
+                                  {version.version > 1 && version.version === Math.max(...budget.versions.map(v => v.version)) && budget.status !== 'aprovada' && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive"
+                                      onClick={async () => {
+                                        if (window.confirm(`Tem certeza que deseja excluir a versão V${version.version}?`)) {
+                                          await deleteLastVersion(budget.id);
+                                        }
+                                      }}
+                                      title={`Excluir V${version.version}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
