@@ -122,11 +122,8 @@ export const LEAD_FUNNEL_STATUS_LABELS: Record<LeadFunnelStatus, string> = {
 
 export const FUNNEL_STATUS_ORDER: LeadFunnelStatus[] = [
   'mapeado',
-  'tentativa_contato',
   'contato_realizado',
   'reuniao_agendada',
-  'reuniao_realizada',
-  'proposta_solicitada',
   'qualificado_crm',
   'perdido',
   'nutricao',
