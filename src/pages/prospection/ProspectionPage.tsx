@@ -156,8 +156,7 @@ export function ProspectionPage() {
   const metrics = useMemo(() => {
     const total = filteredLeads.length;
     const active = filteredLeads.filter(l => !['perdido', 'qualificado_crm'].includes(l.funnelStatus)).length;
-    const meetings = filteredLeads.filter(l => ['reuniao_agendada', 'reuniao_realizada'].includes(l.funnelStatus)).length;
-    const proposals = filteredLeads.filter(l => l.funnelStatus === 'proposta_solicitada').length;
+    const meetings = filteredLeads.filter(l => l.funnelStatus === 'reuniao_agendada').length;
     const lost = filteredLeads.filter(l => l.funnelStatus === 'perdido').length;
     const volume = filteredLeads.reduce((sum, l) => sum + (l.estimatedPotential || 0), 0);
 
