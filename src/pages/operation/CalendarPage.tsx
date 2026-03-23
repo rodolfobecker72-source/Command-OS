@@ -26,6 +26,13 @@ export function CalendarPage() {
     [budgets],
   );
 
+  // Budgets with executionMonth matching current view but no specific start date
+  const currentYearMonth = format(currentDate, 'yyyy-MM');
+  const undatedEvents = useMemo(
+    () => budgets.filter(b => b.executionMonth === currentYearMonth && !b.executionStartDate),
+    [budgets, currentYearMonth],
+  );
+
   const goToday = () => setCurrentDate(new Date());
 
   const goPrev = () =>
