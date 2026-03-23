@@ -115,7 +115,7 @@ export function CalendarPage() {
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Projetos previstos para {format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })} — sem data definida
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="flex flex-col gap-2 max-w-md">
             {undatedEvents.map(budget => (
               <CalendarEventCard
                 key={budget.id}
