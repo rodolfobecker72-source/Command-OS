@@ -215,7 +215,7 @@ export async function generateProposalPDF({
   y += 6;
   
   if (responsibleUser) {
-    doc.text(`Atendimento HERO: ${responsibleUser.name}`, margin, y);
+    doc.text(`Responsável pelo atendimento: ${responsibleUser.name}`, margin, y);
     y += 6;
   }
   
