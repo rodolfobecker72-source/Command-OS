@@ -123,7 +123,7 @@ export function BudgetDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile, workspace } = useAuth();
-  const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget } = useCRM();
+  const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, deleteLastVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget } = useCRM();
 
   const budget = getBudget(id || '');
   const client = budget ? getClient(budget.clientId) : null;
@@ -1683,6 +1683,21 @@ export function BudgetDetail() {
                                       title="Marcar como recusada"
                                     >
                                       <XCircle className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                  {version.version > 1 && version.version === Math.max(...budget.versions.map(v => v.version)) && budget.status !== 'aprovada' && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive"
+                                      onClick={async () => {
+                                        if (window.confirm(`Tem certeza que deseja excluir a versão V${version.version}?`)) {
+                                          await deleteLastVersion(budget.id);
+                                        }
+                                      }}
+                                      title={`Excluir V${version.version}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
                                     </Button>
                                   )}
                                   <Button 

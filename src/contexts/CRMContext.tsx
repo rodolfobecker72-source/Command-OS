@@ -207,6 +207,7 @@ interface CRMContextType {
 
   addBudgetVersion: (budgetId: string, version: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => Promise<void>;
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
+  deleteLastVersion: (budgetId: string) => Promise<void>;
   approveBudget: (budgetId: string, versionNumber: number, executionMonth?: string) => Promise<void>;
 
   updateExecution: (budgetId: string, execution: Partial<ProjectExecution>) => Promise<void>;
@@ -911,6 +912,36 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro ao atualizar versão: ' + e.message); }
   };
 
+  const deleteLastVersion = async (budgetId: string) => {
+    try {
+      const budget = budgets.find(b => b.id === budgetId);
+      if (!budget || budget.versions.length <= 1) {
+        toast.error('Não é possível excluir a única versão.');
+        return;
+      }
+      const sortedVersions = [...budget.versions].sort((a, b) => b.version - a.version);
+      const lastVersion = sortedVersions[0];
+      if (lastVersion.version === budget.approvedVersion) {
+        toast.error('Não é possível excluir uma versão aprovada.');
+        return;
+      }
+      const { error } = await supabase.from('budget_versions').delete().eq('id', lastVersion.id);
+      if (error) throw error;
+      const newCurrentVersion = sortedVersions[1].version;
+      const { error: cvError } = await supabase.from('budgets').update({ current_version: newCurrentVersion }).eq('id', budgetId);
+      if (cvError) console.error('[CRM] deleteLastVersion: erro ao atualizar current_version:', cvError.message);
+      setBudgets(prev => prev.map(b => {
+        if (b.id === budgetId) {
+          return { ...b, versions: b.versions.filter(v => v.id !== lastVersion.id), currentVersion: newCurrentVersion, updatedAt: new Date() };
+        }
+        return b;
+      }));
+      toast.success(`Versão V${lastVersion.version} excluída com sucesso!`);
+    } catch (e: any) {
+      toast.error('Erro ao excluir versão: ' + e.message);
+    }
+  };
+
   const approveBudget = async (budgetId: string, versionNumber: number, executionMonth?: string) => {
     const budget = budgets.find(b => b.id === budgetId);
     if (!budget) return;
@@ -1396,7 +1427,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     isLoading,
     clients, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown,
     budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
-    addBudgetVersion, updateBudgetVersion, approveBudget,
+    addBudgetVersion, updateBudgetVersion, deleteLastVersion, approveBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,
     kanbanColumns, addKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, getStatusLabel,
     serviceCategories, serviceObjectives, addServiceCategory, updateServiceCategory, deleteServiceCategory,
