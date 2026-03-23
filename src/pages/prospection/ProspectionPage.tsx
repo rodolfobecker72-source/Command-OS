@@ -639,7 +639,6 @@ export function ProspectionPage() {
               { label: 'Total Leads', value: metrics.total, icon: Users, color: 'bg-primary/10 text-primary' },
               { label: 'Leads Ativos', value: metrics.active, icon: Target, color: 'bg-success/10 text-success' },
               { label: 'Reuniões', value: metrics.meetings, icon: CalendarCheck, color: 'bg-warning/10 text-warning' },
-              { label: 'Propostas', value: metrics.proposals, icon: FileText, color: 'bg-info/10 text-info' },
               { label: 'Perdidos', value: metrics.lost, icon: XCircle, color: 'bg-destructive/10 text-destructive' },
             ].map((card) => (
               <Card key={card.label} className="border-0 shadow-sm rounded-2xl">
