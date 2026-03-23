@@ -1,30 +1,30 @@
 
 
-## Correção: Projetos não aparecem no calendário
+## Lista de projetos sem data definida no mês
 
-### Problema identificado
+### O que será feito
 
-Há um bug de referência de objeto JavaScript no `getEventsForDay` nos componentes `CalendarMonthView` e `CalendarWeekView`. Quando um orçamento não tem `executionEndDate` (como o 727 - Seminário Imobiliário), o código faz `end = start`, criando duas variáveis apontando para o mesmo objeto Date. Ao chamar `end.setHours(23,59,59,999)`, o `start` também é mutado para 23:59, fazendo com que a comparação `d >= start` falhe (12:00 >= 23:59 = false).
+Abaixo do calendário (na visão mensal), exibir uma seção com os projetos que possuem `executionMonth` correspondente ao mês visualizado, mas que **não** têm `executionStartDate` definida. Cada item usa o mesmo padrão visual do calendário: verde para aprovados, amarelo para em negociação. Clicável para abrir o mesmo dialog de detalhes.
 
-O projeto 727 existe no banco com `execution_start_date: 2026-05-20` e `execution_end_date: null`, confirmando que é afetado por este bug.
-
-### Correção
+### Alterações
 
 | Arquivo | Alteração |
 |---|---|
-| `src/components/operation/CalendarMonthView.tsx` | Corrigir `getEventsForDay`: quando `executionEndDate` é null, criar um **novo** Date a partir de `start` em vez de reusar a referência |
-| `src/components/operation/CalendarWeekView.tsx` | Mesma correção |
+| `src/pages/operation/CalendarPage.tsx` | Adicionar lista `undatedEvents` filtrando budgets com `executionMonth === YYYY-MM do mês atual` e sem `executionStartDate`. Renderizar seção abaixo do calendário com título "Projetos previstos para {mês} — sem data definida" e cards usando `CalendarEventCard`. |
 
-### Detalhe técnico
+### Lógica de filtragem
 
-Trocar:
 ```typescript
-const end = b.executionEndDate ? new Date(b.executionEndDate) : start;
-```
-Por:
-```typescript
-const end = b.executionEndDate ? new Date(b.executionEndDate) : new Date(start);
+const currentYearMonth = format(currentDate, 'yyyy-MM');
+const undatedEvents = budgets.filter(
+  b => b.executionMonth === currentYearMonth && !b.executionStartDate
+);
 ```
 
-Isso garante que `start` e `end` são objetos independentes, e `setHours` em um não afeta o outro. Com isso, todos os projetos com data de execução (mesmo sem data de fim) passarão a aparecer corretamente no calendário, com a cor amarela (warning) para projetos em negociação.
+### Visual
+
+- Seção com borda superior, padding, título em texto pequeno
+- Cards no mesmo estilo do `CalendarEventCard` (não-compact), com cores por status
+- Clique abre o mesmo dialog de detalhes já existente
+- Exibida apenas quando há itens (oculta se vazia)
 
