@@ -32,11 +32,8 @@ export type LeadSegment =
 
 export type LeadFunnelStatus =
   | 'mapeado'
-  | 'tentativa_contato'
   | 'contato_realizado'
   | 'reuniao_agendada'
-  | 'reuniao_realizada'
-  | 'proposta_solicitada'
   | 'qualificado_crm'
   | 'perdido'
   | 'nutricao';
