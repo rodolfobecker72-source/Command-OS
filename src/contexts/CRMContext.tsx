@@ -1427,7 +1427,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     isLoading,
     clients, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown,
     budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
-    addBudgetVersion, updateBudgetVersion, approveBudget,
+    addBudgetVersion, updateBudgetVersion, deleteLastVersion, approveBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,
     kanbanColumns, addKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, getStatusLabel,
     serviceCategories, serviceObjectives, addServiceCategory, updateServiceCategory, deleteServiceCategory,
