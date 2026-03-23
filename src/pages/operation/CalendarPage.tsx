@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { CalendarEventCard } from '@/components/operation/CalendarEventCard';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
