@@ -113,11 +113,8 @@ export const LEAD_PRIORITY_LABELS: Record<LeadPriority, string> = {
 
 export const LEAD_FUNNEL_STATUS_LABELS: Record<LeadFunnelStatus, string> = {
   mapeado: 'Mapeado',
-  tentativa_contato: 'Tentativa de Contato',
   contato_realizado: 'Contato Realizado',
   reuniao_agendada: 'Reunião Agendada',
-  reuniao_realizada: 'Reunião Realizada',
-  proposta_solicitada: 'Proposta Solicitada',
   qualificado_crm: 'Qualificado para CRM',
   perdido: 'Perdido',
   nutricao: 'Nutrição',
