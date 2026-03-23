@@ -71,11 +71,8 @@ function PriorityBadge({ priority }: { priority: LeadPriority }) {
 function FunnelStatusBadge({ status }: { status: LeadFunnelStatus }) {
   const colorMap: Record<LeadFunnelStatus, string> = {
     mapeado: 'bg-muted text-muted-foreground',
-    tentativa_contato: 'bg-info/15 text-info border-info/20',
     contato_realizado: 'bg-primary/10 text-primary border-primary/20',
     reuniao_agendada: 'bg-warning/15 text-warning border-warning/20',
-    reuniao_realizada: 'bg-warning/20 text-warning border-warning/30',
-    proposta_solicitada: 'bg-success/10 text-success border-success/20',
     qualificado_crm: 'bg-success/20 text-success border-success/30',
     perdido: 'bg-destructive/15 text-destructive border-destructive/20',
     nutricao: 'bg-primary/5 text-muted-foreground border-primary/10',
@@ -159,8 +156,7 @@ export function ProspectionPage() {
   const metrics = useMemo(() => {
     const total = filteredLeads.length;
     const active = filteredLeads.filter(l => !['perdido', 'qualificado_crm'].includes(l.funnelStatus)).length;
-    const meetings = filteredLeads.filter(l => ['reuniao_agendada', 'reuniao_realizada'].includes(l.funnelStatus)).length;
-    const proposals = filteredLeads.filter(l => l.funnelStatus === 'proposta_solicitada').length;
+    const meetings = filteredLeads.filter(l => l.funnelStatus === 'reuniao_agendada').length;
     const lost = filteredLeads.filter(l => l.funnelStatus === 'perdido').length;
     const volume = filteredLeads.reduce((sum, l) => sum + (l.estimatedPotential || 0), 0);
 
@@ -172,14 +168,13 @@ export function ProspectionPage() {
     const convMeetingToCRM = meetingsTotal > 0 ? ((qualifiedCRM / Math.max(meetingsTotal + qualifiedCRM, 1)) * 100) : 0;
     const lossRate = total > 0 ? ((lost / total) * 100) : 0;
 
-    return { total, active, meetings, proposals, lost, volume, convMappedToMeeting, convMeetingToCRM, lossRate };
+    return { total, active, meetings, lost, volume, convMappedToMeeting, convMeetingToCRM, lossRate };
   }, [filteredLeads]);
 
   const dashboardCards = [
     { label: 'Total Leads', value: metrics.total, icon: Users, color: 'bg-primary/10 text-primary' },
     { label: 'Leads Ativos', value: metrics.active, icon: Target, color: 'bg-success/10 text-success' },
     { label: 'Reuniões Agendadas', value: metrics.meetings, icon: CalendarCheck, color: 'bg-warning/10 text-warning' },
-    { label: 'Propostas Geradas', value: metrics.proposals, icon: FileText, color: 'bg-info/10 text-info' },
     { label: 'Leads Perdidos', value: metrics.lost, icon: XCircle, color: 'bg-destructive/10 text-destructive' },
     { label: 'Volume Estimado', value: `R$ ${metrics.volume.toLocaleString('pt-BR')}`, icon: DollarSign, color: 'bg-primary/10 text-primary' },
   ];
@@ -277,8 +272,7 @@ export function ProspectionPage() {
 
   // Kanban columns (filter out perdido and nutricao — they show separately)
   const kanbanStatuses: LeadFunnelStatus[] = [
-    'mapeado', 'tentativa_contato', 'contato_realizado',
-    'reuniao_agendada', 'reuniao_realizada', 'proposta_solicitada', 'qualificado_crm',
+    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm',
   ];
 
   const uniqueResponsibles = useMemo(() => {
@@ -645,7 +639,6 @@ export function ProspectionPage() {
               { label: 'Total Leads', value: metrics.total, icon: Users, color: 'bg-primary/10 text-primary' },
               { label: 'Leads Ativos', value: metrics.active, icon: Target, color: 'bg-success/10 text-success' },
               { label: 'Reuniões', value: metrics.meetings, icon: CalendarCheck, color: 'bg-warning/10 text-warning' },
-              { label: 'Propostas', value: metrics.proposals, icon: FileText, color: 'bg-info/10 text-info' },
               { label: 'Perdidos', value: metrics.lost, icon: XCircle, color: 'bg-destructive/10 text-destructive' },
             ].map((card) => (
               <Card key={card.label} className="border-0 shadow-sm rounded-2xl">
