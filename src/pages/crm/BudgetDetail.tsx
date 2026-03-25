@@ -141,6 +141,7 @@ export function BudgetDetail() {
   const [editedExecutionMonth, setEditedExecutionMonth] = useState('');
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
+  const [isEditingExecDate, setIsEditingExecDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPaymentTerms, setEditedPaymentTerms] = useState('');
   const [editedProjectName, setEditedProjectName] = useState('');
