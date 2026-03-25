@@ -78,6 +78,7 @@ import {
   Download,
   Copy,
   CheckCircle,
+  Check,
   Upload,
   Building2,
   User,
@@ -141,6 +142,7 @@ export function BudgetDetail() {
   const [editedExecutionMonth, setEditedExecutionMonth] = useState('');
   const [executionNfValue, setExecutionNfValue] = useState<number>(0);
   const [isEditingNf, setIsEditingNf] = useState(false);
+  const [isEditingExecDate, setIsEditingExecDate] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedPaymentTerms, setEditedPaymentTerms] = useState('');
   const [editedProjectName, setEditedProjectName] = useState('');
@@ -765,7 +767,7 @@ export function BudgetDetail() {
                     {/* Data para Execução - always visible */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Data para Execução</p>
-                      {isEditing ? (
+                      {(isEditing || isEditingExecDate) ? (
                         <div className="space-y-2">
                           <div className="flex items-center gap-4">
                             <div className="flex items-center space-x-2">
@@ -803,6 +805,7 @@ export function BudgetDetail() {
                                     selected={editedExecutionStartDate ? new Date(editedExecutionStartDate) : undefined}
                                     onSelect={(date) => setEditedExecutionStartDate(date || null)}
                                     locale={ptBR}
+                                    className="p-3 pointer-events-auto"
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -822,18 +825,63 @@ export function BudgetDetail() {
                                     selected={editedExecutionEndDate ? new Date(editedExecutionEndDate) : undefined}
                                     onSelect={(date) => setEditedExecutionEndDate(date || null)}
                                     locale={ptBR}
+                                    className="p-3 pointer-events-auto"
                                   />
                                 </PopoverContent>
                               </Popover>
                             </div>
                           )}
+                          {isEditingExecDate && !isEditing && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={async () => {
+                                  await updateBudget(budget.id, {
+                                    hasExecutionDate: editedHasExecutionDate,
+                                    executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
+                                    executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
+                                  });
+                                  setIsEditingExecDate(false);
+                                  toast.success('Datas de execução atualizadas!');
+                                }}
+                              >
+                                <Check className="w-3 h-3 mr-1" /> Salvar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setIsEditingExecDate(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <p className="font-medium">
-                          {budget.hasExecutionDate && budget.executionStartDate
-                            ? `${format(new Date(budget.executionStartDate), 'dd/MM/yyyy')}${budget.executionEndDate ? ` — ${format(new Date(budget.executionEndDate), 'dd/MM/yyyy')}` : ''}`
-                            : 'A definir'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">
+                            {budget.hasExecutionDate && budget.executionStartDate
+                              ? `${format(new Date(budget.executionStartDate), 'dd/MM/yyyy')}${budget.executionEndDate ? ` — ${format(new Date(budget.executionEndDate), 'dd/MM/yyyy')}` : ''}`
+                              : 'A definir'}
+                          </p>
+                          {budget.status === 'aprovada' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                setEditedHasExecutionDate(budget.hasExecutionDate);
+                                setEditedExecutionStartDate(budget.executionStartDate);
+                                setEditedExecutionEndDate(budget.executionEndDate);
+                                setIsEditingExecDate(true);
+                              }}
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
 
