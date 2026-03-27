@@ -52,6 +52,7 @@ export function CRMKanban() {
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -61,18 +62,33 @@ export function CRMKanban() {
 
   const cards = getCRMCards();
 
-  // Get unique execution months for filter
+  // Get unique months for filter based on mode
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
-    cards.forEach(c => { if (c.executionMonth) months.add(c.executionMonth); });
+    cards.forEach(c => {
+      if (filterMode === 'execution') {
+        if (c.executionMonth) months.add(c.executionMonth);
+      } else {
+        const d = new Date(c.createdAt);
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        months.add(ym);
+      }
+    });
     return [...months].sort();
-  }, [cards]);
+  }, [cards, filterMode]);
 
   // Filter cards by month
   const filteredCards = useMemo(() => {
     if (monthFilter === 'all') return cards;
-    return cards.filter(c => c.executionMonth === monthFilter);
-  }, [cards, monthFilter]);
+    if (filterMode === 'execution') {
+      return cards.filter(c => c.executionMonth === monthFilter);
+    }
+    return cards.filter(c => {
+      const d = new Date(c.createdAt);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return ym === monthFilter;
+    });
+  }, [cards, monthFilter, filterMode]);
 
   // Sort columns by order
   const sortedColumns = useMemo(() => {
@@ -195,24 +211,31 @@ export function CRMKanban() {
       <div className="p-4 md:p-6">
         {/* Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <p className="text-sm text-muted-foreground">
               {filteredCards.length} projeto(s)
             </p>
             <KanbanColumnManager />
-            {availableMonths.length > 0 && (
-              <Select value={monthFilter} onValueChange={setMonthFilter}>
-                <SelectTrigger className="w-40 md:w-48 h-9">
-                  <SelectValue placeholder="Filtrar por mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os meses</SelectItem>
-                  {availableMonths.map(m => (
-                    <SelectItem key={m} value={m}>{formatExecutionMonth(m)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <Select value={filterMode} onValueChange={(v) => { setFilterMode(v as 'all' | 'execution'); setMonthFilter('all'); }}>
+              <SelectTrigger className="w-44 md:w-52 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Propostas no mês</SelectItem>
+                <SelectItem value="execution">Execução no mês</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-36 md:w-44 h-9">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                {availableMonths.map(m => (
+                  <SelectItem key={m} value={m}>{formatExecutionMonth(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
