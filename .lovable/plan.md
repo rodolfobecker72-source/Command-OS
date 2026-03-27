@@ -1,26 +1,25 @@
 
 
-## Ajustar lista de status do funil de prospecção
+## Adicionar link do Google Drive no card do projeto
 
 ### O que será feito
 
-Remover 3 status que não são mais usados: `tentativa_contato`, `reuniao_realizada`, `proposta_solicitada`. O funil ficará com 6 estágios:
-
-1. Mapeado
-2. Contato Realizado
-3. Reunião Agendada
-4. Qualificado para CRM
-5. Perdido
-6. Nutrição
+Adicionar um campo `drive_url` na tabela `budgets` e exibir um botão de Google Drive ao lado do identificador da proposta no BudgetDetail. O link pode ser adicionado na criação ou editado depois.
 
 ### Alterações
 
-| Arquivo | Alteração |
+| Arquivo/Recurso | Alteração |
 |---|---|
-| `src/types/prospection.ts` | Remover `tentativa_contato`, `reuniao_realizada`, `proposta_solicitada` do tipo `LeadFunnelStatus`, de `LEAD_FUNNEL_STATUS_LABELS` e de `FUNNEL_STATUS_ORDER` |
-| `src/pages/prospection/ProspectionPage.tsx` | Remover os 3 status do `colorMap`, do `kanbanStatuses` e ajustar métricas (remover contagem de `proposals`, ajustar filtro de `meetings` para usar só `reuniao_agendada`) |
+| **Migration** | `ALTER TABLE budgets ADD COLUMN drive_url text DEFAULT '';` |
+| `src/types/crm.ts` | Adicionar `driveUrl: string` na interface `Budget` |
+| `src/contexts/CRMContext.tsx` | Mapear `driveUrl` ↔ `drive_url` no `updateBudget` e no fetch |
+| `src/pages/crm/BudgetDetail.tsx` | Ao lado do identificador da proposta, adicionar input para colar link + botão com ícone do Drive que abre em nova aba. Editável inline (sempre, não só no modo edição) |
+| `src/pages/crm/NewBudget.tsx` | Campo opcional para Google Drive URL na criação |
 
-### Nota sobre dados existentes
+### Comportamento
 
-Leads que já possuam os status removidos no banco de dados continuarão existindo mas não aparecerão no kanban. Caso existam, será necessário migrá-los manualmente para um status válido.
+- Ao lado do proposal ID, um botão/ícone de link externo aparece se `driveUrl` estiver preenchido
+- Se vazio, mostra um botão "+" para adicionar o link
+- Clique no botão abre o link em nova aba
+- Inline edit: ao clicar no ícone de edição, abre input para colar/editar o link com botão salvar
 
