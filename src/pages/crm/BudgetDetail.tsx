@@ -721,18 +721,67 @@ export function BudgetDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Identificador da Proposta */}
+                    {/* Identificador da Proposta + Google Drive */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Identificador da Proposta</p>
-                      {isEditing ? (
-                        <Input
-                          value={editedProposalId}
-                          onChange={(e) => setEditedProposalId(e.target.value)}
-                          placeholder="Ex: 850"
-                        />
-                      ) : (
-                        <p className="font-medium">{budget.proposalId}</p>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isEditing ? (
+                          <Input
+                            value={editedProposalId}
+                            onChange={(e) => setEditedProposalId(e.target.value)}
+                            placeholder="Ex: 850"
+                            className="flex-1"
+                          />
+                        ) : (
+                          <p className="font-medium">{budget.proposalId}</p>
+                        )}
+                        {/* Google Drive link */}
+                        {budget.driveUrl ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 text-xs"
+                              onClick={() => window.open(budget.driveUrl, '_blank')}
+                            >
+                              <HardDrive className="w-3 h-3" />
+                              Drive
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                const newUrl = prompt('Editar link do Google Drive:', budget.driveUrl);
+                                if (newUrl !== null) {
+                                  updateBudget(budget.id, { driveUrl: newUrl });
+                                  toast.success('Link do Drive atualizado!');
+                                }
+                              }}
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 text-xs text-muted-foreground"
+                            onClick={() => {
+                              const url = prompt('Cole o link do Google Drive:');
+                              if (url) {
+                                updateBudget(budget.id, { driveUrl: url });
+                                toast.success('Link do Drive adicionado!');
+                              }
+                            }}
+                          >
+                            <Plus className="w-3 h-3" />
+                            <HardDrive className="w-3 h-3" />
+                            Drive
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Descrição Geral do Projeto */}
