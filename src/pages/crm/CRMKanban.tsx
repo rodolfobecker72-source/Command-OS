@@ -211,24 +211,31 @@ export function CRMKanban() {
       <div className="p-4 md:p-6">
         {/* Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
             <p className="text-sm text-muted-foreground">
               {filteredCards.length} projeto(s)
             </p>
             <KanbanColumnManager />
-            {availableMonths.length > 0 && (
-              <Select value={monthFilter} onValueChange={setMonthFilter}>
-                <SelectTrigger className="w-40 md:w-48 h-9">
-                  <SelectValue placeholder="Filtrar por mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os meses</SelectItem>
-                  {availableMonths.map(m => (
-                    <SelectItem key={m} value={m}>{formatExecutionMonth(m)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <Select value={filterMode} onValueChange={(v) => { setFilterMode(v as 'all' | 'execution'); setMonthFilter('all'); }}>
+              <SelectTrigger className="w-44 md:w-52 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Propostas no mês</SelectItem>
+                <SelectItem value="execution">Execução no mês</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-36 md:w-44 h-9">
+                <SelectValue placeholder="Mês" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                {availableMonths.map(m => (
+                  <SelectItem key={m} value={m}>{formatExecutionMonth(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
