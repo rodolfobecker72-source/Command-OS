@@ -692,7 +692,7 @@ export function BudgetDetail() {
                             : '+ Mês de execução'}
                         </Badge>
                       )}
-                      {!isEditing && budget.status !== 'aprovada' && (
+                      {!isEditing && (
                         <Button
                           variant="ghost"
                           size="sm"
