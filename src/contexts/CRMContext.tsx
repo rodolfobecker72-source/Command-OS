@@ -113,6 +113,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     finalValue: row.final_value,
     contractUrl: row.contract_url,
     nfUrl: row.nf_url,
+    driveUrl: row.drive_url || '',
     execution: row.execution as ProjectExecution | null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -747,6 +748,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         execution_start_date: budgetData.executionStartDate?.toISOString() || null,
         execution_end_date: budgetData.executionEndDate?.toISOString() || null,
         location: budgetData.location ?? '',
+        drive_url: (budgetData as any).driveUrl || '',
         status: budgetData.status,
       }).select().single();
       if (error) {
@@ -786,6 +788,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.executionMonth !== undefined) dbUpdates.execution_month = updates.executionMonth;
       if (updates.contractUrl !== undefined) dbUpdates.contract_url = updates.contractUrl;
       if (updates.nfUrl !== undefined) dbUpdates.nf_url = updates.nfUrl;
+      if (updates.driveUrl !== undefined) dbUpdates.drive_url = updates.driveUrl;
       if (updates.approvedVersion !== undefined) dbUpdates.approved_version = updates.approvedVersion;
       if (updates.approvalDate !== undefined) dbUpdates.approval_date = updates.approvalDate?.toISOString() || null;
       if (updates.finalValue !== undefined) dbUpdates.final_value = updates.finalValue;

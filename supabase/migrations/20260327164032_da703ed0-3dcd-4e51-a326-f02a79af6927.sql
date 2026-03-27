@@ -1,0 +1,1 @@
+ALTER TABLE budgets ADD COLUMN drive_url text DEFAULT '';
