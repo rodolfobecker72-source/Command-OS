@@ -799,6 +799,13 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.from('budgets').update(dbUpdates).eq('id', id);
         if (error) throw error;
       }
+
+      // Sync proposalId to project_cards if changed
+      if (updates.proposalId !== undefined) {
+        await supabase.from('project_cards').update({ proposal_id: updates.proposalId }).eq('budget_id', id);
+        setProjectCards(prev => prev.map(pc => pc.budgetId === id ? { ...pc, proposalId: updates.proposalId! } : pc));
+      }
+
       setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b));
     } catch (e: any) { toast.error('Erro ao atualizar orçamento: ' + e.message); }
   };
