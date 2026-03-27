@@ -745,7 +745,7 @@ export function BudgetDetail() {
                               onClick={() => window.open(budget.driveUrl, '_blank')}
                             >
                               <HardDrive className="w-3 h-3" />
-                              Drive
+                              Drive Comercial
                               <ExternalLink className="w-3 h-3" />
                             </Button>
                             <Button
@@ -778,7 +778,7 @@ export function BudgetDetail() {
                           >
                             <Plus className="w-3 h-3" />
                             <HardDrive className="w-3 h-3" />
-                            Drive
+                            Drive Comercial
                           </Button>
                         )}
                       </div>
