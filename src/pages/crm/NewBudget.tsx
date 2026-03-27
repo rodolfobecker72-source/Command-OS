@@ -391,6 +391,7 @@ export function NewBudget() {
         executionStartDate: formData.executionStartDate,
         executionEndDate: formData.executionEndDate,
         location: formData.location,
+        driveUrl: (formData as any).driveUrl || '',
         executionMonth: null,
         status: formData.status,
       });
