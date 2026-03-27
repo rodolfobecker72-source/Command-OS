@@ -157,6 +157,7 @@ export type Database = {
           created_at: string
           current_version: number
           description: string
+          drive_url: string | null
           execution: Json | null
           execution_end_date: string | null
           execution_month: string | null
@@ -190,6 +191,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           description?: string
+          drive_url?: string | null
           execution?: Json | null
           execution_end_date?: string | null
           execution_month?: string | null
@@ -223,6 +225,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           description?: string
+          drive_url?: string | null
           execution?: Json | null
           execution_end_date?: string | null
           execution_month?: string | null
