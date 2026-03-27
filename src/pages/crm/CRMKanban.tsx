@@ -52,6 +52,7 @@ export function CRMKanban() {
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -61,18 +62,33 @@ export function CRMKanban() {
 
   const cards = getCRMCards();
 
-  // Get unique execution months for filter
+  // Get unique months for filter based on mode
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
-    cards.forEach(c => { if (c.executionMonth) months.add(c.executionMonth); });
+    cards.forEach(c => {
+      if (filterMode === 'execution') {
+        if (c.executionMonth) months.add(c.executionMonth);
+      } else {
+        const d = new Date(c.createdAt);
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        months.add(ym);
+      }
+    });
     return [...months].sort();
-  }, [cards]);
+  }, [cards, filterMode]);
 
   // Filter cards by month
   const filteredCards = useMemo(() => {
     if (monthFilter === 'all') return cards;
-    return cards.filter(c => c.executionMonth === monthFilter);
-  }, [cards, monthFilter]);
+    if (filterMode === 'execution') {
+      return cards.filter(c => c.executionMonth === monthFilter);
+    }
+    return cards.filter(c => {
+      const d = new Date(c.createdAt);
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return ym === monthFilter;
+    });
+  }, [cards, monthFilter, filterMode]);
 
   // Sort columns by order
   const sortedColumns = useMemo(() => {
