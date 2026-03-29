@@ -105,7 +105,7 @@ export function Signup() {
             </Button>
             <p className="text-sm text-muted-foreground text-center pt-2">
               Já tem uma conta?{' '}
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to="/" className="text-primary hover:underline">
                 Fazer login
               </Link>
             </p>

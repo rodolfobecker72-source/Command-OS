@@ -47,12 +47,10 @@ const App = () => (
           <CRMProvider>
             <ProspectionProvider>
             <Routes>
-              {/* Root - Maintenance page */}
-              <Route path="/" element={<MaintenancePage />} />
-
               {/* Auth */}
+              <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
+              <Route path="/cadastro" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
