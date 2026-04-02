@@ -14,7 +14,7 @@ import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { Header } from '@/components/layout/Header';
 
 export function CalendarPage() {
-  const { budgets, clients, getStatusLabel } = useCRM();
+  const { budgets, clients } = useCRM();
   const navigate = useNavigate();
 
   const [view, setView] = useState<'month' | 'week'>('month');
