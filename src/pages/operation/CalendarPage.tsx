@@ -129,37 +129,28 @@ export function CalendarPage() {
 
       {/* Event detail dialog */}
       <Dialog open={!!selectedBudget} onOpenChange={open => !open && setSelectedBudget(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-primary" />
-              {selectedBudget?.proposalId}
+              {selectedBudget?.proposalId} - {selectedBudget?.projectName}
             </DialogTitle>
           </DialogHeader>
 
           {selectedBudget && (
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Projeto</p>
-                <p className="font-medium">{selectedBudget.projectName}</p>
-              </div>
-              {client && (
-                <div>
-                  <p className="text-muted-foreground text-xs">Cliente</p>
-                  <p className="font-medium">{client.companyName}</p>
-                </div>
-              )}
+            <div className="space-y-4 text-sm">
+              {/* Info grid */}
               <div className="grid grid-cols-2 gap-3">
+                {client && (
+                  <div>
+                    <p className="text-muted-foreground text-xs">Cliente</p>
+                    <p className="font-medium">{client.companyName}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-muted-foreground text-xs">Status</p>
-                  <p className="font-medium">{getStatusLabel(selectedBudget.status)}</p>
+                  <p className="text-muted-foreground text-xs">Local</p>
+                  <p className="font-medium">{selectedBudget.location || '—'}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Valor</p>
-                  <p className="font-medium">{formatCurrency(getBudgetValue(selectedBudget))}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-muted-foreground text-xs">Início</p>
                   <p className="font-medium">
@@ -177,10 +168,53 @@ export function CalendarPage() {
                   </p>
                 </div>
               </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Local</p>
-                <p className="font-medium">{selectedBudget.location || '—'}</p>
-              </div>
+
+              {/* Briefing */}
+              {selectedBudget.projectDescription && (
+                <div>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Briefing do Projeto</p>
+                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                    {selectedBudget.projectDescription}
+                  </p>
+                </div>
+              )}
+
+              {/* Objective */}
+              {selectedBudget.objective && (
+                <div>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Objetivo</p>
+                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                    {selectedBudget.objective}
+                  </p>
+                </div>
+              )}
+
+              {/* Services description */}
+              {(() => {
+                const latestVersion = selectedBudget.versions?.length
+                  ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                  : null;
+                if (!latestVersion?.services?.length) return null;
+                return (
+                  <div>
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Serviços</p>
+                    <div className="space-y-2">
+                      {latestVersion.services.map((svc, idx) => (
+                        <div key={svc.id || idx} className="bg-muted/50 rounded-md p-3 space-y-1">
+                          <p className="font-semibold text-xs text-primary">
+                            {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
+                          </p>
+                          {svc.description && (
+                            <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
+                              {svc.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <Button
                 className="w-full mt-2"

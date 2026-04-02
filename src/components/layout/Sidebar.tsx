@@ -48,7 +48,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Operação',
+    label: 'Projetos',
     icon: Wrench,
     items: [
       { name: 'Calendário', href: '/calendario', icon: CalendarDays, pageKey: 'calendario' },
