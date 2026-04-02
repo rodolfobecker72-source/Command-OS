@@ -1092,6 +1092,29 @@ export function BudgetDetail() {
             {/* Budget View */}
             {activeTab === 'budget' && (
               <>
+                {/* Edit Version Button */}
+                {currentVersionData && budget.status !== 'aprovada' && !isEditingVersion && (
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" onClick={startEditingVersion}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Editar versão atual
+                    </Button>
+                  </div>
+                )}
+                {isEditingVersion && (
+                  <div className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <p className="text-sm font-medium text-warning">Editando V{currentVersionData?.version} — alterações serão salvas na versão atual</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveVersionEdit}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingVersion(false)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {/* Services by Type */}
                 {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
                   const cvd = currentVersionData;
