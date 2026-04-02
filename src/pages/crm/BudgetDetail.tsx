@@ -1406,13 +1406,18 @@ export function BudgetDetail() {
 
                 {/* Composição do Investimento */}
                 {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
-                  const operationalTotal = (currentVersionData.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
-                  const totalProdCost = currentVersionData.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
-                  const nfValue = currentVersionData.fullPrice * (currentVersionData.nfCostPercentage / 100);
+                  const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
+                  const displayOpCosts = isEditingVersion ? editVersionOperationalCosts : (currentVersionData.operationalCosts || []);
+                  const operationalTotal = displayOpCosts.reduce((sum, c) => sum + c.value, 0);
+                  const totalProdCost = displayServices.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
+                  const displayNfPct = isEditingVersion ? editVersionNfPct : currentVersionData.nfCostPercentage;
+                  const displayMarginPct = isEditingVersion ? editVersionTargetMargin : currentVersionData.margin;
+                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : currentVersionData.fullPrice;
+                  const nfValue = displayFullPrice * (displayNfPct / 100);
                   const totalCosts = totalProdCost + operationalTotal;
-                  const marginValue = currentVersionData.fullPrice - totalCosts - nfValue;
+                  const marginValue = displayFullPrice - totalCosts - nfValue;
 
-                  const servicesSubtotals = currentVersionData.services.map(service => {
+                  const servicesSubtotals = displayServices.map(service => {
                     const prodCost = service.costs.reduce((sum, c) => sum + c.value, 0);
                     const weight = totalProdCost > 0 ? prodCost / totalProdCost : 0;
                     const svcMargin = weight * marginValue;
@@ -1464,19 +1469,45 @@ export function BudgetDetail() {
                             )}
 
                             <div className="flex items-center justify-between">
-                              <span className="text-sm">Nota Fiscal ({currentVersionData.nfCostPercentage}%)</span>
+                              <span className="text-sm">
+                                Nota Fiscal ({isEditingVersion ? (
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={editVersionNfPct}
+                                    onChange={(e) => setEditVersionNfPct(parseFloat(e.target.value) || 0)}
+                                    className="inline-block h-6 w-16 text-xs px-1"
+                                  />
+                                ) : displayNfPct}%)
+                              </span>
                               <span className="font-medium text-sm">{formatCurrency(nfValue)}</span>
                             </div>
+
+                            {isEditingVersion && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  Margem alvo: <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={editVersionTargetMargin}
+                                    onChange={(e) => setEditVersionTargetMargin(parseFloat(e.target.value) || 0)}
+                                    className="inline-block h-6 w-16 text-xs px-1"
+                                  />%
+                                </span>
+                              </div>
+                            )}
 
                             <div className="border-t pt-3 mt-3">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-base">INVESTIMENTO TOTAL</span>
-                                <span className="font-bold text-lg">{formatCurrency(currentVersionData.fullPrice)}</span>
+                                <span className="font-bold text-lg">{formatCurrency(displayFullPrice)}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
                                 <span className="text-sm text-muted-foreground">Margem total projetada</span>
-                                <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
-                                  {formatCurrency(marginValue)} ({currentVersionData.margin.toFixed(1)}%)
+                                <span className={`font-semibold text-sm ${getMarginColor(displayMarginPct)}`}>
+                                  {formatCurrency(marginValue)} ({displayMarginPct.toFixed(1)}%)
                                 </span>
                               </div>
                             </div>
@@ -1486,6 +1517,19 @@ export function BudgetDetail() {
                     </motion.div>
                   );
                 })()}
+
+                {/* Save bar at bottom when editing version */}
+                {isEditingVersion && (
+                  <div className="flex items-center justify-end gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <Button size="sm" variant="outline" onClick={() => setIsEditingVersion(false)}>
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={handleSaveVersionEdit}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar alterações
+                    </Button>
+                  </div>
+                )}
 
                 {/* Version History */}
                 {budget.versions.length > 0 && (
