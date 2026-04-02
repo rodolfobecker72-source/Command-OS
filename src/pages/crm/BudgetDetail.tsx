@@ -222,7 +222,7 @@ export function BudgetDetail() {
     return { productionCost, operationalTotal, totalCosts, totalProjectValue };
   }, [editVersionServices, editVersionOperationalCosts, editVersionNfPct, editVersionTargetMargin]);
 
-
+  if (!budget || !client) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
