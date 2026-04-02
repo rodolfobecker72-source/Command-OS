@@ -160,6 +160,13 @@ export function BudgetDetail() {
   const [activeTab, setActiveTab] = useState('budget');
   const [deleteOpen, setDeleteOpen] = useState(false);
   
+  // Inline version editing states
+  const [isEditingVersion, setIsEditingVersion] = useState(false);
+  const [editVersionServices, setEditVersionServices] = useState<ServiceItem[]>([]);
+  const [editVersionOperationalCosts, setEditVersionOperationalCosts] = useState<CostItem[]>([]);
+  const [editVersionNfPct, setEditVersionNfPct] = useState(13);
+  const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
+  
   // Rejection dialog states
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectingVersionId, setRejectingVersionId] = useState<string | null>(null);
@@ -203,6 +210,17 @@ export function BudgetDetail() {
 
     return { productionCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
   }, [newVersionServices, newVersionOperationalTotal, newVersionNfPct, newVersionTargetMargin]);
+  // Inline version editing computed totals
+  const editVersionTotals = useMemo(() => {
+    const productionCost = editVersionServices.reduce((sum, service) => {
+      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
+    }, 0);
+    const operationalTotal = editVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
+    const totalCosts = productionCost + operationalTotal;
+    const divisor = 1 - (editVersionTargetMargin / 100) - (editVersionNfPct / 100);
+    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+    return { productionCost, operationalTotal, totalCosts, totalProjectValue };
+  }, [editVersionServices, editVersionOperationalCosts, editVersionNfPct, editVersionTargetMargin]);
 
   if (!budget || !client) {
     return (
@@ -463,7 +481,69 @@ export function BudgetDetail() {
     toast.success('Versão marcada como recusada');
   };
 
-  const handleFinalizeExecution = () => {
+  // ===== Inline version editing handlers =====
+  const startEditingVersion = () => {
+    if (!currentVersionData) return;
+    setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
+    setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+    setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
+    setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    setIsEditingVersion(true);
+  };
+
+  const updateEditService = (serviceId: string, updates: Partial<ServiceItem>) => {
+    setEditVersionServices(prev => prev.map(s => s.id === serviceId ? { ...s, ...updates } : s));
+  };
+
+  const updateEditCost = (serviceId: string, costId: string, updates: Partial<CostItem>) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: s.costs.map(c => c.id === costId ? { ...c, ...updates } : c) } : s
+    ));
+  };
+
+  const addEditCost = (serviceId: string) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: [...s.costs, { id: uuidv4(), description: '', quantity: 1, unitValue: 0, value: 0, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] } : s
+    ));
+  };
+
+  const removeEditCost = (serviceId: string, costId: string) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: s.costs.filter(c => c.id !== costId) } : s
+    ));
+  };
+
+  const addEditOperationalCost = () => {
+    setEditVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description: '', quantity: 1, unitValue: 0, value: 0, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+  };
+
+  const updateEditOperationalCost = (costId: string, updates: Partial<CostItem>) => {
+    setEditVersionOperationalCosts(prev => prev.map(c => c.id === costId ? { ...c, ...updates } : c));
+  };
+
+  const removeEditOperationalCost = (costId: string) => {
+    setEditVersionOperationalCosts(prev => prev.filter(c => c.id !== costId));
+  };
+
+  const handleSaveVersionEdit = async () => {
+    if (!currentVersionData) return;
+    const { productionCost, totalCosts, totalProjectValue } = editVersionTotals;
+    await updateBudgetVersion(budget.id, currentVersionData.id, {
+      services: editVersionServices,
+      operationalCosts: editVersionOperationalCosts,
+      productionCost,
+      nfCostPercentage: editVersionNfPct,
+      totalCost: totalCosts,
+      fullPrice: totalProjectValue,
+      discount4Price: totalProjectValue * 0.96,
+      discount5Price: totalProjectValue * 0.95,
+      margin: editVersionTargetMargin,
+    });
+    setIsEditingVersion(false);
+    toast.success('Versão atualizada com sucesso!');
+  };
+
+
     finalizeExecution(budget.id, finalReport);
     setFinalizeDialogOpen(false);
     setFinalReport('');
@@ -1012,17 +1092,44 @@ export function BudgetDetail() {
             {/* Budget View */}
             {activeTab === 'budget' && (
               <>
+                {/* Edit Version Button */}
+                {currentVersionData && budget.status !== 'aprovada' && !isEditingVersion && (
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" onClick={startEditingVersion}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Editar versão atual
+                    </Button>
+                  </div>
+                )}
+                {isEditingVersion && (
+                  <div className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <p className="text-sm font-medium text-warning">Editando V{currentVersionData?.version} — alterações serão salvas na versão atual</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveVersionEdit}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditingVersion(false)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {/* Services by Type */}
                 {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
+                  const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
                   const cvd = currentVersionData;
-                  const opTotal = (cvd.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
-                  const totalProdCost = cvd.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
-                  const projNfValue = cvd.fullPrice * (cvd.nfCostPercentage / 100);
-                  const projMarginValue = cvd.fullPrice - totalProdCost - opTotal - projNfValue;
+                  const opTotal = (isEditingVersion ? editVersionOperationalCosts : (cvd.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
+                  const totalProdCost = displayServices.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
+                  const displayNfPct = isEditingVersion ? editVersionNfPct : cvd.nfCostPercentage;
+                  const displayMargin = isEditingVersion ? editVersionTargetMargin : cvd.margin;
+                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : cvd.fullPrice;
+                  const projNfValue = displayFullPrice * (displayNfPct / 100);
+                  const projMarginValue = displayFullPrice - totalProdCost - opTotal - projNfValue;
 
                   return (
                   <AnimatePresence mode="popLayout">
-                    {cvd.services.map((service, index) => {
+                    {displayServices.map((service, index) => {
                       const Icon = SERVICE_ICONS[service.serviceType];
                       const objectives = getObjectivesForCategory(service.serviceType);
                       const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
@@ -1044,16 +1151,42 @@ export function BudgetDetail() {
                                   <div className="p-3 rounded-xl bg-foreground text-background">
                                     <Icon className="w-6 h-6" />
                                   </div>
-                                  <div>
+                                  <div className="flex-1">
                                     <CardTitle className="flex items-center gap-2">
                                       <span className="text-xs font-bold px-2 py-1 bg-foreground text-background rounded">
                                         {service.serviceType}
                                       </span>
-                                      {objectiveLabel}
+                                      {isEditingVersion ? (
+                                        <Select
+                                          value={service.objective}
+                                          onValueChange={(value) => updateEditService(service.id, { objective: value })}
+                                        >
+                                          <SelectTrigger className="h-8 w-48">
+                                            <SelectValue placeholder="Objetivo..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {objectives.map((obj) => (
+                                              <SelectItem key={obj.value} value={obj.value}>{obj.label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      ) : (
+                                        objectiveLabel
+                                      )}
                                     </CardTitle>
-                                    <CardDescription className="whitespace-pre-wrap">
-                                      {service.description || 'Sem descrição'}
-                                    </CardDescription>
+                                    {isEditingVersion ? (
+                                      <Textarea
+                                        value={service.description}
+                                        onChange={(e) => updateEditService(service.id, { description: e.target.value })}
+                                        placeholder="Descrição do serviço..."
+                                        rows={2}
+                                        className="mt-1"
+                                      />
+                                    ) : (
+                                      <CardDescription className="whitespace-pre-wrap">
+                                        {service.description || 'Sem descrição'}
+                                      </CardDescription>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1065,27 +1198,74 @@ export function BudgetDetail() {
                                   <TableHeader>
                                     <TableRow className="bg-muted/50">
                                       <TableHead>Descrição</TableHead>
-                                      <TableHead className="text-right w-[60px]">Qtd</TableHead>
+                                      <TableHead className="text-right w-[70px]">Qtd</TableHead>
                                       <TableHead className="text-right">V. Unit.</TableHead>
                                       <TableHead className="text-right">Total</TableHead>
+                                      {isEditingVersion && <TableHead className="w-10"></TableHead>}
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
                                     {service.costs.map((cost) => (
                                       <TableRow key={cost.id}>
-                                        <TableCell>{cost.description}</TableCell>
-                                        <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                        <TableCell>
+                                          {isEditingVersion ? (
+                                            <Input
+                                              value={cost.description}
+                                              onChange={(e) => updateEditCost(service.id, cost.id, { description: e.target.value })}
+                                              placeholder="Descrição do custo"
+                                              className="h-8"
+                                            />
+                                          ) : cost.description}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                          {isEditingVersion ? (
+                                            <Input
+                                              type="number"
+                                              min={1}
+                                              value={cost.quantity || 1}
+                                              onChange={(e) => {
+                                                const qty = parseInt(e.target.value) || 1;
+                                                updateEditCost(service.id, cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
+                                              }}
+                                              className="h-8 w-16"
+                                            />
+                                          ) : (cost.quantity || 1)}
+                                        </TableCell>
                                         <TableCell className="text-right text-muted-foreground">
-                                          {formatCurrency(cost.unitValue || cost.value)}
+                                          {isEditingVersion ? (
+                                            <Input
+                                              type="number"
+                                              min={0}
+                                              value={cost.unitValue || ''}
+                                              onChange={(e) => {
+                                                const uv = parseFloat(e.target.value) || 0;
+                                                updateEditCost(service.id, cost.id, { unitValue: uv, value: (cost.quantity || 1) * uv });
+                                              }}
+                                              className="h-8 w-28"
+                                            />
+                                          ) : formatCurrency(cost.unitValue || cost.value)}
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
                                           {formatCurrency(cost.value)}
                                         </TableCell>
+                                        {isEditingVersion && (
+                                          <TableCell>
+                                            <Button variant="ghost" size="sm" onClick={() => removeEditCost(service.id, cost.id)}>
+                                              <Trash2 className="w-4 h-4 text-destructive" />
+                                            </Button>
+                                          </TableCell>
+                                        )}
                                       </TableRow>
                                     ))}
                                   </TableBody>
                                 </Table>
                               </div>
+                              {isEditingVersion && (
+                                <Button variant="outline" size="sm" onClick={() => addEditCost(service.id)} className="mb-4">
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Adicionar item
+                                </Button>
+                              )}
 
                               {/* Service Calculations */}
                               <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
@@ -1112,7 +1292,10 @@ export function BudgetDetail() {
                 })()}
 
                 {/* Operational Costs in Budget View */}
-                {currentVersionData && (currentVersionData.operationalCosts || []).length > 0 && (
+                {currentVersionData && (() => {
+                  const displayOpCosts = isEditingVersion ? editVersionOperationalCosts : (currentVersionData.operationalCosts || []);
+                  if (!isEditingVersion && displayOpCosts.length === 0) return null;
+                  return (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1120,16 +1303,22 @@ export function BudgetDetail() {
                   >
                     <Card className="card-elevated border-l-4 border-l-warning">
                       <CardHeader>
-                        <div className="flex items-center gap-3">
-                          <div className="p-3 rounded-xl bg-warning/10">
-                            <DollarSign className="w-6 h-6 text-warning" />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-warning/10">
+                              <DollarSign className="w-6 h-6 text-warning" />
+                            </div>
+                            <div>
+                              <CardTitle>Despesas Operacionais</CardTitle>
+                              <CardDescription>Custos gerais do projeto</CardDescription>
+                            </div>
                           </div>
-                          <div>
-                            <CardTitle>Despesas Operacionais</CardTitle>
-                            <CardDescription>
-                              Custos gerais do projeto
-                            </CardDescription>
-                          </div>
+                          {isEditingVersion && (
+                            <Button variant="outline" size="sm" onClick={addEditOperationalCost}>
+                              <Plus className="w-3 h-3 mr-1" />
+                              Adicionar
+                            </Button>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -1138,31 +1327,73 @@ export function BudgetDetail() {
                             <TableHeader>
                               <TableRow className="bg-muted/50">
                                 <TableHead>Descrição</TableHead>
-                                <TableHead className="text-right w-[60px]">Qtd</TableHead>
+                                <TableHead className="text-right w-[70px]">Qtd</TableHead>
                                 <TableHead className="text-right">V. Unit.</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
+                                {isEditingVersion && <TableHead className="w-10"></TableHead>}
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {currentVersionData.operationalCosts.map((cost) => (
+                              {displayOpCosts.map((cost) => (
                                 <TableRow key={cost.id}>
-                                  <TableCell>{cost.description}</TableCell>
-                                  <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                  <TableCell>
+                                    {isEditingVersion ? (
+                                      <Input
+                                        value={cost.description}
+                                        onChange={(e) => updateEditOperationalCost(cost.id, { description: e.target.value })}
+                                        placeholder="Ex: Passagens, Hotel..."
+                                        className="h-8"
+                                      />
+                                    ) : cost.description}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {isEditingVersion ? (
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        value={cost.quantity || 1}
+                                        onChange={(e) => {
+                                          const qty = parseInt(e.target.value) || 1;
+                                          updateEditOperationalCost(cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
+                                        }}
+                                        className="h-8 w-16"
+                                      />
+                                    ) : (cost.quantity || 1)}
+                                  </TableCell>
                                   <TableCell className="text-right text-muted-foreground">
-                                    {formatCurrency(cost.unitValue || cost.value)}
+                                    {isEditingVersion ? (
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        value={cost.unitValue || ''}
+                                        onChange={(e) => {
+                                          const uv = parseFloat(e.target.value) || 0;
+                                          updateEditOperationalCost(cost.id, { unitValue: uv, value: (cost.quantity || 1) * uv });
+                                        }}
+                                        className="h-8 w-28"
+                                      />
+                                    ) : formatCurrency(cost.unitValue || cost.value)}
                                   </TableCell>
                                   <TableCell className="text-right font-medium">
                                     {formatCurrency(cost.value)}
                                   </TableCell>
+                                  {isEditingVersion && (
+                                    <TableCell>
+                                      <Button variant="ghost" size="sm" onClick={() => removeEditOperationalCost(cost.id)}>
+                                        <Trash2 className="w-4 h-4 text-destructive" />
+                                      </Button>
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
                               <TableRow className="bg-muted/30">
-                                <TableCell colSpan={3} className="font-semibold">
+                                <TableCell colSpan={isEditingVersion ? 4 : 3} className="font-semibold">
                                   Total Despesas Operacionais
                                 </TableCell>
                                 <TableCell className="text-right font-bold">
-                                  {formatCurrency(currentVersionData.operationalCosts.reduce((sum, c) => sum + c.value, 0))}
+                                  {formatCurrency(displayOpCosts.reduce((sum, c) => sum + c.value, 0))}
                                 </TableCell>
+                                {isEditingVersion && <TableCell></TableCell>}
                               </TableRow>
                             </TableBody>
                           </Table>
@@ -1170,17 +1401,23 @@ export function BudgetDetail() {
                       </CardContent>
                     </Card>
                   </motion.div>
-                )}
+                  );
+                })()}
 
                 {/* Composição do Investimento */}
                 {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
-                  const operationalTotal = (currentVersionData.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
-                  const totalProdCost = currentVersionData.services.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
-                  const nfValue = currentVersionData.fullPrice * (currentVersionData.nfCostPercentage / 100);
+                  const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
+                  const displayOpCosts = isEditingVersion ? editVersionOperationalCosts : (currentVersionData.operationalCosts || []);
+                  const operationalTotal = displayOpCosts.reduce((sum, c) => sum + c.value, 0);
+                  const totalProdCost = displayServices.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
+                  const displayNfPct = isEditingVersion ? editVersionNfPct : currentVersionData.nfCostPercentage;
+                  const displayMarginPct = isEditingVersion ? editVersionTargetMargin : currentVersionData.margin;
+                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : currentVersionData.fullPrice;
+                  const nfValue = displayFullPrice * (displayNfPct / 100);
                   const totalCosts = totalProdCost + operationalTotal;
-                  const marginValue = currentVersionData.fullPrice - totalCosts - nfValue;
+                  const marginValue = displayFullPrice - totalCosts - nfValue;
 
-                  const servicesSubtotals = currentVersionData.services.map(service => {
+                  const servicesSubtotals = displayServices.map(service => {
                     const prodCost = service.costs.reduce((sum, c) => sum + c.value, 0);
                     const weight = totalProdCost > 0 ? prodCost / totalProdCost : 0;
                     const svcMargin = weight * marginValue;
@@ -1232,19 +1469,45 @@ export function BudgetDetail() {
                             )}
 
                             <div className="flex items-center justify-between">
-                              <span className="text-sm">Nota Fiscal ({currentVersionData.nfCostPercentage}%)</span>
+                              <span className="text-sm">
+                                Nota Fiscal ({isEditingVersion ? (
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={editVersionNfPct}
+                                    onChange={(e) => setEditVersionNfPct(parseFloat(e.target.value) || 0)}
+                                    className="inline-block h-6 w-16 text-xs px-1"
+                                  />
+                                ) : displayNfPct}%)
+                              </span>
                               <span className="font-medium text-sm">{formatCurrency(nfValue)}</span>
                             </div>
+
+                            {isEditingVersion && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">
+                                  Margem alvo: <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={editVersionTargetMargin}
+                                    onChange={(e) => setEditVersionTargetMargin(parseFloat(e.target.value) || 0)}
+                                    className="inline-block h-6 w-16 text-xs px-1"
+                                  />%
+                                </span>
+                              </div>
+                            )}
 
                             <div className="border-t pt-3 mt-3">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-base">INVESTIMENTO TOTAL</span>
-                                <span className="font-bold text-lg">{formatCurrency(currentVersionData.fullPrice)}</span>
+                                <span className="font-bold text-lg">{formatCurrency(displayFullPrice)}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
                                 <span className="text-sm text-muted-foreground">Margem total projetada</span>
-                                <span className={`font-semibold text-sm ${getMarginColor(currentVersionData.margin)}`}>
-                                  {formatCurrency(marginValue)} ({currentVersionData.margin.toFixed(1)}%)
+                                <span className={`font-semibold text-sm ${getMarginColor(displayMarginPct)}`}>
+                                  {formatCurrency(marginValue)} ({displayMarginPct.toFixed(1)}%)
                                 </span>
                               </div>
                             </div>
@@ -1254,6 +1517,19 @@ export function BudgetDetail() {
                     </motion.div>
                   );
                 })()}
+
+                {/* Save bar at bottom when editing version */}
+                {isEditingVersion && (
+                  <div className="flex items-center justify-end gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <Button size="sm" variant="outline" onClick={() => setIsEditingVersion(false)}>
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={handleSaveVersionEdit}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar alterações
+                    </Button>
+                  </div>
+                )}
 
                 {/* Version History */}
                 {budget.versions.length > 0 && (
