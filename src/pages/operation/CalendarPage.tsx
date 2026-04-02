@@ -55,11 +55,7 @@ export function CalendarPage() {
     ? clients.find(c => c.id === selectedBudget.clientId)
     : null;
 
-  const getBudgetValue = (b: Budget) => {
-    if (b.finalValue) return b.finalValue;
-    const latestVersion = b.versions?.length ? b.versions[b.versions.length - 1] : null;
-    return latestVersion?.fullPrice || 0;
-  };
+
 
   return (
     <div className="flex flex-col h-full">
