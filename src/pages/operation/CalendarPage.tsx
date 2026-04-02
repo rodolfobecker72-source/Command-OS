@@ -5,7 +5,7 @@ import { CalendarEventCard } from '@/components/operation/CalendarEventCard';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
-import { Budget, formatCurrency } from '@/types/crm';
+import { Budget } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
