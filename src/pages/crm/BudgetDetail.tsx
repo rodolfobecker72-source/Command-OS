@@ -160,6 +160,13 @@ export function BudgetDetail() {
   const [activeTab, setActiveTab] = useState('budget');
   const [deleteOpen, setDeleteOpen] = useState(false);
   
+  // Inline version editing states
+  const [isEditingVersion, setIsEditingVersion] = useState(false);
+  const [editVersionServices, setEditVersionServices] = useState<ServiceItem[]>([]);
+  const [editVersionOperationalCosts, setEditVersionOperationalCosts] = useState<CostItem[]>([]);
+  const [editVersionNfPct, setEditVersionNfPct] = useState(13);
+  const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
+  
   // Rejection dialog states
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectingVersionId, setRejectingVersionId] = useState<string | null>(null);
