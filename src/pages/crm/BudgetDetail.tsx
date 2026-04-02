@@ -481,7 +481,69 @@ export function BudgetDetail() {
     toast.success('Versão marcada como recusada');
   };
 
-  const handleFinalizeExecution = () => {
+  // ===== Inline version editing handlers =====
+  const startEditingVersion = () => {
+    if (!currentVersionData) return;
+    setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
+    setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+    setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
+    setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    setIsEditingVersion(true);
+  };
+
+  const updateEditService = (serviceId: string, updates: Partial<ServiceItem>) => {
+    setEditVersionServices(prev => prev.map(s => s.id === serviceId ? { ...s, ...updates } : s));
+  };
+
+  const updateEditCost = (serviceId: string, costId: string, updates: Partial<CostItem>) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: s.costs.map(c => c.id === costId ? { ...c, ...updates } : c) } : s
+    ));
+  };
+
+  const addEditCost = (serviceId: string) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: [...s.costs, { id: uuidv4(), description: '', quantity: 1, unitValue: 0, value: 0, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] } : s
+    ));
+  };
+
+  const removeEditCost = (serviceId: string, costId: string) => {
+    setEditVersionServices(prev => prev.map(s =>
+      s.id === serviceId ? { ...s, costs: s.costs.filter(c => c.id !== costId) } : s
+    ));
+  };
+
+  const addEditOperationalCost = () => {
+    setEditVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description: '', quantity: 1, unitValue: 0, value: 0, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+  };
+
+  const updateEditOperationalCost = (costId: string, updates: Partial<CostItem>) => {
+    setEditVersionOperationalCosts(prev => prev.map(c => c.id === costId ? { ...c, ...updates } : c));
+  };
+
+  const removeEditOperationalCost = (costId: string) => {
+    setEditVersionOperationalCosts(prev => prev.filter(c => c.id !== costId));
+  };
+
+  const handleSaveVersionEdit = async () => {
+    if (!currentVersionData) return;
+    const { productionCost, totalCosts, totalProjectValue } = editVersionTotals;
+    await updateBudgetVersion(budget.id, currentVersionData.id, {
+      services: editVersionServices,
+      operationalCosts: editVersionOperationalCosts,
+      productionCost,
+      nfCostPercentage: editVersionNfPct,
+      totalCost: totalCosts,
+      fullPrice: totalProjectValue,
+      discount4Price: totalProjectValue * 0.96,
+      discount5Price: totalProjectValue * 0.95,
+      margin: editVersionTargetMargin,
+    });
+    setIsEditingVersion(false);
+    toast.success('Versão atualizada com sucesso!');
+  };
+
+
     finalizeExecution(budget.id, finalReport);
     setFinalizeDialogOpen(false);
     setFinalReport('');
