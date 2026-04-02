@@ -210,8 +210,19 @@ export function BudgetDetail() {
 
     return { productionCost, operationalTotal, totalCosts, totalProjectValue, nfValue, marginValue };
   }, [newVersionServices, newVersionOperationalTotal, newVersionNfPct, newVersionTargetMargin]);
+  // Inline version editing computed totals
+  const editVersionTotals = useMemo(() => {
+    const productionCost = editVersionServices.reduce((sum, service) => {
+      return sum + service.costs.reduce((s, c) => s + (c.value || 0), 0);
+    }, 0);
+    const operationalTotal = editVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
+    const totalCosts = productionCost + operationalTotal;
+    const divisor = 1 - (editVersionTargetMargin / 100) - (editVersionNfPct / 100);
+    const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
+    return { productionCost, operationalTotal, totalCosts, totalProjectValue };
+  }, [editVersionServices, editVersionOperationalCosts, editVersionNfPct, editVersionTargetMargin]);
 
-  if (!budget || !client) {
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
