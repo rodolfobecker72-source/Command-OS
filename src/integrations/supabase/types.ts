@@ -947,7 +947,24 @@ export type Database = {
           email: string
           id: string
           logo_url: string
+          pdf_title: string
+          section_briefing_title: string
+          section_client_title: string
+          section_inclusions_title: string
+          section_investment_title: string
+          section_operational_title: string
+          section_services_title: string
+          section_terms_title: string
+          section_total_title: string
+          terms_approval_text: string
+          terms_client_items: string
+          terms_client_label: string
+          terms_company_items: string
+          terms_company_label: string
+          terms_general_items: string
+          terms_general_label: string
           updated_at: string
+          validity_text: string
           website: string
           workspace_id: string
         }
@@ -957,7 +974,24 @@ export type Database = {
           email?: string
           id?: string
           logo_url?: string
+          pdf_title?: string
+          section_briefing_title?: string
+          section_client_title?: string
+          section_inclusions_title?: string
+          section_investment_title?: string
+          section_operational_title?: string
+          section_services_title?: string
+          section_terms_title?: string
+          section_total_title?: string
+          terms_approval_text?: string
+          terms_client_items?: string
+          terms_client_label?: string
+          terms_company_items?: string
+          terms_company_label?: string
+          terms_general_items?: string
+          terms_general_label?: string
           updated_at?: string
+          validity_text?: string
           website?: string
           workspace_id: string
         }
@@ -967,7 +1001,24 @@ export type Database = {
           email?: string
           id?: string
           logo_url?: string
+          pdf_title?: string
+          section_briefing_title?: string
+          section_client_title?: string
+          section_inclusions_title?: string
+          section_investment_title?: string
+          section_operational_title?: string
+          section_services_title?: string
+          section_terms_title?: string
+          section_total_title?: string
+          terms_approval_text?: string
+          terms_client_items?: string
+          terms_client_label?: string
+          terms_company_items?: string
+          terms_company_label?: string
+          terms_general_items?: string
+          terms_general_label?: string
           updated_at?: string
+          validity_text?: string
           website?: string
           workspace_id?: string
         }
