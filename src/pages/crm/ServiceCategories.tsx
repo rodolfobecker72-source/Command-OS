@@ -27,7 +27,6 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Lock,
   FolderOpen,
   Target,
   Film,
@@ -107,11 +106,6 @@ export function ServiceCategories() {
 
   const handleDeleteCategory = () => {
     if (!deleteCategoryId) return;
-    const category = serviceCategories.find(c => c.id === deleteCategoryId);
-    if (category?.isDefault) {
-      toast.error('Não é possível excluir categorias padrão');
-      return;
-    }
     deleteServiceCategory(deleteCategoryId);
     setDeleteCategoryId(null);
     toast.success('Categoria removida!');
@@ -204,11 +198,8 @@ export function ServiceCategories() {
                               </Button>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2">
                               <CardTitle>{category.label}</CardTitle>
-                              {category.isDefault && (
-                                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                              )}
                             </div>
                           )}
                           <CardDescription>
@@ -226,15 +217,13 @@ export function ServiceCategories() {
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          {!category.isDefault && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setDeleteCategoryId(category.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setDeleteCategoryId(category.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
                         </div>
                       )}
                     </div>
