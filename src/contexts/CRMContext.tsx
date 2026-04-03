@@ -654,11 +654,28 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const updateServiceCategory = async (id: string, updates: Partial<ServiceCategory>) => {
     try {
+      const category = serviceCategories.find(c => c.id === id);
       const dbUpdates: any = {};
+      if (updates.label !== undefined) {
+        dbUpdates.label = updates.label;
+        // Also update the key to match the new label
+        const newKey = updates.label.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+        dbUpdates.key = newKey;
+        updates.key = newKey;
+      }
       if (updates.key !== undefined) dbUpdates.key = updates.key;
-      if (updates.label !== undefined) dbUpdates.label = updates.label;
       const { error } = await supabase.from('service_categories').update(dbUpdates).eq('id', id);
       if (error) throw error;
+
+      // If key changed, update related objectives and service items
+      if (category && dbUpdates.key && category.key !== dbUpdates.key) {
+        const oldKey = category.key;
+        const newKey = dbUpdates.key;
+        await supabase.from('service_objectives').update({ category_key: newKey }).eq('workspace_id', workspaceId!).eq('category_key', oldKey);
+        await supabase.from('service_items').update({ category_key: newKey }).eq('workspace_id', workspaceId!).eq('category_key', oldKey);
+        setServiceObjectives(prev => prev.map(obj => obj.categoryKey === oldKey ? { ...obj, categoryKey: newKey } : obj));
+      }
+
       setServiceCategories(prev => prev.map(cat => cat.id === id ? { ...cat, ...updates } : cat));
     } catch (e: any) { toast.error('Erro: ' + e.message); }
   };

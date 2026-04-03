@@ -107,11 +107,6 @@ export function ServiceCategories() {
 
   const handleDeleteCategory = () => {
     if (!deleteCategoryId) return;
-    const category = serviceCategories.find(c => c.id === deleteCategoryId);
-    if (category?.isDefault) {
-      toast.error('Não é possível excluir categorias padrão');
-      return;
-    }
     deleteServiceCategory(deleteCategoryId);
     setDeleteCategoryId(null);
     toast.success('Categoria removida!');
