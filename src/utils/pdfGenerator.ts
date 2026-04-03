@@ -385,6 +385,22 @@ export async function generateProposalPDF({
     setColor(gray);
     doc.text(`Objetivo: ${objectiveLabel}`, margin, y);
     y += 6;
+
+    // Prazo de entrega
+    if (service.deliveryType) {
+      let deliveryText = '';
+      if (service.deliveryType === 'realtime') {
+        deliveryText = 'Prazo de entrega: Real time (mesmo dia)';
+      } else if (service.deliveryType === 'dias_uteis') {
+        deliveryText = `Prazo de entrega: ${service.deliveryDays || ''} dias úteis`;
+      } else if (service.deliveryType === 'dias_corridos') {
+        deliveryText = `Prazo de entrega: ${service.deliveryDays || ''} dias corridos`;
+      }
+      if (deliveryText) {
+        doc.text(deliveryText, margin, y);
+        y += 6;
+      }
+    }
     
     if (descLines.length > 0) {
       doc.setFontSize(normalSize);
