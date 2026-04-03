@@ -96,7 +96,9 @@ interface ServiceItem {
   costs: CostItem[];
   fixedCostPercentage: number;
   nfCostPercentage: number;
-  targetMargin: number; // kept for type compat, not used per-service anymore
+  targetMargin: number;
+  deliveryType?: DeliveryType;
+  deliveryDays?: number;
 }
 
 export function NewBudget() {
