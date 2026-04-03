@@ -223,15 +223,13 @@ export function ServiceCategories() {
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          {!category.isDefault && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setDeleteCategoryId(category.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          )}
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setDeleteCategoryId(category.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
                         </div>
                       )}
                     </div>
