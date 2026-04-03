@@ -543,7 +543,7 @@ export function BudgetDetail() {
     toast.success('Versão atualizada com sucesso!');
   };
 
-
+  const handleFinalizeExecution = () => {
     finalizeExecution(budget.id, finalReport);
     setFinalizeDialogOpen(false);
     setFinalReport('');
