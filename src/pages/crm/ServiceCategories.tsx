@@ -27,7 +27,7 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Lock,
+  FolderOpen,
   FolderOpen,
   Target,
   Film,
