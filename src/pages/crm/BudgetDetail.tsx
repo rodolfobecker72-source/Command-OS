@@ -576,11 +576,29 @@ export function BudgetDetail() {
         .eq('workspace_id', workspace.id)
         .maybeSingle();
       if (data) {
+        const d = data as any;
         return {
-          logoUrl: (data as any).logo_url || '',
-          companyName: (data as any).company_name || '',
-          website: (data as any).website || '',
-          email: (data as any).email || '',
+          logoUrl: d.logo_url || '',
+          companyName: d.company_name || '',
+          website: d.website || '',
+          email: d.email || '',
+          pdfTitle: d.pdf_title || undefined,
+          sectionClientTitle: d.section_client_title || undefined,
+          sectionBriefingTitle: d.section_briefing_title || undefined,
+          sectionInclusionsTitle: d.section_inclusions_title || undefined,
+          sectionServicesTitle: d.section_services_title || undefined,
+          sectionOperationalTitle: d.section_operational_title || undefined,
+          sectionInvestmentTitle: d.section_investment_title || undefined,
+          sectionTotalTitle: d.section_total_title || undefined,
+          sectionTermsTitle: d.section_terms_title || undefined,
+          termsCompanyLabel: d.terms_company_label || undefined,
+          termsCompanyItems: d.terms_company_items || undefined,
+          termsClientLabel: d.terms_client_label || undefined,
+          termsClientItems: d.terms_client_items || undefined,
+          termsGeneralLabel: d.terms_general_label || undefined,
+          termsGeneralItems: d.terms_general_items || undefined,
+          termsApprovalText: d.terms_approval_text || undefined,
+          validityText: d.validity_text || undefined,
         };
       }
     } catch (err) {
