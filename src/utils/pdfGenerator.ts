@@ -6,6 +6,8 @@ import {
   OBJECTIVES_BY_SERVICE,
   formatCurrency,
   SERVICE_TYPE_LABELS,
+  DELIVERY_TYPE_LABELS,
+  DeliveryType,
 } from '@/types/crm';
 interface PDFUser {
   id: string;
