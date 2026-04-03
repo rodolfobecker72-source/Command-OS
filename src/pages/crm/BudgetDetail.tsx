@@ -26,6 +26,8 @@ import {
   ExecutionCostItem,
   BudgetVersion,
   PaymentStatus as PaymentStatusType,
+  DeliveryType,
+  DELIVERY_TYPE_LABELS,
 } from '@/types/crm';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
@@ -1205,6 +1207,43 @@ export function BudgetDetail() {
                                         {service.description || 'Sem descrição'}
                                       </CardDescription>
                                     )}
+                                    {/* Prazo de Entrega */}
+                                    {isEditingVersion ? (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Select
+                                          value={service.deliveryType || ''}
+                                          onValueChange={(value) =>
+                                            updateEditService(service.id, { 
+                                              deliveryType: value as DeliveryType,
+                                              deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                            })
+                                          }
+                                        >
+                                          <SelectTrigger className="h-8 w-56">
+                                            <SelectValue placeholder="Prazo de entrega..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
+                                              <SelectItem key={key} value={key}>{label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        {service.deliveryType && service.deliveryType !== 'realtime' && (
+                                          <Input
+                                            type="number"
+                                            min={1}
+                                            className="h-8 w-20"
+                                            value={service.deliveryDays || ''}
+                                            onChange={(e) => updateEditService(service.id, { deliveryDays: parseInt(e.target.value) || 1 })}
+                                            placeholder="Dias"
+                                          />
+                                        )}
+                                      </div>
+                                    ) : service.deliveryType ? (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Prazo: {service.deliveryType === 'realtime' ? 'Real time (mesmo dia)' : `${service.deliveryDays || ''} ${service.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                                      </p>
+                                    ) : null}
                                   </div>
                                 </div>
                               </div>
@@ -1684,6 +1723,47 @@ export function BudgetDetail() {
                                                     rows={2}
                                                   />
                                                 </div>
+                                              </div>
+
+                                              {/* Prazo de Entrega */}
+                                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                  <Label>Prazo de Entrega</Label>
+                                                  <Select
+                                                    value={service.deliveryType || ''}
+                                                    onValueChange={(value) =>
+                                                      updateNewVersionService(service.id, { 
+                                                        deliveryType: value as DeliveryType,
+                                                        deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                                      })
+                                                    }
+                                                  >
+                                                    <SelectTrigger>
+                                                      <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
+                                                        <SelectItem key={key} value={key}>
+                                                          {label}
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                                {service.deliveryType && service.deliveryType !== 'realtime' && (
+                                                  <div className="space-y-2">
+                                                    <Label>Quantidade de dias</Label>
+                                                    <Input
+                                                      type="number"
+                                                      min={1}
+                                                      value={service.deliveryDays || ''}
+                                                      onChange={(e) =>
+                                                        updateNewVersionService(service.id, { deliveryDays: parseInt(e.target.value) || 1 })
+                                                      }
+                                                      placeholder="Ex: 15"
+                                                    />
+                                                  </div>
+                                                )}
                                               </div>
 
                                               {/* Costs Table */}
