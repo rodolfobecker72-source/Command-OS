@@ -1688,6 +1688,47 @@ export function BudgetDetail() {
                                                 </div>
                                               </div>
 
+                                              {/* Prazo de Entrega */}
+                                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                  <Label>Prazo de Entrega</Label>
+                                                  <Select
+                                                    value={service.deliveryType || ''}
+                                                    onValueChange={(value) =>
+                                                      updateNewVersionService(service.id, { 
+                                                        deliveryType: value as DeliveryType,
+                                                        deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                                      })
+                                                    }
+                                                  >
+                                                    <SelectTrigger>
+                                                      <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
+                                                        <SelectItem key={key} value={key}>
+                                                          {label}
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                                {service.deliveryType && service.deliveryType !== 'realtime' && (
+                                                  <div className="space-y-2">
+                                                    <Label>Quantidade de dias</Label>
+                                                    <Input
+                                                      type="number"
+                                                      min={1}
+                                                      value={service.deliveryDays || ''}
+                                                      onChange={(e) =>
+                                                        updateNewVersionService(service.id, { deliveryDays: parseInt(e.target.value) || 1 })
+                                                      }
+                                                      placeholder="Ex: 15"
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
+
                                               {/* Costs Table */}
                                               <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
