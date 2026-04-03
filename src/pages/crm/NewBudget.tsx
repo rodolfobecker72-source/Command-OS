@@ -16,6 +16,8 @@ import {
   PaymentStatus,
   PAYMENT_STATUS_LABELS,
   formatCurrency,
+  DeliveryType,
+  DELIVERY_TYPE_LABELS,
 } from '@/types/crm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
