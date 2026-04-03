@@ -665,7 +665,6 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
   const deleteServiceCategory = async (id: string) => {
     const category = serviceCategories.find(c => c.id === id);
-    if (category?.isDefault) return;
     try {
       // Delete related objectives
       const { error: objDelError } = await supabase.from('service_objectives').delete().eq('workspace_id', workspaceId!).eq('category_key', category!.key);
