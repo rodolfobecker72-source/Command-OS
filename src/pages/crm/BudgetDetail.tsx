@@ -26,6 +26,8 @@ import {
   ExecutionCostItem,
   BudgetVersion,
   PaymentStatus as PaymentStatusType,
+  DeliveryType,
+  DELIVERY_TYPE_LABELS,
 } from '@/types/crm';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
