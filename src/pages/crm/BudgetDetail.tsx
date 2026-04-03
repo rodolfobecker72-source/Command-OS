@@ -1207,6 +1207,43 @@ export function BudgetDetail() {
                                         {service.description || 'Sem descrição'}
                                       </CardDescription>
                                     )}
+                                    {/* Prazo de Entrega */}
+                                    {isEditingVersion ? (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Select
+                                          value={service.deliveryType || ''}
+                                          onValueChange={(value) =>
+                                            updateEditService(service.id, { 
+                                              deliveryType: value as DeliveryType,
+                                              deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                            })
+                                          }
+                                        >
+                                          <SelectTrigger className="h-8 w-56">
+                                            <SelectValue placeholder="Prazo de entrega..." />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
+                                              <SelectItem key={key} value={key}>{label}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        {service.deliveryType && service.deliveryType !== 'realtime' && (
+                                          <Input
+                                            type="number"
+                                            min={1}
+                                            className="h-8 w-20"
+                                            value={service.deliveryDays || ''}
+                                            onChange={(e) => updateEditService(service.id, { deliveryDays: parseInt(e.target.value) || 1 })}
+                                            placeholder="Dias"
+                                          />
+                                        )}
+                                      </div>
+                                    ) : service.deliveryType ? (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Prazo: {service.deliveryType === 'realtime' ? 'Real time (mesmo dia)' : `${service.deliveryDays || ''} ${service.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                                      </p>
+                                    ) : null}
                                   </div>
                                 </div>
                               </div>
