@@ -204,11 +204,8 @@ export function ServiceCategories() {
                               </Button>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2">
                               <CardTitle>{category.label}</CardTitle>
-                              {category.isDefault && (
-                                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                              )}
                             </div>
                           )}
                           <CardDescription>
