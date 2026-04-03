@@ -20,6 +20,23 @@ export interface PDFLayoutSettings {
   companyName: string;
   website: string;
   email: string;
+  pdfTitle?: string;
+  sectionClientTitle?: string;
+  sectionBriefingTitle?: string;
+  sectionInclusionsTitle?: string;
+  sectionServicesTitle?: string;
+  sectionOperationalTitle?: string;
+  sectionInvestmentTitle?: string;
+  sectionTotalTitle?: string;
+  sectionTermsTitle?: string;
+  termsCompanyLabel?: string;
+  termsCompanyItems?: string;
+  termsClientLabel?: string;
+  termsClientItems?: string;
+  termsGeneralLabel?: string;
+  termsGeneralItems?: string;
+  termsApprovalText?: string;
+  validityText?: string;
 }
 
 interface PDFGeneratorParams {
@@ -67,31 +84,46 @@ export async function generateProposalPDF({
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
-  // Layout configuration
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
-  const headerY = 15; // top margin for header area
-  const contentStartY = 28; // where content begins (below header)
-  const footerTopY = pageHeight - 28; // max Y before footer area
+  const headerY = 15;
+  const contentStartY = 28;
+  const footerTopY = pageHeight - 28;
   
-  // Colors (only black, gray, white)
   const black = [0, 0, 0] as [number, number, number];
   const darkGray = [80, 80, 80] as [number, number, number];
   const gray = [128, 128, 128] as [number, number, number];
   const lightGray = [200, 200, 200] as [number, number, number];
   
-  // Font sizes
   const titleSize = 14;
   const subtitleSize = 12;
   const normalSize = 10;
   const smallSize = 9;
+
+  // Configurable texts with fallbacks
+  const t = {
+    pdfTitle: layoutSettings?.pdfTitle || 'PROPOSTA COMERCIAL',
+    client: layoutSettings?.sectionClientTitle || 'CLIENTE',
+    briefing: layoutSettings?.sectionBriefingTitle || 'BRIEFING DO PROJETO',
+    inclusions: layoutSettings?.sectionInclusionsTitle || 'O QUE ESTÁ INCLUSO',
+    services: layoutSettings?.sectionServicesTitle || 'SERVIÇOS',
+    operational: layoutSettings?.sectionOperationalTitle || 'DESPESAS OPERACIONAIS',
+    investment: layoutSettings?.sectionInvestmentTitle || 'COMPOSIÇÃO DO INVESTIMENTO',
+    total: layoutSettings?.sectionTotalTitle || 'INVESTIMENTO TOTAL',
+    terms: layoutSettings?.sectionTermsTitle || 'TERMOS E CONDIÇÕES',
+    termsCompanyLabel: layoutSettings?.termsCompanyLabel || 'Responsabilidades da HERO:',
+    termsCompanyItems: layoutSettings?.termsCompanyItems || '• Executar os serviços descritos com qualidade profissional\n• Fornecer equipe técnica qualificada\n• Cumprir os prazos acordados\n• Realizar até 2 rodadas de revisão',
+    termsClientLabel: layoutSettings?.termsClientLabel || 'Responsabilidades do Cliente:',
+    termsClientItems: layoutSettings?.termsClientItems || '• Fornecer acesso às locações e informações necessárias\n• Aprovar materiais dentro dos prazos combinados\n• Efetuar pagamentos conforme condições acordadas',
+    termsGeneralLabel: layoutSettings?.termsGeneralLabel || 'Condições Gerais:',
+    termsGeneralItems: layoutSettings?.termsGeneralItems || '• Proposta válida por 30 dias\n• Alterações de escopo podem gerar custos adicionais\n• Cancelamento após início sujeito a cobrança proporcional',
+    termsApproval: layoutSettings?.termsApprovalText || 'A aprovação desta proposta implica na aceitação dos termos acima.',
+    validity: layoutSettings?.validityText || 'Validade: 30 dias',
+  };
   
-  // Project identification pattern: ID - Name - Version
   const projectIdentifier = `${budget.proposalId} - ${budget.projectName} - Versão ${version.version}`;
   const generatedDate = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
   
-  // Load logos
-  // Load header logo: use layout settings if available, else default
   let logoData: { base64: string; width: number; height: number } | null = null;
   const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
@@ -110,7 +142,6 @@ export async function generateProposalPDF({
   
   let y = contentStartY;
 
-  // Helper functions
   const setColor = (color: [number, number, number]) => {
     doc.setTextColor(color[0], color[1], color[2]);
   };
@@ -150,7 +181,6 @@ export async function generateProposalPDF({
     doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   };
 
-  /** If the next block of `neededHeight` won't fit, adds a new page and returns the new Y */
   const ensureSpace = (neededHeight: number): number => {
     if (y + neededHeight > footerTopY) {
       addHeader();
@@ -169,20 +199,17 @@ export async function generateProposalPDF({
   };
 
   // ============================================
-  // PAGE 1: Header, Client, Project, Inclusions
+  // PAGE 1
   // ============================================
-  
-  // First page header (logo + title, no duplicate)
   addHeader();
   
   doc.setFontSize(titleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('PROPOSTA COMERCIAL', margin, headerY + 4);
+  doc.text(t.pdfTitle, margin, headerY + 4);
   
   y = contentStartY;
   
-  // Project identifier
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(darkGray);
@@ -193,14 +220,14 @@ export async function generateProposalPDF({
   drawLine(y);
   y += 10;
 
-  // CLIENT BLOCK — estimate height to keep together
+  // CLIENT BLOCK
   const clientBlockHeight = 8 + 6 * 3 + (responsibleUser ? 6 : 0) + 20;
   ensureSpace(clientBlockHeight);
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('CLIENTE', margin, y);
+  doc.text(t.client, margin, y);
   y += 8;
   
   doc.setFontSize(normalSize);
@@ -231,7 +258,7 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('BRIEFING DO PROJETO', margin, y);
+  doc.text(t.briefing, margin, y);
   y += 8;
   
   doc.setFontSize(normalSize);
@@ -267,7 +294,7 @@ export async function generateProposalPDF({
     y += 6;
   }
   
-  doc.text('Validade: 30 dias', margin, y);
+  doc.text(t.validity, margin, y);
   y += 12;
   
   drawLine(y);
@@ -288,7 +315,7 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('O QUE ESTÁ INCLUSO', margin, y);
+  doc.text(t.inclusions, margin, y);
   y += 8;
   
   doc.setFontSize(normalSize);
@@ -313,7 +340,6 @@ export async function generateProposalPDF({
   let totalProductionCost = 0;
   version.services.forEach(s => { totalProductionCost += s.costs.reduce((sum, c) => sum + c.value, 0); });
 
-  // Pre-compute values needed for per-service pricing
   const preNfPct = version.nfCostPercentage || 13;
   const preMarginPct = version.margin || 0;
   const preOpTotal = (version.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
@@ -327,7 +353,7 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('SERVIÇOS', margin, y);
+  doc.text(t.services, margin, y);
   y += 10;
 
   version.services.forEach((service, serviceIndex) => {
@@ -337,32 +363,27 @@ export async function generateProposalPDF({
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
-    // Estimate block height: header(6) + objective(6) + desc + items + subtotal(16)
     const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth - 10) as string[] : [];
     const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
     
-    // If the whole service fits, keep it together; otherwise just ensure minimum header space
     if (estimatedHeight < footerTopY - contentStartY) {
       ensureSpace(estimatedHeight);
     } else {
-      ensureSpace(40); // at least header + objective + some items
+      ensureSpace(40);
     }
     
-    // Service header
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
     doc.text(`${serviceIndex + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}`, margin, y);
     y += 6;
     
-    // Objective
     doc.setFontSize(smallSize);
     doc.setFont('helvetica', 'normal');
     setColor(gray);
     doc.text(`Objetivo: ${objectiveLabel}`, margin, y);
     y += 6;
     
-    // Description
     if (descLines.length > 0) {
       doc.setFontSize(normalSize);
       setColor(darkGray);
@@ -374,7 +395,6 @@ export async function generateProposalPDF({
       y += 4;
     }
     
-    // Items list
     if (service.costs.length > 0) {
       const col1 = margin;
       const col2 = margin + 10;
@@ -386,7 +406,6 @@ export async function generateProposalPDF({
       doc.text('#', col1, y);
       doc.text('Descrição', col2, y);
       y += 2;
-      
       y += 4;
       
       doc.setFont('helvetica', 'normal');
@@ -403,28 +422,21 @@ export async function generateProposalPDF({
       });
     }
     
-    // Service subtotal — keep with last item
     ensureSpace(16);
     y += 2;
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
     doc.text(`Subtotal: ${formatCurrency(serviceDisplayValue)}`, pageWidth - margin, y, { align: 'right' });
-    
     y += 16;
-    
-    // space between services
   });
 
-  // ============================================
-  // OPERATIONAL COSTS SECTION
-  // ============================================
+  // OPERATIONAL COSTS
   const operationalCostItems = version.operationalCosts || [];
   let operationalTotal = 0;
   operationalCostItems.forEach(c => { operationalTotal += c.value; });
   
   if (operationalCostItems.length > 0) {
-    // Estimate block height
     const opBlockHeight = 10 + 10 + operationalCostItems.length * 8 + 16;
     if (opBlockHeight < footerTopY - contentStartY) {
       ensureSpace(opBlockHeight);
@@ -437,7 +449,7 @@ export async function generateProposalPDF({
     doc.setFontSize(subtitleSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
-    doc.text('DESPESAS OPERACIONAIS', margin, y);
+    doc.text(t.operational, margin, y);
     y += 10;
     
     const opCol1 = margin;
@@ -475,21 +487,20 @@ export async function generateProposalPDF({
     doc.setFont('helvetica', 'bold');
     setColor(black);
     doc.text(`Subtotal: ${formatCurrency(operationalTotal)}`, pageWidth - margin, y, { align: 'right' });
-    
     y += 8;
   }
 
   drawLine(y);
   y += 12;
 
-  // INVESTMENT BREAKDOWN — keep as a block
+  // INVESTMENT BREAKDOWN
   const investmentBlockHeight = 10 + version.services.length * 7 + (operationalTotal > 0 ? 7 : 0) + 7 + 20;
   ensureSpace(investmentBlockHeight);
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('COMPOSIÇÃO DO INVESTIMENTO', margin, y);
+  doc.text(t.investment, margin, y);
   y += 10;
 
   const versionNfPercentage = version.nfCostPercentage || 13;
@@ -535,7 +546,7 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('INVESTIMENTO TOTAL', margin, y);
+  doc.text(t.total, margin, y);
   
   doc.setFontSize(titleSize);
   doc.text(formatCurrency(totalProjectValue), pageWidth - margin, y, { align: 'right' });
@@ -553,82 +564,48 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text('TERMOS E CONDIÇÕES', margin, y);
+  doc.text(t.terms, margin, y);
+  y += 12;
+
+  // Helper to render a terms block
+  const renderTermsBlock = (label: string, itemsText: string) => {
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(darkGray);
+    doc.text(label, margin, y);
+    y += 7;
+    
+    doc.setFont('helvetica', 'normal');
+    setColor(gray);
+    
+    const items = itemsText.split('\n').filter(line => line.trim());
+    items.forEach((item) => {
+      const lines = doc.splitTextToSize(item, contentWidth) as string[];
+      lines.forEach(line => {
+        ensureSpace(6);
+        doc.text(line, margin, y);
+        y += 6;
+      });
+    });
+    y += 8;
+  };
+
+  renderTermsBlock(t.termsCompanyLabel, t.termsCompanyItems);
+  renderTermsBlock(t.termsClientLabel, t.termsClientItems);
+  renderTermsBlock(t.termsGeneralLabel, t.termsGeneralItems);
+
   y += 12;
   
-  // HERO responsibilities
-  doc.setFontSize(normalSize);
-  doc.setFont('helvetica', 'bold');
-  setColor(darkGray);
-  doc.text('Responsabilidades da HERO:', margin, y);
-  y += 7;
-  
-  doc.setFont('helvetica', 'normal');
-  setColor(gray);
-  
-  const heroTerms = [
-    '• Executar os serviços descritos com qualidade profissional',
-    '• Fornecer equipe técnica qualificada',
-    '• Cumprir os prazos acordados',
-    '• Realizar até 2 rodadas de revisão',
-  ];
-  
-  heroTerms.forEach((term) => {
-    doc.text(term, margin, y);
-    y += 6;
-  });
-  
-  y += 8;
-  
-  // Client responsibilities
-  doc.setFont('helvetica', 'bold');
-  setColor(darkGray);
-  doc.text('Responsabilidades do Cliente:', margin, y);
-  y += 7;
-  
-  doc.setFont('helvetica', 'normal');
-  setColor(gray);
-  
-  const clientTerms = [
-    '• Fornecer acesso às locações e informações necessárias',
-    '• Aprovar materiais dentro dos prazos combinados',
-    '• Efetuar pagamentos conforme condições acordadas',
-  ];
-  
-  clientTerms.forEach((term) => {
-    doc.text(term, margin, y);
-    y += 6;
-  });
-  
-  y += 8;
-  
-  // General conditions
-  doc.setFont('helvetica', 'bold');
-  setColor(darkGray);
-  doc.text('Condições Gerais:', margin, y);
-  y += 7;
-  
-  doc.setFont('helvetica', 'normal');
-  setColor(gray);
-  
-  const generalTerms = [
-    '• Proposta válida por 30 dias',
-    '• Alterações de escopo podem gerar custos adicionais',
-    '• Cancelamento após início sujeito a cobrança proporcional',
-  ];
-  
-  generalTerms.forEach((term) => {
-    doc.text(term, margin, y);
-    y += 6;
-  });
-
-  y += 20;
-  
   // Approval text
+  ensureSpace(30);
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
-  doc.text('A aprovação desta proposta implica na aceitação dos termos acima.', margin, y);
+  const approvalLines = doc.splitTextToSize(t.termsApproval, contentWidth) as string[];
+  approvalLines.forEach(line => {
+    doc.text(line, margin, y);
+    y += 6;
+  });
   
   y += 25;
   
