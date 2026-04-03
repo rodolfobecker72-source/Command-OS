@@ -28,7 +28,6 @@ import {
   Trash2,
   Pencil,
   FolderOpen,
-  FolderOpen,
   Target,
   Film,
   Camera,
