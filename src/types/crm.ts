@@ -193,6 +193,15 @@ export interface ExecutionCostItem extends CostItem {
   supplier?: string; // Supplier/person who executed this cost
 }
 
+// Delivery Type
+export type DeliveryType = 'realtime' | 'dias_uteis' | 'dias_corridos';
+
+export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
+  realtime: 'Entrega real time (mesmo dia)',
+  dias_uteis: 'Dias úteis',
+  dias_corridos: 'Dias corridos',
+};
+
 // Service Item Interface (for budget with multiple services)
 export interface ServiceItem {
   id: string;
@@ -203,6 +212,8 @@ export interface ServiceItem {
   fixedCostPercentage: number;
   nfCostPercentage: number;
   targetMargin: number;
+  deliveryType?: DeliveryType;
+  deliveryDays?: number;
 }
 
 // Budget Version Interface
