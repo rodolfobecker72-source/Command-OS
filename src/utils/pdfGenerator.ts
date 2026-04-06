@@ -388,12 +388,17 @@ export async function generateProposalPDF({
     
     if (descLines.length > 0) {
       doc.setFontSize(normalSize);
+      doc.setFont('helvetica', 'normal');
       setColor(darkGray);
-      for (const line of descLines) {
+      descLines.forEach((line: string, idx: number) => {
         ensureSpace(6);
-        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+        if (idx < descLines.length - 1) {
+          doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+        } else {
+          doc.text(line, margin, y);
+        }
         y += 5;
-      }
+      });
       y += 4;
     }
     
