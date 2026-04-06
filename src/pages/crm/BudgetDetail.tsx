@@ -2234,6 +2234,61 @@ export function BudgetDetail() {
                   </CardHeader>
                   <CardContent>
 
+  const generateContract = async () => {
+    if (!currentVersionData || !client || !budget) {
+      toast.error('Dados insuficientes para gerar minuta');
+      return;
+    }
+    try {
+      // Fetch contract template
+      const { data: templateData } = await supabase
+        .from('workspace_contract_template')
+        .select('content')
+        .eq('workspace_id', workspace?.id || '')
+        .maybeSingle();
+
+      if (!templateData?.content) {
+        toast.error('Nenhum template de contrato configurado. Acesse Configurações > Minuta de Contrato.');
+        return;
+      }
+
+      // Fetch layout for company info
+      const layoutSettings = await fetchLayoutSettings();
+
+      generateContractPDF({
+        template: templateData.content,
+        budget: {
+          proposalId: budget.proposalId,
+          projectName: budget.projectName,
+          projectDescription: budget.projectDescription,
+          paymentTerms: budget.paymentTerms,
+          hasExecutionDate: budget.hasExecutionDate,
+          executionStartDate: budget.executionStartDate,
+          executionEndDate: budget.executionEndDate,
+          approvalDate: budget.approvalDate,
+          finalValue: budget.finalValue,
+        },
+        version: currentVersionData,
+        client: {
+          companyName: client.companyName,
+          cnpj: client.cnpj,
+          responsiblePerson: client.responsiblePerson,
+          email: client.email,
+          phone: client.phone,
+        },
+        layout: layoutSettings ? {
+          companyName: layoutSettings.companyName,
+          website: layoutSettings.website,
+          email: layoutSettings.email,
+          logoUrl: layoutSettings.logoUrl,
+        } : null,
+      });
+      toast.success('Minuta gerada com sucesso!');
+    } catch (err) {
+      console.error('Error generating contract:', err);
+      toast.error('Erro ao gerar minuta');
+    }
+  };
 
                     {/* Services Execution */}
                     {budget.execution.services.map((service) => {
