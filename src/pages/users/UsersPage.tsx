@@ -42,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase, Camera } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase, Camera, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
@@ -59,6 +59,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
   vendedor: 'Vendedor',
   visualizador: 'Visualizador',
+  time_hero: 'Time HERO',
 };
 
 const ROLE_ICONS: Record<AppRole, typeof Crown> = {
@@ -66,6 +67,7 @@ const ROLE_ICONS: Record<AppRole, typeof Crown> = {
   admin: ShieldCheck,
   vendedor: Briefcase,
   visualizador: EyeIcon,
+  time_hero: Users,
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -73,6 +75,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   admin: 'bg-accent/10 text-accent',
   vendedor: 'bg-warning/10 text-warning',
   visualizador: 'bg-muted text-muted-foreground',
+  time_hero: 'bg-blue-500/10 text-blue-600',
 };
 
 export function UsersPage() {
@@ -402,6 +405,7 @@ export function UsersPage() {
                           <SelectItem value="admin">Administrador</SelectItem>
                           <SelectItem value="vendedor">Vendedor</SelectItem>
                           <SelectItem value="visualizador">Visualizador</SelectItem>
+                          <SelectItem value="time_hero">Time HERO</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -459,20 +463,18 @@ export function UsersPage() {
                         {canManage && (
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
                               {member.role !== 'owner' && (
-                                <>
-                                  <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-destructive hover:text-destructive"
-                                    onClick={() => setDeletingMember(member)}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => setDeletingMember(member)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               )}
                             </div>
                           </TableCell>
@@ -546,23 +548,26 @@ export function UsersPage() {
                 />
               </div>
 
-              {/* Role */}
-              <div className="space-y-2">
-                <Label>Papel</Label>
-                <Select
-                  value={editForm.role}
-                  onValueChange={(v: AppRole) => setEditForm({ ...editForm, role: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="vendedor">Vendedor</SelectItem>
-                    <SelectItem value="visualizador">Visualizador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Role - hidden when editing owner */}
+              {editingMember?.role !== 'owner' && (
+                <div className="space-y-2">
+                  <Label>Papel</Label>
+                  <Select
+                    value={editForm.role}
+                    onValueChange={(v: AppRole) => setEditForm({ ...editForm, role: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="vendedor">Vendedor</SelectItem>
+                      <SelectItem value="visualizador">Visualizador</SelectItem>
+                      <SelectItem value="time_hero">Time HERO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSavingEdit}>

@@ -11,24 +11,24 @@ export interface AppPage {
 
 export const APP_PAGES: AppPage[] = [
   // Comercial
-  { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial' },
-  { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial' },
-  { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial' },
+  { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial', restrictedFrom: ['time_hero'] },
+  { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial', restrictedFrom: ['time_hero'] },
+  { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial', restrictedFrom: ['time_hero'] },
 
-  // Operação
-  { key: 'calendario', label: 'Calendário', href: '/calendario', group: 'Operação' },
+  // Operação / Projetos
+  { key: 'calendario', label: 'Calendário', href: '/calendario', group: 'Projetos' },
 
   // Configurações
-  { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Configurações', restrictedFrom: ['vendedor'] },
-  { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Configurações', restrictedFrom: ['vendedor'] },
-  { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações', restrictedFrom: ['vendedor'] },
-  { key: 'layout', label: 'Layout do PDF', href: '/configuracoes/layout', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
-  { key: 'contrato', label: 'Minuta de Contrato', href: '/configuracoes/contrato', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
-  { key: 'metas', label: 'Metas', href: '/configuracoes/metas', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador'] },
-  { key: 'score', label: 'Score', href: '/configuracoes/score', group: 'Configurações' },
+  { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Configurações', restrictedFrom: ['vendedor', 'time_hero'] },
+  { key: 'itens-servico', label: 'Itens de Serviço', href: '/itens-servico', group: 'Configurações', restrictedFrom: ['vendedor', 'time_hero'] },
+  { key: 'regras-comerciais', label: 'Regras Comerciais', href: '/configuracoes/regras-comerciais', group: 'Configurações', restrictedFrom: ['vendedor', 'time_hero'] },
+  { key: 'layout', label: 'Layout do PDF', href: '/configuracoes/layout', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador', 'time_hero'] },
+  { key: 'contrato', label: 'Minuta de Contrato', href: '/configuracoes/contrato', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador', 'time_hero'] },
+  { key: 'metas', label: 'Metas', href: '/configuracoes/metas', group: 'Configurações', restrictedFrom: ['vendedor', 'admin', 'visualizador', 'time_hero'] },
+  { key: 'score', label: 'Score', href: '/configuracoes/score', group: 'Configurações', restrictedFrom: ['time_hero'] },
   
   // Sistema
-  { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema', restrictedFrom: ['admin', 'vendedor', 'visualizador'] },
+  { key: 'usuarios', label: 'Usuários', href: '/usuarios', group: 'Sistema', restrictedFrom: ['admin', 'vendedor', 'visualizador', 'time_hero'] },
 ];
 
 // Get all page keys (useful for setting "all access" by default)
