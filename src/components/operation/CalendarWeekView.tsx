@@ -103,7 +103,7 @@ export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventC
                   budget={ev.budget}
                   eventType="delivery"
                   deliveryLabel={ev.label}
-                  onClick={() => onEventClick(ev.budget)}
+                  onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
                 />
               ))}
             </div>
