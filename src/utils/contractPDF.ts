@@ -193,8 +193,7 @@ export async function generateContractPDF(params: ContractPDFParams) {
 
     for (let i = 0; i < wrapped.length; i++) {
       ensureSpace(lineHeight);
-      // Justify text (except last line of paragraph and bold titles)
-      if (!isBold && wrapped.length > 1 && i < wrapped.length - 1) {
+      if (!isBold) {
         doc.text(wrapped[i], margin, y, { align: 'justify', maxWidth: contentWidth });
       } else {
         doc.text(wrapped[i], margin, y);
