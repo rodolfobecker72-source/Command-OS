@@ -379,7 +379,7 @@ export async function generateProposalPDF({
       setColor(darkGray);
       for (const line of descLines) {
         ensureSpace(6);
-        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth - 10 });
+        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
         y += 5;
       }
       y += 4;
