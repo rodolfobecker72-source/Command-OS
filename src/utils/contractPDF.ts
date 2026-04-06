@@ -193,13 +193,8 @@ export async function generateContractPDF(params: ContractPDFParams) {
 
     for (let i = 0; i < wrapped.length; i++) {
       ensureSpace(lineHeight);
-      const isLastLine = i === wrapped.length - 1;
-      // Justify all non-bold lines except the last line of each paragraph
-      if (!isBold && !isLastLine) {
+      if (!isBold) {
         doc.text(wrapped[i], margin, y, { align: 'justify', maxWidth: contentWidth });
-      } else if (!isBold && isLastLine && wrapped.length === 1) {
-        // Single-line paragraph: left-align
-        doc.text(wrapped[i], margin, y);
       } else {
         doc.text(wrapped[i], margin, y);
       }
