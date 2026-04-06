@@ -348,6 +348,8 @@ export interface CRMCard {
   clientScore: number;
   currentVersion: number;
   executionMonth?: string | null;
+  rejectionReason?: string;
+  rejectionObservation?: string;
   createdAt: string;
 }
 

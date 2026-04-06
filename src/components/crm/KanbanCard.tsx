@@ -97,6 +97,21 @@ export function KanbanCard({ card }: KanbanCardProps) {
             )}
           </div>
 
+          {/* Rejection Info */}
+          {card.status === 'nao_aprovada' && card.rejectionReason && (
+            <div className="mb-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+              <div className="flex items-start gap-1.5">
+                <AlertCircle className="w-3 h-3 text-destructive mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-destructive">{card.rejectionReason}</p>
+                  {card.rejectionObservation && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{card.rejectionObservation}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Value & Execution Month */}
           <div className="flex items-center justify-between flex-wrap gap-1">
             {card.value && (
