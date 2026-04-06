@@ -253,8 +253,8 @@ export async function generateProposalPDF({
   y += 10;
 
   // PROJECT BLOCK
-  const projectDescLines = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
-  const projectBlockHeight = 8 + projectDescLines.length * 5 + 30;
+  const projectDescForHeight = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
+  const projectBlockHeight = 8 + projectDescForHeight.length * 5 + 30;
   ensureSpace(projectBlockHeight);
 
   doc.setFontSize(subtitleSize);
@@ -267,9 +267,18 @@ export async function generateProposalPDF({
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
   
-  if (projectDescLines.length > 0) {
-    projectDescLines.forEach((line: string) => {
-      doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+  if (budget.projectDescription) {
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'normal');
+    setColor(darkGray);
+    const briefLines = doc.splitTextToSize(budget.projectDescription, contentWidth) as string[];
+    briefLines.forEach((line: string, idx: number) => {
+      ensureSpace(6);
+      if (idx < briefLines.length - 1) {
+        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+      } else {
+        doc.text(line, margin, y);
+      }
       y += 5;
     });
     y += 4;
@@ -337,6 +346,9 @@ export async function generateProposalPDF({
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
+    // Split description with correct font metrics
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'normal');
     const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth) as string[] : [];
     const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
     
@@ -376,12 +388,17 @@ export async function generateProposalPDF({
     
     if (descLines.length > 0) {
       doc.setFontSize(normalSize);
+      doc.setFont('helvetica', 'normal');
       setColor(darkGray);
-      for (const line of descLines) {
+      descLines.forEach((line: string, idx: number) => {
         ensureSpace(6);
-        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+        if (idx < descLines.length - 1) {
+          doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+        } else {
+          doc.text(line, margin, y);
+        }
         y += 5;
-      }
+      });
       y += 4;
     }
     
