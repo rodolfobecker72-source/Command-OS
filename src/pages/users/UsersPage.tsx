@@ -405,7 +405,7 @@ export function UsersPage() {
                           <SelectItem value="admin">Administrador</SelectItem>
                           <SelectItem value="vendedor">Vendedor</SelectItem>
                           <SelectItem value="visualizador">Visualizador</SelectItem>
-                          <SelectItem value="time_hero">Time HERO</SelectItem>
+                          <SelectItem value="time_hero">Time Operacional</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
