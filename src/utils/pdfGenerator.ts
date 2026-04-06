@@ -337,7 +337,7 @@ export async function generateProposalPDF({
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
-    const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth - 10) as string[] : [];
+    const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth) as string[] : [];
     const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
     
     if (estimatedHeight < footerTopY - contentStartY) {
