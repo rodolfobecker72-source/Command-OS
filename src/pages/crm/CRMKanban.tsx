@@ -196,6 +196,18 @@ export function CRMKanban() {
       }
     }
 
+    // If dropping on "nao_aprovada", show rejection dialog
+    if (targetStatus === 'nao_aprovada') {
+      const card = cards.find(c => c.id === activeId);
+      if (card && card.status !== 'nao_aprovada') {
+        setPendingRejectId(activeId);
+        setRejectReason('');
+        setRejectObservation('');
+        setRejectDialogOpen(true);
+        return;
+      }
+    }
+
     moveCard(activeId, targetStatus as CRMStatus);
   };
 
@@ -207,6 +219,20 @@ export function CRMKanban() {
     setApproveDialogOpen(false);
     setPendingApprovalId(null);
     setDragApproveMonth('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (pendingRejectId && rejectReason) {
+      await updateBudget(pendingRejectId, {
+        status: 'nao_aprovada' as CRMStatus,
+        rejectionReason: rejectReason,
+        rejectionObservation: rejectObservation,
+      });
+    }
+    setRejectDialogOpen(false);
+    setPendingRejectId(null);
+    setRejectReason('');
+    setRejectObservation('');
   };
 
   return (
