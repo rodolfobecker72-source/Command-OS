@@ -253,8 +253,8 @@ export async function generateProposalPDF({
   y += 10;
 
   // PROJECT BLOCK
-  const projectDescLines = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
-  const projectBlockHeight = 8 + projectDescLines.length * 5 + 30;
+  const projectDescForHeight = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
+  const projectBlockHeight = 8 + projectDescForHeight.length * 5 + 30;
   ensureSpace(projectBlockHeight);
 
   doc.setFontSize(subtitleSize);
