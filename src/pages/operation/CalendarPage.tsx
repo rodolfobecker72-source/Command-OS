@@ -61,6 +61,8 @@ export function CalendarPage() {
   const [view, setView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [showDeliveries, setShowDeliveries] = useState(true);
 
   // Only show approved budgets on the calendar
   const approvedBudgets = useMemo(() => budgets.filter(b => b.status === 'aprovada'), [budgets]);
@@ -99,6 +101,12 @@ export function CalendarPage() {
 
   const handleEventClick = useCallback((budget: Budget) => {
     setSelectedBudget(budget);
+    setSelectedServiceId(null);
+  }, []);
+
+  const handleDeliveryClick = useCallback((budget: Budget, serviceId?: string) => {
+    setSelectedBudget(budget);
+    setSelectedServiceId(serviceId || null);
   }, []);
 
   const client = selectedBudget
