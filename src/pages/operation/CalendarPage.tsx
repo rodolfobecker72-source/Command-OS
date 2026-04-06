@@ -142,12 +142,14 @@ export function CalendarPage() {
           <CalendarMonthView
             currentDate={currentDate}
             events={calendarEvents}
+            deliveryEvents={deliveryEvents}
             onEventClick={handleEventClick}
           />
         ) : (
           <CalendarWeekView
             currentDate={currentDate}
             events={calendarEvents}
+            deliveryEvents={deliveryEvents}
             onEventClick={handleEventClick}
           />
         )}
