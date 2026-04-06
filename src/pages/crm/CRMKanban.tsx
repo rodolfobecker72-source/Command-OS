@@ -340,6 +340,56 @@ export function CRMKanban() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Rejection Dialog for Drag */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Não Aprovar Orçamento</DialogTitle>
+              <DialogDescription>
+                Selecione o motivo da não aprovação e adicione observações se necessário.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <Label className="mb-2 block">Motivo *</Label>
+                <RadioGroup value={rejectReason} onValueChange={setRejectReason} className="space-y-2">
+                  {REJECTION_REASONS.map((reason) => (
+                    <div key={reason} className="flex items-center space-x-2">
+                      <RadioGroupItem value={reason} id={`reason-${reason}`} />
+                      <Label htmlFor={`reason-${reason}`} className="text-sm font-normal cursor-pointer">
+                        {reason}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+              <div>
+                <Label htmlFor="reject-observation">Observação</Label>
+                <Textarea
+                  id="reject-observation"
+                  value={rejectObservation}
+                  onChange={(e) => setRejectObservation(e.target.value)}
+                  placeholder="Adicione detalhes ou observações..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmReject}
+                disabled={!rejectReason}
+              >
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
