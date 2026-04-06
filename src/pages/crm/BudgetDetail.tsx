@@ -1239,6 +1239,15 @@ export function BudgetDetail() {
                                   </div>
                                 </div>
                               </div>
+                              {isEditingVersion && (
+                                <Textarea
+                                  value={service.description}
+                                  onChange={(e) => updateEditService(service.id, { description: e.target.value })}
+                                  placeholder="Descrição do serviço..."
+                                  rows={3}
+                                  className="mt-3 w-full"
+                                />
+                              )}
                             </CardHeader>
                             <CardContent>
                               {/* Costs Table */}
