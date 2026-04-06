@@ -59,7 +59,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
   vendedor: 'Vendedor',
   visualizador: 'Visualizador',
-  time_hero: 'Time HERO',
+  time_hero: 'Time Operacional',
 };
 
 const ROLE_ICONS: Record<AppRole, typeof Crown> = {
