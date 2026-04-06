@@ -812,6 +812,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.finalValue !== undefined) dbUpdates.final_value = updates.finalValue;
       if (updates.execution !== undefined) dbUpdates.execution = updates.execution;
       if (updates.currentVersion !== undefined) dbUpdates.current_version = updates.currentVersion;
+      if (updates.rejectionReason !== undefined) dbUpdates.rejection_reason = updates.rejectionReason;
+      if (updates.rejectionObservation !== undefined) dbUpdates.rejection_observation = updates.rejectionObservation;
 
       if (Object.keys(dbUpdates).length > 0) {
         const { error } = await supabase.from('budgets').update(dbUpdates).eq('id', id);
