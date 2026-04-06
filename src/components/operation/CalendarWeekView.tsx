@@ -37,7 +37,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick }: CalendarWeekViewProps) {
+export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarWeekViewProps) {
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { locale: ptBR });
     const weekEnd = endOfWeek(currentDate, { locale: ptBR });
