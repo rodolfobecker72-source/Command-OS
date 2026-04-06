@@ -44,9 +44,10 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
       events.push({
         id: `${b.id}-delivery-${svc.id}`,
         date: deliveryDate,
-        label: `📦 ${b.proposalId} - ${svc.serviceType}${svc.objective ? ` (${svc.objective})` : ''} — ${daysLabel}`,
+        label: `📦 ${b.proposalId} - ${b.projectName} — ${svc.serviceType}`,
         budget: b,
         type: 'delivery',
+        serviceId: svc.id,
       });
     }
   }
