@@ -101,8 +101,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update role if provided
-    if (role && ["admin", "vendedor", "visualizador", "time_hero"].includes(role)) {
+    // Update role if provided (skip for owner)
+    if (!isEditingOwner && role && ["admin", "vendedor", "visualizador", "time_hero"].includes(role)) {
       const { error: roleError } = await supabaseAdmin
         .from("workspace_members")
         .update({ role })
