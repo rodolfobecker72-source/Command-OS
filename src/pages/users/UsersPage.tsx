@@ -548,24 +548,26 @@ export function UsersPage() {
                 />
               </div>
 
-              {/* Role */}
-              <div className="space-y-2">
-                <Label>Papel</Label>
-                <Select
-                  value={editForm.role}
-                  onValueChange={(v: AppRole) => setEditForm({ ...editForm, role: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="vendedor">Vendedor</SelectItem>
-                    <SelectItem value="visualizador">Visualizador</SelectItem>
-                    <SelectItem value="time_hero">Time HERO</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Role - hidden when editing owner */}
+              {editingMember?.role !== 'owner' && (
+                <div className="space-y-2">
+                  <Label>Papel</Label>
+                  <Select
+                    value={editForm.role}
+                    onValueChange={(v: AppRole) => setEditForm({ ...editForm, role: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="vendedor">Vendedor</SelectItem>
+                      <SelectItem value="visualizador">Visualizador</SelectItem>
+                      <SelectItem value="time_hero">Time HERO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSavingEdit}>
