@@ -43,7 +43,7 @@ function buildServicesList(version: BudgetVersion): string {
   if (!version.services || version.services.length === 0) return 'Conforme proposta comercial anexa.';
   return version.services.map((s: ServiceItem, i: number) => {
     const objective = s.objective ? ` — ${s.objective}` : '';
-    return `${i + 1}. ${s.categoryLabel || s.categoryKey}${objective}`;
+    return `${i + 1}. ${s.serviceType}${objective}`;
   }).join('\n');
 }
 
