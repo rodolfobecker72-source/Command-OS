@@ -267,9 +267,18 @@ export async function generateProposalPDF({
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
   
-  if (projectDescLines.length > 0) {
-    projectDescLines.forEach((line: string) => {
-      doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+  if (budget.projectDescription) {
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'normal');
+    setColor(darkGray);
+    const briefLines = doc.splitTextToSize(budget.projectDescription, contentWidth) as string[];
+    briefLines.forEach((line: string, idx: number) => {
+      ensureSpace(6);
+      if (idx < briefLines.length - 1) {
+        doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
+      } else {
+        doc.text(line, margin, y);
+      }
       y += 5;
     });
     y += 4;
