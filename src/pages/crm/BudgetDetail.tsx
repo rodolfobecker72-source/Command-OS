@@ -936,6 +936,18 @@ export function BudgetDetail() {
                             Drive Comercial
                           </Button>
                         )}
+                        {/* Gerar Minuta button - only for approved */}
+                        {budget.status === 'aprovada' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            onClick={generateContract}
+                          >
+                            <FileText className="w-3 h-3" />
+                            Gerar Minuta
+                          </Button>
+                        )}
                       </div>
                     </div>
 
