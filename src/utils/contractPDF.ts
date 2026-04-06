@@ -79,7 +79,7 @@ export function generateContractPDF(params: ContractPDFParams) {
   };
 
   for (const [key, value] of Object.entries(replacements)) {
-    text = text.replaceAll(key, value);
+    text = text.split(key).join(value);
   }
 
   // Generate PDF
