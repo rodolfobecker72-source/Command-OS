@@ -463,20 +463,18 @@ export function UsersPage() {
                         {canManage && (
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
                               {member.role !== 'owner' && (
-                                <>
-                                  <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-destructive hover:text-destructive"
-                                    onClick={() => setDeletingMember(member)}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => setDeletingMember(member)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               )}
                             </div>
                           </TableCell>
