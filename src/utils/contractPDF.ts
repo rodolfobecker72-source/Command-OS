@@ -149,14 +149,24 @@ export async function generateContractPDF(params: ContractPDFParams) {
 
   let y = contentStartY;
 
+  // Track current font state to restore after page breaks
+  let currentFont: 'normal' | 'bold' = 'normal';
+
   const ensureSpace = (neededHeight: number) => {
     if (y + neededHeight > footerTopY) {
       addHeader();
       addFooter();
       doc.addPage();
       y = contentStartY;
+      // Restore font state after page break (addFooter changes it)
+      doc.setFont('helvetica', currentFont);
+      doc.setFontSize(normalSize);
+      doc.setTextColor(0, 0, 0);
     }
   };
+
+  // Add header to first page
+  addHeader();
 
   // Render contract text
   doc.setFont('helvetica', 'normal');
@@ -169,16 +179,21 @@ export async function generateContractPDF(params: ContractPDFParams) {
     const isBold = /^(CONTRATO|CLÁUSULA|CONTRATANTE|CONTRATADA|___)/.test(rawLine.trim());
 
     if (isBold) {
+      currentFont = 'bold';
       doc.setFont('helvetica', 'bold');
     } else {
+      currentFont = 'normal';
       doc.setFont('helvetica', 'normal');
     }
+
+    doc.setFontSize(normalSize);
+    doc.setTextColor(0, 0, 0);
 
     const wrapped = doc.splitTextToSize(rawLine || ' ', contentWidth) as string[];
 
     for (let i = 0; i < wrapped.length; i++) {
       ensureSpace(lineHeight);
-      // Justify text (except last line of paragraph)
+      // Justify text (except last line of paragraph and bold titles)
       if (!isBold && wrapped.length > 1 && i < wrapped.length - 1) {
         doc.text(wrapped[i], margin, y, { align: 'justify', maxWidth: contentWidth });
       } else {
