@@ -7,9 +7,10 @@ export type CalendarEventType = 'execution' | 'delivery';
 export interface CalendarDeliveryEvent {
   id: string;
   date: Date;
-  label: string; // e.g. "CINE - Entrega"
+  label: string;
   budget: Budget;
   type: 'delivery';
+  serviceId?: string;
 }
 
 interface CalendarEventCardProps {
