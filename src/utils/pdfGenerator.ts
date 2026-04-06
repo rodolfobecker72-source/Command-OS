@@ -637,7 +637,10 @@ export async function generateProposalPDF({
   addFooter();
 
   // Save
-  const safeProjectName = budget.projectName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-  const fileName = `${budget.proposalId}_${safeProjectName}_V${version.version}.pdf`;
-  doc.save(fileName);
+  if (!skipSave) {
+    const safeProjectName = budget.projectName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+    const fileName = `${budget.proposalId}_${safeProjectName}_V${version.version}.pdf`;
+    doc.save(fileName);
+  }
+  return doc;
 }
