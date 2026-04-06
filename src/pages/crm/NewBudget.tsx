@@ -398,6 +398,8 @@ export function NewBudget() {
         driveUrl: (formData as any).driveUrl || '',
         executionMonth: null,
         status: formData.status,
+        rejectionReason: '',
+        rejectionObservation: '',
       });
 
       if (!newBudget) {

@@ -17,10 +17,12 @@ import { KanbanColumn } from '@/components/crm/KanbanColumn';
 import { KanbanCard } from '@/components/crm/KanbanCard';
 import { KanbanColumnManager } from '@/components/crm/KanbanColumnManager';
 import { useCRM } from '@/contexts/CRMContext';
-import { CRMCard, CRMStatus } from '@/types/crm';
+import { CRMCard, CRMStatus, REJECTION_REASONS } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -48,7 +50,7 @@ function formatExecutionMonth(ym: string): string {
 }
 
 export function CRMKanban() {
-  const { getCRMCards, moveCard, kanbanColumns, approveBudget } = useCRM();
+  const { getCRMCards, moveCard, kanbanColumns, approveBudget, updateBudget } = useCRM();
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
@@ -59,6 +61,12 @@ export function CRMKanban() {
   const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(null);
   const [pendingApprovalVersion, setPendingApprovalVersion] = useState<number>(0);
   const [dragApproveMonth, setDragApproveMonth] = useState('');
+
+  // Rejection via drag states
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectObservation, setRejectObservation] = useState('');
 
   const cards = getCRMCards();
 
@@ -188,6 +196,18 @@ export function CRMKanban() {
       }
     }
 
+    // If dropping on "nao_aprovada", show rejection dialog
+    if (targetStatus === 'nao_aprovada') {
+      const card = cards.find(c => c.id === activeId);
+      if (card && card.status !== 'nao_aprovada') {
+        setPendingRejectId(activeId);
+        setRejectReason('');
+        setRejectObservation('');
+        setRejectDialogOpen(true);
+        return;
+      }
+    }
+
     moveCard(activeId, targetStatus as CRMStatus);
   };
 
@@ -199,6 +219,20 @@ export function CRMKanban() {
     setApproveDialogOpen(false);
     setPendingApprovalId(null);
     setDragApproveMonth('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (pendingRejectId && rejectReason) {
+      await updateBudget(pendingRejectId, {
+        status: 'nao_aprovada' as CRMStatus,
+        rejectionReason: rejectReason,
+        rejectionObservation: rejectObservation,
+      });
+    }
+    setRejectDialogOpen(false);
+    setPendingRejectId(null);
+    setRejectReason('');
+    setRejectObservation('');
   };
 
   return (
@@ -302,6 +336,56 @@ export function CRMKanban() {
               </Button>
               <Button className="bg-success hover:bg-success/90" onClick={handleConfirmDragApprove}>
                 Confirmar Aprovação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Dialog for Drag */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Não Aprovar Orçamento</DialogTitle>
+              <DialogDescription>
+                Selecione o motivo da não aprovação e adicione observações se necessário.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <Label className="mb-2 block">Motivo *</Label>
+                <RadioGroup value={rejectReason} onValueChange={setRejectReason} className="space-y-2">
+                  {REJECTION_REASONS.map((reason) => (
+                    <div key={reason} className="flex items-center space-x-2">
+                      <RadioGroupItem value={reason} id={`reason-${reason}`} />
+                      <Label htmlFor={`reason-${reason}`} className="text-sm font-normal cursor-pointer">
+                        {reason}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+              <div>
+                <Label htmlFor="reject-observation">Observação</Label>
+                <Textarea
+                  id="reject-observation"
+                  value={rejectObservation}
+                  onChange={(e) => setRejectObservation(e.target.value)}
+                  placeholder="Adicione detalhes ou observações..."
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmReject}
+                disabled={!rejectReason}
+              >
+                Confirmar
               </Button>
             </DialogFooter>
           </DialogContent>

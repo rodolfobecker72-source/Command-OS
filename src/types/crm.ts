@@ -315,9 +315,24 @@ export interface Budget {
   driveUrl: string;
   executionMonth: string | null; // YYYY-MM format
   execution: ProjectExecution | null; // Execution tracking when approved
+  rejectionReason: string;
+  rejectionObservation: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const REJECTION_REASONS = [
+  'Preço acima do esperado pelo cliente',
+  'Cliente encontrou proposta mais barata',
+  'Cliente não respondeu / sumiu',
+  'Sem orçamento disponível no momento',
+  'Projeto adiado / timing inadequado',
+  'Não enxergou valor na proposta',
+  'Escopo não atendeu expectativa',
+  'Fechou com concorrente',
+  'Já tinha fornecedor interno/recorrente',
+  'Mudança de prioridade interna do cliente',
+] as const;
 
 // CRM Card (for Kanban view)
 export interface CRMCard {
