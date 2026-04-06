@@ -107,7 +107,7 @@ export async function generateProposalPDF({
     pdfTitle: layoutSettings?.pdfTitle || 'PROPOSTA COMERCIAL',
     client: layoutSettings?.sectionClientTitle || 'CLIENTE',
     briefing: layoutSettings?.sectionBriefingTitle || 'BRIEFING DO PROJETO',
-    inclusions: layoutSettings?.sectionInclusionsTitle || 'O QUE ESTÁ INCLUSO',
+    
     services: layoutSettings?.sectionServicesTitle || 'SERVIÇOS',
     operational: layoutSettings?.sectionOperationalTitle || 'DESPESAS OPERACIONAIS',
     investment: layoutSettings?.sectionInvestmentTitle || 'COMPOSIÇÃO DO INVESTIMENTO',

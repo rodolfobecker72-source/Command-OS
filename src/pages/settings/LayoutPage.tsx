@@ -289,7 +289,7 @@ export function LayoutPage() {
                   {([
                     ['sectionClientTitle', 'Seção: Cliente'],
                     ['sectionBriefingTitle', 'Seção: Briefing'],
-                    ['sectionInclusionsTitle', 'Seção: Inclusões'],
+                    
                     ['sectionServicesTitle', 'Seção: Serviços'],
                     ['sectionOperationalTitle', 'Seção: Despesas Operacionais'],
                     ['sectionInvestmentTitle', 'Seção: Composição do Investimento'],
