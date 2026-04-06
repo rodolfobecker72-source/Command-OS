@@ -75,13 +75,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Cannot edit owner's profile via this function
-    if (targetMember.role === "owner") {
-      return new Response(JSON.stringify({ error: "Cannot edit owner profile" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // If editing the owner, only allow name/photo changes (no role change)
+    const isEditingOwner = targetMember.role === "owner";
 
     // Update profile (name and/or photo_url)
     const profileUpdate: Record<string, string> = {};
