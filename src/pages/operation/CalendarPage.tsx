@@ -141,6 +141,14 @@ export function CalendarPage() {
 
         <h2 className="text-sm md:text-base font-semibold capitalize flex-1">{headerLabel}</h2>
 
+        <div className="flex items-center gap-2">
+          <Switch checked={showDeliveries} onCheckedChange={setShowDeliveries} className="scale-90" />
+          <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowDeliveries(v => !v)}>
+            <Package className="w-3.5 h-3.5 text-blue-500" />
+            Entregas
+          </label>
+        </div>
+
         <Button variant="outline" size="sm" className="text-xs h-8" onClick={goToday}>
           Hoje
         </Button>
