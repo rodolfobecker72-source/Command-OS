@@ -9,9 +9,9 @@ interface ContractPDFParams {
     projectDescription: string;
     paymentTerms: string;
     hasExecutionDate: boolean;
-    executionStartDate?: string | null;
-    executionEndDate?: string | null;
-    approvalDate?: string | null;
+    executionStartDate?: string | Date | null;
+    executionEndDate?: string | Date | null;
+    approvalDate?: string | Date | null;
     finalValue?: number | null;
   };
   version: BudgetVersion;
