@@ -20,6 +20,7 @@ interface CalendarMonthViewProps {
   events: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
+  onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];

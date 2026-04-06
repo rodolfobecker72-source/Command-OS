@@ -17,6 +17,7 @@ interface CalendarWeekViewProps {
   events: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
+  onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
