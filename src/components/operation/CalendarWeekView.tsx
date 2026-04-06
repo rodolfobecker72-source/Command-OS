@@ -3,17 +3,19 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
+  isSameDay,
   isToday,
   format,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Budget } from '@/types/crm';
-import { CalendarEventCard } from './CalendarEventCard';
+import { CalendarEventCard, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 
 interface CalendarWeekViewProps {
   currentDate: Date;
   events: Budget[];
+  deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
 }
 
@@ -30,7 +32,11 @@ function getEventsForDay(day: Date, events: Budget[]): Budget[] {
   });
 }
 
-export function CalendarWeekView({ currentDate, events, onEventClick }: CalendarWeekViewProps) {
+function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEvent[]): CalendarDeliveryEvent[] {
+  return deliveryEvents.filter(ev => isSameDay(ev.date, day));
+}
+
+export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick }: CalendarWeekViewProps) {
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { locale: ptBR });
     const weekEnd = endOfWeek(currentDate, { locale: ptBR });
@@ -39,7 +45,6 @@ export function CalendarWeekView({ currentDate, events, onEventClick }: Calendar
 
   return (
     <div className="flex flex-col h-full">
-      {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-border">
         {days.map((day, i) => {
           const today = isToday(day);
@@ -67,11 +72,11 @@ export function CalendarWeekView({ currentDate, events, onEventClick }: Calendar
         })}
       </div>
 
-      {/* Day columns */}
       <div className="grid grid-cols-7 flex-1">
         {days.map((day, i) => {
           const today = isToday(day);
           const dayEvents = getEventsForDay(day, events);
+          const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
 
           return (
             <div
@@ -81,7 +86,7 @@ export function CalendarWeekView({ currentDate, events, onEventClick }: Calendar
                 today && 'bg-primary/5',
               )}
             >
-              {dayEvents.length === 0 && (
+              {dayEvents.length === 0 && dayDeliveries.length === 0 && (
                 <p className="text-[10px] text-muted-foreground/40 text-center pt-4">—</p>
               )}
               {dayEvents.map(ev => (
@@ -89,6 +94,15 @@ export function CalendarWeekView({ currentDate, events, onEventClick }: Calendar
                   key={ev.id}
                   budget={ev}
                   onClick={() => onEventClick(ev)}
+                />
+              ))}
+              {dayDeliveries.map(ev => (
+                <CalendarEventCard
+                  key={ev.id}
+                  budget={ev.budget}
+                  eventType="delivery"
+                  deliveryLabel={ev.label}
+                  onClick={() => onEventClick(ev.budget)}
                 />
               ))}
             </div>

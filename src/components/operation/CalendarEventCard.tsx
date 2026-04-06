@@ -2,30 +2,33 @@ import { Budget } from '@/types/crm';
 import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 
+export type CalendarEventType = 'execution' | 'delivery';
+
+export interface CalendarDeliveryEvent {
+  id: string;
+  date: Date;
+  label: string; // e.g. "CINE - Entrega"
+  budget: Budget;
+  type: 'delivery';
+}
+
 interface CalendarEventCardProps {
   budget: Budget;
   compact?: boolean;
   onClick?: () => void;
+  eventType?: CalendarEventType;
+  deliveryLabel?: string;
 }
 
-function getStatusStyle(status: string) {
-  if (status === 'aprovada') return 'bg-success/15 border-success/30 text-success';
-  if (status === 'nao_aprovada') return 'bg-destructive/15 border-destructive/30 text-destructive';
-  // "Em negociação" = all other active statuses
-  return 'bg-warning/15 border-warning/30 text-warning';
-}
-
-function getDotColor(status: string) {
-  if (status === 'aprovada') return 'bg-success';
-  if (status === 'nao_aprovada') return 'bg-destructive';
-  return 'bg-warning';
-}
-
-export function CalendarEventCard({ budget, compact = false, onClick }: CalendarEventCardProps) {
+export function CalendarEventCard({ budget, compact = false, onClick, eventType = 'execution', deliveryLabel }: CalendarEventCardProps) {
   const { clients } = useCRM();
   const client = clients.find(c => c.id === budget.clientId);
-  const statusStyle = getStatusStyle(budget.status);
-  const dotColor = getDotColor(budget.status);
+
+  const isDelivery = eventType === 'delivery';
+  const statusStyle = isDelivery
+    ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
+    : 'bg-success/15 border-success/30 text-success';
+  const dotColor = isDelivery ? 'bg-blue-500' : 'bg-success';
 
   if (compact) {
     return (
@@ -38,7 +41,7 @@ export function CalendarEventCard({ budget, compact = false, onClick }: Calendar
       >
         <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
         <span className="truncate text-foreground">
-          {budget.proposalId} - {budget.projectName}
+          {isDelivery ? deliveryLabel : `${budget.proposalId} - ${budget.projectName}`}
         </span>
       </button>
     );
@@ -55,7 +58,7 @@ export function CalendarEventCard({ budget, compact = false, onClick }: Calendar
       <div className="flex items-center gap-1.5">
         <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />
         <span className="text-xs font-semibold truncate text-foreground">
-          {budget.proposalId} - {budget.projectName}
+          {isDelivery ? deliveryLabel : `${budget.proposalId} - ${budget.projectName}`}
         </span>
       </div>
       {client && (

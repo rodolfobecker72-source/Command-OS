@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { addMonths, subMonths, addWeeks, subWeeks, format } from 'date-fns';
+import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarEventCard } from '@/components/operation/CalendarEventCard';
+import { CalendarEventCard, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
@@ -13,6 +13,45 @@ import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { Header } from '@/components/layout/Header';
 
+function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
+  const events: CalendarDeliveryEvent[] = [];
+  for (const b of budgets) {
+    if (b.status !== 'aprovada' || !b.executionStartDate) continue;
+    const execStart = new Date(b.executionStartDate);
+    const latestVersion = b.versions?.length ? b.versions[b.versions.length - 1] : null;
+    if (!latestVersion?.services?.length) continue;
+
+    for (const svc of latestVersion.services) {
+      if (!svc.deliveryType) continue;
+      let deliveryDate: Date;
+      if (svc.deliveryType === 'realtime') {
+        deliveryDate = new Date(execStart);
+      } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
+        deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
+        deliveryDate = addDays(deliveryDate, -1);
+      } else if (svc.deliveryType === 'dias_corridos' && svc.deliveryDays) {
+        deliveryDate = addDays(execStart, svc.deliveryDays);
+        deliveryDate = addDays(deliveryDate, -1);
+      } else {
+        continue;
+      }
+
+      const daysLabel = svc.deliveryType === 'realtime'
+        ? 'Real time'
+        : `${svc.deliveryDays}d`;
+
+      events.push({
+        id: `${b.id}-delivery-${svc.id}`,
+        date: deliveryDate,
+        label: `📦 ${b.proposalId} - ${svc.serviceType}${svc.objective ? ` (${svc.objective})` : ''} — ${daysLabel}`,
+        budget: b,
+        type: 'delivery',
+      });
+    }
+  }
+  return events;
+}
+
 export function CalendarPage() {
   const { budgets, clients } = useCRM();
   const navigate = useNavigate();
@@ -21,17 +60,26 @@ export function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
 
-  // Filter budgets that have execution start date set (regardless of hasExecutionDate flag)
+  // Only show approved budgets on the calendar
+  const approvedBudgets = useMemo(() => budgets.filter(b => b.status === 'aprovada'), [budgets]);
+
+  // Approved budgets with execution dates for the calendar grid
   const calendarEvents = useMemo(
-    () => budgets.filter(b => b.executionStartDate),
-    [budgets],
+    () => approvedBudgets.filter(b => b.executionStartDate),
+    [approvedBudgets],
   );
 
-  // Budgets with executionMonth matching current view but no specific start date
+  // Delivery date events (blue)
+  const deliveryEvents = useMemo(
+    () => computeDeliveryEvents(approvedBudgets),
+    [approvedBudgets],
+  );
+
+  // Approved budgets with executionMonth matching current view but no specific start date
   const currentYearMonth = format(currentDate, 'yyyy-MM');
   const undatedEvents = useMemo(
-    () => budgets.filter(b => b.executionMonth === currentYearMonth && !b.executionStartDate),
-    [budgets, currentYearMonth],
+    () => approvedBudgets.filter(b => b.executionMonth === currentYearMonth && !b.executionStartDate),
+    [approvedBudgets, currentYearMonth],
   );
 
   const goToday = () => setCurrentDate(new Date());
@@ -94,12 +142,14 @@ export function CalendarPage() {
           <CalendarMonthView
             currentDate={currentDate}
             events={calendarEvents}
+            deliveryEvents={deliveryEvents}
             onEventClick={handleEventClick}
           />
         ) : (
           <CalendarWeekView
             currentDate={currentDate}
             events={calendarEvents}
+            deliveryEvents={deliveryEvents}
             onEventClick={handleEventClick}
           />
         )}
