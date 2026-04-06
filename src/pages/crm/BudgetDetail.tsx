@@ -2235,6 +2235,703 @@ export function BudgetDetail() {
                   <CardContent>
 
 
+                    {/* Services Execution */}
+                    {budget.execution.services.map((service) => {
+                      const Icon = SERVICE_ICONS[service.serviceType];
+                      const objectives = getObjectivesForCategory(service.serviceType);
+                      const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
+                      const extraCosts = service.extraCosts || [];
+
+                      return (
+                        <div key={service.id} className="mb-6 last:mb-0">
+                          {/* Service Header */}
+                          <div className="flex items-center mb-3 p-3 bg-foreground/5 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-foreground text-background rounded-lg">
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold">{service.serviceType}</span>
+                                  <span className="text-muted-foreground">-</span>
+                                  <span>{objectiveLabel}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Main Costs Table */}
+                          <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Descrição</TableHead>
+                                  <TableHead className="text-right">Orçado</TableHead>
+                                  <TableHead className="text-right">Real</TableHead>
+                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Data Pgto</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {service.costs.map((cost) => (
+                                  <TableRow key={cost.id}>
+                                    <TableCell>{cost.description}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                      {formatCurrency(cost.budgetedValue)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <Input
+                                        type="number"
+                                        value={cost.realValue}
+                                        onChange={(e) => handleUpdateExecutionCost(
+                                          service.id,
+                                          cost.id,
+                                          parseFloat(e.target.value) || 0,
+                                          false
+                                        )}
+                                        className="w-28 text-right h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="text"
+                                        value={cost.supplier || ''}
+                                        onChange={(e) => handleUpdateExecutionSupplier(
+                                          service.id,
+                                          cost.id,
+                                          e.target.value
+                                        )}
+                                        placeholder="Quem executou"
+                                        className="w-32 h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Select
+                                        value={cost.paymentStatus}
+                                        onValueChange={(value) => handleUpdateExecutionPayment(
+                                          service.id,
+                                          cost.id,
+                                          value as PaymentStatusType,
+                                          value === 'pago' ? new Date() : null,
+                                          false
+                                        )}
+                                      >
+                                        <SelectTrigger className="w-28 h-8">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                              {label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                      {cost.paymentDate
+                                        ? new Date(cost.paymentDate).toLocaleDateString('pt-BR')
+                                        : '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                          {/* Extra Costs Section */}
+                          {extraCosts.length > 0 && (
+                            <div className="mt-3 rounded-lg border border-warning/30 overflow-hidden">
+                              <div className="bg-warning/10 px-4 py-2 flex items-center justify-between">
+                                <span className="text-sm font-medium text-warning">Gastos Extras (não previstos)</span>
+                              </div>
+                              <Table>
+                                <TableHeader>
+                                  <TableRow className="bg-warning/5">
+                                    <TableHead>Descrição</TableHead>
+                                    <TableHead className="text-right">Valor</TableHead>
+                                    <TableHead>Fornecedor</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Data Pgto</TableHead>
+                                    <TableHead className="w-10"></TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {extraCosts.map((cost) => (
+                                    <TableRow key={cost.id}>
+                                      <TableCell>{cost.description}</TableCell>
+                                      <TableCell className="text-right">
+                                        <Input
+                                          type="number"
+                                          value={cost.realValue}
+                                          onChange={(e) => handleUpdateExecutionCost(
+                                            service.id,
+                                            cost.id,
+                                            parseFloat(e.target.value) || 0,
+                                            true
+                                          )}
+                                          className="w-28 text-right h-8"
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <Input
+                                          type="text"
+                                          value={cost.supplier || ''}
+                                          onChange={(e) => handleUpdateExtraCostSupplier(
+                                            service.id,
+                                            cost.id,
+                                            e.target.value
+                                          )}
+                                          placeholder="Quem executou"
+                                          className="w-32 h-8"
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <Select
+                                          value={cost.paymentStatus}
+                                          onValueChange={(value) => handleUpdateExecutionPayment(
+                                            service.id,
+                                            cost.id,
+                                            value as PaymentStatusType,
+                                            value === 'pago' ? new Date() : null,
+                                            true
+                                          )}
+                                        >
+                                          <SelectTrigger className="w-28 h-8">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+                                              <SelectItem key={value} value={value}>
+                                                {label}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell className="text-sm text-muted-foreground">
+                                        {cost.paymentDate
+                                          ? new Date(cost.paymentDate).toLocaleDateString('pt-BR')
+                                          : '-'}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleRemoveExtraCost(service.id, cost.id)}
+                                        >
+                                          <Trash2 className="w-3 h-3 text-destructive" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+
+                          {/* Add Extra Cost Button */}
+                          <div className="mt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedServiceForExtraCost(service.id);
+                                setExtraCostDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Adicionar gasto extra
+                            </Button>
+                          </div>
+
+                          {/* Resumo por Entrega */}
+                          <div className="mt-3">
+                            <h4 className="text-xs font-semibold text-muted-foreground mb-2">Resumo por Entrega</h4>
+                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg text-sm">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Subtotal</p>
+                                <p className="font-semibold text-blue-500">{formatCurrency(service.budgetedFinalValue || service.finalValue)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Custo Orçado</p>
+                                <p className="font-semibold text-orange-500">{formatCurrency(service.budgetedTotal)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Custo Real</p>
+                                <p className="font-semibold text-destructive">
+                                  {formatCurrency(service.realTotal)}
+                                </p>
+                              </div>
+                             </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Operational Costs in Execution */}
+                    {(() => {
+                      const opCosts = budget.execution.operationalCosts || [];
+                      const extraOpCosts = budget.execution.extraOperationalCosts || [];
+                      if (opCosts.length === 0 && extraOpCosts.length === 0) return null;
+                      const opTotal = opCosts.reduce((sum, c) => sum + c.realValue, 0) + extraOpCosts.reduce((sum, c) => sum + c.realValue, 0);
+                      const opBudgeted = opCosts.reduce((sum, c) => sum + c.budgetedValue, 0);
+                      
+                      return (
+                        <div className="mb-6">
+                          <div className="flex items-center mb-3 p-3 bg-warning/5 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 bg-warning/20 text-warning rounded-lg">
+                                <DollarSign className="w-4 h-4" />
+                              </div>
+                              <span className="font-bold">Despesas Operacionais</span>
+                            </div>
+                          </div>
+                          
+                          <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Descrição</TableHead>
+                                  <TableHead className="text-right">Orçado</TableHead>
+                                  <TableHead className="text-right">Real</TableHead>
+                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Data Pgto</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {opCosts.map((cost) => (
+                                  <TableRow key={cost.id}>
+                                    <TableCell>{cost.description}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                      {formatCurrency(cost.budgetedValue)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <Input
+                                        type="number"
+                                        value={cost.realValue}
+                                        onChange={(e) => {
+                                          const val = parseFloat(e.target.value) || 0;
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, realValue: val } : c
+                                            ),
+                                          });
+                                        }}
+                                        className="w-28 text-right h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="text"
+                                        value={cost.supplier || ''}
+                                        onChange={(e) => {
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, supplier: e.target.value } : c
+                                            ),
+                                          });
+                                        }}
+                                        placeholder="Quem executou"
+                                        className="w-32 h-8"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Select
+                                        value={cost.paymentStatus}
+                                        onValueChange={(value) => {
+                                          updateExecution(budget.id, {
+                                            operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
+                                              c.id === cost.id ? { ...c, paymentStatus: value as PaymentStatusType, paymentDate: value === 'pago' ? new Date() : null } : c
+                                            ),
+                                          });
+                                        }}
+                                      >
+                                        <SelectTrigger className="w-28 h-8">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                              {label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                      {cost.paymentDate
+                                        ? new Date(cost.paymentDate).toLocaleDateString('pt-BR')
+                                        : '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          
+                          <div className="mt-3 grid grid-cols-2 gap-3 p-3 bg-muted/30 rounded-lg text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Orçado</p>
+                              <p className="font-semibold text-orange-500">{formatCurrency(opBudgeted)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Real</p>
+                              <p className="font-semibold text-destructive">{formatCurrency(opTotal)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Consolidação Final do Projeto */}
+                    <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-semibold flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                          Consolidação final do projeto
+                        </h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const layoutSettings = await fetchLayoutSettings();
+                              await generateFinancialReportPDF({
+                                budget,
+                                client,
+                                userName: profile?.name || '',
+                                layoutSettings,
+                              });
+                              toast.success('Relatório financeiro gerado!');
+                            } catch (err) {
+                              console.error(err);
+                              toast.error('Erro ao gerar relatório');
+                            }
+                          }}
+                        >
+                          <Download className="w-3.5 h-3.5 mr-1.5" />
+                          Exportar Relatório
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        {/* Investimento Total */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-sm font-medium">Investimento Total</span>
+                          <span className="font-bold text-lg">{formatCurrency(budget.finalValue || 0)}</span>
+                        </div>
+
+                        <Separator />
+
+                        {/* Custo Real por entrega */}
+                        {budget.execution?.services?.map((svc, idx) => {
+                          const svcRealTotal = svc.costs?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const extraCostsTotal = svc.extraCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const objLabel = svc.objective || '';
+                          return (
+                            <div key={svc.id || idx} className="flex justify-between items-center py-1">
+                              <span className="text-sm text-muted-foreground">
+                                {idx + 1}. {SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType}{objLabel ? ` — ${objLabel}` : ''} (Custo Real)
+                              </span>
+                              <span className="font-semibold text-destructive">{formatCurrency(svcRealTotal + extraCostsTotal)}</span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Despesas Operacionais Reais */}
+                        {(() => {
+                          const opReal = budget.execution?.operationalCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const extraOpReal = budget.execution?.extraOperationalCosts?.reduce((sum: number, c: any) => sum + (c.realValue || 0), 0) || 0;
+                          const totalOpReal = opReal + extraOpReal;
+                          if (totalOpReal > 0) {
+                            return (
+                              <div className="flex justify-between items-center py-1">
+                                <span className="text-sm text-muted-foreground">Despesas Operacionais (Real)</span>
+                                <span className="font-semibold text-destructive">{formatCurrency(totalOpReal)}</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        {/* Imposto NF */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-sm text-muted-foreground">Imposto NF</span>
+                          {isEditingNf ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={executionNfValue}
+                                onChange={(e) => setExecutionNfValue(parseFloat(e.target.value) || 0)}
+                                className="w-24 h-8"
+                              />
+                              <Button size="sm" variant="ghost" onClick={handleSaveNfValue}>
+                                <Save className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div 
+                              className="font-semibold cursor-pointer hover:text-primary flex items-center gap-1"
+                              onClick={() => {
+                                setExecutionNfValue(budget.execution?.nfTaxValue || 0);
+                                setIsEditingNf(true);
+                              }}
+                            >
+                              {formatCurrency(budget.execution?.nfTaxValue || 0)}
+                              <Edit2 className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Margem Real */}
+                        {(() => {
+                          const investimento = budget.finalValue || 0;
+                          const custoRealTotal = (budget.execution?.realTotal || 0) + (budget.execution?.nfTaxValue || 0);
+                          const margemReais = investimento - custoRealTotal;
+                          const margemPercent = investimento > 0 
+                            ? ((margemReais) / investimento) * 100 
+                            : 0;
+                          return (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-sm font-medium">Margem Real</span>
+                              <span className={`font-bold text-lg ${getMarginColor(margemPercent)}`}>
+                                {formatCurrency(margemReais)} ({margemPercent.toFixed(1)}%)
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Project Management Link (Notion) */}
+                    <div className="mt-8 pt-6 border-t">
+                      <div className="flex flex-col gap-3">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" />
+                          Gestão do Projeto
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Cole o link do Notion onde é feita a gestão deste projeto
+                        </p>
+                        {budget.execution?.notionLink && !isEditingNotion ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={budget.execution.notionLink}
+                              readOnly
+                              className="flex-1 bg-muted"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={budget.execution.notionLink} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Abrir
+                              </a>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNotionInput(budget.execution?.notionLink || '');
+                                setIsEditingNotion(true);
+                              }}
+                            >
+                              Editar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="https://notion.so/..."
+                              value={notionInput}
+                              onChange={(e) => setNotionInput(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button
+                              size="sm"
+                              disabled={!notionInput.trim()}
+                              onClick={() => {
+                                if (budget.execution && notionInput.trim()) {
+                                  const updated = { ...budget, execution: { ...budget.execution, notionLink: notionInput.trim() } };
+                                  updateBudget(budget.id, updated);
+                                  setNotionInput('');
+                                  setIsEditingNotion(false);
+                                }
+                              }}
+                            >
+                              Salvar
+                            </Button>
+                            {isEditingNotion && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsEditingNotion(false)}
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Finalization Section */}
+                    <div className="mt-8 pt-6 border-t">
+                      {budget.execution.isFinalized ? (
+                        <div className="p-4 bg-success/10 border border-success/30 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Flag className="w-5 h-5 text-success" />
+                            <span className="font-semibold text-success">Execução Finalizada</span>
+                          </div>
+                          {budget.execution.finalizedAt && (
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Finalizado em {new Date(budget.execution.finalizedAt).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                          {budget.execution.finalReport && (
+                            <div className="mt-3 p-3 bg-background/50 rounded">
+                              <p className="text-xs text-muted-foreground mb-1">Relatório Final:</p>
+                              <p className="text-sm">{budget.execution.finalReport}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          <div>
+                            <h3 className="font-semibold">Finalizar Execução</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Consolide a operação e gere um relatório final
+                            </p>
+                          </div>
+                          <Button onClick={() => setFinalizeDialogOpen(true)}>
+                            <Flag className="w-4 h-4 mr-2" />
+                            Finalizar Execução
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* If Approved - Show approval info */}
+            {budget.status === 'aprovada' && activeTab === 'budget' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="card-elevated border-success/30 bg-success/5">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-success/10">
+                        <CheckCircle className="w-6 h-6 text-success" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-success">Projeto Aprovado</CardTitle>
+                        <CardDescription>
+                          {budget.approvalDate &&
+                            `Aprovado em ${new Date(budget.approvalDate).toLocaleDateString('pt-BR')}`}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Versão Aprovada</p>
+                        <p className="font-bold text-lg">V{budget.approvedVersion}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Valor Final</p>
+                        <p className="font-bold text-lg text-success">
+                          {formatCurrency(budget.finalValue || 0)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <Button variant="outline" className="flex-1">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Contrato
+                        </Button>
+                        <Button variant="outline" className="flex-1">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Nota Fiscal
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Column - Client Info & Stats */}
+          <div className="space-y-6">
+            {/* Client Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <Card className="card-elevated">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Cliente</CardTitle>
+                    <ScoreBadge score={client.score} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <Building2 className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{client.companyName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatCNPJ(client.cnpj)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{client.responsiblePerson}</p>
+                      <p className="text-xs text-muted-foreground">Responsável</p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-success/10 hover:bg-success/20 transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-success" />
+                    <div>
+                      <p className="font-medium text-success">
+                        {formatPhone(client.phone)}
+                      </p>
+                      <p className="text-xs text-success/80">WhatsApp</p>
+                    </div>
+                  </a>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+
             {/* Timeline */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
