@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { generateProposalPDF } from '@/utils/pdfGenerator';
 import type { PDFLayoutSettings } from '@/utils/pdfGenerator';
 import { generateFinancialReportPDF } from '@/utils/financialReportPDF';
+import { generateContractPDF } from '@/utils/contractPDF';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { useCRM } from '@/contexts/CRMContext';
@@ -639,6 +640,60 @@ export function BudgetDetail() {
     generatePDFForVersion(currentVersionData);
   };
 
+  const generateContract = async () => {
+    if (!currentVersionData || !client || !budget) {
+      toast.error('Dados insuficientes para gerar minuta');
+      return;
+    }
+    try {
+      const { data: templateData } = await supabase
+        .from('workspace_contract_template')
+        .select('content')
+        .eq('workspace_id', workspace?.id || '')
+        .maybeSingle();
+
+      if (!templateData?.content) {
+        toast.error('Nenhum template de contrato configurado. Acesse Configurações > Minuta de Contrato.');
+        return;
+      }
+
+      const layoutSettings = await fetchLayoutSettings();
+
+      generateContractPDF({
+        template: templateData.content,
+        budget: {
+          proposalId: budget.proposalId,
+          projectName: budget.projectName,
+          projectDescription: budget.projectDescription,
+          paymentTerms: budget.paymentTerms,
+          hasExecutionDate: budget.hasExecutionDate,
+          executionStartDate: budget.executionStartDate,
+          executionEndDate: budget.executionEndDate,
+          approvalDate: budget.approvalDate,
+          finalValue: budget.finalValue,
+        },
+        version: currentVersionData,
+        client: {
+          companyName: client.companyName,
+          cnpj: client.cnpj,
+          responsiblePerson: client.responsiblePerson,
+          email: client.email,
+          phone: client.phone,
+        },
+        layout: layoutSettings ? {
+          companyName: layoutSettings.companyName,
+          website: layoutSettings.website,
+          email: layoutSettings.email,
+          logoUrl: layoutSettings.logoUrl,
+        } : null,
+      });
+      toast.success('Minuta gerada com sucesso!');
+    } catch (err) {
+      console.error('Error generating contract:', err);
+      toast.error('Erro ao gerar minuta');
+    }
+  };
+
   const getMarginColor = (margin: number) => {
     if (margin >= 40) return 'text-success';
     if (margin >= 25) return 'text-warning';
@@ -879,6 +934,18 @@ export function BudgetDetail() {
                             <Plus className="w-3 h-3" />
                             <HardDrive className="w-3 h-3" />
                             Drive Comercial
+                          </Button>
+                        )}
+                        {/* Gerar Minuta button - only for approved */}
+                        {budget.status === 'aprovada' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            onClick={generateContract}
+                          >
+                            <FileText className="w-3 h-3" />
+                            Gerar Minuta
                           </Button>
                         )}
                       </div>
