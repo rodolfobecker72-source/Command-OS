@@ -178,6 +178,8 @@ export type Database = {
           project_description: string
           project_name: string
           proposal_id: string
+          rejection_observation: string
+          rejection_reason: string
           service_type: string
           status: string
           updated_at: string
@@ -212,6 +214,8 @@ export type Database = {
           project_description?: string
           project_name?: string
           proposal_id?: string
+          rejection_observation?: string
+          rejection_reason?: string
           service_type?: string
           status?: string
           updated_at?: string
@@ -246,6 +250,8 @@ export type Database = {
           project_description?: string
           project_name?: string
           proposal_id?: string
+          rejection_observation?: string
+          rejection_reason?: string
           service_type?: string
           status?: string
           updated_at?: string
