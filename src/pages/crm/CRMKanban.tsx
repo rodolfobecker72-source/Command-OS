@@ -17,7 +17,7 @@ import { KanbanColumn } from '@/components/crm/KanbanColumn';
 import { KanbanCard } from '@/components/crm/KanbanCard';
 import { KanbanColumnManager } from '@/components/crm/KanbanColumnManager';
 import { useCRM } from '@/contexts/CRMContext';
-import { CRMCard, CRMStatus } from '@/types/crm';
+import { CRMCard, CRMStatus, REJECTION_REASONS } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
