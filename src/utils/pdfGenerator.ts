@@ -81,8 +81,10 @@ export async function generateProposalPDF({
   client,
   responsibleUser,
   layoutSettings,
-}: PDFGeneratorParams): Promise<void> {
-  const doc = new jsPDF();
+  existingDoc,
+  skipSave,
+}: PDFGeneratorParams & { existingDoc?: jsPDF; skipSave?: boolean }): Promise<jsPDF> {
+  const doc = existingDoc || new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
