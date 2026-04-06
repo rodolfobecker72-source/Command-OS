@@ -115,6 +115,8 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     nfUrl: row.nf_url,
     driveUrl: row.drive_url || '',
     execution: row.execution as ProjectExecution | null,
+    rejectionReason: row.rejection_reason || '',
+    rejectionObservation: row.rejection_observation || '',
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
