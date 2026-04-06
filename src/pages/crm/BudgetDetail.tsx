@@ -659,33 +659,13 @@ export function BudgetDetail() {
 
       const layoutSettings = await fetchLayoutSettings();
 
-      generateContractPDF({
+      await generateContractPDF({
         template: templateData.content,
-        budget: {
-          proposalId: budget.proposalId,
-          projectName: budget.projectName,
-          projectDescription: budget.projectDescription,
-          paymentTerms: budget.paymentTerms,
-          hasExecutionDate: budget.hasExecutionDate,
-          executionStartDate: budget.executionStartDate,
-          executionEndDate: budget.executionEndDate,
-          approvalDate: budget.approvalDate,
-          finalValue: budget.finalValue,
-        },
+        budget,
         version: currentVersionData,
-        client: {
-          companyName: client.companyName,
-          cnpj: client.cnpj,
-          responsiblePerson: client.responsiblePerson,
-          email: client.email,
-          phone: client.phone,
-        },
-        layout: layoutSettings ? {
-          companyName: layoutSettings.companyName,
-          website: layoutSettings.website,
-          email: layoutSettings.email,
-          logoUrl: layoutSettings.logoUrl,
-        } : null,
+        client,
+        layoutSettings,
+        responsibleUser: profile ? { id: profile.id, name: profile.name, photo: profile.photo_url || '' } : null,
       });
       toast.success('Minuta gerada com sucesso!');
     } catch (err) {
