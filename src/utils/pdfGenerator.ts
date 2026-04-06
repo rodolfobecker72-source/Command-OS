@@ -302,34 +302,6 @@ export async function generateProposalPDF({
   drawLine(y);
   y += 10;
 
-  // INCLUSIONS BLOCK
-  const inclusionItems = [
-    { label: 'Impostos', included: budget.includesTax },
-    { label: 'Logística e deslocamento', included: budget.includesLogistics },
-    { label: 'Hospedagem da equipe', included: budget.includesAccommodation },
-    { label: 'Alimentação da equipe', included: budget.includesMeals },
-    { label: 'Material bruto', included: budget.includesRawMaterial },
-    { label: 'Visita técnica', included: budget.includesTechnicalVisit },
-  ];
-  const inclusionsBlockHeight = 8 + inclusionItems.length * 6 + 4;
-  ensureSpace(inclusionsBlockHeight);
-
-  doc.setFontSize(subtitleSize);
-  doc.setFont('helvetica', 'bold');
-  setColor(black);
-  doc.text(t.inclusions, margin, y);
-  y += 8;
-  
-  doc.setFontSize(normalSize);
-  doc.setFont('helvetica', 'normal');
-
-  inclusionItems.forEach((item) => {
-    const status = item.included ? '[x]' : '[ ]';
-    setColor(item.included ? darkGray : gray);
-    doc.text(`${status} ${item.label}`, margin, y);
-    y += 6;
-  });
-
   addFooter();
 
   // ============================================
