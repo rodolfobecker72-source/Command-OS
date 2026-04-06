@@ -42,7 +42,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick }: CalendarMonthViewProps) {
+export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarMonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
