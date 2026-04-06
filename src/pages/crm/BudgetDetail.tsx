@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { generateProposalPDF } from '@/utils/pdfGenerator';
 import type { PDFLayoutSettings } from '@/utils/pdfGenerator';
 import { generateFinancialReportPDF } from '@/utils/financialReportPDF';
+import { generateContractPDF } from '@/utils/contractPDF';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { useCRM } from '@/contexts/CRMContext';
