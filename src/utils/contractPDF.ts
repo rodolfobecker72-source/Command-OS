@@ -30,12 +30,13 @@ interface ContractPDFParams {
   } | null;
 }
 
-function formatDate(dateStr: string | null | undefined): string {
+function formatDate(dateStr: string | Date | null | undefined): string {
   if (!dateStr) return '___/___/______';
   try {
-    return new Date(dateStr).toLocaleDateString('pt-BR');
+    const d = dateStr instanceof Date ? dateStr : new Date(dateStr);
+    return d.toLocaleDateString('pt-BR');
   } catch {
-    return dateStr;
+    return String(dateStr);
   }
 }
 
