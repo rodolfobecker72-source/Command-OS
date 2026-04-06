@@ -2,13 +2,14 @@ import { useState, useMemo, useCallback } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarEventCard, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
 import { Budget } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { Header } from '@/components/layout/Header';
@@ -43,9 +44,10 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
       events.push({
         id: `${b.id}-delivery-${svc.id}`,
         date: deliveryDate,
-        label: `📦 ${b.proposalId} - ${svc.serviceType}${svc.objective ? ` (${svc.objective})` : ''} — ${daysLabel}`,
+        label: `📦 ${b.proposalId} - ${b.projectName} — ${svc.serviceType}`,
         budget: b,
         type: 'delivery',
+        serviceId: svc.id,
       });
     }
   }
@@ -59,6 +61,8 @@ export function CalendarPage() {
   const [view, setView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [showDeliveries, setShowDeliveries] = useState(true);
 
   // Only show approved budgets on the calendar
   const approvedBudgets = useMemo(() => budgets.filter(b => b.status === 'aprovada'), [budgets]);
@@ -97,6 +101,12 @@ export function CalendarPage() {
 
   const handleEventClick = useCallback((budget: Budget) => {
     setSelectedBudget(budget);
+    setSelectedServiceId(null);
+  }, []);
+
+  const handleDeliveryClick = useCallback((budget: Budget, serviceId?: string) => {
+    setSelectedBudget(budget);
+    setSelectedServiceId(serviceId || null);
   }, []);
 
   const client = selectedBudget
@@ -131,6 +141,14 @@ export function CalendarPage() {
 
         <h2 className="text-sm md:text-base font-semibold capitalize flex-1">{headerLabel}</h2>
 
+        <div className="flex items-center gap-2">
+          <Switch checked={showDeliveries} onCheckedChange={setShowDeliveries} className="scale-90" />
+          <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowDeliveries(v => !v)}>
+            <Package className="w-3.5 h-3.5 text-blue-500" />
+            Entregas
+          </label>
+        </div>
+
         <Button variant="outline" size="sm" className="text-xs h-8" onClick={goToday}>
           Hoje
         </Button>
@@ -142,15 +160,17 @@ export function CalendarPage() {
           <CalendarMonthView
             currentDate={currentDate}
             events={calendarEvents}
-            deliveryEvents={deliveryEvents}
+            deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
+            onDeliveryClick={handleDeliveryClick}
           />
         ) : (
           <CalendarWeekView
             currentDate={currentDate}
             events={calendarEvents}
-            deliveryEvents={deliveryEvents}
+            deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
+            onDeliveryClick={handleDeliveryClick}
           />
         )}
       </div>
@@ -174,11 +194,15 @@ export function CalendarPage() {
       )}
 
       {/* Event detail dialog */}
-      <Dialog open={!!selectedBudget} onOpenChange={open => !open && setSelectedBudget(null)}>
+      <Dialog open={!!selectedBudget} onOpenChange={open => { if (!open) { setSelectedBudget(null); setSelectedServiceId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-primary" />
+              {selectedServiceId ? (
+                <Package className="w-5 h-5 text-blue-500" />
+              ) : (
+                <CalendarDays className="w-5 h-5 text-primary" />
+              )}
               {selectedBudget?.proposalId} - {selectedBudget?.projectName}
             </DialogTitle>
           </DialogHeader>
@@ -215,58 +239,85 @@ export function CalendarPage() {
                 </div>
               </div>
 
-              {/* Briefing */}
-              {selectedBudget.projectDescription && (
-                <div>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Briefing do Projeto</p>
-                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
-                    {selectedBudget.projectDescription}
-                  </p>
-                </div>
-              )}
-
-              {/* Objective */}
-              {selectedBudget.objective && (
-                <div>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Objetivo</p>
-                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
-                    {selectedBudget.objective}
-                  </p>
-                </div>
-              )}
-
-              {/* Services description */}
-              {(() => {
+              {/* If delivery click: show only that service */}
+              {selectedServiceId ? (() => {
                 const latestVersion = selectedBudget.versions?.length
                   ? selectedBudget.versions[selectedBudget.versions.length - 1]
                   : null;
-                if (!latestVersion?.services?.length) return null;
+                const svc = latestVersion?.services?.find((s: any) => s.id === selectedServiceId);
+                if (!svc) return null;
                 return (
                   <div>
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Serviços</p>
-                    <div className="space-y-2">
-                      {latestVersion.services.map((svc, idx) => (
-                        <div key={svc.id || idx} className="bg-muted/50 rounded-md p-3 space-y-1">
-                          <p className="font-semibold text-xs text-primary">
-                            {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
-                          </p>
-                          {svc.description && (
-                            <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
-                              {svc.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Entrega — Serviço</p>
+                    <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                      <p className="font-semibold text-xs text-primary">
+                        {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
+                      </p>
+                      {svc.description && (
+                        <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
+                          {svc.description}
+                        </p>
+                      )}
+                      {svc.deliveryType && (
+                        <p className="text-muted-foreground text-[10px] mt-1">
+                          Prazo: {svc.deliveryType === 'realtime' ? 'Real time' : `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
-              })()}
+              })() : (
+                <>
+                  {selectedBudget.projectDescription && (
+                    <div>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Briefing do Projeto</p>
+                      <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                        {selectedBudget.projectDescription}
+                      </p>
+                    </div>
+                  )}
+                  {selectedBudget.objective && (
+                    <div>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Objetivo</p>
+                      <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                        {selectedBudget.objective}
+                      </p>
+                    </div>
+                  )}
+                  {(() => {
+                    const latestVersion = selectedBudget.versions?.length
+                      ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                      : null;
+                    if (!latestVersion?.services?.length) return null;
+                    return (
+                      <div>
+                        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Serviços</p>
+                        <div className="space-y-2">
+                          {latestVersion.services.map((svc: any, idx: number) => (
+                            <div key={svc.id || idx} className="bg-muted/50 rounded-md p-3 space-y-1">
+                              <p className="font-semibold text-xs text-primary">
+                                {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
+                              </p>
+                              {svc.description && (
+                                <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
+                                  {svc.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
 
               <Button
                 className="w-full mt-2"
                 size="sm"
                 onClick={() => {
                   setSelectedBudget(null);
+                  setSelectedServiceId(null);
                   navigate(`/crm/orcamento/${selectedBudget.id}`);
                 }}
               >

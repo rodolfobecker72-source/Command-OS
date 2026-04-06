@@ -20,6 +20,7 @@ interface CalendarMonthViewProps {
   events: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
+  onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -41,7 +42,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick }: CalendarMonthViewProps) {
+export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarMonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
@@ -103,7 +104,7 @@ export function CalendarMonthView({ currentDate, events, deliveryEvents, onEvent
                     compact
                     eventType="delivery"
                     deliveryLabel={ev.label}
-                    onClick={() => onEventClick(ev.budget)}
+                    onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
                   />
                 ))}
               </div>

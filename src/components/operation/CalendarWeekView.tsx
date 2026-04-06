@@ -17,6 +17,7 @@ interface CalendarWeekViewProps {
   events: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
+  onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
@@ -36,7 +37,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick }: CalendarWeekViewProps) {
+export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarWeekViewProps) {
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { locale: ptBR });
     const weekEnd = endOfWeek(currentDate, { locale: ptBR });
@@ -102,7 +103,7 @@ export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventC
                   budget={ev.budget}
                   eventType="delivery"
                   deliveryLabel={ev.label}
-                  onClick={() => onEventClick(ev.budget)}
+                  onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
                 />
               ))}
             </div>
