@@ -346,6 +346,9 @@ export async function generateProposalPDF({
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
     const serviceDisplayValue = serviceWeight * preToDistribute;
 
+    // Split description with correct font metrics
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'normal');
     const descLines = service.description ? doc.splitTextToSize(service.description, contentWidth) as string[] : [];
     const estimatedHeight = 6 + 6 + descLines.length * 5 + 10 + service.costs.length * 8 + 20;
     
