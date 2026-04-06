@@ -1,33 +1,14 @@
 import jsPDF from 'jspdf';
-import { formatCurrency, formatCNPJ, formatPhone, BudgetVersion, ServiceItem } from '@/types/crm';
+import { formatCurrency, formatCNPJ, formatPhone, BudgetVersion, ServiceItem, Budget, Client } from '@/types/crm';
+import { generateProposalPDF, PDFLayoutSettings } from '@/utils/pdfGenerator';
 
 interface ContractPDFParams {
   template: string;
-  budget: {
-    proposalId: string;
-    projectName: string;
-    projectDescription: string;
-    paymentTerms: string;
-    hasExecutionDate: boolean;
-    executionStartDate?: string | Date | null;
-    executionEndDate?: string | Date | null;
-    approvalDate?: string | Date | null;
-    finalValue?: number | null;
-  };
+  budget: Budget;
   version: BudgetVersion;
-  client: {
-    companyName: string;
-    cnpj: string;
-    responsiblePerson: string;
-    email: string;
-    phone: string;
-  };
-  layout?: {
-    companyName?: string;
-    website?: string;
-    email?: string;
-    logoUrl?: string;
-  } | null;
+  client: Client;
+  layoutSettings?: PDFLayoutSettings | null;
+  responsibleUser?: { id: string; name: string; photo: string } | null;
 }
 
 function formatDate(dateStr: string | Date | null | undefined): string {
@@ -48,15 +29,36 @@ function buildServicesList(version: BudgetVersion): string {
   }).join('\n');
 }
 
-function buildExecutionDates(budget: ContractPDFParams['budget']): string {
+function buildExecutionDates(budget: Budget): string {
   if (!budget.hasExecutionDate) return '';
   const start = formatDate(budget.executionStartDate);
   const end = formatDate(budget.executionEndDate);
   return `Início: ${start}\nTérmino: ${end}`;
 }
 
-export function generateContractPDF(params: ContractPDFParams) {
-  const { template, budget, version, client, layout } = params;
+async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        resolve({ base64: canvas.toDataURL('image/png'), width: img.width, height: img.height });
+      } else {
+        reject(new Error('Failed to get canvas context'));
+      }
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+export async function generateContractPDF(params: ContractPDFParams) {
+  const { template, budget, version, client, layoutSettings, responsibleUser } = params;
 
   // Replace placeholders
   let text = template;
@@ -66,9 +68,9 @@ export function generateContractPDF(params: ContractPDFParams) {
     '{{responsavel}}': client.responsiblePerson || '',
     '{{email_cliente}}': client.email || '',
     '{{telefone_cliente}}': client.phone ? formatPhone(client.phone) : '',
-    '{{empresa_contratada}}': layout?.companyName || '',
-    '{{website_contratada}}': layout?.website || '',
-    '{{email_contratada}}': layout?.email || '',
+    '{{empresa_contratada}}': layoutSettings?.companyName || '',
+    '{{website_contratada}}': layoutSettings?.website || '',
+    '{{email_contratada}}': layoutSettings?.email || '',
     '{{proposta_id}}': budget.proposalId || '',
     '{{nome_projeto}}': budget.projectName || '',
     '{{descricao_projeto}}': budget.projectDescription || '',
@@ -91,35 +93,122 @@ export function generateContractPDF(params: ContractPDFParams) {
   const contentWidth = pageWidth - margin * 2;
   const lineHeight = 6;
   const normalSize = 11;
+  const headerY = 15;
+  const contentStartY = 28;
+  const footerTopY = pageHeight - 28;
 
+  const lightGray = [200, 200, 200] as [number, number, number];
+
+  // Load logos
+  let logoData: { base64: string; width: number; height: number } | null = null;
+  const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
+  try {
+    logoData = await loadImageAsBase64(headerLogoUrl);
+  } catch (error) {
+    console.warn('Could not load logo:', error);
+  }
+
+  let footerLogoData: { base64: string; width: number; height: number } | null = null;
+  try {
+    const { default: commandLogoUrl } = await import('@/assets/command-logo.png');
+    footerLogoData = await loadImageAsBase64(commandLogoUrl);
+  } catch (error) {
+    console.warn('Could not load footer logo:', error);
+  }
+
+  const addHeader = () => {
+    if (logoData) {
+      const logoHeight = 20;
+      const aspectRatio = logoData.width / logoData.height;
+      const logoWidth = logoHeight * aspectRatio;
+      doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
+    }
+  };
+
+  const addFooter = () => {
+    if (footerLogoData) {
+      const fLogoH = 6;
+      const fAspect = footerLogoData.width / footerLogoData.height;
+      const fLogoW = fLogoH * fAspect;
+      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - fLogoW / 2, pageHeight - 20, fLogoW, fLogoH);
+    }
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+    const footerParts: string[] = [];
+    if (layoutSettings?.companyName) footerParts.push(layoutSettings.companyName.toUpperCase());
+    if (layoutSettings?.website) footerParts.push(layoutSettings.website);
+    if (layoutSettings?.email) footerParts.push(layoutSettings.email);
+    const footerText = footerParts.length > 0
+      ? footerParts.join(' • ')
+      : '';
+    if (footerText) {
+      doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    }
+  };
+
+  let y = contentStartY;
+
+  const ensureSpace = (neededHeight: number) => {
+    if (y + neededHeight > footerTopY) {
+      addHeader();
+      addFooter();
+      doc.addPage();
+      y = contentStartY;
+    }
+  };
+
+  // Render contract text
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(normalSize);
+  doc.setTextColor(0, 0, 0);
 
   const lines = text.split('\n');
-  let y = margin;
 
   for (const rawLine of lines) {
-    // Check if it's a title-like line (all caps or starts with CLÁUSULA)
     const isBold = /^(CONTRATO|CLÁUSULA|CONTRATANTE|CONTRATADA|___)/.test(rawLine.trim());
-    
+
     if (isBold) {
       doc.setFont('helvetica', 'bold');
     } else {
       doc.setFont('helvetica', 'normal');
     }
 
-    const wrapped = doc.splitTextToSize(rawLine || ' ', contentWidth);
-    
-    for (const wLine of wrapped) {
-      if (y + lineHeight > pageHeight - margin) {
-        doc.addPage();
-        y = margin;
+    const wrapped = doc.splitTextToSize(rawLine || ' ', contentWidth) as string[];
+
+    for (let i = 0; i < wrapped.length; i++) {
+      ensureSpace(lineHeight);
+      // Justify text (except last line of paragraph)
+      if (!isBold && wrapped.length > 1 && i < wrapped.length - 1) {
+        doc.text(wrapped[i], margin, y, { align: 'justify', maxWidth: contentWidth });
+      } else {
+        doc.text(wrapped[i], margin, y);
       }
-      doc.text(wLine, margin, y);
       y += lineHeight;
     }
   }
 
-  const fileName = `Minuta_${budget.proposalId}_${client.companyName.replace(/\s+/g, '_')}.pdf`;
+  // Finalize last contract page
+  addHeader();
+  addFooter();
+
+  // ============================================
+  // APPEND PROPOSAL PDF
+  // ============================================
+  doc.addPage();
+
+  await generateProposalPDF({
+    budget,
+    version,
+    client,
+    responsibleUser: responsibleUser || null,
+    layoutSettings,
+    existingDoc: doc,
+    skipSave: true,
+  });
+
+  // Save combined PDF
+  const safeProjectName = budget.projectName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+  const fileName = `Contrato_Proposta_${budget.proposalId}_${safeProjectName}.pdf`;
   doc.save(fileName);
 }
