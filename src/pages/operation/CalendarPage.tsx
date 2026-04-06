@@ -160,15 +160,17 @@ export function CalendarPage() {
           <CalendarMonthView
             currentDate={currentDate}
             events={calendarEvents}
-            deliveryEvents={deliveryEvents}
+            deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
+            onDeliveryClick={handleDeliveryClick}
           />
         ) : (
           <CalendarWeekView
             currentDate={currentDate}
             events={calendarEvents}
-            deliveryEvents={deliveryEvents}
+            deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
+            onDeliveryClick={handleDeliveryClick}
           />
         )}
       </div>
@@ -192,11 +194,15 @@ export function CalendarPage() {
       )}
 
       {/* Event detail dialog */}
-      <Dialog open={!!selectedBudget} onOpenChange={open => !open && setSelectedBudget(null)}>
+      <Dialog open={!!selectedBudget} onOpenChange={open => { if (!open) { setSelectedBudget(null); setSelectedServiceId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-primary" />
+              {selectedServiceId ? (
+                <Package className="w-5 h-5 text-blue-500" />
+              ) : (
+                <CalendarDays className="w-5 h-5 text-primary" />
+              )}
               {selectedBudget?.proposalId} - {selectedBudget?.projectName}
             </DialogTitle>
           </DialogHeader>
@@ -233,58 +239,85 @@ export function CalendarPage() {
                 </div>
               </div>
 
-              {/* Briefing */}
-              {selectedBudget.projectDescription && (
-                <div>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Briefing do Projeto</p>
-                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
-                    {selectedBudget.projectDescription}
-                  </p>
-                </div>
-              )}
-
-              {/* Objective */}
-              {selectedBudget.objective && (
-                <div>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Objetivo</p>
-                  <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
-                    {selectedBudget.objective}
-                  </p>
-                </div>
-              )}
-
-              {/* Services description */}
-              {(() => {
+              {/* If delivery click: show only that service */}
+              {selectedServiceId ? (() => {
                 const latestVersion = selectedBudget.versions?.length
                   ? selectedBudget.versions[selectedBudget.versions.length - 1]
                   : null;
-                if (!latestVersion?.services?.length) return null;
+                const svc = latestVersion?.services?.find((s: any) => s.id === selectedServiceId);
+                if (!svc) return null;
                 return (
                   <div>
-                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Serviços</p>
-                    <div className="space-y-2">
-                      {latestVersion.services.map((svc, idx) => (
-                        <div key={svc.id || idx} className="bg-muted/50 rounded-md p-3 space-y-1">
-                          <p className="font-semibold text-xs text-primary">
-                            {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
-                          </p>
-                          {svc.description && (
-                            <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
-                              {svc.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                    <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Entrega — Serviço</p>
+                    <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                      <p className="font-semibold text-xs text-primary">
+                        {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
+                      </p>
+                      {svc.description && (
+                        <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
+                          {svc.description}
+                        </p>
+                      )}
+                      {svc.deliveryType && (
+                        <p className="text-muted-foreground text-[10px] mt-1">
+                          Prazo: {svc.deliveryType === 'realtime' ? 'Real time' : `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
-              })()}
+              })() : (
+                <>
+                  {selectedBudget.projectDescription && (
+                    <div>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Briefing do Projeto</p>
+                      <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                        {selectedBudget.projectDescription}
+                      </p>
+                    </div>
+                  )}
+                  {selectedBudget.objective && (
+                    <div>
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-1">Objetivo</p>
+                      <p className="text-foreground whitespace-pre-line leading-relaxed bg-muted/50 rounded-md p-3">
+                        {selectedBudget.objective}
+                      </p>
+                    </div>
+                  )}
+                  {(() => {
+                    const latestVersion = selectedBudget.versions?.length
+                      ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                      : null;
+                    if (!latestVersion?.services?.length) return null;
+                    return (
+                      <div>
+                        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide mb-2">Serviços</p>
+                        <div className="space-y-2">
+                          {latestVersion.services.map((svc: any, idx: number) => (
+                            <div key={svc.id || idx} className="bg-muted/50 rounded-md p-3 space-y-1">
+                              <p className="font-semibold text-xs text-primary">
+                                {svc.serviceType}{svc.objective ? ` — ${svc.objective}` : ''}
+                              </p>
+                              {svc.description && (
+                                <p className="text-foreground whitespace-pre-line leading-relaxed text-xs">
+                                  {svc.description}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
 
               <Button
                 className="w-full mt-2"
                 size="sm"
                 onClick={() => {
                   setSelectedBudget(null);
+                  setSelectedServiceId(null);
                   navigate(`/crm/orcamento/${selectedBudget.id}`);
                 }}
               >
