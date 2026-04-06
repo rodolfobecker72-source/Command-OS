@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Film, Camera, Smartphone, FileText, Calendar } from 'lucide-react';
+import { GripVertical, Film, Camera, Smartphone, FileText, Calendar, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
 
