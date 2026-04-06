@@ -64,6 +64,7 @@ const navGroups: NavGroup[] = [
       { name: 'Layout do PDF', href: '/configuracoes/layout', icon: FileImage, pageKey: 'layout' },
       { name: 'Metas', href: '/configuracoes/metas', icon: Target, pageKey: 'metas' },
       { name: 'Score', href: '/configuracoes/score', icon: Award, pageKey: 'score' },
+      { name: 'Minuta de Contrato', href: '/configuracoes/contrato', icon: FileImage, pageKey: 'contrato' },
     ],
   },
 ];
