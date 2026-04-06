@@ -1194,15 +1194,7 @@ export function BudgetDetail() {
                                         objectiveLabel
                                       )}
                                     </CardTitle>
-                                    {isEditingVersion ? (
-                                      <Textarea
-                                        value={service.description}
-                                        onChange={(e) => updateEditService(service.id, { description: e.target.value })}
-                                        placeholder="Descrição do serviço..."
-                                        rows={2}
-                                        className="mt-1"
-                                      />
-                                    ) : (
+                                    {!isEditingVersion && (
                                       <CardDescription className="whitespace-pre-wrap">
                                         {service.description || 'Sem descrição'}
                                       </CardDescription>
