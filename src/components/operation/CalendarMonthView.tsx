@@ -12,12 +12,13 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Budget } from '@/types/crm';
-import { CalendarEventCard } from './CalendarEventCard';
+import { CalendarEventCard, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 
 interface CalendarMonthViewProps {
   currentDate: Date;
   events: Budget[];
+  deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
 }
 
@@ -36,7 +37,11 @@ function getEventsForDay(day: Date, events: Budget[]): Budget[] {
   });
 }
 
-export function CalendarMonthView({ currentDate, events, onEventClick }: CalendarMonthViewProps) {
+function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEvent[]): CalendarDeliveryEvent[] {
+  return deliveryEvents.filter(ev => isSameDay(ev.date, day));
+}
+
+export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick }: CalendarMonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
@@ -47,7 +52,6 @@ export function CalendarMonthView({ currentDate, events, onEventClick }: Calenda
 
   return (
     <div className="flex flex-col h-full">
-      {/* Weekday headers */}
       <div className="grid grid-cols-7 border-b border-border">
         {WEEKDAYS.map(d => (
           <div key={d} className="py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -56,12 +60,12 @@ export function CalendarMonthView({ currentDate, events, onEventClick }: Calenda
         ))}
       </div>
 
-      {/* Day cells */}
       <div className="grid grid-cols-7 flex-1 auto-rows-fr">
         {days.map((day, i) => {
           const inMonth = isSameMonth(day, currentDate);
           const today = isToday(day);
           const dayEvents = getEventsForDay(day, events);
+          const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
 
           return (
             <div
@@ -90,6 +94,16 @@ export function CalendarMonthView({ currentDate, events, onEventClick }: Calenda
                     budget={ev}
                     compact
                     onClick={() => onEventClick(ev)}
+                  />
+                ))}
+                {dayDeliveries.map(ev => (
+                  <CalendarEventCard
+                    key={ev.id}
+                    budget={ev.budget}
+                    compact
+                    eventType="delivery"
+                    deliveryLabel={ev.label}
+                    onClick={() => onEventClick(ev.budget)}
                   />
                 ))}
               </div>
