@@ -50,7 +50,7 @@ function formatExecutionMonth(ym: string): string {
 }
 
 export function CRMKanban() {
-  const { getCRMCards, moveCard, kanbanColumns, approveBudget } = useCRM();
+  const { getCRMCards, moveCard, kanbanColumns, approveBudget, updateBudget } = useCRM();
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
@@ -61,6 +61,12 @@ export function CRMKanban() {
   const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(null);
   const [pendingApprovalVersion, setPendingApprovalVersion] = useState<number>(0);
   const [dragApproveMonth, setDragApproveMonth] = useState('');
+
+  // Rejection via drag states
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectObservation, setRejectObservation] = useState('');
 
   const cards = getCRMCards();
 
