@@ -59,6 +59,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin: 'Administrador',
   vendedor: 'Vendedor',
   visualizador: 'Visualizador',
+  time_hero: 'Time HERO',
 };
 
 const ROLE_ICONS: Record<AppRole, typeof Crown> = {
@@ -66,6 +67,7 @@ const ROLE_ICONS: Record<AppRole, typeof Crown> = {
   admin: ShieldCheck,
   vendedor: Briefcase,
   visualizador: EyeIcon,
+  time_hero: Users,
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -73,6 +75,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   admin: 'bg-accent/10 text-accent',
   vendedor: 'bg-warning/10 text-warning',
   visualizador: 'bg-muted text-muted-foreground',
+  time_hero: 'bg-blue-500/10 text-blue-600',
 };
 
 export function UsersPage() {
