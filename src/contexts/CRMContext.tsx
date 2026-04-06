@@ -1436,6 +1436,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         value: currentVersionData?.fullPrice || null, status: budget.status,
         clientScore: client?.score || 0, currentVersion: budget.currentVersion,
         executionMonth: budget.executionMonth,
+        rejectionReason: budget.rejectionReason,
+        rejectionObservation: budget.rejectionObservation,
         createdAt: budget.createdAt.toISOString(),
       };
     });
