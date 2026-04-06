@@ -11,6 +11,11 @@ interface ContractPDFParams {
   responsibleUser?: { id: string; name: string; photo: string } | null;
 }
 
+type ContractBlock =
+  | { type: 'title'; text: string }
+  | { type: 'paragraph'; text: string }
+  | { type: 'spacer' };
+
 function formatDate(dateStr: string | Date | null | undefined): string {
   if (!dateStr) return '___/___/______';
   try {
@@ -34,6 +39,92 @@ function buildExecutionDates(budget: Budget): string {
   const start = formatDate(budget.executionStartDate);
   const end = formatDate(budget.executionEndDate);
   return `Início: ${start}\nTérmino: ${end}`;
+}
+
+function isTitleLine(line: string): boolean {
+  return /^(CONTRATO|CLÁUSULA|CONTRATANTE|CONTRATADA|___)/i.test(line.trim());
+}
+
+function isStandaloneParagraphLine(line: string): boolean {
+  return /^((\d+(?:[.-]\d+)*[.)]?|[•\-–])\s+|[a-zA-Z]\)\s+)/.test(line.trim());
+}
+
+function buildContractBlocks(text: string): ContractBlock[] {
+  const normalizedText = text
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  if (!normalizedText) return [];
+
+  const rawLines = normalizedText.split('\n');
+  const blocks: ContractBlock[] = [];
+  let paragraphBuffer: string[] = [];
+
+  const flushParagraph = () => {
+    if (!paragraphBuffer.length) return;
+    blocks.push({
+      type: 'paragraph',
+      text: paragraphBuffer.join(' ').replace(/\s+/g, ' ').trim(),
+    });
+    paragraphBuffer = [];
+  };
+
+  for (const rawLine of rawLines) {
+    const trimmedLine = rawLine.trim();
+
+    if (!trimmedLine) {
+      flushParagraph();
+      blocks.push({ type: 'spacer' });
+      continue;
+    }
+
+    if (isTitleLine(trimmedLine)) {
+      flushParagraph();
+      blocks.push({ type: 'title', text: trimmedLine });
+      continue;
+    }
+
+    if (isStandaloneParagraphLine(trimmedLine)) {
+      flushParagraph();
+      paragraphBuffer = [trimmedLine];
+      continue;
+    }
+
+    paragraphBuffer.push(trimmedLine);
+  }
+
+  flushParagraph();
+  return blocks;
+}
+
+function drawJustifiedLine(doc: jsPDF, line: string, x: number, y: number, maxWidth: number) {
+  const words = line.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length < 2) {
+    doc.text(line, x, y);
+    return;
+  }
+
+  const renderedLine = words.join(' ');
+  const lineWidth = doc.getTextWidth(renderedLine);
+
+  if (lineWidth < maxWidth * 0.72) {
+    doc.text(renderedLine, x, y);
+    return;
+  }
+
+  const wordsWidth = words.reduce((sum, word) => sum + doc.getTextWidth(word), 0);
+  const gapWidth = (maxWidth - wordsWidth) / (words.length - 1);
+
+  let cursorX = x;
+  words.forEach((word, index) => {
+    doc.text(word, cursorX, y);
+    if (index < words.length - 1) {
+      cursorX += doc.getTextWidth(word) + gapWidth;
+    }
+  });
 }
 
 async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
@@ -60,7 +151,6 @@ async function loadImageAsBase64(url: string): Promise<{ base64: string; width: 
 export async function generateContractPDF(params: ContractPDFParams) {
   const { template, budget, version, client, layoutSettings, responsibleUser } = params;
 
-  // Replace placeholders
   let text = template;
   const replacements: Record<string, string> = {
     '{{empresa_cliente}}': client.companyName || '',
@@ -85,7 +175,7 @@ export async function generateContractPDF(params: ContractPDFParams) {
     text = text.split(key).join(value);
   }
 
-  // Generate PDF
+  const blocks = buildContractBlocks(text);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -96,10 +186,8 @@ export async function generateContractPDF(params: ContractPDFParams) {
   const headerY = 15;
   const contentStartY = 28;
   const footerTopY = pageHeight - 28;
-
   const lightGray = [200, 200, 200] as [number, number, number];
 
-  // Load logos
   let logoData: { base64: string; width: number; height: number } | null = null;
   const headerLogoUrl = layoutSettings?.logoUrl || '/images/hero-logo-black.png';
   try {
@@ -127,89 +215,106 @@ export async function generateContractPDF(params: ContractPDFParams) {
 
   const addFooter = () => {
     if (footerLogoData) {
-      const fLogoH = 6;
-      const fAspect = footerLogoData.width / footerLogoData.height;
-      const fLogoW = fLogoH * fAspect;
-      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - fLogoW / 2, pageHeight - 20, fLogoW, fLogoH);
+      const footerLogoHeight = 6;
+      const footerAspect = footerLogoData.width / footerLogoData.height;
+      const footerLogoWidth = footerLogoHeight * footerAspect;
+      doc.addImage(footerLogoData.base64, 'PNG', pageWidth / 2 - footerLogoWidth / 2, pageHeight - 20, footerLogoWidth, footerLogoHeight);
     }
+
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+
     const footerParts: string[] = [];
     if (layoutSettings?.companyName) footerParts.push(layoutSettings.companyName.toUpperCase());
     if (layoutSettings?.website) footerParts.push(layoutSettings.website);
     if (layoutSettings?.email) footerParts.push(layoutSettings.email);
-    const footerText = footerParts.length > 0
-      ? footerParts.join(' • ')
-      : '';
+
+    const footerText = footerParts.join(' • ');
     if (footerText) {
       doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
     }
   };
 
   let y = contentStartY;
-
-  // Track current font state to restore after page breaks
   let currentFont: 'normal' | 'bold' = 'normal';
+  let currentPageHasBodyContent = false;
+
+  const applyBodyStyle = () => {
+    doc.setFont('helvetica', currentFont);
+    doc.setFontSize(normalSize);
+    doc.setTextColor(0, 0, 0);
+  };
+
+  const startPage = (createNewPage = false) => {
+    if (createNewPage) {
+      doc.addPage();
+    }
+    y = contentStartY;
+    currentPageHasBodyContent = false;
+    addHeader();
+    applyBodyStyle();
+  };
+
+  const closePage = () => {
+    addFooter();
+  };
 
   const ensureSpace = (neededHeight: number) => {
     if (y + neededHeight > footerTopY) {
-      addHeader();
-      addFooter();
-      doc.addPage();
-      y = contentStartY;
-      // Restore font state after page break (addFooter changes it)
-      doc.setFont('helvetica', currentFont);
-      doc.setFontSize(normalSize);
-      doc.setTextColor(0, 0, 0);
+      closePage();
+      startPage(true);
     }
   };
 
-  // Add header to first page
-  addHeader();
+  startPage();
 
-  // Render contract text
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(normalSize);
-  doc.setTextColor(0, 0, 0);
-
-  const lines = text.split('\n');
-
-  for (const rawLine of lines) {
-    const isBold = /^(CONTRATO|CLÁUSULA|CONTRATANTE|CONTRATADA|___)/.test(rawLine.trim());
-
-    if (isBold) {
-      currentFont = 'bold';
-      doc.setFont('helvetica', 'bold');
-    } else {
-      currentFont = 'normal';
-      doc.setFont('helvetica', 'normal');
+  for (const block of blocks) {
+    if (block.type === 'spacer') {
+      ensureSpace(lineHeight);
+      y += lineHeight;
+      continue;
     }
 
-    doc.setFontSize(normalSize);
-    doc.setTextColor(0, 0, 0);
+    if (block.type === 'title') {
+      currentFont = 'bold';
+      applyBodyStyle();
 
-    const wrapped = doc.splitTextToSize(rawLine || ' ', contentWidth) as string[];
-
-    for (let i = 0; i < wrapped.length; i++) {
-      ensureSpace(lineHeight);
-      if (!isBold) {
-        doc.text(wrapped[i], margin, y, { align: 'justify', maxWidth: contentWidth });
-      } else {
-        doc.text(wrapped[i], margin, y);
+      const titleLines = doc.splitTextToSize(block.text, contentWidth) as string[];
+      for (const titleLine of titleLines) {
+        ensureSpace(lineHeight);
+        applyBodyStyle();
+        doc.text(titleLine, margin, y);
+        y += lineHeight;
+        currentPageHasBodyContent = true;
       }
+      continue;
+    }
+
+    currentFont = 'normal';
+    applyBodyStyle();
+
+    const paragraphLines = doc.splitTextToSize(block.text, contentWidth) as string[];
+    for (let i = 0; i < paragraphLines.length; i++) {
+      ensureSpace(lineHeight);
+      applyBodyStyle();
+
+      const isLastLine = i === paragraphLines.length - 1;
+      if (isLastLine) {
+        doc.text(paragraphLines[i], margin, y);
+      } else {
+        drawJustifiedLine(doc, paragraphLines[i], margin, y, contentWidth);
+      }
+
       y += lineHeight;
+      currentPageHasBodyContent = true;
     }
   }
 
-  // Finalize last contract page
-  addHeader();
-  addFooter();
-
-  // ============================================
-  // APPEND PROPOSAL PDF
-  // ============================================
-  doc.addPage();
+  if (currentPageHasBodyContent) {
+    closePage();
+    doc.addPage();
+  }
 
   await generateProposalPDF({
     budget,
@@ -221,7 +326,6 @@ export async function generateContractPDF(params: ContractPDFParams) {
     skipSave: true,
   });
 
-  // Save combined PDF
   const safeProjectName = budget.projectName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
   const fileName = `Contrato_Proposta_${budget.proposalId}_${safeProjectName}.pdf`;
   doc.save(fileName);
