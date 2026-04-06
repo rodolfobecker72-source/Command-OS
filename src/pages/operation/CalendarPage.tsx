@@ -312,17 +312,6 @@ export function CalendarPage() {
                 </>
               )}
 
-              <Button
-                className="w-full mt-2"
-                size="sm"
-                onClick={() => {
-                  setSelectedBudget(null);
-                  setSelectedServiceId(null);
-                  navigate(`/crm/orcamento/${selectedBudget.id}`);
-                }}
-              >
-                Ver orçamento
-              </Button>
             </div>
           )}
         </DialogContent>
