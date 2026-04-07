@@ -423,7 +423,16 @@ export function FinancialPage() {
                                   <TableBody>
                                     {p.services.map((s, i) => (
                                       <TableRow key={i}>
-                                        <TableCell className="font-medium">{s.name}</TableCell>
+                                        <TableCell className="font-medium">
+                                          <div className="flex items-center gap-2">
+                                            {s.categoryLabel && (
+                                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">
+                                                {s.categoryLabel}
+                                              </Badge>
+                                            )}
+                                            <span>{s.name}</span>
+                                          </div>
+                                        </TableCell>
                                         <TableCell className="text-right">{currencyFmt(s.value)}</TableCell>
                                         <TableCell className="text-right">{currencyFmt(s.realCost)}</TableCell>
                                         <TableCell className="text-right">
