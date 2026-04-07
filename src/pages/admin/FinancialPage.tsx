@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { format, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -64,6 +64,7 @@ export function FinancialPage() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [goals, setGoals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   // Account form state
   const [accountDialog, setAccountDialog] = useState(false);
@@ -118,15 +119,18 @@ export function FinancialPage() {
 
         let totalValue = 0;
         let totalRealCost = 0;
-        const serviceDetails = services.map((s: any) => {
+        const serviceDetails = services.map((s: any, idx: number) => {
           const sValue = Number(s.subtotal || s.totalPrice || 0);
           const sRealCost = Number(realCosts[s.id] ?? s.productionCost ?? 0);
           totalValue += sValue;
           totalRealCost += sRealCost;
           return {
+            id: s.id || `svc-${idx}`,
             name: s.name || s.categoryLabel || 'Serviço',
             value: sValue,
             realCost: sRealCost,
+            margin: sValue - sRealCost,
+            marginPercent: sValue > 0 ? ((sValue - sRealCost) / sValue) * 100 : 0,
           };
         });
 
@@ -358,38 +362,96 @@ export function FinancialPage() {
                   </TableHeader>
                   <TableBody>
                     {monthlyProjects.map(p => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-mono text-sm">{p.proposalId}</TableCell>
-                        <TableCell className="font-medium">{p.projectName}</TableCell>
-                        <TableCell>{p.clientName}</TableCell>
-                        <TableCell>
-                          <div className="space-y-0.5">
-                            {p.services.map((s, i) => (
-                              <div key={i} className="text-xs">
-                                {s.name} <span className="text-muted-foreground">({currencyFmt(s.value)})</span>
+                      <React.Fragment key={p.id}>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
+                        >
+                          <TableCell className="font-mono text-sm">{p.proposalId}</TableCell>
+                          <TableCell className="font-medium">{p.projectName}</TableCell>
+                          <TableCell>{p.clientName}</TableCell>
+                          <TableCell>
+                            <div className="space-y-0.5">
+                              {p.services.map((s, i) => (
+                                <div key={i} className="text-xs">
+                                  {s.name}
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
+                          <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
+                          <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
+                          <TableCell className="text-right">
+                            <span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
+                              {currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }}
+                              title="Ver no CRM"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded detail */}
+                        {expandedProject === p.id && (
+                          <TableRow>
+                            <TableCell colSpan={9} className="bg-muted/30 p-0">
+                              <div className="p-4 space-y-3">
+                                <h4 className="text-sm font-semibold">Composição do Investimento</h4>
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Serviço</TableHead>
+                                      <TableHead className="text-right">Valor Proposta</TableHead>
+                                      <TableHead className="text-right">Custo Real</TableHead>
+                                      <TableHead className="text-right">Margem</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {p.services.map((s, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{s.name}</TableCell>
+                                        <TableCell className="text-right">{currencyFmt(s.value)}</TableCell>
+                                        <TableCell className="text-right">{currencyFmt(s.realCost)}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={s.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
+                                            {currencyFmt(s.margin)} ({s.marginPercent.toFixed(1)}%)
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                    {/* NF row */}
+                                    <TableRow>
+                                      <TableCell className="font-medium">Imposto NF</TableCell>
+                                      <TableCell className="text-right">—</TableCell>
+                                      <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
+                                      <TableCell className="text-right">—</TableCell>
+                                    </TableRow>
+                                    {/* Total row */}
+                                    <TableRow className="font-bold border-t-2">
+                                      <TableCell>Total</TableCell>
+                                      <TableCell className="text-right">{currencyFmt(p.totalValue)}</TableCell>
+                                      <TableCell className="text-right">{currencyFmt(p.totalRealCost + p.nfCost)}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
+                                          {currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
                               </div>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
-                        <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
-                        <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
-                        <TableCell className="text-right">
-                          <span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
-                            {currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => navigate(`/crm/orcamento/${p.id}`)}
-                            title="Ver Execução"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
