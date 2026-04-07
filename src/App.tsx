@@ -31,6 +31,8 @@ import { GoalsPage } from "@/pages/settings/GoalsPage";
 import { ScorePage } from "@/pages/settings/ScorePage";
 import { ContractTemplatePage } from "@/pages/settings/ContractTemplatePage";
 import { CalendarPage } from "@/pages/operation/CalendarPage";
+import { FinancialPage } from '@/pages/admin/FinancialPage';
+import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
