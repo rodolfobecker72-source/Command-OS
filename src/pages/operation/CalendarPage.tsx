@@ -292,9 +292,11 @@ export function CalendarPage() {
                     </div>
                   )}
                   {(() => {
-                    const latestVersion = selectedBudget.versions?.length
-                      ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                    const approvedVer2 = selectedBudget.approvedVersion != null
+                      ? selectedBudget.versions?.find(v => v.version === selectedBudget.approvedVersion)
                       : null;
+                    const latestVersion = approvedVer2
+                      || (selectedBudget.versions?.length ? [...selectedBudget.versions].sort((a, c) => c.version - a.version)[0] : null);
                     if (!latestVersion?.services?.length) return null;
                     return (
                       <div>
