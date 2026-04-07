@@ -1,60 +1,54 @@
 
 
-## Editor completo de Layout do PDF da Proposta Comercial
+# Plano: Área Administrativa (Financeiro + Patrimonio)
 
-### O que será feito
+## O que será construído
 
-Transformar a página de Layout do PDF em um editor completo, permitindo personalizar todos os textos e títulos do documento de proposta comercial, incluindo os termos e condições da última página.
+1. **Novo grupo "Administrativo" no menu lateral** com duas páginas:
+   - **Financeiro** — painel completo de controle financeiro
+   - **Patrimônio** — página "Em construção" (placeholder)
 
-### Migration - novos campos na tabela `workspace_layout`
+2. **Página Financeiro** com 4 seções:
+   - **Relação de Projetos do Mês**: Seletor de mês, lista dos projetos aprovados com `execution_month` correspondente. Cada linha mostra: ID proposta, nome do projeto, cliente, serviços, valor por serviço, custo real (da execução no CRM), valor NF, margem. Clique abre a aba de Execução do projeto no CRM.
+   - **Painel Financeiro Anual**: Visão do ano com gráficos — faturamento mensal, custo real mensal, margem real mensal, comparativo metas vs realizado.
+   - **Contas Financeiras**: CRUD para cadastrar contas (ex: Banco do Brasil, Caixa, PagSeguro). Cada conta tem nome, tipo (corrente/poupança/carteira digital), banco, agência, número.
+   - **Acesso à Execução**: Link direto para a aba de execução de cada projeto aprovado.
 
-Adicionar colunas para armazenar os textos configuráveis:
+3. **Permissões**: Páginas restritas de `vendedor`, `visualizador` e `time_hero`.
 
-```sql
-ALTER TABLE workspace_layout
-  ADD COLUMN pdf_title text NOT NULL DEFAULT 'PROPOSTA COMERCIAL',
-  ADD COLUMN section_client_title text NOT NULL DEFAULT 'CLIENTE',
-  ADD COLUMN section_briefing_title text NOT NULL DEFAULT 'BRIEFING DO PROJETO',
-  ADD COLUMN section_inclusions_title text NOT NULL DEFAULT 'O QUE ESTÁ INCLUSO',
-  ADD COLUMN section_services_title text NOT NULL DEFAULT 'SERVIÇOS',
-  ADD COLUMN section_operational_title text NOT NULL DEFAULT 'DESPESAS OPERACIONAIS',
-  ADD COLUMN section_investment_title text NOT NULL DEFAULT 'COMPOSIÇÃO DO INVESTIMENTO',
-  ADD COLUMN section_total_title text NOT NULL DEFAULT 'INVESTIMENTO TOTAL',
-  ADD COLUMN section_terms_title text NOT NULL DEFAULT 'TERMOS E CONDIÇÕES',
-  ADD COLUMN terms_company_label text NOT NULL DEFAULT 'Responsabilidades da HERO:',
-  ADD COLUMN terms_company_items text NOT NULL DEFAULT '• Executar os serviços descritos com qualidade profissional
-• Fornecer equipe técnica qualificada
-• Cumprir os prazos acordados
-• Realizar até 2 rodadas de revisão',
-  ADD COLUMN terms_client_label text NOT NULL DEFAULT 'Responsabilidades do Cliente:',
-  ADD COLUMN terms_client_items text NOT NULL DEFAULT '• Fornecer acesso às locações e informações necessárias
-• Aprovar materiais dentro dos prazos combinados
-• Efetuar pagamentos conforme condições acordadas',
-  ADD COLUMN terms_general_label text NOT NULL DEFAULT 'Condições Gerais:',
-  ADD COLUMN terms_general_items text NOT NULL DEFAULT '• Proposta válida por 30 dias
-• Alterações de escopo podem gerar custos adicionais
-• Cancelamento após início sujeito a cobrança proporcional',
-  ADD COLUMN terms_approval_text text NOT NULL DEFAULT 'A aprovação desta proposta implica na aceitação dos termos acima.',
-  ADD COLUMN validity_text text NOT NULL DEFAULT 'Validade: 30 dias';
+## Estrutura do Banco de Dados
+
+Novas tabelas via migration:
+
+```text
+financial_accounts
+├── id (uuid, PK)
+├── workspace_id (uuid, NOT NULL)
+├── name (text)           -- "Banco do Brasil", "PagSeguro"
+├── type (text)           -- "corrente", "poupanca", "carteira_digital", "outro"
+├── bank (text)           -- Nome do banco
+├── agency (text)         -- Agência
+├── account_number (text) -- Número da conta
+├── is_active (boolean, default true)
+├── created_at, updated_at
 ```
 
-### Alterações em arquivos
+RLS: mesmas políticas padrão com `has_workspace_access`.
 
-| Arquivo | Alteração |
-|---|---|
-| **`src/pages/settings/LayoutPage.tsx`** | Expandir com seções de edição: (1) Cabeçalho - logo + título do PDF, (2) Títulos das seções - campos de texto para cada título, (3) Texto de validade, (4) Termos e Condições - 3 blocos com label + textarea para os itens, (5) Texto de aprovação. Organizar em cards com accordion ou tabs para não ficar extenso. |
-| **`src/utils/pdfGenerator.ts`** | Ampliar `PDFLayoutSettings` com todos os novos campos. Substituir todos os textos hardcoded por valores do `layoutSettings`, usando os defaults atuais como fallback. |
-| **`src/pages/crm/BudgetDetail.tsx`** | Passar os novos campos do layout ao chamar `generateProposalPDF` (já busca `workspace_layout`, só precisa incluir os novos campos no objeto). |
+## Arquivos a criar/editar
 
-### Estrutura do editor na LayoutPage
+| Arquivo | Ação |
+|---------|------|
+| `src/config/pages.ts` | Adicionar entries `financeiro` e `patrimonio` no grupo "Administrativo" |
+| `src/components/layout/Sidebar.tsx` | Adicionar grupo "Administrativo" com ícone e itens |
+| `src/pages/admin/FinancialPage.tsx` | Página principal do financeiro (seletor de mês, tabela de projetos, painel anual, contas) |
+| `src/pages/admin/PatrimonioPage.tsx` | Placeholder "Em construção" |
+| `src/App.tsx` | Adicionar rotas `/financeiro` e `/patrimonio` com PageGuard |
+| Migration SQL | Criar tabela `financial_accounts` |
 
-1. **Card: Cabeçalho** (já existe) - Logo + novo campo "Título do documento" (default: PROPOSTA COMERCIAL)
-2. **Card: Rodapé** (já existe) - Nome, site, email
-3. **Card: Títulos das Seções** - Campos para cada título de seção (Cliente, Briefing, Inclusões, Serviços, etc.) + campo de texto de validade
-4. **Card: Termos e Condições** - 3 sub-blocos, cada um com: campo para o label (ex: "Responsabilidades da HERO:") e textarea para os itens (um por linha, com bullet)
-5. **Card: Texto de Aprovação** - Textarea para o texto final antes das assinaturas
+## Detalhes Técnicos
 
-### Comportamento no PDF
-
-Cada texto hardcoded atual será substituído por `layoutSettings?.campo || 'valor default'`, garantindo retrocompatibilidade total.
+- **Dados dos projetos do mês**: Query em `budgets` filtrando `status = 'aprovada'` e `execution_month = 'YYYY-MM'` selecionado, join com `budget_versions` (versão aprovada) e dados de `execution` (JSONB no budget) para custos reais.
+- **Painel anual**: Agrupa budgets aprovados por `execution_month` para calcular totais mensais de faturamento, custo e margem.
+- **Contas financeiras**: CRUD simples usando Supabase client, preparando estrutura para futuro vínculo de recebimentos/pagamentos.
 
