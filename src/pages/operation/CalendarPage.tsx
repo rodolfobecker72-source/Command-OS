@@ -246,9 +246,11 @@ export function CalendarPage() {
 
               {/* If delivery click: show only that service */}
               {selectedServiceId ? (() => {
-                const latestVersion = selectedBudget.versions?.length
-                  ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                const approvedVer = selectedBudget.approvedVersion != null
+                  ? selectedBudget.versions?.find(v => v.version === selectedBudget.approvedVersion)
                   : null;
+                const latestVersion = approvedVer
+                  || (selectedBudget.versions?.length ? [...selectedBudget.versions].sort((a, c) => c.version - a.version)[0] : null);
                 const svc = latestVersion?.services?.find((s: any) => s.id === selectedServiceId);
                 if (!svc) return null;
                 return (
