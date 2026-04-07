@@ -19,7 +19,12 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
   for (const b of budgets) {
     if (b.status !== 'aprovada' || !b.executionStartDate) continue;
     const execStart = new Date(b.executionStartDate);
-    const latestVersion = b.versions?.length ? b.versions[b.versions.length - 1] : null;
+    // Use the approved version specifically, fallback to latest by version number
+    const approvedVersion = b.approvedVersion != null
+      ? b.versions?.find(v => v.version === b.approvedVersion)
+      : null;
+    const latestVersion = approvedVersion
+      || (b.versions?.length ? [...b.versions].sort((a, c) => c.version - a.version)[0] : null);
     if (!latestVersion?.services?.length) continue;
 
     for (const svc of latestVersion.services) {
@@ -241,9 +246,11 @@ export function CalendarPage() {
 
               {/* If delivery click: show only that service */}
               {selectedServiceId ? (() => {
-                const latestVersion = selectedBudget.versions?.length
-                  ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                const approvedVer = selectedBudget.approvedVersion != null
+                  ? selectedBudget.versions?.find(v => v.version === selectedBudget.approvedVersion)
                   : null;
+                const latestVersion = approvedVer
+                  || (selectedBudget.versions?.length ? [...selectedBudget.versions].sort((a, c) => c.version - a.version)[0] : null);
                 const svc = latestVersion?.services?.find((s: any) => s.id === selectedServiceId);
                 if (!svc) return null;
                 return (
@@ -285,9 +292,11 @@ export function CalendarPage() {
                     </div>
                   )}
                   {(() => {
-                    const latestVersion = selectedBudget.versions?.length
-                      ? selectedBudget.versions[selectedBudget.versions.length - 1]
+                    const approvedVer2 = selectedBudget.approvedVersion != null
+                      ? selectedBudget.versions?.find(v => v.version === selectedBudget.approvedVersion)
                       : null;
+                    const latestVersion = approvedVer2
+                      || (selectedBudget.versions?.length ? [...selectedBudget.versions].sort((a, c) => c.version - a.version)[0] : null);
                     if (!latestVersion?.services?.length) return null;
                     return (
                       <div>
