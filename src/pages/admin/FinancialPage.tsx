@@ -125,7 +125,7 @@ export function FinancialPage() {
           totalValue += sValue;
           totalRealCost += sRealCost;
           return {
-            id: s.id || `svc-${i}`,
+            id: s.id || `svc-${idx}`,
             name: s.name || s.categoryLabel || 'Serviço',
             value: sValue,
             realCost: sRealCost,
