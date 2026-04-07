@@ -127,6 +127,7 @@ export function FinancialPage() {
           return {
             id: s.id || `svc-${idx}`,
             name: s.name || s.categoryLabel || 'Serviço',
+            categoryLabel: s.categoryLabel || '',
             value: sValue,
             realCost: sRealCost,
             margin: sValue - sRealCost,
