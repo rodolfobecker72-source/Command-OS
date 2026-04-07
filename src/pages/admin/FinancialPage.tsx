@@ -127,6 +127,7 @@ export function FinancialPage() {
           return {
             id: s.id || `svc-${idx}`,
             name: s.name || s.categoryLabel || 'Serviço',
+            categoryLabel: s.categoryLabel || '',
             value: sValue,
             realCost: sRealCost,
             margin: sValue - sRealCost,
@@ -371,10 +372,15 @@ export function FinancialPage() {
                           <TableCell className="font-medium">{p.projectName}</TableCell>
                           <TableCell>{p.clientName}</TableCell>
                           <TableCell>
-                            <div className="space-y-0.5">
+                            <div className="space-y-1">
                               {p.services.map((s, i) => (
-                                <div key={i} className="text-xs">
-                                  {s.name}
+                                <div key={i} className="flex items-center gap-1.5">
+                                  {s.categoryLabel && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">
+                                      {s.categoryLabel}
+                                    </Badge>
+                                  )}
+                                  <span className="text-xs">{s.name}</span>
                                 </div>
                               ))}
                             </div>
