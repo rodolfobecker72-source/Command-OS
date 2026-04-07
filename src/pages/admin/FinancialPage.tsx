@@ -124,9 +124,12 @@ export function FinancialPage() {
           totalValue += sValue;
           totalRealCost += sRealCost;
           return {
+            id: s.id || `svc-${i}`,
             name: s.name || s.categoryLabel || 'Serviço',
             value: sValue,
             realCost: sRealCost,
+            margin: sValue - sRealCost,
+            marginPercent: sValue > 0 ? ((sValue - sRealCost) / sValue) * 100 : 0,
           };
         });
 
