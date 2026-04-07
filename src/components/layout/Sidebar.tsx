@@ -19,6 +19,9 @@ import {
   LogOut,
   CalendarDays,
   Wrench,
+  DollarSign,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
