@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { APP_PAGES } from '@/config/pages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -14,15 +15,17 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login, session } = useAuth();
+  const { login, session, hasPageAccess } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect when session becomes available
+  // Redirect when session becomes available — to first accessible page
   useEffect(() => {
     if (session) {
-      navigate('/crm/dashboard', { replace: true });
+      const firstAccessible = APP_PAGES.find(p => hasPageAccess(p.key));
+      const target = firstAccessible?.href || '/calendario';
+      navigate(target, { replace: true });
     }
-  }, [session, navigate]);
+  }, [session, navigate, hasPageAccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
