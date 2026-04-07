@@ -119,7 +119,7 @@ export function FinancialPage() {
 
         let totalValue = 0;
         let totalRealCost = 0;
-        const serviceDetails = services.map((s: any) => {
+        const serviceDetails = services.map((s: any, idx: number) => {
           const sValue = Number(s.subtotal || s.totalPrice || 0);
           const sRealCost = Number(realCosts[s.id] ?? s.productionCost ?? 0);
           totalValue += sValue;
