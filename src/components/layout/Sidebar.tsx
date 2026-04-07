@@ -70,6 +70,14 @@ const navGroups: NavGroup[] = [
       { name: 'Minuta de Contrato', href: '/configuracoes/contrato', icon: FileImage, pageKey: 'contrato' },
     ],
   },
+  {
+    label: 'Administrativo',
+    icon: ShieldCheck,
+    items: [
+      { name: 'Financeiro', href: '/financeiro', icon: DollarSign, pageKey: 'financeiro' },
+      { name: 'Patrimônio', href: '/patrimonio', icon: Building2, pageKey: 'patrimonio' },
+    ],
+  },
 ];
 
 interface SidebarProps {
