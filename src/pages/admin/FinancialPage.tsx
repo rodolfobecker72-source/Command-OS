@@ -63,6 +63,7 @@ export function FinancialPage() {
   const [clients, setClients] = useState<Record<string, string>>({});
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [goals, setGoals] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   // Account form state
