@@ -19,7 +19,12 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
   for (const b of budgets) {
     if (b.status !== 'aprovada' || !b.executionStartDate) continue;
     const execStart = new Date(b.executionStartDate);
-    const latestVersion = b.versions?.length ? b.versions[b.versions.length - 1] : null;
+    // Use the approved version specifically, fallback to latest by version number
+    const approvedVersion = b.approvedVersion != null
+      ? b.versions?.find(v => v.version === b.approvedVersion)
+      : null;
+    const latestVersion = approvedVersion
+      || (b.versions?.length ? [...b.versions].sort((a, c) => c.version - a.version)[0] : null);
     if (!latestVersion?.services?.length) continue;
 
     for (const svc of latestVersion.services) {
