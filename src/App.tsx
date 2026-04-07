@@ -31,6 +31,8 @@ import { GoalsPage } from "@/pages/settings/GoalsPage";
 import { ScorePage } from "@/pages/settings/ScorePage";
 import { ContractTemplatePage } from "@/pages/settings/ContractTemplatePage";
 import { CalendarPage } from "@/pages/operation/CalendarPage";
+import { FinancialPage } from '@/pages/admin/FinancialPage';
+import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
@@ -85,6 +87,10 @@ const App = () => (
                   {/* Operação */}
                   <Route path="/calendario" element={<PageGuard pageKey="calendario"><CalendarPage /></PageGuard>} />
                   
+                  {/* Administrativo */}
+                  <Route path="/financeiro" element={<PageGuard pageKey="financeiro"><FinancialPage /></PageGuard>} />
+                  <Route path="/patrimonio" element={<PageGuard pageKey="patrimonio"><PatrimonioPage /></PageGuard>} />
+
                   {/* Users */}
                   <Route path="/usuarios" element={<PageGuard pageKey="usuarios"><UsersPage /></PageGuard>} />
                   

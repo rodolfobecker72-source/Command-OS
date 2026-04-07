@@ -19,6 +19,9 @@ import {
   LogOut,
   CalendarDays,
   Wrench,
+  DollarSign,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -65,6 +68,14 @@ const navGroups: NavGroup[] = [
       { name: 'Metas', href: '/configuracoes/metas', icon: Target, pageKey: 'metas' },
       { name: 'Score', href: '/configuracoes/score', icon: Award, pageKey: 'score' },
       { name: 'Minuta de Contrato', href: '/configuracoes/contrato', icon: FileImage, pageKey: 'contrato' },
+    ],
+  },
+  {
+    label: 'Administrativo',
+    icon: ShieldCheck,
+    items: [
+      { name: 'Financeiro', href: '/financeiro', icon: DollarSign, pageKey: 'financeiro' },
+      { name: 'Patrimônio', href: '/patrimonio', icon: Building2, pageKey: 'patrimonio' },
     ],
   },
 ];

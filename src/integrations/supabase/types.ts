@@ -320,6 +320,53 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          account_number: string
+          agency: string
+          bank: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          type: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          account_number?: string
+          agency?: string
+          bank?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          account_number?: string
+          agency?: string
+          bank?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hard_drives: {
         Row: {
           capacity_gb: number
