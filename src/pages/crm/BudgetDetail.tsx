@@ -2495,20 +2495,28 @@ export function BudgetDetail() {
                           {/* Resumo por Entrega */}
                           <div className="mt-3">
                             <h4 className="text-xs font-semibold text-muted-foreground mb-2">Resumo por Entrega</h4>
-                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg text-sm">
+                             <div className="grid grid-cols-3 gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg text-sm">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Custo de Produção</p>
+                                <p className="font-semibold text-orange-500">{formatCurrency(service.realTotal)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Margem para este serviço</p>
+                                {(() => {
+                                  const realSubtotal = service.budgetedFinalValue || service.finalValue;
+                                  const realMargin = realSubtotal - service.realTotal;
+                                  const realMarginPct = realSubtotal > 0 ? (realMargin / realSubtotal) * 100 : 0;
+                                  const marginColor = realMargin >= 0 ? 'text-success' : 'text-destructive';
+                                  return (
+                                    <p className={`font-semibold ${marginColor}`}>
+                                      {formatCurrency(realMargin)} <span className="text-xs font-normal">({realMarginPct.toFixed(1)}%)</span>
+                                    </p>
+                                  );
+                                })()}
+                              </div>
                               <div>
                                 <p className="text-xs text-muted-foreground">Subtotal</p>
                                 <p className="font-semibold text-blue-500">{formatCurrency(service.budgetedFinalValue || service.finalValue)}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Custo Orçado</p>
-                                <p className="font-semibold text-orange-500">{formatCurrency(service.budgetedTotal)}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Custo Real</p>
-                                <p className="font-semibold text-destructive">
-                                  {formatCurrency(service.realTotal)}
-                                </p>
                               </div>
                              </div>
                           </div>
