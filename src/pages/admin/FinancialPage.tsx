@@ -601,7 +601,14 @@ export function FinancialPage() {
                 </Select>
               </div>
             </div>
-            <Button onClick={openNewEntry} size="sm"><Plus className="w-4 h-4 mr-1" /> Novo Lançamento</Button>
+            <div className="flex gap-2">
+              <Button onClick={() => openNewEntry('receita')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                <ArrowUpCircle className="w-4 h-4 mr-1" /> + Receita
+              </Button>
+              <Button onClick={() => openNewEntry('despesa')} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+                <ArrowDownCircle className="w-4 h-4 mr-1" /> - Despesa
+              </Button>
+            </div>
           </div>
 
           {/* Summary cards */}
