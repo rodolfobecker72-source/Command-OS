@@ -797,8 +797,8 @@ export function FinancialPage() {
             <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum projeto aprovado para este mês.</CardContent></Card>
           ) : (
             <Card>
-              <CardContent className="p-0">
-                <Table>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table className="min-w-[800px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Projeto</TableHead>
