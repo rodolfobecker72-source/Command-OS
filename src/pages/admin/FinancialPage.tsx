@@ -564,23 +564,25 @@ export function FinancialPage() {
       <h1 className="text-2xl font-bold">Financeiro</h1>
 
       <Tabs defaultValue="fluxo">
-        <TabsList className="flex flex-wrap">
-          <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
-          <TabsTrigger value="projetos">Projetos do Mês</TabsTrigger>
-          <TabsTrigger value="painel">Painel Financeiro</TabsTrigger>
-          <TabsTrigger value="anual">Painel Anual</TabsTrigger>
-          <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
-          <TabsTrigger value="config">Configurações</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 gap-1">
+            <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
+            <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
+            <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
+            <TabsTrigger value="anual" className="text-xs sm:text-sm whitespace-nowrap">Painel Anual</TabsTrigger>
+            <TabsTrigger value="contas" className="text-xs sm:text-sm whitespace-nowrap">Contas</TabsTrigger>
+            <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* ===================== FLUXO DE CAIXA ===================== */}
         <TabsContent value="fluxo" className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Mês</Label>
+                <Label className="whitespace-nowrap text-sm">Mês</Label>
                 <Select value={cashflowMonth} onValueChange={setCashflowMonth}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {monthOptions.map(m => (
                       <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
@@ -589,9 +591,9 @@ export function FinancialPage() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Conta</Label>
+                <Label className="whitespace-nowrap text-sm">Conta</Label>
                 <Select value={cashflowAccountFilter} onValueChange={setCashflowAccountFilter}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as contas</SelectItem>
                     {accounts.filter(a => a.is_active).map(a => (
@@ -602,17 +604,17 @@ export function FinancialPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => openNewEntry('receita')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={() => openNewEntry('receita')} size="sm" className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white">
                 <ArrowUpCircle className="w-4 h-4 mr-1" /> + Receita
               </Button>
-              <Button onClick={() => openNewEntry('despesa')} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button onClick={() => openNewEntry('despesa')} size="sm" className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600 text-white">
                 <ArrowDownCircle className="w-4 h-4 mr-1" /> - Despesa
               </Button>
             </div>
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /> Receitas</div>
@@ -637,8 +639,8 @@ export function FinancialPage() {
             <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum lançamento neste período.</CardContent></Card>
           ) : (
             <Card>
-              <CardContent className="p-0">
-                <Table>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
@@ -683,7 +685,7 @@ export function FinancialPage() {
 
           {/* Cashflow Entry Dialog */}
           <Dialog open={cashflowDialog} onOpenChange={setCashflowDialog}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingEntry ? 'Editar Lançamento' : 'Novo Lançamento'}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="flex gap-2">
@@ -784,19 +786,19 @@ export function FinancialPage() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Faturamento</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingDown className="w-4 h-4" /> Custo Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Imposto NF</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4" /> Margem Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p></CardContent></Card>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4 shrink-0" /> Faturamento</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><TrendingDown className="w-4 h-4 shrink-0" /> Custo Real</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4 shrink-0" /> Imposto NF</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4 shrink-0" /> Margem Real</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p></CardContent></Card>
           </div>
 
           {monthlyProjects.length === 0 ? (
             <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum projeto aprovado para este mês.</CardContent></Card>
           ) : (
             <Card>
-              <CardContent className="p-0">
-                <Table>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table className="min-w-[800px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Projeto</TableHead>
@@ -931,7 +933,7 @@ export function FinancialPage() {
 
           {/* Payment Dialog */}
           <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <CircleDollarSign className="w-5 h-5" />
@@ -1011,7 +1013,7 @@ export function FinancialPage() {
         {/* ===================== PAINEL FINANCEIRO ===================== */}
         <TabsContent value="painel" className="space-y-6">
           {/* Summary cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Wallet className="w-4 h-4" /> Saldo Total (Contas)</div>
@@ -1119,11 +1121,11 @@ export function FinancialPage() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Faturamento Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Custo Real Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Margem Real Anual</p><p className="text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Meta Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Faturamento Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Custo Real Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Margem Real Anual</p><p className="text-lg sm:text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Meta Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
           </div>
 
           <Card>
@@ -1190,9 +1192,9 @@ export function FinancialPage() {
             <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
           ) : (
             <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead>Agência</TableHead><TableHead>Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table className="min-w-[600px]">
+                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {accounts.map(acc => (
                       <TableRow key={acc.id}>
