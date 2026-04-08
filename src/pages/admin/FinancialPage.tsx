@@ -115,7 +115,7 @@ export function FinancialPage() {
         const services: any[] = approvedVer?.services || [];
         const executionData = b.execution as any;
         const realCosts = executionData?.realCosts || {};
-        const nfCost = executionData?.nfCost || 0;
+        const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
 
         let totalValue = 0;
         let totalRealCost = 0;
