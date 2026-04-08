@@ -267,6 +267,83 @@ export type Database = {
           },
         ]
       }
+      cashflow_entries: {
+        Row: {
+          account_id: string | null
+          budget_id: string | null
+          cost_center_id: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          notes: string
+          revenue_center_id: string | null
+          type: string
+          updated_at: string
+          value: number
+          workspace_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          budget_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          notes?: string
+          revenue_center_id?: string | null
+          type?: string
+          updated_at?: string
+          value?: number
+          workspace_id: string
+        }
+        Update: {
+          account_id?: string | null
+          budget_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          notes?: string
+          revenue_center_id?: string | null
+          type?: string
+          updated_at?: string
+          value?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashflow_entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_entries_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_entries_revenue_center_id_fkey"
+            columns: ["revenue_center_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_entries_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           cnpj: string
@@ -313,6 +390,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "clients_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_centers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -796,6 +905,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "prospection_leads_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_centers: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_centers_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
