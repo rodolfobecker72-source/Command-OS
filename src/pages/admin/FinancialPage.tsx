@@ -19,6 +19,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
 interface BudgetWithVersions {
@@ -560,20 +561,19 @@ export function FinancialPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold">Financeiro</h1>
+    <div>
+      <Header title="Financeiro" subtitle="Gestão financeira" />
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
 
       <Tabs defaultValue="fluxo">
-        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 gap-1">
-            <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
-            <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
-            <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
-            <TabsTrigger value="anual" className="text-xs sm:text-sm whitespace-nowrap">Painel Anual</TabsTrigger>
-            <TabsTrigger value="contas" className="text-xs sm:text-sm whitespace-nowrap">Contas</TabsTrigger>
-            <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="grid grid-cols-3 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
+          <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
+          <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
+          <TabsTrigger value="anual" className="text-xs sm:text-sm whitespace-nowrap">Painel Anual</TabsTrigger>
+          <TabsTrigger value="contas" className="text-xs sm:text-sm whitespace-nowrap">Contas</TabsTrigger>
+          <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
+        </TabsList>
 
         {/* ===================== FLUXO DE CAIXA ===================== */}
         <TabsContent value="fluxo" className="space-y-4">
@@ -1282,6 +1282,7 @@ export function FinancialPage() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
