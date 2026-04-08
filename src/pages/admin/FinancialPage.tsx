@@ -1013,7 +1013,7 @@ export function FinancialPage() {
         {/* ===================== PAINEL FINANCEIRO ===================== */}
         <TabsContent value="painel" className="space-y-6">
           {/* Summary cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Wallet className="w-4 h-4" /> Saldo Total (Contas)</div>
