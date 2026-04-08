@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-
 import { format, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,12 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BudgetWithVersions {
   id: string;
@@ -39,6 +42,27 @@ interface FinancialAccount {
   bank: string;
   agency: string;
   account_number: string;
+  is_active: boolean;
+}
+
+interface CashflowEntry {
+  id: string;
+  workspace_id: string;
+  type: string;
+  description: string;
+  value: number;
+  date: string;
+  account_id: string | null;
+  budget_id: string | null;
+  revenue_center_id: string | null;
+  cost_center_id: string | null;
+  notes: string;
+}
+
+interface CenterItem {
+  id: string;
+  workspace_id: string;
+  name: string;
   is_active: boolean;
 }
 
@@ -71,6 +95,30 @@ export function FinancialPage() {
   const [editingAccount, setEditingAccount] = useState<FinancialAccount | null>(null);
   const [accountForm, setAccountForm] = useState({ name: '', type: 'corrente', bank: '', agency: '', account_number: '' });
 
+  // Cashflow state
+  const [cashflowEntries, setCashflowEntries] = useState<CashflowEntry[]>([]);
+  const [cashflowMonth, setCashflowMonth] = useState(format(now, 'yyyy-MM'));
+  const [cashflowAccountFilter, setCashflowAccountFilter] = useState<string>('all');
+  const [cashflowDialog, setCashflowDialog] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<CashflowEntry | null>(null);
+  const [entryForm, setEntryForm] = useState({
+    type: 'receita' as 'receita' | 'despesa',
+    description: '',
+    value: '',
+    date: new Date(),
+    account_id: '',
+    budget_id: '',
+    revenue_center_id: '',
+    cost_center_id: '',
+    notes: '',
+  });
+
+  // Centers state
+  const [revenueCenters, setRevenueCenters] = useState<CenterItem[]>([]);
+  const [costCenters, setCostCenters] = useState<CenterItem[]>([]);
+  const [newRevenueCenterName, setNewRevenueCenterName] = useState('');
+  const [newCostCenterName, setNewCostCenterName] = useState('');
+
   useEffect(() => {
     if (workspace?.id) loadData();
   }, [workspace?.id]);
@@ -79,12 +127,15 @@ export function FinancialPage() {
     setLoading(true);
     const wid = workspace!.id;
 
-    const [bRes, vRes, cRes, aRes, gRes] = await Promise.all([
+    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes] = await Promise.all([
       supabase.from('budgets').select('*').eq('workspace_id', wid).in('status', ['aprovada', 'em_execucao', 'concluido']),
       supabase.from('budget_versions').select('*').eq('workspace_id', wid),
       supabase.from('clients').select('id, company_name').eq('workspace_id', wid),
       supabase.from('financial_accounts').select('*').eq('workspace_id', wid).order('name'),
       supabase.from('monthly_goals').select('*').eq('workspace_id', wid),
+      supabase.from('cashflow_entries').select('*').eq('workspace_id', wid).order('date', { ascending: false }),
+      supabase.from('revenue_centers').select('*').eq('workspace_id', wid).order('name'),
+      supabase.from('cost_centers').select('*').eq('workspace_id', wid).order('name'),
     ]);
 
     if (bRes.data) setBudgets(bRes.data as any);
@@ -100,10 +151,13 @@ export function FinancialPage() {
       gRes.data.forEach((g: any) => { gmap[g.month] = Number(g.value); });
       setGoals(gmap);
     }
+    if (cfRes.data) setCashflowEntries(cfRes.data as any);
+    if (rcRes.data) setRevenueCenters(rcRes.data as any);
+    if (ccRes.data) setCostCenters(ccRes.data as any);
     setLoading(false);
   }
 
-  // Monthly projects
+  // ======== Monthly projects (existing logic) ========
   const monthlyProjects = useMemo(() => {
     return budgets
       .filter(b => b.execution_month === selectedMonth)
@@ -120,14 +174,12 @@ export function FinancialPage() {
         let totalValue = 0;
         let totalRealCost = 0;
         const serviceDetails = services.map((s: any, idx: number) => {
-          // Calculate budgeted value from costs
           const costSum = (s.costs || []).reduce((sum: number, c: any) => sum + Number(c.value || 0), 0);
           const nfPct = Number(s.nfCostPercentage || 0) / 100;
           const marginPct = Number(s.targetMargin || 0) / 100;
           const divisor = 1 - marginPct - nfPct;
           const sValue = divisor > 0 ? costSum / divisor : costSum;
 
-          // Find real cost from execution services
           const execService = executionServices.find((es: any) => es.id === s.id);
           const sRealCost = execService ? Number(execService.realTotal || 0) : 0;
 
@@ -163,7 +215,7 @@ export function FinancialPage() {
       });
   }, [budgets, versions, clients, selectedMonth]);
 
-  // Annual data
+  // ======== Annual data (existing logic) ========
   const annualData = useMemo(() => {
     const months = eachMonthOfInterval({
       start: startOfYear(new Date(selectedYear, 0)),
@@ -196,29 +248,94 @@ export function FinancialPage() {
         custoReal += nfCost;
       });
 
-      return {
-        month: label,
-        faturamento,
-        custoReal,
-        margem: faturamento - custoReal,
-        meta: goals[key] || 0,
-      };
+      return { month: label, faturamento, custoReal, margem: faturamento - custoReal, meta: goals[key] || 0 };
     });
   }, [budgets, versions, goals, selectedYear]);
 
   const annualTotals = useMemo(() => {
     return annualData.reduce(
-      (acc, d) => ({
-        faturamento: acc.faturamento + d.faturamento,
-        custoReal: acc.custoReal + d.custoReal,
-        margem: acc.margem + d.margem,
-        meta: acc.meta + d.meta,
-      }),
+      (acc, d) => ({ faturamento: acc.faturamento + d.faturamento, custoReal: acc.custoReal + d.custoReal, margem: acc.margem + d.margem, meta: acc.meta + d.meta }),
       { faturamento: 0, custoReal: 0, margem: 0, meta: 0 }
     );
   }, [annualData]);
 
-  // Account CRUD
+  // ======== Cashflow logic ========
+  const filteredCashflow = useMemo(() => {
+    return cashflowEntries.filter(e => {
+      const entryMonth = e.date?.substring(0, 7);
+      if (entryMonth !== cashflowMonth) return false;
+      if (cashflowAccountFilter !== 'all' && e.account_id !== cashflowAccountFilter) return false;
+      return true;
+    });
+  }, [cashflowEntries, cashflowMonth, cashflowAccountFilter]);
+
+  const cashflowSummary = useMemo(() => {
+    const totalReceitas = filteredCashflow.filter(e => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
+    const totalDespesas = filteredCashflow.filter(e => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
+    return { totalReceitas, totalDespesas, saldo: totalReceitas - totalDespesas };
+  }, [filteredCashflow]);
+
+  function openNewEntry() {
+    setEditingEntry(null);
+    setEntryForm({ type: 'receita', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
+    setCashflowDialog(true);
+  }
+
+  function openEditEntry(e: CashflowEntry) {
+    setEditingEntry(e);
+    setEntryForm({
+      type: e.type as any,
+      description: e.description,
+      value: String(e.value),
+      date: new Date(e.date + 'T12:00:00'),
+      account_id: e.account_id || '',
+      budget_id: e.budget_id || '',
+      revenue_center_id: e.revenue_center_id || '',
+      cost_center_id: e.cost_center_id || '',
+      notes: e.notes,
+    });
+    setCashflowDialog(true);
+  }
+
+  async function saveEntry() {
+    const wid = workspace!.id;
+    if (!entryForm.description.trim()) { toast.error('Descrição é obrigatória'); return; }
+    if (!entryForm.value || Number(entryForm.value) <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+
+    const data: any = {
+      workspace_id: wid,
+      type: entryForm.type,
+      description: entryForm.description,
+      value: Number(entryForm.value),
+      date: format(entryForm.date, 'yyyy-MM-dd'),
+      account_id: entryForm.account_id || null,
+      budget_id: entryForm.budget_id || null,
+      revenue_center_id: entryForm.type === 'receita' ? (entryForm.revenue_center_id || null) : null,
+      cost_center_id: entryForm.type === 'despesa' ? (entryForm.cost_center_id || null) : null,
+      notes: entryForm.notes,
+    };
+
+    if (editingEntry) {
+      const { error } = await supabase.from('cashflow_entries').update(data).eq('id', editingEntry.id);
+      if (error) { toast.error('Erro ao atualizar lançamento'); return; }
+      toast.success('Lançamento atualizado');
+    } else {
+      const { error } = await supabase.from('cashflow_entries').insert(data);
+      if (error) { toast.error('Erro ao criar lançamento'); return; }
+      toast.success('Lançamento criado');
+    }
+    setCashflowDialog(false);
+    loadData();
+  }
+
+  async function deleteEntry(id: string) {
+    if (!confirm('Excluir este lançamento?')) return;
+    await supabase.from('cashflow_entries').delete().eq('id', id);
+    toast.success('Lançamento excluído');
+    loadData();
+  }
+
+  // ======== Account CRUD (existing) ========
   async function saveAccount() {
     const wid = workspace!.id;
     if (!accountForm.name.trim()) { toast.error('Nome da conta é obrigatório'); return; }
@@ -263,6 +380,49 @@ export function FinancialPage() {
     setAccountDialog(true);
   }
 
+  // ======== Centers CRUD ========
+  async function addRevenueCenter() {
+    if (!newRevenueCenterName.trim()) return;
+    const { error } = await supabase.from('revenue_centers').insert({ workspace_id: workspace!.id, name: newRevenueCenterName.trim() });
+    if (error) { toast.error('Erro ao criar centro de receita'); return; }
+    toast.success('Centro de receita criado');
+    setNewRevenueCenterName('');
+    loadData();
+  }
+
+  async function toggleRevenueCenter(id: string, is_active: boolean) {
+    await supabase.from('revenue_centers').update({ is_active: !is_active }).eq('id', id);
+    loadData();
+  }
+
+  async function deleteRevenueCenter(id: string) {
+    if (!confirm('Excluir este centro de receita?')) return;
+    await supabase.from('revenue_centers').delete().eq('id', id);
+    toast.success('Centro excluído');
+    loadData();
+  }
+
+  async function addCostCenter() {
+    if (!newCostCenterName.trim()) return;
+    const { error } = await supabase.from('cost_centers').insert({ workspace_id: workspace!.id, name: newCostCenterName.trim() });
+    if (error) { toast.error('Erro ao criar centro de custo'); return; }
+    toast.success('Centro de custo criado');
+    setNewCostCenterName('');
+    loadData();
+  }
+
+  async function toggleCostCenter(id: string, is_active: boolean) {
+    await supabase.from('cost_centers').update({ is_active: !is_active }).eq('id', id);
+    loadData();
+  }
+
+  async function deleteCostCenter(id: string) {
+    if (!confirm('Excluir este centro de custo?')) return;
+    await supabase.from('cost_centers').delete().eq('id', id);
+    toast.success('Centro excluído');
+    loadData();
+  }
+
   // Month options
   const monthOptions = useMemo(() => {
     const months: string[] = [];
@@ -274,6 +434,16 @@ export function FinancialPage() {
   }, []);
 
   const yearOptions = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+
+  // Helper: get name lookups
+  const accountName = (id: string | null) => accounts.find(a => a.id === id)?.name || '—';
+  const budgetLabel = (id: string | null) => {
+    if (!id) return null;
+    const b = budgets.find(b => b.id === id);
+    return b ? `${b.proposal_id} - ${b.project_name}` : null;
+  };
+  const revenueCenterName = (id: string | null) => revenueCenters.find(r => r.id === id)?.name || null;
+  const costCenterName = (id: string | null) => costCenters.find(c => c.id === id)?.name || null;
 
   if (loading) {
     return (
@@ -287,73 +457,245 @@ export function FinancialPage() {
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold">Financeiro</h1>
 
-      <Tabs defaultValue="projetos">
-        <TabsList>
+      <Tabs defaultValue="fluxo">
+        <TabsList className="flex flex-wrap">
+          <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="projetos">Projetos do Mês</TabsTrigger>
           <TabsTrigger value="anual">Painel Anual</TabsTrigger>
           <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
+          <TabsTrigger value="config">Configurações</TabsTrigger>
         </TabsList>
 
-        {/* PROJETOS DO MÊS */}
+        {/* ===================== FLUXO DE CAIXA ===================== */}
+        <TabsContent value="fluxo" className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap">Mês</Label>
+                <Select value={cashflowMonth} onValueChange={setCashflowMonth}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {monthOptions.map(m => (
+                      <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="whitespace-nowrap">Conta</Label>
+                <Select value={cashflowAccountFilter} onValueChange={setCashflowAccountFilter}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as contas</SelectItem>
+                    {accounts.filter(a => a.is_active).map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button onClick={openNewEntry} size="sm"><Plus className="w-4 h-4 mr-1" /> Novo Lançamento</Button>
+          </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /> Receitas</div>
+                <p className="text-xl font-bold text-green-600">{currencyFmt(cashflowSummary.totalReceitas)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowDownCircle className="w-4 h-4 text-destructive" /> Despesas</div>
+                <p className="text-xl font-bold text-destructive">{currencyFmt(cashflowSummary.totalDespesas)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Saldo</div>
+                <p className={cn("text-xl font-bold", cashflowSummary.saldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(cashflowSummary.saldo)}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {filteredCashflow.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum lançamento neste período.</CardContent></Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Projeto / Centro</TableHead>
+                      <TableHead>Conta</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-center">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCashflow.map(e => (
+                      <TableRow key={e.id}>
+                        <TableCell>{e.date ? format(new Date(e.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant={e.type === 'receita' ? 'default' : 'destructive'} className="text-xs">
+                            {e.type === 'receita' ? 'Receita' : 'Despesa'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">{e.description}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {budgetLabel(e.budget_id) || revenueCenterName(e.revenue_center_id) || costCenterName(e.cost_center_id) || '—'}
+                        </TableCell>
+                        <TableCell>{accountName(e.account_id)}</TableCell>
+                        <TableCell className={cn("text-right font-medium", e.type === 'receita' ? 'text-green-600' : 'text-destructive')}>
+                          {e.type === 'despesa' ? '- ' : ''}{currencyFmt(Number(e.value))}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => openEditEntry(e)}><Pencil className="w-4 h-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteEntry(e.id)}><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Cashflow Entry Dialog */}
+          <Dialog open={cashflowDialog} onOpenChange={setCashflowDialog}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle>{editingEntry ? 'Editar Lançamento' : 'Novo Lançamento'}</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Button variant={entryForm.type === 'receita' ? 'default' : 'outline'} className="flex-1" onClick={() => setEntryForm(f => ({ ...f, type: 'receita', cost_center_id: '', budget_id: '', revenue_center_id: '' }))}>
+                    <ArrowUpCircle className="w-4 h-4 mr-1" /> Receita
+                  </Button>
+                  <Button variant={entryForm.type === 'despesa' ? 'destructive' : 'outline'} className="flex-1" onClick={() => setEntryForm(f => ({ ...f, type: 'despesa', budget_id: '', revenue_center_id: '', cost_center_id: '' }))}>
+                    <ArrowDownCircle className="w-4 h-4 mr-1" /> Despesa
+                  </Button>
+                </div>
+                <div>
+                  <Label>Descrição</Label>
+                  <Input value={entryForm.description} onChange={e => setEntryForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição do lançamento" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Valor (R$)</Label>
+                    <Input type="number" min="0" step="0.01" value={entryForm.value} onChange={e => setEntryForm(f => ({ ...f, value: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Data</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !entryForm.date && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {entryForm.date ? format(entryForm.date, 'dd/MM/yyyy') : 'Selecionar'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={entryForm.date} onSelect={d => d && setEntryForm(f => ({ ...f, date: d }))} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+                <div>
+                  <Label>Conta Financeira</Label>
+                  <Select value={entryForm.account_id} onValueChange={v => setEntryForm(f => ({ ...f, account_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
+                    <SelectContent>
+                      {accounts.filter(a => a.is_active).map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {entryForm.type === 'receita' && (
+                  <div className="space-y-3">
+                    <Label className="text-muted-foreground text-xs">Vincular a:</Label>
+                    <div>
+                      <Label>Projeto Aprovado</Label>
+                      <Select value={entryForm.budget_id} onValueChange={v => setEntryForm(f => ({ ...f, budget_id: v, revenue_center_id: '' }))}>
+                        <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum</SelectItem>
+                          {budgets.map(b => (
+                            <SelectItem key={b.id} value={b.id}>{b.proposal_id} - {b.project_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!entryForm.budget_id && (
+                      <div>
+                        <Label>Centro de Receita</Label>
+                        <Select value={entryForm.revenue_center_id} onValueChange={v => setEntryForm(f => ({ ...f, revenue_center_id: v }))}>
+                          <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Nenhum</SelectItem>
+                            {revenueCenters.filter(r => r.is_active).map(r => (
+                              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {entryForm.type === 'despesa' && (
+                  <div>
+                    <Label>Centro de Custo</Label>
+                    <Select value={entryForm.cost_center_id} onValueChange={v => setEntryForm(f => ({ ...f, cost_center_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Nenhum</SelectItem>
+                        {costCenters.filter(c => c.is_active).map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label>Observações</Label>
+                  <Textarea value={entryForm.notes} onChange={e => setEntryForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+                </div>
+                <Button onClick={saveEntry} className="w-full">Salvar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* ===================== PROJETOS DO MÊS ===================== */}
         <TabsContent value="projetos" className="space-y-4">
           <div className="flex items-center gap-4">
             <Label>Mês</Label>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {monthOptions.map(m => (
-                  <SelectItem key={m} value={m}>
-                    {format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}
-                  </SelectItem>
+                  <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Summary cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <DollarSign className="w-4 h-4" /> Faturamento
-                </div>
-                <p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <TrendingDown className="w-4 h-4" /> Custo Real
-                </div>
-                <p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <DollarSign className="w-4 h-4" /> Imposto NF
-                </div>
-                <p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <TrendingUp className="w-4 h-4" /> Margem Real
-                </div>
-                <p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p>
-              </CardContent>
-            </Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Faturamento</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingDown className="w-4 h-4" /> Custo Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Imposto NF</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4" /> Margem Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p></CardContent></Card>
           </div>
 
           {monthlyProjects.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                Nenhum projeto aprovado para este mês.
-              </CardContent>
-            </Card>
+            <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum projeto aprovado para este mês.</CardContent></Card>
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -373,21 +715,14 @@ export function FinancialPage() {
                   <TableBody>
                     {monthlyProjects.map(p => (
                       <React.Fragment key={p.id}>
-                        <TableRow
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
-                        >
+                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}>
                           <TableCell className="font-medium">{p.proposalId} - {p.projectName}</TableCell>
                           <TableCell>{p.clientName}</TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               {p.services.map((s, i) => (
                                 <div key={i} className="flex items-center gap-1.5">
-                                  {s.categoryLabel && (
-                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">
-                                      {s.categoryLabel}
-                                    </Badge>
-                                  )}
+                                  {s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}
                                   <span className="text-xs">{s.name}</span>
                                 </div>
                               ))}
@@ -396,77 +731,33 @@ export function FinancialPage() {
                           <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
                           <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
                           <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
-                          <TableCell className="text-right">
-                            <span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
-                              {currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)
-                            </span>
-                          </TableCell>
+                          <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
                           <TableCell className="text-center">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }}
-                              title="Ver no CRM"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </Button>
+                            <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }} title="Ver no CRM"><ExternalLink className="w-4 h-4" /></Button>
                           </TableCell>
                         </TableRow>
-
-                        {/* Expanded detail */}
                         {expandedProject === p.id && (
                           <TableRow>
                             <TableCell colSpan={9} className="bg-muted/30 p-0">
                               <div className="p-4 space-y-3">
                                 <h4 className="text-sm font-semibold">Composição do Investimento</h4>
                                 <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>Serviço</TableHead>
-                                      <TableHead className="text-right">Valor Proposta</TableHead>
-                                      <TableHead className="text-right">Custo Real</TableHead>
-                                      <TableHead className="text-right">Margem</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
+                                  <TableHeader><TableRow><TableHead>Serviço</TableHead><TableHead className="text-right">Valor Proposta</TableHead><TableHead className="text-right">Custo Real</TableHead><TableHead className="text-right">Margem</TableHead></TableRow></TableHeader>
                                   <TableBody>
                                     {p.services.map((s, i) => (
                                       <TableRow key={i}>
-                                        <TableCell className="font-medium">
-                                          <div className="flex items-center gap-2">
-                                            {s.categoryLabel && (
-                                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">
-                                                {s.categoryLabel}
-                                              </Badge>
-                                            )}
-                                            <span>{s.name}</span>
-                                          </div>
-                                        </TableCell>
+                                        <TableCell className="font-medium"><div className="flex items-center gap-2">{s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}<span>{s.name}</span></div></TableCell>
                                         <TableCell className="text-right">{currencyFmt(s.value)}</TableCell>
                                         <TableCell className="text-right">{currencyFmt(s.realCost)}</TableCell>
-                                        <TableCell className="text-right">
-                                          <span className={s.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
-                                            {currencyFmt(s.margin)} ({s.marginPercent.toFixed(1)}%)
-                                          </span>
-                                        </TableCell>
+                                        <TableCell className="text-right"><span className={s.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(s.margin)} ({s.marginPercent.toFixed(1)}%)</span></TableCell>
                                       </TableRow>
                                     ))}
-                                    {/* NF row */}
-                                    <TableRow>
-                                      <TableCell className="font-medium">Imposto NF</TableCell>
-                                      <TableCell className="text-right">—</TableCell>
-                                      <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
-                                      <TableCell className="text-right">—</TableCell>
-                                    </TableRow>
-                                    {/* Total row */}
+                                    <TableRow><TableCell className="font-medium">Imposto NF</TableCell><TableCell className="text-right">—</TableCell><TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell><TableCell className="text-right">—</TableCell></TableRow>
                                     <TableRow className="font-bold border-t-2">
                                       <TableCell>Total</TableCell>
                                       <TableCell className="text-right">{currencyFmt(p.totalValue)}</TableCell>
                                       <TableCell className="text-right">{currencyFmt(p.totalRealCost + p.nfCost)}</TableCell>
-                                      <TableCell className="text-right">
-                                        <span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>
-                                          {currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)
-                                        </span>
-                                      </TableCell>
+                                      <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
                                     </TableRow>
                                   </TableBody>
                                 </Table>
@@ -483,63 +774,30 @@ export function FinancialPage() {
           )}
         </TabsContent>
 
-        {/* PAINEL ANUAL */}
+        {/* ===================== PAINEL ANUAL ===================== */}
         <TabsContent value="anual" className="space-y-4">
           <div className="flex items-center gap-4">
             <Label>Ano</Label>
             <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map(y => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
-              </SelectContent>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>{yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
           </div>
 
-          {/* Annual summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Faturamento Anual</p>
-                <p className="text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Custo Real Anual</p>
-                <p className="text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Margem Real Anual</p>
-                <p className="text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">Meta Anual</p>
-                <p className="text-xl font-bold">{currencyFmt(annualTotals.meta)}</p>
-              </CardContent>
-            </Card>
+            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Faturamento Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Custo Real Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Margem Real Anual</p><p className="text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Meta Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
           </div>
 
-          {/* Chart */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Faturamento vs Custo vs Margem</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Faturamento vs Custo vs Margem</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={annualData}>
-                  <CartesianAxis />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} />
-                  <Legend />
+                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
                   <Bar dataKey="faturamento" name="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="custoReal" name="Custo Real" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="margem" name="Margem" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
@@ -549,17 +807,12 @@ export function FinancialPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Meta vs Realizado</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Meta vs Realizado</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={annualData}>
-                  <CartesianAxis />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} />
-                  <Legend />
+                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
                   <Line type="monotone" dataKey="faturamento" name="Realizado" stroke="hsl(var(--primary))" strokeWidth={2} />
                   <Line type="monotone" dataKey="meta" name="Meta" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" strokeWidth={2} />
                 </LineChart>
@@ -568,49 +821,29 @@ export function FinancialPage() {
           </Card>
         </TabsContent>
 
-        {/* CONTAS FINANCEIRAS */}
+        {/* ===================== CONTAS FINANCEIRAS ===================== */}
         <TabsContent value="contas" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Contas Financeiras</h2>
             <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
               <DialogTrigger asChild>
-                <Button onClick={openNewAccount} size="sm">
-                  <Plus className="w-4 h-4 mr-1" /> Nova Conta
-                </Button>
+                <Button onClick={openNewAccount} size="sm"><Plus className="w-4 h-4 mr-1" /> Nova Conta</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle></DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label>Nome da Conta</Label>
-                    <Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" />
-                  </div>
+                  <div><Label>Nome da Conta</Label><Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" /></div>
                   <div>
                     <Label>Tipo</Label>
                     <Select value={accountForm.type} onValueChange={v => setAccountForm(f => ({ ...f, type: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ACCOUNT_TYPES.map(t => (
-                          <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                        ))}
-                      </SelectContent>
+                      <SelectContent>{ACCOUNT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Banco</Label>
-                    <Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} />
-                  </div>
+                  <div><Label>Banco</Label><Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Agência</Label>
-                      <Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label>Número da Conta</Label>
-                      <Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} />
-                    </div>
+                    <div><Label>Agência</Label><Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} /></div>
+                    <div><Label>Número da Conta</Label><Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} /></div>
                   </div>
                   <Button onClick={saveAccount} className="w-full">Salvar</Button>
                 </div>
@@ -619,27 +852,12 @@ export function FinancialPage() {
           </div>
 
           {accounts.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                <Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                Nenhuma conta cadastrada.
-              </CardContent>
-            </Card>
+            <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
           ) : (
             <Card>
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Banco</TableHead>
-                      <TableHead>Agência</TableHead>
-                      <TableHead>Conta</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-center">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead>Agência</TableHead><TableHead>Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {accounts.map(acc => (
                       <TableRow key={acc.id}>
@@ -648,19 +866,11 @@ export function FinancialPage() {
                         <TableCell>{acc.bank || '—'}</TableCell>
                         <TableCell>{acc.agency || '—'}</TableCell>
                         <TableCell>{acc.account_number || '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant={acc.is_active ? 'default' : 'secondary'}>
-                            {acc.is_active ? 'Ativa' : 'Inativa'}
-                          </Badge>
-                        </TableCell>
+                        <TableCell><Badge variant={acc.is_active ? 'default' : 'secondary'}>{acc.is_active ? 'Ativa' : 'Inativa'}</Badge></TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}>
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -670,6 +880,69 @@ export function FinancialPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ===================== CONFIGURAÇÕES ===================== */}
+        <TabsContent value="config" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue Centers */}
+            <Card>
+              <CardHeader><CardTitle className="text-base">Centros de Receita</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input placeholder="Nome do centro de receita" value={newRevenueCenterName} onChange={e => setNewRevenueCenterName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addRevenueCenter()} />
+                  <Button size="sm" onClick={addRevenueCenter}><Plus className="w-4 h-4" /></Button>
+                </div>
+                {revenueCenters.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum centro cadastrado.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {revenueCenters.map(rc => (
+                      <div key={rc.id} className="flex items-center justify-between p-2 rounded-md border">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={rc.is_active ? 'default' : 'secondary'} className="text-xs">{rc.is_active ? 'Ativo' : 'Inativo'}</Badge>
+                          <span className="text-sm font-medium">{rc.name}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => toggleRevenueCenter(rc.id, rc.is_active)}>{rc.is_active ? 'Desativar' : 'Ativar'}</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteRevenueCenter(rc.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Cost Centers */}
+            <Card>
+              <CardHeader><CardTitle className="text-base">Centros de Custo</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input placeholder="Nome do centro de custo" value={newCostCenterName} onChange={e => setNewCostCenterName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCostCenter()} />
+                  <Button size="sm" onClick={addCostCenter}><Plus className="w-4 h-4" /></Button>
+                </div>
+                {costCenters.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum centro cadastrado.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {costCenters.map(cc => (
+                      <div key={cc.id} className="flex items-center justify-between p-2 rounded-md border">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={cc.is_active ? 'default' : 'secondary'} className="text-xs">{cc.is_active ? 'Ativo' : 'Inativo'}</Badge>
+                          <span className="text-sm font-medium">{cc.name}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => toggleCostCenter(cc.id, cc.is_active)}>{cc.is_active ? 'Desativar' : 'Ativar'}</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteCostCenter(cc.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
