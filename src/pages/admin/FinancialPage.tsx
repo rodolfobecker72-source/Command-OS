@@ -748,10 +748,10 @@ export function FinancialPage() {
                     {!entryForm.budget_id && (
                       <div>
                         <Label>Centro de Receita</Label>
-                        <Select value={entryForm.revenue_center_id} onValueChange={v => setEntryForm(f => ({ ...f, revenue_center_id: v }))}>
+                        <Select value={entryForm.revenue_center_id || 'none'} onValueChange={v => setEntryForm(f => ({ ...f, revenue_center_id: v === 'none' ? '' : v }))}>
                           <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Nenhum</SelectItem>
+                            <SelectItem value="none">Nenhum</SelectItem>
                             {revenueCenters.filter(r => r.is_active).map(r => (
                               <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                             ))}
