@@ -175,7 +175,7 @@ export function FinancialPage() {
           : versions.filter(v => v.budget_id === b.id).sort((a, c) => c.version - a.version)[0];
 
         const executionData = b.execution as any;
-        const nfCost = Number(executionData?.nfCost || 0);
+        const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
         const realCosts = executionData?.realCosts || {};
 
         faturamento += b.final_value || Number(approvedVer?.full_price || 0);
