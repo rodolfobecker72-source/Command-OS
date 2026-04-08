@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BudgetWithVersions {
@@ -119,6 +119,17 @@ export function FinancialPage() {
   const [newRevenueCenterName, setNewRevenueCenterName] = useState('');
   const [newCostCenterName, setNewCostCenterName] = useState('');
 
+  // Payment dialog state
+  const [paymentDialog, setPaymentDialog] = useState(false);
+  const [paymentProject, setPaymentProject] = useState<any>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    value: '',
+    date: new Date(),
+    account_id: '',
+    type: 'total' as 'total' | 'parcial',
+    notes: '',
+  });
+
   useEffect(() => {
     if (workspace?.id) loadData();
   }, [workspace?.id]);
@@ -155,6 +166,18 @@ export function FinancialPage() {
     if (rcRes.data) setRevenueCenters(rcRes.data as any);
     if (ccRes.data) setCostCenters(ccRes.data as any);
     setLoading(false);
+  }
+
+  // ======== Helper: get payment status for a project ========
+  function getProjectPaymentInfo(projectId: string, projectValue: number) {
+    const payments = cashflowEntries.filter(
+      e => e.type === 'receita' && e.budget_id === projectId
+    );
+    const totalPaid = payments.reduce((s, e) => s + Number(e.value), 0);
+    
+    if (totalPaid <= 0) return { status: 'nao_pago' as const, totalPaid, remaining: projectValue };
+    if (totalPaid >= projectValue * 0.99) return { status: 'pago' as const, totalPaid, remaining: 0 };
+    return { status: 'parcial' as const, totalPaid, remaining: projectValue - totalPaid };
   }
 
   // ======== Monthly projects (existing logic) ========
@@ -275,6 +298,52 @@ export function FinancialPage() {
     return { totalReceitas, totalDespesas, saldo: totalReceitas - totalDespesas };
   }, [filteredCashflow]);
 
+  // ======== Painel Financeiro data ========
+  const painelData = useMemo(() => {
+    // Account balances: sum all cashflow entries per account
+    const accountBalances = accounts.filter(a => a.is_active).map(acc => {
+      const entries = cashflowEntries.filter(e => e.account_id === acc.id);
+      const receitas = entries.filter(e => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
+      const despesas = entries.filter(e => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
+      return { ...acc, saldo: receitas - despesas };
+    });
+
+    // Receivables by month: approved budgets - payments received
+    const receivablesByMonth: { month: string; label: string; totalValue: number; totalPaid: number; remaining: number }[] = [];
+    const monthsSet = new Set<string>();
+    budgets.forEach(b => { if (b.execution_month) monthsSet.add(b.execution_month); });
+    const sortedMonths = Array.from(monthsSet).sort();
+
+    sortedMonths.forEach(m => {
+      const monthBudgets = budgets.filter(b => b.execution_month === m);
+      let totalValue = 0;
+      let totalPaid = 0;
+
+      monthBudgets.forEach(b => {
+        const approvedVer = b.approved_version != null
+          ? versions.find(v => v.budget_id === b.id && v.version === b.approved_version)
+          : versions.filter(v => v.budget_id === b.id).sort((a, c) => c.version - a.version)[0];
+        const fv = b.final_value || Number(approvedVer?.full_price || 0);
+        totalValue += fv;
+        const payments = cashflowEntries.filter(e => e.type === 'receita' && e.budget_id === b.id);
+        totalPaid += payments.reduce((s, e) => s + Number(e.value), 0);
+      });
+
+      receivablesByMonth.push({
+        month: m,
+        label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }),
+        totalValue,
+        totalPaid,
+        remaining: totalValue - totalPaid,
+      });
+    });
+
+    const totalSaldo = accountBalances.reduce((s, a) => s + a.saldo, 0);
+    const totalRecebiveis = receivablesByMonth.reduce((s, r) => s + Math.max(0, r.remaining), 0);
+
+    return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis };
+  }, [accounts, cashflowEntries, budgets, versions]);
+
   function openNewEntry() {
     setEditingEntry(null);
     setEntryForm({ type: 'receita', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
@@ -332,6 +401,43 @@ export function FinancialPage() {
     if (!confirm('Excluir este lançamento?')) return;
     await supabase.from('cashflow_entries').delete().eq('id', id);
     toast.success('Lançamento excluído');
+    loadData();
+  }
+
+  // ======== Payment dialog ========
+  function openPaymentDialog(project: any) {
+    setPaymentProject(project);
+    const paymentInfo = getProjectPaymentInfo(project.id, project.totalValue);
+    setPaymentForm({
+      value: paymentInfo.remaining > 0 ? String(paymentInfo.remaining.toFixed(2)) : String(project.totalValue.toFixed(2)),
+      date: new Date(),
+      account_id: '',
+      type: 'total',
+      notes: '',
+    });
+    setPaymentDialog(true);
+  }
+
+  async function savePayment() {
+    if (!paymentProject || !workspace) return;
+    const val = Number(paymentForm.value);
+    if (!val || val <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+    if (!paymentForm.account_id) { toast.error('Selecione uma conta financeira'); return; }
+
+    const { error } = await supabase.from('cashflow_entries').insert({
+      workspace_id: workspace.id,
+      type: 'receita',
+      description: `Pgto ${paymentForm.type === 'total' ? 'total' : 'parcial'} - ${paymentProject.proposalId} - ${paymentProject.projectName}`,
+      value: val,
+      date: format(paymentForm.date, 'yyyy-MM-dd'),
+      account_id: paymentForm.account_id,
+      budget_id: paymentProject.id,
+      notes: paymentForm.notes,
+    });
+
+    if (error) { toast.error('Erro ao registrar pagamento'); return; }
+    toast.success('Pagamento registrado no fluxo de caixa');
+    setPaymentDialog(false);
     loadData();
   }
 
@@ -461,6 +567,7 @@ export function FinancialPage() {
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="projetos">Projetos do Mês</TabsTrigger>
+          <TabsTrigger value="painel">Painel Financeiro</TabsTrigger>
           <TabsTrigger value="anual">Painel Anual</TabsTrigger>
           <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
           <TabsTrigger value="config">Configurações</TabsTrigger>
@@ -713,62 +820,293 @@ export function FinancialPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {monthlyProjects.map(p => (
-                      <React.Fragment key={p.id}>
-                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}>
-                          <TableCell className="font-medium">{p.proposalId} - {p.projectName}</TableCell>
-                          <TableCell>{p.clientName}</TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {p.services.map((s, i) => (
-                                <div key={i} className="flex items-center gap-1.5">
-                                  {s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}
-                                  <span className="text-xs">{s.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
-                          <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
-                          <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
-                          <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
-                          <TableCell className="text-center">
-                            <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }} title="Ver no CRM"><ExternalLink className="w-4 h-4" /></Button>
-                          </TableCell>
-                        </TableRow>
-                        {expandedProject === p.id && (
-                          <TableRow>
-                            <TableCell colSpan={9} className="bg-muted/30 p-0">
-                              <div className="p-4 space-y-3">
-                                <h4 className="text-sm font-semibold">Composição do Investimento</h4>
-                                <Table>
-                                  <TableHeader><TableRow><TableHead>Serviço</TableHead><TableHead className="text-right">Valor Proposta</TableHead><TableHead className="text-right">Custo Real</TableHead><TableHead className="text-right">Margem</TableHead></TableRow></TableHeader>
-                                  <TableBody>
-                                    {p.services.map((s, i) => (
-                                      <TableRow key={i}>
-                                        <TableCell className="font-medium"><div className="flex items-center gap-2">{s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}<span>{s.name}</span></div></TableCell>
-                                        <TableCell className="text-right">{currencyFmt(s.value)}</TableCell>
-                                        <TableCell className="text-right">{currencyFmt(s.realCost)}</TableCell>
-                                        <TableCell className="text-right"><span className={s.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(s.margin)} ({s.marginPercent.toFixed(1)}%)</span></TableCell>
-                                      </TableRow>
-                                    ))}
-                                    <TableRow><TableCell className="font-medium">Imposto NF</TableCell><TableCell className="text-right">—</TableCell><TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell><TableCell className="text-right">—</TableCell></TableRow>
-                                    <TableRow className="font-bold border-t-2">
-                                      <TableCell>Total</TableCell>
-                                      <TableCell className="text-right">{currencyFmt(p.totalValue)}</TableCell>
-                                      <TableCell className="text-right">{currencyFmt(p.totalRealCost + p.nfCost)}</TableCell>
-                                      <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
-                                    </TableRow>
-                                  </TableBody>
-                                </Table>
+                    {monthlyProjects.map(p => {
+                      const paymentInfo = getProjectPaymentInfo(p.id, p.totalValue);
+                      const paymentIconColor = paymentInfo.status === 'pago'
+                        ? 'text-green-600'
+                        : paymentInfo.status === 'parcial'
+                          ? 'text-yellow-500'
+                          : 'text-orange-400';
+                      const paymentTooltip = paymentInfo.status === 'pago'
+                        ? 'Pagamento concluído'
+                        : paymentInfo.status === 'parcial'
+                          ? `Parcial: ${currencyFmt(paymentInfo.totalPaid)} recebido, falta ${currencyFmt(paymentInfo.remaining)}`
+                          : 'Nenhum pagamento registrado';
+
+                      return (
+                        <React.Fragment key={p.id}>
+                          <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}>
+                            <TableCell className="font-medium">{p.proposalId} - {p.projectName}</TableCell>
+                            <TableCell>{p.clientName}</TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                {p.services.map((s, i) => (
+                                  <div key={i} className="flex items-center gap-1.5">
+                                    {s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}
+                                    <span className="text-xs">{s.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
+                            <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
+                            <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
+                            <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title={paymentTooltip}
+                                  onClick={(e) => { e.stopPropagation(); openPaymentDialog(p); }}
+                                >
+                                  <CircleDollarSign className={cn("w-5 h-5", paymentIconColor)} />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }} title="Ver no CRM"><ExternalLink className="w-4 h-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </React.Fragment>
-                    ))}
+                          {expandedProject === p.id && (
+                            <TableRow>
+                              <TableCell colSpan={9} className="bg-muted/30 p-0">
+                                <div className="p-4 space-y-3">
+                                  <h4 className="text-sm font-semibold">Composição do Investimento</h4>
+                                  <Table>
+                                    <TableHeader><TableRow><TableHead>Serviço</TableHead><TableHead className="text-right">Valor Proposta</TableHead><TableHead className="text-right">Custo Real</TableHead><TableHead className="text-right">Margem</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                      {p.services.map((s, i) => (
+                                        <TableRow key={i}>
+                                          <TableCell className="font-medium"><div className="flex items-center gap-2">{s.categoryLabel && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold uppercase">{s.categoryLabel}</Badge>}<span>{s.name}</span></div></TableCell>
+                                          <TableCell className="text-right">{currencyFmt(s.value)}</TableCell>
+                                          <TableCell className="text-right">{currencyFmt(s.realCost)}</TableCell>
+                                          <TableCell className="text-right"><span className={s.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(s.margin)} ({s.marginPercent.toFixed(1)}%)</span></TableCell>
+                                        </TableRow>
+                                      ))}
+                                      <TableRow><TableCell className="font-medium">Imposto NF</TableCell><TableCell className="text-right">—</TableCell><TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell><TableCell className="text-right">—</TableCell></TableRow>
+                                      <TableRow className="font-bold border-t-2">
+                                        <TableCell>Total</TableCell>
+                                        <TableCell className="text-right">{currencyFmt(p.totalValue)}</TableCell>
+                                        <TableCell className="text-right">{currencyFmt(p.totalRealCost + p.nfCost)}</TableCell>
+                                        <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+
+                                  {/* Payment history for this project */}
+                                  {(() => {
+                                    const projectPayments = cashflowEntries.filter(e => e.type === 'receita' && e.budget_id === p.id);
+                                    if (projectPayments.length === 0) return null;
+                                    return (
+                                      <div className="mt-4">
+                                        <h4 className="text-sm font-semibold mb-2">Histórico de Pagamentos</h4>
+                                        <Table>
+                                          <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Conta</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader>
+                                          <TableBody>
+                                            {projectPayments.map(pay => (
+                                              <TableRow key={pay.id}>
+                                                <TableCell>{pay.date ? format(new Date(pay.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
+                                                <TableCell>{pay.description}</TableCell>
+                                                <TableCell>{accountName(pay.account_id)}</TableCell>
+                                                <TableCell className="text-right text-green-600 font-medium">{currencyFmt(Number(pay.value))}</TableCell>
+                                              </TableRow>
+                                            ))}
+                                            <TableRow className="font-bold border-t">
+                                              <TableCell colSpan={3}>Total Recebido</TableCell>
+                                              <TableCell className="text-right text-green-600">{currencyFmt(projectPayments.reduce((s, e) => s + Number(e.value), 0))}</TableCell>
+                                            </TableRow>
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Dialog */}
+          <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CircleDollarSign className="w-5 h-5" />
+                  Registrar Pagamento
+                </DialogTitle>
+              </DialogHeader>
+              {paymentProject && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+                    <p className="font-medium">{paymentProject.proposalId} - {paymentProject.projectName}</p>
+                    <p className="text-muted-foreground">Valor do projeto: {currencyFmt(paymentProject.totalValue)}</p>
+                    {(() => {
+                      const info = getProjectPaymentInfo(paymentProject.id, paymentProject.totalValue);
+                      return info.totalPaid > 0 ? (
+                        <p className="text-muted-foreground">Já recebido: <span className="text-green-600 font-medium">{currencyFmt(info.totalPaid)}</span> — Falta: <span className="text-orange-500 font-medium">{currencyFmt(info.remaining)}</span></p>
+                      ) : null;
+                    })()}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant={paymentForm.type === 'total' ? 'default' : 'outline'} className="flex-1" onClick={() => {
+                      const info = getProjectPaymentInfo(paymentProject.id, paymentProject.totalValue);
+                      setPaymentForm(f => ({ ...f, type: 'total', value: String(info.remaining.toFixed(2)) }));
+                    }}>
+                      Pagamento Total
+                    </Button>
+                    <Button variant={paymentForm.type === 'parcial' ? 'default' : 'outline'} className="flex-1" onClick={() => setPaymentForm(f => ({ ...f, type: 'parcial' }))}>
+                      Pagamento Parcial
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Valor (R$)</Label>
+                      <Input type="number" min="0" step="0.01" value={paymentForm.value} onChange={e => setPaymentForm(f => ({ ...f, value: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label>Data</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal")}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(paymentForm.date, 'dd/MM/yyyy')}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={paymentForm.date} onSelect={d => d && setPaymentForm(f => ({ ...f, date: d }))} initialFocus className="p-3 pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Conta Financeira *</Label>
+                    <Select value={paymentForm.account_id} onValueChange={v => setPaymentForm(f => ({ ...f, account_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
+                      <SelectContent>
+                        {accounts.filter(a => a.is_active).map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea value={paymentForm.notes} onChange={e => setPaymentForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Observações sobre o pagamento" />
+                  </div>
+
+                  <Button onClick={savePayment} className="w-full">Registrar Pagamento</Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* ===================== PAINEL FINANCEIRO ===================== */}
+        <TabsContent value="painel" className="space-y-6">
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Wallet className="w-4 h-4" /> Saldo Total (Contas)</div>
+                <p className={cn("text-2xl font-bold", painelData.totalSaldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(painelData.totalSaldo)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-orange-500" /> Total a Receber</div>
+                <p className="text-2xl font-bold text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4 text-green-600" /> Projeção (Saldo + Recebíveis)</div>
+                <p className="text-2xl font-bold text-green-600">{currencyFmt(painelData.totalSaldo + painelData.totalRecebiveis)}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Account balances */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Saldo por Conta</CardTitle></CardHeader>
+            <CardContent>
+              {painelData.accountBalances.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta financeira cadastrada.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {painelData.accountBalances.map(acc => (
+                    <div key={acc.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div>
+                        <p className="font-medium text-sm">{acc.name}</p>
+                        <p className="text-xs text-muted-foreground">{acc.bank || acc.type}</p>
+                      </div>
+                      <p className={cn("font-bold", acc.saldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(acc.saldo)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Receivables by month */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Valores a Receber por Mês</CardTitle></CardHeader>
+            <CardContent>
+              {painelData.receivablesByMonth.filter(r => r.remaining > 0).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Todos os projetos estão pagos.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mês</TableHead>
+                      <TableHead className="text-right">Valor Total</TableHead>
+                      <TableHead className="text-right">Recebido</TableHead>
+                      <TableHead className="text-right">A Receber</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {painelData.receivablesByMonth.filter(r => r.remaining > 0).map(r => (
+                      <TableRow key={r.month}>
+                        <TableCell className="font-medium">{r.label}</TableCell>
+                        <TableCell className="text-right">{currencyFmt(r.totalValue)}</TableCell>
+                        <TableCell className="text-right text-green-600">{currencyFmt(r.totalPaid)}</TableCell>
+                        <TableCell className="text-right text-orange-500 font-medium">{currencyFmt(r.remaining)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="font-bold border-t-2">
+                      <TableCell>Total</TableCell>
+                      <TableCell className="text-right">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalValue, 0))}</TableCell>
+                      <TableCell className="text-right text-green-600">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalPaid, 0))}</TableCell>
+                      <TableCell className="text-right text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Receivables chart */}
+          {painelData.receivablesByMonth.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Recebimentos por Mês</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={painelData.receivablesByMonth.filter(r => r.totalValue > 0)}>
+                    <CartesianAxis /><XAxis dataKey="label" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
+                    <Bar dataKey="totalPaid" name="Recebido" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="remaining" name="A Receber" fill="hsl(30 95% 55%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
