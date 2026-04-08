@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { format, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, CartesianAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
@@ -82,7 +82,7 @@ export function FinancialPage() {
   const navigate = useNavigate();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(now, 'yyyy-MM'));
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  
   const [budgets, setBudgets] = useState<BudgetWithVersions[]>([]);
   const [versions, setVersions] = useState<any[]>([]);
   const [clients, setClients] = useState<Record<string, string>>({});
@@ -239,49 +239,6 @@ export function FinancialPage() {
       });
   }, [budgets, versions, clients, selectedMonth]);
 
-  // ======== Annual data (existing logic) ========
-  const annualData = useMemo(() => {
-    const months = eachMonthOfInterval({
-      start: startOfYear(new Date(selectedYear, 0)),
-      end: endOfYear(new Date(selectedYear, 0)),
-    });
-
-    return months.map(m => {
-      const key = format(m, 'yyyy-MM');
-      const label = format(m, 'MMM', { locale: ptBR });
-      const monthBudgets = budgets.filter(b => b.execution_month === key);
-
-      let faturamento = 0;
-      let custoReal = 0;
-
-      monthBudgets.forEach(b => {
-        const approvedVer = b.approved_version != null
-          ? versions.find(v => v.budget_id === b.id && v.version === b.approved_version)
-          : versions.filter(v => v.budget_id === b.id).sort((a, c) => c.version - a.version)[0];
-
-        const executionData = b.execution as any;
-        const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
-        const executionServices: any[] = executionData?.services || [];
-
-        faturamento += b.final_value || Number(approvedVer?.full_price || 0);
-        const services: any[] = approvedVer?.services || [];
-        services.forEach((s: any) => {
-          const execSvc = executionServices.find((es: any) => es.id === s.id);
-          custoReal += execSvc ? Number(execSvc.realTotal || 0) : 0;
-        });
-        custoReal += nfCost;
-      });
-
-      return { month: label, faturamento, custoReal, margem: faturamento - custoReal, meta: goals[key] || 0 };
-    });
-  }, [budgets, versions, goals, selectedYear]);
-
-  const annualTotals = useMemo(() => {
-    return annualData.reduce(
-      (acc, d) => ({ faturamento: acc.faturamento + d.faturamento, custoReal: acc.custoReal + d.custoReal, margem: acc.margem + d.margem, meta: acc.meta + d.meta }),
-      { faturamento: 0, custoReal: 0, margem: 0, meta: 0 }
-    );
-  }, [annualData]);
 
   // ======== Cashflow logic ========
   const filteredCashflow = useMemo(() => {
@@ -540,7 +497,7 @@ export function FinancialPage() {
     return months;
   }, []);
 
-  const yearOptions = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+  
 
   // Helper: get name lookups
   const accountName = (id: string | null) => accounts.find(a => a.id === id)?.name || '—';
@@ -565,13 +522,11 @@ export function FinancialPage() {
       <Header title="Financeiro" subtitle="Gestão financeira" />
       <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
 
-      <Tabs defaultValue="fluxo">
-        <TabsList className="grid grid-cols-3 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
+      <Tabs defaultValue="painel">
+        <TabsList className="grid grid-cols-2 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
+          <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
           <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
-          <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
-          <TabsTrigger value="anual" className="text-xs sm:text-sm whitespace-nowrap">Painel Anual</TabsTrigger>
-          <TabsTrigger value="contas" className="text-xs sm:text-sm whitespace-nowrap">Contas</TabsTrigger>
           <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
         </TabsList>
 
@@ -1111,116 +1066,71 @@ export function FinancialPage() {
           )}
         </TabsContent>
 
-        {/* ===================== PAINEL ANUAL ===================== */}
-        <TabsContent value="anual" className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Label>Ano</Label>
-            <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>{yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Faturamento Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Custo Real Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Margem Real Anual</p><p className="text-lg sm:text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Meta Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
-          </div>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Faturamento vs Custo vs Margem</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={annualData}>
-                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
-                  <Bar dataKey="faturamento" name="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="custoReal" name="Custo Real" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="margem" name="Margem" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Meta vs Realizado</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={annualData}>
-                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
-                  <Line type="monotone" dataKey="faturamento" name="Realizado" stroke="hsl(var(--primary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="meta" name="Meta" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ===================== CONTAS FINANCEIRAS ===================== */}
-        <TabsContent value="contas" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Contas Financeiras</h2>
-            <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
-              <DialogTrigger asChild>
-                <Button onClick={openNewAccount} size="sm"><Plus className="w-4 h-4 mr-1" /> Nova Conta</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle></DialogHeader>
-                <div className="space-y-4">
-                  <div><Label>Nome da Conta</Label><Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" /></div>
-                  <div>
-                    <Label>Tipo</Label>
-                    <Select value={accountForm.type} onValueChange={v => setAccountForm(f => ({ ...f, type: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{ACCOUNT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Banco</Label><Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Agência</Label><Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} /></div>
-                    <div><Label>Número da Conta</Label><Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} /></div>
-                  </div>
-                  <Button onClick={saveAccount} className="w-full">Salvar</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {accounts.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
-          ) : (
-            <Card>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table className="min-w-[600px]">
-                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {accounts.map(acc => (
-                      <TableRow key={acc.id}>
-                        <TableCell className="font-medium">{acc.name}</TableCell>
-                        <TableCell>{ACCOUNT_TYPES.find(t => t.value === acc.type)?.label || acc.type}</TableCell>
-                        <TableCell>{acc.bank || '—'}</TableCell>
-                        <TableCell>{acc.agency || '—'}</TableCell>
-                        <TableCell>{acc.account_number || '—'}</TableCell>
-                        <TableCell><Badge variant={acc.is_active ? 'default' : 'secondary'}>{acc.is_active ? 'Ativa' : 'Inativa'}</Badge></TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
 
         {/* ===================== CONFIGURAÇÕES ===================== */}
         <TabsContent value="config" className="space-y-6">
+          {/* Contas Financeiras */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Contas Financeiras</h2>
+              <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
+                <DialogTrigger asChild>
+                  <Button onClick={openNewAccount} size="sm"><Plus className="w-4 h-4 mr-1" /> Nova Conta</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div><Label>Nome da Conta</Label><Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" /></div>
+                    <div>
+                      <Label>Tipo</Label>
+                      <Select value={accountForm.type} onValueChange={v => setAccountForm(f => ({ ...f, type: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{ACCOUNT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Banco</Label><Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Agência</Label><Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} /></div>
+                      <div><Label>Número da Conta</Label><Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} /></div>
+                    </div>
+                    <Button onClick={saveAccount} className="w-full">Salvar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {accounts.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table className="min-w-[600px]">
+                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {accounts.map(acc => (
+                        <TableRow key={acc.id}>
+                          <TableCell className="font-medium">{acc.name}</TableCell>
+                          <TableCell>{ACCOUNT_TYPES.find(t => t.value === acc.type)?.label || acc.type}</TableCell>
+                          <TableCell>{acc.bank || '—'}</TableCell>
+                          <TableCell>{acc.agency || '—'}</TableCell>
+                          <TableCell>{acc.account_number || '—'}</TableCell>
+                          <TableCell><Badge variant={acc.is_active ? 'default' : 'secondary'}>{acc.is_active ? 'Ativa' : 'Inativa'}</Badge></TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Centros de Receita e Custo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Centers */}
             <Card>
