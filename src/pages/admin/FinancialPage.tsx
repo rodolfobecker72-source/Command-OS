@@ -1110,69 +1110,70 @@ export function FinancialPage() {
         </TabsContent>
 
 
-        {/* ===================== CONTAS FINANCEIRAS ===================== */}
-        <TabsContent value="contas" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Contas Financeiras</h2>
-            <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
-              <DialogTrigger asChild>
-                <Button onClick={openNewAccount} size="sm"><Plus className="w-4 h-4 mr-1" /> Nova Conta</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle></DialogHeader>
-                <div className="space-y-4">
-                  <div><Label>Nome da Conta</Label><Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" /></div>
-                  <div>
-                    <Label>Tipo</Label>
-                    <Select value={accountForm.type} onValueChange={v => setAccountForm(f => ({ ...f, type: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{ACCOUNT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Banco</Label><Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Agência</Label><Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} /></div>
-                    <div><Label>Número da Conta</Label><Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} /></div>
-                  </div>
-                  <Button onClick={saveAccount} className="w-full">Salvar</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {accounts.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
-          ) : (
-            <Card>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table className="min-w-[600px]">
-                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {accounts.map(acc => (
-                      <TableRow key={acc.id}>
-                        <TableCell className="font-medium">{acc.name}</TableCell>
-                        <TableCell>{ACCOUNT_TYPES.find(t => t.value === acc.type)?.label || acc.type}</TableCell>
-                        <TableCell>{acc.bank || '—'}</TableCell>
-                        <TableCell>{acc.agency || '—'}</TableCell>
-                        <TableCell>{acc.account_number || '—'}</TableCell>
-                        <TableCell><Badge variant={acc.is_active ? 'default' : 'secondary'}>{acc.is_active ? 'Ativa' : 'Inativa'}</Badge></TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
         {/* ===================== CONFIGURAÇÕES ===================== */}
         <TabsContent value="config" className="space-y-6">
+          {/* Contas Financeiras */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Contas Financeiras</h2>
+              <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
+                <DialogTrigger asChild>
+                  <Button onClick={openNewAccount} size="sm"><Plus className="w-4 h-4 mr-1" /> Nova Conta</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>{editingAccount ? 'Editar Conta' : 'Nova Conta'}</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div><Label>Nome da Conta</Label><Input value={accountForm.name} onChange={e => setAccountForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Banco do Brasil" /></div>
+                    <div>
+                      <Label>Tipo</Label>
+                      <Select value={accountForm.type} onValueChange={v => setAccountForm(f => ({ ...f, type: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{ACCOUNT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Banco</Label><Input value={accountForm.bank} onChange={e => setAccountForm(f => ({ ...f, bank: e.target.value }))} /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Agência</Label><Input value={accountForm.agency} onChange={e => setAccountForm(f => ({ ...f, agency: e.target.value }))} /></div>
+                      <div><Label>Número da Conta</Label><Input value={accountForm.account_number} onChange={e => setAccountForm(f => ({ ...f, account_number: e.target.value }))} /></div>
+                    </div>
+                    <Button onClick={saveAccount} className="w-full">Salvar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {accounts.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table className="min-w-[600px]">
+                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {accounts.map(acc => (
+                        <TableRow key={acc.id}>
+                          <TableCell className="font-medium">{acc.name}</TableCell>
+                          <TableCell>{ACCOUNT_TYPES.find(t => t.value === acc.type)?.label || acc.type}</TableCell>
+                          <TableCell>{acc.bank || '—'}</TableCell>
+                          <TableCell>{acc.agency || '—'}</TableCell>
+                          <TableCell>{acc.account_number || '—'}</TableCell>
+                          <TableCell><Badge variant={acc.is_active ? 'default' : 'secondary'}>{acc.is_active ? 'Ativa' : 'Inativa'}</Badge></TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Centros de Receita e Custo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Centers */}
             <Card>
