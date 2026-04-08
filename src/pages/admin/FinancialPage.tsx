@@ -350,7 +350,6 @@ export function FinancialPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Proposta</TableHead>
                       <TableHead>Projeto</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Serviços</TableHead>
@@ -368,8 +367,7 @@ export function FinancialPage() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setExpandedProject(expandedProject === p.id ? null : p.id)}
                         >
-                          <TableCell className="font-mono text-sm">{p.proposalId}</TableCell>
-                          <TableCell className="font-medium">{p.projectName}</TableCell>
+                          <TableCell className="font-medium">{p.proposalId} - {p.projectName}</TableCell>
                           <TableCell>{p.clientName}</TableCell>
                           <TableCell>
                             <div className="space-y-1">
