@@ -497,7 +497,7 @@ export function FinancialPage() {
     return months;
   }, []);
 
-  const yearOptions = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+  
 
   // Helper: get name lookups
   const accountName = (id: string | null) => accounts.find(a => a.id === id)?.name || '—';
