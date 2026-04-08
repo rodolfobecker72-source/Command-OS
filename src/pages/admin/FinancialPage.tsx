@@ -577,12 +577,12 @@ export function FinancialPage() {
 
         {/* ===================== FLUXO DE CAIXA ===================== */}
         <TabsContent value="fluxo" className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Mês</Label>
+                <Label className="whitespace-nowrap text-sm">Mês</Label>
                 <Select value={cashflowMonth} onValueChange={setCashflowMonth}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {monthOptions.map(m => (
                       <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
@@ -591,9 +591,9 @@ export function FinancialPage() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Conta</Label>
+                <Label className="whitespace-nowrap text-sm">Conta</Label>
                 <Select value={cashflowAccountFilter} onValueChange={setCashflowAccountFilter}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as contas</SelectItem>
                     {accounts.filter(a => a.is_active).map(a => (
@@ -604,10 +604,10 @@ export function FinancialPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => openNewEntry('receita')} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={() => openNewEntry('receita')} size="sm" className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white">
                 <ArrowUpCircle className="w-4 h-4 mr-1" /> + Receita
               </Button>
-              <Button onClick={() => openNewEntry('despesa')} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button onClick={() => openNewEntry('despesa')} size="sm" className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600 text-white">
                 <ArrowDownCircle className="w-4 h-4 mr-1" /> - Despesa
               </Button>
             </div>
