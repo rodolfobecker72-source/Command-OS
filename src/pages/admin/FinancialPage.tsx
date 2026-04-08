@@ -1192,9 +1192,9 @@ export function FinancialPage() {
             <Card><CardContent className="py-8 text-center text-muted-foreground"><Landmark className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhuma conta cadastrada.</CardContent></Card>
           ) : (
             <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead>Agência</TableHead><TableHead>Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table className="min-w-[600px]">
+                  <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead>Banco</TableHead><TableHead className="hidden sm:table-cell">Agência</TableHead><TableHead className="hidden sm:table-cell">Conta</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {accounts.map(acc => (
                       <TableRow key={acc.id}>
