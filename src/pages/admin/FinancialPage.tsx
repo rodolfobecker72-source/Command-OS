@@ -1121,11 +1121,11 @@ export function FinancialPage() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Faturamento Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Custo Real Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Margem Real Anual</p><p className="text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-sm text-muted-foreground">Meta Anual</p><p className="text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Faturamento Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Custo Real Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Margem Real Anual</p><p className="text-lg sm:text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Meta Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
           </div>
 
           <Card>
