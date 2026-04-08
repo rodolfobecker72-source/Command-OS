@@ -344,9 +344,9 @@ export function FinancialPage() {
     return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis };
   }, [accounts, cashflowEntries, budgets, versions]);
 
-  function openNewEntry() {
+  function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
-    setEntryForm({ type: 'receita', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
+    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
     setCashflowDialog(true);
   }
 
