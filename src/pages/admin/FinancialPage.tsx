@@ -239,49 +239,6 @@ export function FinancialPage() {
       });
   }, [budgets, versions, clients, selectedMonth]);
 
-  // ======== Annual data (existing logic) ========
-  const annualData = useMemo(() => {
-    const months = eachMonthOfInterval({
-      start: startOfYear(new Date(selectedYear, 0)),
-      end: endOfYear(new Date(selectedYear, 0)),
-    });
-
-    return months.map(m => {
-      const key = format(m, 'yyyy-MM');
-      const label = format(m, 'MMM', { locale: ptBR });
-      const monthBudgets = budgets.filter(b => b.execution_month === key);
-
-      let faturamento = 0;
-      let custoReal = 0;
-
-      monthBudgets.forEach(b => {
-        const approvedVer = b.approved_version != null
-          ? versions.find(v => v.budget_id === b.id && v.version === b.approved_version)
-          : versions.filter(v => v.budget_id === b.id).sort((a, c) => c.version - a.version)[0];
-
-        const executionData = b.execution as any;
-        const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
-        const executionServices: any[] = executionData?.services || [];
-
-        faturamento += b.final_value || Number(approvedVer?.full_price || 0);
-        const services: any[] = approvedVer?.services || [];
-        services.forEach((s: any) => {
-          const execSvc = executionServices.find((es: any) => es.id === s.id);
-          custoReal += execSvc ? Number(execSvc.realTotal || 0) : 0;
-        });
-        custoReal += nfCost;
-      });
-
-      return { month: label, faturamento, custoReal, margem: faturamento - custoReal, meta: goals[key] || 0 };
-    });
-  }, [budgets, versions, goals, selectedYear]);
-
-  const annualTotals = useMemo(() => {
-    return annualData.reduce(
-      (acc, d) => ({ faturamento: acc.faturamento + d.faturamento, custoReal: acc.custoReal + d.custoReal, margem: acc.margem + d.margem, meta: acc.meta + d.meta }),
-      { faturamento: 0, custoReal: 0, margem: 0, meta: 0 }
-    );
-  }, [annualData]);
 
   // ======== Cashflow logic ========
   const filteredCashflow = useMemo(() => {
