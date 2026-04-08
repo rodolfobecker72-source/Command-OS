@@ -82,7 +82,7 @@ export function FinancialPage() {
   const navigate = useNavigate();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(now, 'yyyy-MM'));
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  
   const [budgets, setBudgets] = useState<BudgetWithVersions[]>([]);
   const [versions, setVersions] = useState<any[]>([]);
   const [clients, setClients] = useState<Record<string, string>>({});
