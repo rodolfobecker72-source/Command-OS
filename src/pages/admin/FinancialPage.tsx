@@ -735,10 +735,10 @@ export function FinancialPage() {
                     <Label className="text-muted-foreground text-xs">Vincular a:</Label>
                     <div>
                       <Label>Projeto Aprovado</Label>
-                      <Select value={entryForm.budget_id} onValueChange={v => setEntryForm(f => ({ ...f, budget_id: v, revenue_center_id: '' }))}>
+                      <Select value={entryForm.budget_id || 'none'} onValueChange={v => setEntryForm(f => ({ ...f, budget_id: v === 'none' ? '' : v, revenue_center_id: '' }))}>
                         <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
+                          <SelectItem value="none">Nenhum</SelectItem>
                           {budgets.map(b => (
                             <SelectItem key={b.id} value={b.id}>{b.proposal_id} - {b.project_name}</SelectItem>
                           ))}
@@ -748,10 +748,10 @@ export function FinancialPage() {
                     {!entryForm.budget_id && (
                       <div>
                         <Label>Centro de Receita</Label>
-                        <Select value={entryForm.revenue_center_id} onValueChange={v => setEntryForm(f => ({ ...f, revenue_center_id: v }))}>
+                        <Select value={entryForm.revenue_center_id || 'none'} onValueChange={v => setEntryForm(f => ({ ...f, revenue_center_id: v === 'none' ? '' : v }))}>
                           <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Nenhum</SelectItem>
+                            <SelectItem value="none">Nenhum</SelectItem>
                             {revenueCenters.filter(r => r.is_active).map(r => (
                               <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                             ))}
@@ -765,10 +765,10 @@ export function FinancialPage() {
                 {entryForm.type === 'despesa' && (
                   <div>
                     <Label>Centro de Custo</Label>
-                    <Select value={entryForm.cost_center_id} onValueChange={v => setEntryForm(f => ({ ...f, cost_center_id: v }))}>
+                    <Select value={entryForm.cost_center_id || 'none'} onValueChange={v => setEntryForm(f => ({ ...f, cost_center_id: v === 'none' ? '' : v }))}>
                       <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="none">Nenhum</SelectItem>
                         {costCenters.filter(c => c.is_active).map(c => (
                           <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                         ))}
