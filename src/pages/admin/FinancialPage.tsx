@@ -882,30 +882,37 @@ export function FinancialPage() {
                                     </TableBody>
                                   </Table>
 
-                                  {/* Payment history for this project */}
                                   {(() => {
                                     const projectPayments = cashflowEntries.filter(e => e.type === 'receita' && e.budget_id === p.id);
-                                    if (projectPayments.length === 0) return null;
+                                    const totalPaid = projectPayments.reduce((s, e) => s + Number(e.value), 0);
                                     return (
                                       <div className="mt-4">
-                                        <h4 className="text-sm font-semibold mb-2">Histórico de Pagamentos</h4>
-                                        <Table>
-                                          <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Conta</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader>
-                                          <TableBody>
-                                            {projectPayments.map(pay => (
-                                              <TableRow key={pay.id}>
-                                                <TableCell>{pay.date ? format(new Date(pay.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
-                                                <TableCell>{pay.description}</TableCell>
-                                                <TableCell>{accountName(pay.account_id)}</TableCell>
-                                                <TableCell className="text-right text-green-600 font-medium">{currencyFmt(Number(pay.value))}</TableCell>
+                                        <h4 className="text-sm font-semibold mb-2">Histórico de Recebimentos</h4>
+                                        {projectPayments.length === 0 ? (
+                                          <p className="text-sm text-muted-foreground italic">Nenhum pagamento registrado para este projeto.</p>
+                                        ) : (
+                                          <Table>
+                                            <TableHeader><TableRow><TableHead>Data</TableHead><TableHead>Descrição</TableHead><TableHead>Conta</TableHead><TableHead className="text-right">Valor</TableHead></TableRow></TableHeader>
+                                            <TableBody>
+                                              {projectPayments.map(pay => (
+                                                <TableRow key={pay.id}>
+                                                  <TableCell>{pay.date ? format(new Date(pay.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
+                                                  <TableCell>{pay.description}</TableCell>
+                                                  <TableCell>{accountName(pay.account_id)}</TableCell>
+                                                  <TableCell className="text-right text-green-600 font-medium">{currencyFmt(Number(pay.value))}</TableCell>
+                                                </TableRow>
+                                              ))}
+                                              <TableRow className="font-bold border-t">
+                                                <TableCell colSpan={3}>Total Recebido</TableCell>
+                                                <TableCell className="text-right text-green-600">{currencyFmt(totalPaid)}</TableCell>
                                               </TableRow>
-                                            ))}
-                                            <TableRow className="font-bold border-t">
-                                              <TableCell colSpan={3}>Total Recebido</TableCell>
-                                              <TableCell className="text-right text-green-600">{currencyFmt(projectPayments.reduce((s, e) => s + Number(e.value), 0))}</TableCell>
-                                            </TableRow>
-                                          </TableBody>
-                                        </Table>
+                                              <TableRow>
+                                                <TableCell colSpan={3} className="font-medium">Saldo Restante</TableCell>
+                                                <TableCell className="text-right font-medium text-orange-500">{currencyFmt(p.totalValue - totalPaid)}</TableCell>
+                                              </TableRow>
+                                            </TableBody>
+                                          </Table>
+                                        )}
                                       </div>
                                     );
                                   })()}
