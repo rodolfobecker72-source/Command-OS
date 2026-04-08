@@ -1,54 +1,65 @@
 
 
-# Plano: Área Administrativa (Financeiro + Patrimonio)
+# Plano: Fluxo de Caixa + Centros de Custo/Receita
 
-## O que será construído
+## Resumo
 
-1. **Novo grupo "Administrativo" no menu lateral** com duas páginas:
-   - **Financeiro** — painel completo de controle financeiro
-   - **Patrimônio** — página "Em construção" (placeholder)
+Adicionar ao módulo Financeiro:
+- Nova aba **Fluxo de Caixa** (primeiro item) para lançamento de receitas e despesas vinculadas a contas financeiras
+- Nova aba **Configurações** (último item) para gerenciar centros de receita externa e centros de custo
 
-2. **Página Financeiro** com 4 seções:
-   - **Relação de Projetos do Mês**: Seletor de mês, lista dos projetos aprovados com `execution_month` correspondente. Cada linha mostra: ID proposta, nome do projeto, cliente, serviços, valor por serviço, custo real (da execução no CRM), valor NF, margem. Clique abre a aba de Execução do projeto no CRM.
-   - **Painel Financeiro Anual**: Visão do ano com gráficos — faturamento mensal, custo real mensal, margem real mensal, comparativo metas vs realizado.
-   - **Contas Financeiras**: CRUD para cadastrar contas (ex: Banco do Brasil, Caixa, PagSeguro). Cada conta tem nome, tipo (corrente/poupança/carteira digital), banco, agência, número.
-   - **Acesso à Execução**: Link direto para a aba de execução de cada projeto aprovado.
+## Novas tabelas no banco de dados
 
-3. **Permissões**: Páginas restritas de `vendedor`, `visualizador` e `time_hero`.
+### 1. `revenue_centers` — Centros de receita externa
+- `id`, `workspace_id`, `name`, `is_active`, `created_at`
 
-## Estrutura do Banco de Dados
+### 2. `cost_centers` — Centros de custo
+- `id`, `workspace_id`, `name`, `is_active`, `created_at`
 
-Novas tabelas via migration:
+### 3. `cashflow_entries` — Lançamentos de fluxo de caixa
+- `id`, `workspace_id`
+- `type` — `receita` ou `despesa`
+- `description` — descrição do lançamento
+- `value` — valor (sempre positivo)
+- `date` — data do lançamento
+- `account_id` — referência à conta financeira
+- `budget_id` — (nullable) vínculo com projeto aprovado (para receitas de projeto)
+- `revenue_center_id` — (nullable) vínculo com centro de receita (para receitas externas)
+- `cost_center_id` — (nullable) vínculo com centro de custo (para despesas não-projeto)
+- `notes`, `created_at`, `updated_at`
 
-```text
-financial_accounts
-├── id (uuid, PK)
-├── workspace_id (uuid, NOT NULL)
-├── name (text)           -- "Banco do Brasil", "PagSeguro"
-├── type (text)           -- "corrente", "poupanca", "carteira_digital", "outro"
-├── bank (text)           -- Nome do banco
-├── agency (text)         -- Agência
-├── account_number (text) -- Número da conta
-├── is_active (boolean, default true)
-├── created_at, updated_at
-```
+RLS em todas as tabelas com `has_workspace_access`.
 
-RLS: mesmas políticas padrão com `has_workspace_access`.
+## Alterações na interface (`FinancialPage.tsx`)
 
-## Arquivos a criar/editar
+### Aba "Fluxo de Caixa" (primeira posição)
+- Filtro por mês e por conta financeira
+- Tabela com colunas: Data, Tipo (badge receita/despesa), Descrição, Projeto ou Centro, Conta, Valor
+- Resumo no topo: Total Receitas, Total Despesas, Saldo do período
+- Botão "Novo Lançamento" abre dialog com:
+  - Tipo (Receita / Despesa)
+  - Descrição, Valor, Data
+  - Conta financeira (select das contas cadastradas)
+  - Se receita: opção de vincular a Projeto ou Centro de Receita
+  - Se despesa: opção de vincular a Centro de Custo
+  - Observações
 
-| Arquivo | Ação |
-|---------|------|
-| `src/config/pages.ts` | Adicionar entries `financeiro` e `patrimonio` no grupo "Administrativo" |
-| `src/components/layout/Sidebar.tsx` | Adicionar grupo "Administrativo" com ícone e itens |
-| `src/pages/admin/FinancialPage.tsx` | Página principal do financeiro (seletor de mês, tabela de projetos, painel anual, contas) |
-| `src/pages/admin/PatrimonioPage.tsx` | Placeholder "Em construção" |
-| `src/App.tsx` | Adicionar rotas `/financeiro` e `/patrimonio` com PageGuard |
-| Migration SQL | Criar tabela `financial_accounts` |
+### Aba "Configurações" (última posição)
+- Duas seções lado a lado ou empilhadas:
+  - **Centros de Receita**: CRUD simples (nome, ativo/inativo)
+  - **Centros de Custo**: CRUD simples (nome, ativo/inativo)
 
-## Detalhes Técnicos
+### Ordem final das abas
+1. Fluxo de Caixa
+2. Projetos do Mês
+3. Painel Anual
+4. Contas Financeiras
+5. Configurações
 
-- **Dados dos projetos do mês**: Query em `budgets` filtrando `status = 'aprovada'` e `execution_month = 'YYYY-MM'` selecionado, join com `budget_versions` (versão aprovada) e dados de `execution` (JSONB no budget) para custos reais.
-- **Painel anual**: Agrupa budgets aprovados por `execution_month` para calcular totais mensais de faturamento, custo e margem.
-- **Contas financeiras**: CRUD simples usando Supabase client, preparando estrutura para futuro vínculo de recebimentos/pagamentos.
+## Detalhes técnicos
+
+- Migration SQL cria as 3 tabelas com RLS policies
+- Queries usam `supabase.from('cashflow_entries')` com joins em `financial_accounts`, `revenue_centers`, `cost_centers` e `budgets`
+- Para receitas de projeto, o select de projetos lista budgets aprovados do workspace
+- Todos os lançamentos são manuais (não automáticos) — o usuário lança receita/despesa quando desejar
 
