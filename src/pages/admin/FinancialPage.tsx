@@ -685,7 +685,7 @@ export function FinancialPage() {
 
           {/* Cashflow Entry Dialog */}
           <Dialog open={cashflowDialog} onOpenChange={setCashflowDialog}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingEntry ? 'Editar Lançamento' : 'Novo Lançamento'}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="flex gap-2">
