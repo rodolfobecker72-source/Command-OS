@@ -1109,52 +1109,6 @@ export function FinancialPage() {
           )}
         </TabsContent>
 
-        {/* ===================== PAINEL ANUAL ===================== */}
-        <TabsContent value="anual" className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Label>Ano</Label>
-            <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>{yearOptions.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Faturamento Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.faturamento)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Custo Real Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.custoReal)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Margem Real Anual</p><p className="text-lg sm:text-xl font-bold text-green-600">{currencyFmt(annualTotals.margem)}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs sm:text-sm text-muted-foreground">Meta Anual</p><p className="text-lg sm:text-xl font-bold">{currencyFmt(annualTotals.meta)}</p></CardContent></Card>
-          </div>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Faturamento vs Custo vs Margem</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={annualData}>
-                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
-                  <Bar dataKey="faturamento" name="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="custoReal" name="Custo Real" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="margem" name="Margem" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Meta vs Realizado</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={annualData}>
-                  <CartesianAxis /><XAxis dataKey="month" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
-                  <Line type="monotone" dataKey="faturamento" name="Realizado" stroke="hsl(var(--primary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="meta" name="Meta" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* ===================== CONTAS FINANCEIRAS ===================== */}
         <TabsContent value="contas" className="space-y-4">
