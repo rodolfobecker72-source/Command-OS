@@ -786,11 +786,11 @@ export function FinancialPage() {
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Faturamento</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingDown className="w-4 h-4" /> Custo Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Imposto NF</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4" /> Margem Real</div><p className="text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p></CardContent></Card>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4 shrink-0" /> Faturamento</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalValue, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><TrendingDown className="w-4 h-4 shrink-0" /> Custo Real</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.totalRealCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4 shrink-0" /> Imposto NF</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.nfCost, 0))}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4 shrink-0" /> Margem Real</div><p className="text-lg sm:text-xl font-bold">{currencyFmt(monthlyProjects.reduce((s, p) => s + p.margin, 0))}</p></CardContent></Card>
           </div>
 
           {monthlyProjects.length === 0 ? (
