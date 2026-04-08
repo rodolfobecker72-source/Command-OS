@@ -185,12 +185,13 @@ export function FinancialPage() {
 
         const executionData = b.execution as any;
         const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
-        const realCosts = executionData?.realCosts || {};
+        const executionServices: any[] = executionData?.services || [];
 
         faturamento += b.final_value || Number(approvedVer?.full_price || 0);
         const services: any[] = approvedVer?.services || [];
         services.forEach((s: any) => {
-          custoReal += Number(realCosts[s.id] ?? s.productionCost ?? 0);
+          const execSvc = executionServices.find((es: any) => es.id === s.id);
+          custoReal += execSvc ? Number(execSvc.realTotal || 0) : 0;
         });
         custoReal += nfCost;
       });
