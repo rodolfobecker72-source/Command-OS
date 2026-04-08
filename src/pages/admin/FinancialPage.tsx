@@ -1282,6 +1282,7 @@ export function FinancialPage() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
