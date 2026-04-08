@@ -114,14 +114,23 @@ export function FinancialPage() {
 
         const services: any[] = approvedVer?.services || [];
         const executionData = b.execution as any;
-        const realCosts = executionData?.realCosts || {};
+        const executionServices: any[] = executionData?.services || [];
         const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
 
         let totalValue = 0;
         let totalRealCost = 0;
         const serviceDetails = services.map((s: any, idx: number) => {
-          const sValue = Number(s.subtotal || s.totalPrice || 0);
-          const sRealCost = Number(realCosts[s.id] ?? s.productionCost ?? 0);
+          // Calculate budgeted value from costs
+          const costSum = (s.costs || []).reduce((sum: number, c: any) => sum + Number(c.value || 0), 0);
+          const nfPct = Number(s.nfCostPercentage || 0) / 100;
+          const marginPct = Number(s.targetMargin || 0) / 100;
+          const divisor = 1 - marginPct - nfPct;
+          const sValue = divisor > 0 ? costSum / divisor : costSum;
+
+          // Find real cost from execution services
+          const execService = executionServices.find((es: any) => es.id === s.id);
+          const sRealCost = execService ? Number(execService.realTotal || 0) : 0;
+
           totalValue += sValue;
           totalRealCost += sRealCost;
           return {
@@ -176,12 +185,13 @@ export function FinancialPage() {
 
         const executionData = b.execution as any;
         const nfCost = Number(executionData?.nfTaxValue ?? executionData?.nfCost ?? 0);
-        const realCosts = executionData?.realCosts || {};
+        const executionServices: any[] = executionData?.services || [];
 
         faturamento += b.final_value || Number(approvedVer?.full_price || 0);
         const services: any[] = approvedVer?.services || [];
         services.forEach((s: any) => {
-          custoReal += Number(realCosts[s.id] ?? s.productionCost ?? 0);
+          const execSvc = executionServices.find((es: any) => es.id === s.id);
+          custoReal += execSvc ? Number(execSvc.realTotal || 0) : 0;
         });
         custoReal += nfCost;
       });
