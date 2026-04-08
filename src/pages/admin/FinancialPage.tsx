@@ -564,14 +564,16 @@ export function FinancialPage() {
       <h1 className="text-2xl font-bold">Financeiro</h1>
 
       <Tabs defaultValue="fluxo">
-        <TabsList className="flex flex-wrap">
-          <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
-          <TabsTrigger value="projetos">Projetos do Mês</TabsTrigger>
-          <TabsTrigger value="painel">Painel Financeiro</TabsTrigger>
-          <TabsTrigger value="anual">Painel Anual</TabsTrigger>
-          <TabsTrigger value="contas">Contas Financeiras</TabsTrigger>
-          <TabsTrigger value="config">Configurações</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 gap-1">
+            <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
+            <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
+            <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
+            <TabsTrigger value="anual" className="text-xs sm:text-sm whitespace-nowrap">Painel Anual</TabsTrigger>
+            <TabsTrigger value="contas" className="text-xs sm:text-sm whitespace-nowrap">Contas</TabsTrigger>
+            <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* ===================== FLUXO DE CAIXA ===================== */}
         <TabsContent value="fluxo" className="space-y-4">
