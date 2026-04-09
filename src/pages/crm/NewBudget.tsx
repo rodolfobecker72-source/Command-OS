@@ -103,7 +103,7 @@ interface ServiceItem {
 
 export function NewBudget() {
   const { clients, addBudget, addBudgetVersion, kanbanColumns, serviceCategories, getObjectivesForCategory, getCategoryLabel, budgets, isLoading: crmLoading } = useCRM();
-  const { workspace } = useAuth();
+  const { workspace, role } = useAuth();
   const navigate = useNavigate();
 
   // Auto-generate next proposalId starting from 900
@@ -455,6 +455,10 @@ export function NewBudget() {
 
   // Gerar PDF
   const generatePDF = () => {
+    if (role === 'vendedor') {
+      toast.error('Vendedores só podem baixar propostas aprovadas');
+      return;
+    }
     if (!selectedClient || services.length === 0) {
       toast.error('Preencha os dados do orçamento primeiro');
       return;
@@ -1609,15 +1613,17 @@ export function NewBudget() {
                 Salvar Rascunho
               </Button>
             )}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={generatePDF}
-              disabled={services.length === 0}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Gerar PDF
-            </Button>
+            {role !== 'vendedor' && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={generatePDF}
+                disabled={services.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Gerar PDF
+              </Button>
+            )}
             <Button type="submit" className="flex-1 btn-hero" disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? 'Salvando...' : 'Salvar Orçamento'}
