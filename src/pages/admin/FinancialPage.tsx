@@ -1244,7 +1244,7 @@ export function FinancialPage() {
 
           {/* Receivables by month */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Valores a Receber por Mês</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Receita Prevista por Mês</CardTitle></CardHeader>
             <CardContent>
               {painelData.receivablesByMonth.filter(r => r.remaining > 0).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Todos os projetos estão pagos.</p>
@@ -1272,6 +1272,37 @@ export function FinancialPage() {
                       <TableCell className="text-right">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalValue, 0))}</TableCell>
                       <TableCell className="text-right text-green-600">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalPaid, 0))}</TableCell>
                       <TableCell className="text-right text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Despesas Previstas por Mês */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Despesas Previstas por Mês</CardTitle></CardHeader>
+            <CardContent>
+              {painelData.futureExpensesByMonth.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa futura pendente.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mês</TableHead>
+                      <TableHead className="text-right">Valor Pendente</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {painelData.futureExpensesByMonth.map(r => (
+                      <TableRow key={r.month}>
+                        <TableCell className="font-medium">{r.label}</TableCell>
+                        <TableCell className="text-right text-destructive font-medium">{currencyFmt(r.pending)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="font-bold border-t-2">
+                      <TableCell>Total</TableCell>
+                      <TableCell className="text-right text-destructive">{currencyFmt(painelData.totalDespesasPrevistas)}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
