@@ -127,6 +127,8 @@ export function FinancialPage() {
     revenue_center_id: '',
     cost_center_id: '',
     notes: '',
+    is_future_payment: false,
+    payment_due_date: null as Date | null,
   });
 
   // Centers state
