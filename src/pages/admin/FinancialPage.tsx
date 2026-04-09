@@ -186,7 +186,37 @@ export function FinancialPage() {
     if (cfRes.data) setCashflowEntries(cfRes.data as any);
     if (rcRes.data) setRevenueCenters(rcRes.data as any);
     if (ccRes.data) setCostCenters(ccRes.data as any);
+    if (crRes.data) setCreditCards(crRes.data as any);
     setLoading(false);
+  }
+
+  // ======== Credit Card CRUD ========
+  function openNewCard() { setEditingCard(null); setCardForm({ name: '', last_digits: '', brand: 'Visa', credit_limit: '', closing_day: '1', due_day: '10', account_id: '' }); setCardDialog(true); }
+  function openEditCard(card: CreditCard) { setEditingCard(card); setCardForm({ name: card.name, last_digits: card.last_digits, brand: card.brand, credit_limit: String(card.credit_limit), closing_day: String(card.closing_day), due_day: String(card.due_day), account_id: card.account_id || '' }); setCardDialog(true); }
+  async function saveCard() {
+    if (!workspace?.id || !cardForm.name) return;
+    const payload = { workspace_id: workspace.id, name: cardForm.name, last_digits: cardForm.last_digits, brand: cardForm.brand, credit_limit: Number(cardForm.credit_limit) || 0, closing_day: Number(cardForm.closing_day) || 1, due_day: Number(cardForm.due_day) || 10, account_id: cardForm.account_id || null };
+    if (editingCard) {
+      const { error } = await supabase.from('credit_cards').update(payload).eq('id', editingCard.id);
+      if (error) { toast.error('Erro ao atualizar cartão'); return; }
+      toast.success('Cartão atualizado');
+    } else {
+      const { error } = await supabase.from('credit_cards').insert(payload);
+      if (error) { toast.error('Erro ao criar cartão'); return; }
+      toast.success('Cartão cadastrado');
+    }
+    setCardDialog(false);
+    loadData();
+  }
+  async function deleteCard(id: string) {
+    if (!confirm('Excluir este cartão?')) return;
+    await supabase.from('credit_cards').delete().eq('id', id);
+    toast.success('Cartão excluído');
+    loadData();
+  }
+  async function toggleCard(id: string, currentActive: boolean) {
+    await supabase.from('credit_cards').update({ is_active: !currentActive }).eq('id', id);
+    loadData();
   }
 
   // ======== Helper: get payment status for a project ========
