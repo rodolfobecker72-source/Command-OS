@@ -134,6 +134,8 @@ export function FinancialPage() {
     credit_card_id: '',
     installment_value: '',
     installments: '1',
+    is_recurring: false,
+    recurring_end_month: '',
   });
 
   // Centers state
