@@ -175,6 +175,7 @@ export type Database = {
           nf_url: string | null
           objective: string
           payment_terms: string
+          pdf_released: boolean
           project_description: string
           project_name: string
           proposal_id: string
@@ -211,6 +212,7 @@ export type Database = {
           nf_url?: string | null
           objective?: string
           payment_terms?: string
+          pdf_released?: boolean
           project_description?: string
           project_name?: string
           proposal_id?: string
@@ -247,6 +249,7 @@ export type Database = {
           nf_url?: string | null
           objective?: string
           payment_terms?: string
+          pdf_released?: boolean
           project_description?: string
           project_name?: string
           proposal_id?: string

@@ -101,6 +101,7 @@ import {
   Flag,
   HardDrive,
   Layers,
+  LockKeyhole,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -612,11 +613,12 @@ export function BudgetDetail() {
   };
 
   const isVendedor = role === 'vendedor';
-  const canDownloadPDF = !isVendedor || budget?.status === 'aprovada';
+  const isAdminOrOwner = role === 'owner' || role === 'admin';
+  const canDownloadPDF = !isVendedor || budget?.pdfReleased;
 
   const generatePDFForVersion = async (version: BudgetVersion) => {
     if (!canDownloadPDF) {
-      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      toast.error('O PDF ainda não foi liberado pelo administrador');
       return;
     }
     if (!version.services || version.services.length === 0) {
@@ -652,7 +654,7 @@ export function BudgetDetail() {
 
   const generateContract = async () => {
     if (!canDownloadPDF) {
-      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      toast.error('O PDF ainda não foi liberado pelo administrador');
       return;
     }
     if (!currentVersionData || !client || !budget) {
@@ -940,6 +942,25 @@ export function BudgetDetail() {
                           >
                             <FileText className="w-3 h-3" />
                             Gerar Minuta
+                          </Button>
+                        )}
+                        {/* Liberar PDF button - only for admin/owner */}
+                        {isAdminOrOwner && budget.currentVersion > 0 && (
+                          <Button
+                            variant={budget.pdfReleased ? "outline" : "default"}
+                            size="sm"
+                            className={`h-7 gap-1 text-xs ${budget.pdfReleased ? 'border-success text-success' : ''}`}
+                            onClick={async () => {
+                              const newValue = !budget.pdfReleased;
+                              await updateBudget(budget.id, { pdfReleased: newValue });
+                              toast.success(newValue ? 'PDF liberado para download' : 'Liberação do PDF revogada');
+                            }}
+                          >
+                            {budget.pdfReleased ? (
+                              <><CheckCircle className="w-3 h-3" /> PDF Liberado</>
+                            ) : (
+                              <><LockKeyhole className="w-3 h-3" /> Liberar PDF</>
+                            )}
                           </Button>
                         )}
                       </div>

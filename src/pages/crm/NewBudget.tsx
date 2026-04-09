@@ -400,6 +400,7 @@ export function NewBudget() {
         status: formData.status,
         rejectionReason: '',
         rejectionObservation: '',
+        pdfReleased: false,
       });
 
       if (!newBudget) {
@@ -1568,6 +1569,7 @@ export function NewBudget() {
                       status: formData.status,
                       rejectionReason: '',
                       rejectionObservation: '',
+                      pdfReleased: false,
                     });
                     if (!newBudget) {
                       toast.error('Erro ao salvar rascunho');
