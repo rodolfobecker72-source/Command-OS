@@ -351,7 +351,7 @@ export function FinancialPage() {
 
       receivablesByMonth.push({
         month: m,
-        label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }),
+        label: format(new Date(m + '-01T12:00:00'), 'MMM/yy', { locale: ptBR }),
         totalValue,
         totalPaid,
         remaining: totalValue - totalPaid,
@@ -371,7 +371,7 @@ export function FinancialPage() {
       const total = monthEntries.reduce((s, e) => s + Number(e.value), 0);
       futureExpensesByMonth.push({
         month: m,
-        label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }),
+        label: format(new Date(m + '-01T12:00:00'), 'MMM/yy', { locale: ptBR }),
         totalValue: total,
         totalPaid: 0,
         pending: total,
@@ -756,7 +756,7 @@ export function FinancialPage() {
                   <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {monthOptions.map(m => (
-                      <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
+                      <SelectItem key={m} value={m}>{format(new Date(m + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1089,7 +1089,7 @@ export function FinancialPage() {
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {monthOptions.map(m => (
-                  <SelectItem key={m} value={m}>{format(new Date(m + '-01'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
+                  <SelectItem key={m} value={m}>{format(new Date(m + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR })}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1438,7 +1438,7 @@ export function FinancialPage() {
                   const desp = despMap[m]?.pending || 0;
                   totalRec += rec;
                   totalDesp += desp;
-                  return { month: m, label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }), rec, desp, saldo: rec - desp };
+                  return { month: m, label: format(new Date(m + '-01T12:00:00'), 'MMM/yy', { locale: ptBR }), rec, desp, saldo: rec - desp };
                 });
                 return (
                   <Table>
