@@ -356,12 +356,13 @@ export function FinancialPage() {
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
-    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
+    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null });
     setCashflowDialog(true);
   }
 
   function openEditEntry(e: CashflowEntry) {
     setEditingEntry(e);
+    const entry = e as any;
     setEntryForm({
       type: e.type as any,
       description: e.description,
@@ -372,6 +373,8 @@ export function FinancialPage() {
       revenue_center_id: e.revenue_center_id || '',
       cost_center_id: e.cost_center_id || '',
       notes: e.notes,
+      is_future_payment: entry.is_future_payment || false,
+      payment_due_date: entry.payment_due_date ? new Date(entry.payment_due_date + 'T12:00:00') : null,
     });
     setCashflowDialog(true);
   }
