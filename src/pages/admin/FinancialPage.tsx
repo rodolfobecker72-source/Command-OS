@@ -67,6 +67,21 @@ interface CenterItem {
   is_active: boolean;
 }
 
+interface CreditCard {
+  id: string;
+  workspace_id: string;
+  account_id: string | null;
+  name: string;
+  last_digits: string;
+  brand: string;
+  credit_limit: number;
+  closing_day: number;
+  due_day: number;
+  is_active: boolean;
+}
+
+const CARD_BRANDS = ['Visa', 'Mastercard', 'Elo', 'American Express', 'Hipercard', 'Outro'];
+
 const ACCOUNT_TYPES = [
   { value: 'corrente', label: 'Conta Corrente' },
   { value: 'poupanca', label: 'Poupança' },
