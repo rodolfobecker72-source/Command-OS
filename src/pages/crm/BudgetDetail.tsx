@@ -2661,6 +2661,8 @@ export function BudgetDetail() {
                                 client,
                                 userName: profile?.name || '',
                                 layoutSettings,
+                                categoryLabels: serviceCategories.reduce((acc, c) => { acc[c.key] = c.label; return acc; }, {} as Record<string, string>),
+                                objectiveLabels: (() => { const map: Record<string, Record<string, string>> = {}; serviceCategories.forEach(c => { (getObjectivesForCategory(c.key) || []).forEach(o => { if (!map[c.key]) map[c.key] = {}; map[c.key][o.value] = o.label; }); }); return map; })(),
                               });
                               toast.success('Relatório financeiro gerado!');
                             } catch (err) {
