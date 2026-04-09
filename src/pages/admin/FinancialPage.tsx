@@ -59,6 +59,8 @@ interface CashflowEntry {
   revenue_center_id: string | null;
   cost_center_id: string | null;
   notes: string;
+  is_future_payment: boolean;
+  is_paid: boolean;
 }
 
 interface CenterItem {
