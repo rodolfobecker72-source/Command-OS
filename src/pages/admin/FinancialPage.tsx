@@ -663,41 +663,67 @@ export function FinancialPage() {
               <CardContent className="p-0 overflow-x-auto">
                 <Table className="min-w-[600px]">
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Projeto / Centro</TableHead>
                       <TableHead>Conta</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCashflow.map(e => (
-                      <TableRow key={e.id}>
+                    {filteredCashflow.map(e => {
+                      const entry = e as any;
+                      const isFuture = entry.is_future_payment;
+                      const isPaid = entry.is_paid;
+                      return (
+                      <TableRow key={e.id} className={cn(isFuture && !isPaid && 'bg-muted/40')}>
                         <TableCell>{e.date ? format(new Date(e.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
                         <TableCell>
                           <Badge variant={e.type === 'receita' ? 'default' : 'destructive'} className="text-xs">
                             {e.type === 'receita' ? 'Receita' : 'Despesa'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium">{e.description}</TableCell>
+                        <TableCell className="font-medium">
+                          {e.description}
+                          {isFuture && entry.payment_due_date && (
+                            <span className="block text-xs text-muted-foreground mt-0.5">
+                              Pgto: {format(new Date(entry.payment_due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {budgetLabel(e.budget_id) || revenueCenterName(e.revenue_center_id) || costCenterName(e.cost_center_id) || '—'}
                         </TableCell>
                         <TableCell>{accountName(e.account_id)}</TableCell>
+                        <TableCell>
+                          {isFuture ? (
+                            isPaid ? (
+                              <Badge variant="default" className="text-xs bg-green-600"><Check className="w-3 h-3 mr-1" />Pago</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-orange-600 border-orange-400"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>
+                            )
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className={cn("text-right font-medium", e.type === 'receita' ? 'text-green-600' : 'text-destructive')}>
                           {e.type === 'despesa' ? '- ' : ''}{currencyFmt(Number(e.value))}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-1">
+                            {isFuture && !isPaid && (
+                              <Button size="sm" variant="ghost" className="text-green-600" title="Confirmar pagamento" onClick={() => markEntryAsPaid(e.id)}><Check className="w-4 h-4" /></Button>
+                            )}
                             <Button size="sm" variant="ghost" onClick={() => openEditEntry(e)}><Pencil className="w-4 h-4" /></Button>
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteEntry(e.id)}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );})}
                   </TableBody>
                 </Table>
               </CardContent>
