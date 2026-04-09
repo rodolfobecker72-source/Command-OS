@@ -385,7 +385,7 @@ export function FinancialPage() {
     return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis, futureExpensesByMonth, totalDespesasPrevistas };
   }, [accounts, cashflowEntries, budgets, versions]);
 
-  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1' };
+  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1', is_recurring: false, recurring_end_month: '' };
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
