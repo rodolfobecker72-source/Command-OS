@@ -612,7 +612,8 @@ export function BudgetDetail() {
   };
 
   const isVendedor = role === 'vendedor';
-  const canDownloadPDF = !isVendedor || budget?.status === 'aprovada';
+  const isAdminOrOwner = role === 'owner' || role === 'admin';
+  const canDownloadPDF = !isVendedor || budget?.pdfReleased;
 
   const generatePDFForVersion = async (version: BudgetVersion) => {
     if (!canDownloadPDF) {
