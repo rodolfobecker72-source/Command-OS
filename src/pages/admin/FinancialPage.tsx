@@ -1044,6 +1044,7 @@ export function FinancialPage() {
                   </div>
                 )}
 
+                {entryForm.type === 'despesa' && !entryForm.is_credit_card && !entryForm.is_recurring && (
                   <div className="flex items-center justify-between p-3 rounded-md border">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
