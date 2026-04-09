@@ -1003,6 +1003,49 @@ export function FinancialPage() {
                 {entryForm.type === 'despesa' && !entryForm.is_credit_card && (
                   <div className="flex items-center justify-between p-3 rounded-md border">
                     <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="recurring-toggle" className="cursor-pointer">Despesa Contínua (mensal)</Label>
+                    </div>
+                    <Switch id="recurring-toggle" checked={entryForm.is_recurring} onCheckedChange={v => setEntryForm(f => ({ ...f, is_recurring: v }))} />
+                  </div>
+                )}
+
+                {entryForm.is_recurring && entryForm.type === 'despesa' && (
+                  <div className="space-y-3 p-3 rounded-md border bg-muted/30">
+                    <p className="text-sm text-muted-foreground">Um lançamento será criado para cada mês, da data de início até o mês de término selecionado.</p>
+                    <div>
+                      <Label>Mês de Término</Label>
+                      <Select value={entryForm.recurring_end_month} onValueChange={v => setEntryForm(f => ({ ...f, recurring_end_month: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar mês de término" /></SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const options: { value: string; label: string }[] = [];
+                            const start = new Date(entryForm.date);
+                            for (let i = 0; i < 24; i++) {
+                              const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+                              options.push({ value: format(d, 'yyyy-MM'), label: format(d, 'MMMM yyyy', { locale: ptBR }) });
+                            }
+                            return options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>);
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {entryForm.recurring_end_month && Number(entryForm.value) > 0 && (() => {
+                      const startMonth = new Date(entryForm.date.getFullYear(), entryForm.date.getMonth(), 1);
+                      const [ey, em] = entryForm.recurring_end_month.split('-').map(Number);
+                      const endMonth = new Date(ey, em - 1, 1);
+                      const months = (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + endMonth.getMonth() - startMonth.getMonth() + 1;
+                      return months > 0 ? (
+                        <p className="text-sm font-medium">
+                          {months} lançamento(s) de {currencyFmt(Number(entryForm.value))} = Total: {currencyFmt(months * Number(entryForm.value))}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <Label htmlFor="future-payment" className="cursor-pointer">Pagamento futuro</Label>
                     </div>
