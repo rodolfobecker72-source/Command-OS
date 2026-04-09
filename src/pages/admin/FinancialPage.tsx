@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -296,6 +296,9 @@ export function FinancialPage() {
       });
   }, [budgets, versions, clients, selectedMonth]);
 
+  // Transfer state
+  const [transferDialog, setTransferDialog] = useState(false);
+  const [transferForm, setTransferForm] = useState({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' });
 
   // ======== Cashflow logic ========
   const filteredCashflow = useMemo(() => {
@@ -628,7 +631,37 @@ export function FinancialPage() {
     return months;
   }, []);
 
-  
+  async function saveTransfer() {
+    const wid = workspace!.id;
+    if (!transferForm.from_account_id || !transferForm.to_account_id) { toast.error('Selecione as contas'); return; }
+    if (transferForm.from_account_id === transferForm.to_account_id) { toast.error('Contas devem ser diferentes'); return; }
+    const val = Number(transferForm.value);
+    if (!val || val <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+    
+    // Check balance
+    const fromAcc = painelData.accountBalances.find(a => a.id === transferForm.from_account_id);
+    if (fromAcc && val > fromAcc.saldo) {
+      toast.error(`Saldo insuficiente. Disponível: ${currencyFmt(fromAcc.saldo)}`);
+      return;
+    }
+
+    const dateStr = format(transferForm.date, 'yyyy-MM-dd');
+    const desc = transferForm.description.trim() || 'Transferência entre contas';
+    const fromName = accounts.find(a => a.id === transferForm.from_account_id)?.name || '';
+    const toName = accounts.find(a => a.id === transferForm.to_account_id)?.name || '';
+
+    const { error } = await supabase.from('cashflow_entries').insert([
+      { workspace_id: wid, type: 'despesa', description: `${desc} → ${toName}`, value: val, date: dateStr, account_id: transferForm.from_account_id, notes: 'Transferência entre contas' },
+      { workspace_id: wid, type: 'receita', description: `${desc} ← ${fromName}`, value: val, date: dateStr, account_id: transferForm.to_account_id, notes: 'Transferência entre contas' },
+    ]);
+    if (error) { toast.error('Erro ao transferir'); return; }
+    toast.success('Transferência realizada!');
+    setTransferDialog(false);
+    setTransferForm({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' });
+    loadData();
+  }
+
+
 
   // Helper: get name lookups
   const accountName = (id: string | null) => accounts.find(a => a.id === id)?.name || '—';
@@ -1222,7 +1255,14 @@ export function FinancialPage() {
 
           {/* Account balances */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Saldo por Conta</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base">Saldo por Conta</CardTitle>
+              {painelData.accountBalances.length >= 2 && (
+                <Button variant="outline" size="sm" onClick={() => { setTransferForm({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' }); setTransferDialog(true); }}>
+                  <ArrowLeftRight className="h-4 w-4 mr-1" /> Transferir
+                </Button>
+              )}
+            </CardHeader>
             <CardContent>
               {painelData.accountBalances.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta financeira cadastrada.</p>
@@ -1241,6 +1281,64 @@ export function FinancialPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Transfer Dialog */}
+          <Dialog open={transferDialog} onOpenChange={setTransferDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle>Transferência entre Contas</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Conta de Origem</Label>
+                  <Select value={transferForm.from_account_id} onValueChange={v => setTransferForm(f => ({ ...f, from_account_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a conta de origem" /></SelectTrigger>
+                    <SelectContent>
+                      {painelData.accountBalances.map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name} ({currencyFmt(a.saldo)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Conta de Destino</Label>
+                  <Select value={transferForm.to_account_id} onValueChange={v => setTransferForm(f => ({ ...f, to_account_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a conta de destino" /></SelectTrigger>
+                    <SelectContent>
+                      {painelData.accountBalances.filter(a => a.id !== transferForm.from_account_id).map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name} ({currencyFmt(a.saldo)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Valor</Label>
+                  <Input type="number" step="0.01" placeholder="0,00" value={transferForm.value} onChange={e => setTransferForm(f => ({ ...f, value: e.target.value }))} />
+                  {transferForm.from_account_id && (() => {
+                    const acc = painelData.accountBalances.find(a => a.id === transferForm.from_account_id);
+                    return acc ? <p className="text-xs text-muted-foreground mt-1">Saldo disponível: {currencyFmt(acc.saldo)}</p> : null;
+                  })()}
+                </div>
+                <div>
+                  <Label>Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(transferForm.date, 'dd/MM/yyyy')}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={transferForm.date} onSelect={d => d && setTransferForm(f => ({ ...f, date: d }))} /></PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Descrição (opcional)</Label>
+                  <Input placeholder="Transferência entre contas" value={transferForm.description} onChange={e => setTransferForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                <Button className="w-full" onClick={saveTransfer}>
+                  <ArrowLeftRight className="h-4 w-4 mr-2" /> Confirmar Transferência
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Receivables by month */}
           <Card>
