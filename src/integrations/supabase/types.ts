@@ -276,7 +276,11 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_future_payment: boolean
+          is_paid: boolean
           notes: string
+          paid_at: string | null
+          payment_due_date: string | null
           revenue_center_id: string | null
           type: string
           updated_at: string
@@ -291,7 +295,11 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_future_payment?: boolean
+          is_paid?: boolean
           notes?: string
+          paid_at?: string | null
+          payment_due_date?: string | null
           revenue_center_id?: string | null
           type?: string
           updated_at?: string
@@ -306,7 +314,11 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_future_payment?: boolean
+          is_paid?: boolean
           notes?: string
+          paid_at?: string | null
+          payment_due_date?: string | null
           revenue_center_id?: string | null
           type?: string
           updated_at?: string
