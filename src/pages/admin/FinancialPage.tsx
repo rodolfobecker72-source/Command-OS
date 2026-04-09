@@ -472,7 +472,7 @@ export function FinancialPage() {
       while (current <= endMonth) {
         const dayInMonth = Math.min(startDate.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate());
         const entryDate = new Date(current.getFullYear(), current.getMonth(), dayInMonth);
-        const dueDate = entryForm.is_future_payment && entryForm.payment_due_date
+        const dueDate = entryForm.payment_due_date
           ? new Date(current.getFullYear(), current.getMonth(), Math.min(entryForm.payment_due_date.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()))
           : entryDate;
 
