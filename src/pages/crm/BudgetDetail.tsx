@@ -2689,7 +2689,7 @@ export function BudgetDetail() {
                           return (
                             <div key={svc.id || idx} className="flex justify-between items-center py-1">
                               <span className="text-sm text-muted-foreground">
-                                {idx + 1}. {SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType}{objLabel ? ` — ${objLabel}` : ''} (Custo Real)
+                                {idx + 1}. {getCategoryLabel(svc.serviceType)}{objLabel ? ` — ${objLabel}` : ''} (Custo Real)
                               </span>
                               <span className="font-semibold text-destructive">{formatCurrency(svcRealTotal + extraCostsTotal)}</span>
                             </div>
