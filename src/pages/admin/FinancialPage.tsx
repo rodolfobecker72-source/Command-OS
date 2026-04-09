@@ -353,10 +353,31 @@ export function FinancialPage() {
       });
     });
 
+    // Future expenses by month (pending payments)
+    const futureExpensesByMonth: { month: string; label: string; totalValue: number; totalPaid: number; pending: number }[] = [];
+    const futureExpenses = cashflowEntries.filter(e => e.type === 'despesa' && (e as any).is_future_payment && !(e as any).is_paid);
+    const expMonthsSet = new Set<string>();
+    futureExpenses.forEach(e => {
+      const dueDate = (e as any).payment_due_date;
+      if (dueDate) expMonthsSet.add(dueDate.substring(0, 7));
+    });
+    Array.from(expMonthsSet).sort().forEach(m => {
+      const monthEntries = futureExpenses.filter(e => (e as any).payment_due_date?.substring(0, 7) === m);
+      const total = monthEntries.reduce((s, e) => s + Number(e.value), 0);
+      futureExpensesByMonth.push({
+        month: m,
+        label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }),
+        totalValue: total,
+        totalPaid: 0,
+        pending: total,
+      });
+    });
+    const totalDespesasPrevistas = futureExpensesByMonth.reduce((s, r) => s + r.pending, 0);
+
     const totalSaldo = accountBalances.reduce((s, a) => s + a.saldo, 0);
     const totalRecebiveis = receivablesByMonth.reduce((s, r) => s + Math.max(0, r.remaining), 0);
 
-    return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis };
+    return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis, futureExpensesByMonth, totalDespesasPrevistas };
   }, [accounts, cashflowEntries, budgets, versions]);
 
   const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1' };
