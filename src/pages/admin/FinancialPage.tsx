@@ -853,7 +853,48 @@ export function FinancialPage() {
                   </div>
                 )}
 
-                {entryForm.type === 'despesa' && (
+                {entryForm.type === 'despesa' && creditCards.length > 0 && (
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <CreditCardIcon className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="credit-card-toggle" className="cursor-pointer">Compra no Cartão de Crédito</Label>
+                    </div>
+                    <Switch id="credit-card-toggle" checked={entryForm.is_credit_card} onCheckedChange={v => setEntryForm(f => ({ ...f, is_credit_card: v, is_future_payment: v ? true : f.is_future_payment }))} />
+                  </div>
+                )}
+
+                {entryForm.is_credit_card && entryForm.type === 'despesa' && (
+                  <div className="space-y-4 p-3 rounded-md border bg-muted/30">
+                    <div>
+                      <Label>Cartão</Label>
+                      <Select value={entryForm.credit_card_id} onValueChange={v => setEntryForm(f => ({ ...f, credit_card_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar cartão" /></SelectTrigger>
+                        <SelectContent>
+                          {creditCards.filter(c => c.is_active).map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name} •••• {c.last_digits}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Valor da Parcela (R$)</Label>
+                        <Input type="number" min="0" step="0.01" value={entryForm.installment_value} onChange={e => setEntryForm(f => ({ ...f, installment_value: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label>Nº de Parcelas</Label>
+                        <Input type="number" min="1" max="48" value={entryForm.installments} onChange={e => setEntryForm(f => ({ ...f, installments: e.target.value }))} />
+                      </div>
+                    </div>
+                    {Number(entryForm.installment_value) > 0 && Number(entryForm.installments) > 0 && (
+                      <p className="text-sm font-medium">
+                        Total: {currencyFmt(Number(entryForm.installment_value) * Number(entryForm.installments))} ({entryForm.installments}x de {currencyFmt(Number(entryForm.installment_value))})
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {entryForm.type === 'despesa' && !entryForm.is_credit_card && (
                   <div className="flex items-center justify-between p-3 rounded-md border">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
