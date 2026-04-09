@@ -127,7 +127,7 @@ function formatExecutionMonth(ym: string): string {
 export function BudgetDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile, workspace } = useAuth();
+  const { profile, workspace, role } = useAuth();
   const { getBudget, getClient, updateBudget, addBudgetVersion, approveBudget, updateBudgetVersion, deleteLastVersion, updateExecutionCost, updateExecution, addExtraCost, removeExtraCost, deleteBudget, finalizeExecution, addDeliveryLink, removeDeliveryLink, kanbanColumns, getObjectivesForCategory, getCategoryLabel, serviceCategories, getHDForBudget } = useCRM();
 
   const budget = getBudget(id || '');
@@ -611,7 +611,14 @@ export function BudgetDetail() {
     return null;
   };
 
+  const isVendedor = role === 'vendedor';
+  const canDownloadPDF = !isVendedor || budget?.status === 'aprovada';
+
   const generatePDFForVersion = async (version: BudgetVersion) => {
+    if (!canDownloadPDF) {
+      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      return;
+    }
     if (!version.services || version.services.length === 0) {
       toast.error('Versão não possui serviços');
       return;
@@ -644,6 +651,10 @@ export function BudgetDetail() {
   };
 
   const generateContract = async () => {
+    if (!canDownloadPDF) {
+      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      return;
+    }
     if (!currentVersionData || !client || !budget) {
       toast.error('Dados insuficientes para gerar minuta');
       return;
@@ -2222,14 +2233,16 @@ export function BudgetDetail() {
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
                                   )}
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => generatePDFForVersion(version)}
-                                    title={`Gerar PDF V${version.version}`}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
+                                  {canDownloadPDF && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => generatePDFForVersion(version)}
+                                      title={`Gerar PDF V${version.version}`}
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">{version.reason}</p>
