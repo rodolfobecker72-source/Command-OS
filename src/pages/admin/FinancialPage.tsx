@@ -453,6 +453,56 @@ export function FinancialPage() {
       return;
     }
 
+    // Recurring expense: create one entry per month from start to end
+    if (entryForm.is_recurring && entryForm.type === 'despesa' && !entryForm.is_credit_card) {
+      const val = Number(entryForm.value);
+      if (!val || val <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+      if (!entryForm.recurring_end_month) { toast.error('Selecione o mês de término'); return; }
+
+      const startDate = new Date(entryForm.date);
+      const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const [endY, endM] = entryForm.recurring_end_month.split('-').map(Number);
+      const endMonth = new Date(endY, endM - 1, 1);
+
+      if (endMonth < startMonth) { toast.error('Mês de término deve ser igual ou posterior ao mês de início'); return; }
+
+      const entries: any[] = [];
+      const current = new Date(startMonth);
+
+      while (current <= endMonth) {
+        const dayInMonth = Math.min(startDate.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate());
+        const entryDate = new Date(current.getFullYear(), current.getMonth(), dayInMonth);
+        const dueDate = entryForm.is_future_payment && entryForm.payment_due_date
+          ? new Date(current.getFullYear(), current.getMonth(), Math.min(entryForm.payment_due_date.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()))
+          : entryDate;
+
+        entries.push({
+          workspace_id: wid,
+          type: 'despesa',
+          description: entryForm.description,
+          value: val,
+          date: format(entryDate, 'yyyy-MM-dd'),
+          account_id: entryForm.account_id || null,
+          budget_id: null,
+          revenue_center_id: null,
+          cost_center_id: entryForm.cost_center_id || null,
+          notes: [entryForm.notes, 'Despesa contínua'].filter(Boolean).join(' | '),
+          is_future_payment: entryForm.is_future_payment,
+          payment_due_date: entryForm.is_future_payment ? format(dueDate, 'yyyy-MM-dd') : null,
+          is_paid: false,
+          paid_at: null,
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+
+      const { error } = await supabase.from('cashflow_entries').insert(entries);
+      if (error) { toast.error('Erro ao criar despesas contínuas'); return; }
+      toast.success(`${entries.length} lançamento(s) contínuo(s) criado(s)`);
+      setCashflowDialog(false);
+      loadData();
+      return;
+    }
+
     if (!entryForm.value || Number(entryForm.value) <= 0) { toast.error('Valor deve ser maior que zero'); return; }
 
     const data: any = {
