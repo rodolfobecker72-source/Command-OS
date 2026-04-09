@@ -631,6 +631,36 @@ export function FinancialPage() {
     return months;
   }, []);
 
+  async function saveTransfer() {
+    const wid = workspace!.id;
+    if (!transferForm.from_account_id || !transferForm.to_account_id) { toast.error('Selecione as contas'); return; }
+    if (transferForm.from_account_id === transferForm.to_account_id) { toast.error('Contas devem ser diferentes'); return; }
+    const val = Number(transferForm.value);
+    if (!val || val <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+    
+    // Check balance
+    const fromAcc = painelData.accountBalances.find(a => a.id === transferForm.from_account_id);
+    if (fromAcc && val > fromAcc.saldo) {
+      toast.error(`Saldo insuficiente. Disponível: ${currencyFmt(fromAcc.saldo)}`);
+      return;
+    }
+
+    const dateStr = format(transferForm.date, 'yyyy-MM-dd');
+    const desc = transferForm.description.trim() || 'Transferência entre contas';
+    const fromName = accounts.find(a => a.id === transferForm.from_account_id)?.name || '';
+    const toName = accounts.find(a => a.id === transferForm.to_account_id)?.name || '';
+
+    const { error } = await supabase.from('cashflow_entries').insert([
+      { workspace_id: wid, type: 'despesa', description: `${desc} → ${toName}`, value: val, date: dateStr, account_id: transferForm.from_account_id, notes: 'Transferência entre contas' },
+      { workspace_id: wid, type: 'receita', description: `${desc} ← ${fromName}`, value: val, date: dateStr, account_id: transferForm.to_account_id, notes: 'Transferência entre contas' },
+    ]);
+    if (error) { toast.error('Erro ao transferir'); return; }
+    toast.success('Transferência realizada!');
+    setTransferDialog(false);
+    setTransferForm({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' });
+    loadData();
+  }
+
 
 
   // Helper: get name lookups
