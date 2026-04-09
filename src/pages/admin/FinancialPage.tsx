@@ -360,10 +360,10 @@ export function FinancialPage() {
 
     // Future expenses by month (pending payments)
     const futureExpensesByMonth: { month: string; label: string; totalValue: number; totalPaid: number; pending: number }[] = [];
-    const futureExpenses = cashflowEntries.filter(e => e.type === 'despesa' && (e as any).is_future_payment && !(e as any).is_paid);
+    const futureExpenses = cashflowEntries.filter(e => e.type === 'despesa' && !(e as any).is_paid);
     const expMonthsSet = new Set<string>();
     futureExpenses.forEach(e => {
-      const dueDate = (e as any).payment_due_date;
+      const dueDate = (e as any).payment_due_date || e.date;
       if (dueDate) expMonthsSet.add(dueDate.substring(0, 7));
     });
     Array.from(expMonthsSet).sort().forEach(m => {
