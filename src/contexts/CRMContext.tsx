@@ -697,6 +697,25 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro: ' + e.message); }
   };
 
+  const reorderServiceCategories = async (newCategories: ServiceCategory[]) => {
+    const previous = serviceCategories;
+    const reordered = newCategories.map((cat, index) => ({ ...cat, order: index }));
+    setServiceCategories(reordered);
+    try {
+      const results = await Promise.all(
+        reordered.map(cat => supabase.from('service_categories').update({ order: cat.order }).eq('id', cat.id))
+      );
+      const failed = results.find(r => r.error);
+      if (failed?.error) {
+        toast.error('Erro ao reordenar categorias');
+        setServiceCategories(previous);
+      }
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+      setServiceCategories(previous);
+    }
+  };
+
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
     const wsId = await ensureWorkspace();
     if (!wsId) return;
