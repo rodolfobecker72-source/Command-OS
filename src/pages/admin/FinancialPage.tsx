@@ -1255,7 +1255,14 @@ export function FinancialPage() {
 
           {/* Account balances */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Saldo por Conta</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base">Saldo por Conta</CardTitle>
+              {painelData.accountBalances.length >= 2 && (
+                <Button variant="outline" size="sm" onClick={() => { setTransferForm({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' }); setTransferDialog(true); }}>
+                  <ArrowLeftRight className="h-4 w-4 mr-1" /> Transferir
+                </Button>
+              )}
+            </CardHeader>
             <CardContent>
               {painelData.accountBalances.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhuma conta financeira cadastrada.</p>
@@ -1274,6 +1281,64 @@ export function FinancialPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Transfer Dialog */}
+          <Dialog open={transferDialog} onOpenChange={setTransferDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle>Transferência entre Contas</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Conta de Origem</Label>
+                  <Select value={transferForm.from_account_id} onValueChange={v => setTransferForm(f => ({ ...f, from_account_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a conta de origem" /></SelectTrigger>
+                    <SelectContent>
+                      {painelData.accountBalances.map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name} ({currencyFmt(a.saldo)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Conta de Destino</Label>
+                  <Select value={transferForm.to_account_id} onValueChange={v => setTransferForm(f => ({ ...f, to_account_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a conta de destino" /></SelectTrigger>
+                    <SelectContent>
+                      {painelData.accountBalances.filter(a => a.id !== transferForm.from_account_id).map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name} ({currencyFmt(a.saldo)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Valor</Label>
+                  <Input type="number" step="0.01" placeholder="0,00" value={transferForm.value} onChange={e => setTransferForm(f => ({ ...f, value: e.target.value }))} />
+                  {transferForm.from_account_id && (() => {
+                    const acc = painelData.accountBalances.find(a => a.id === transferForm.from_account_id);
+                    return acc ? <p className="text-xs text-muted-foreground mt-1">Saldo disponível: {currencyFmt(acc.saldo)}</p> : null;
+                  })()}
+                </div>
+                <div>
+                  <Label>Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(transferForm.date, 'dd/MM/yyyy')}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={transferForm.date} onSelect={d => d && setTransferForm(f => ({ ...f, date: d }))} /></PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Descrição (opcional)</Label>
+                  <Input placeholder="Transferência entre contas" value={transferForm.description} onChange={e => setTransferForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                <Button className="w-full" onClick={saveTransfer}>
+                  <ArrowLeftRight className="h-4 w-4 mr-2" /> Confirmar Transferência
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Receivables by month */}
           <Card>
