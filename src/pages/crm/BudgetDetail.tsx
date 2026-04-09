@@ -2229,14 +2229,16 @@ export function BudgetDetail() {
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
                                   )}
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => generatePDFForVersion(version)}
-                                    title={`Gerar PDF V${version.version}`}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
+                                  {canDownloadPDF && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => generatePDFForVersion(version)}
+                                      title={`Gerar PDF V${version.version}`}
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">{version.reason}</p>
