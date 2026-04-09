@@ -342,7 +342,7 @@ export async function generateProposalPDF({
   y += 10;
 
   version.services.forEach((service, serviceIndex) => {
-    const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
+    const objectives = OBJECTIVES_BY_SERVICE[service.serviceType] || [];
     const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
     const serviceProductionCost = service.costs.reduce((sum, c) => sum + c.value, 0);
     const serviceWeight = totalProductionCost > 0 ? serviceProductionCost / totalProductionCost : 0;
@@ -363,7 +363,7 @@ export async function generateProposalPDF({
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
-    doc.text(`${serviceIndex + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}`, margin, y);
+    doc.text(`${serviceIndex + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}`, margin, y);
     y += 6;
     
     doc.setFontSize(smallSize);
@@ -531,9 +531,9 @@ export async function generateProposalPDF({
     const weight = totalProductionCost > 0 ? serviceCost / totalProductionCost : 0;
     const serviceValue = weight * totalToDistribute;
 
-    const objectives = OBJECTIVES_BY_SERVICE[service.serviceType];
+    const objectives = OBJECTIVES_BY_SERVICE[service.serviceType] || [];
     const objLabel = objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
-    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType]}${objLabel ? ` — ${objLabel}` : ''}`;
+    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
     doc.text(label, margin, y);
     doc.text(formatCurrency(serviceValue), pageWidth - margin, y, { align: 'right' });
     y += 7;
