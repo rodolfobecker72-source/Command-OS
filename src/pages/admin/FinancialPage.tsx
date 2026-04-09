@@ -322,7 +322,7 @@ export function FinancialPage() {
   const painelData = useMemo(() => {
     // Account balances: sum all cashflow entries per account
     const accountBalances = accounts.filter(a => a.is_active).map(acc => {
-      const entries = cashflowEntries.filter(e => e.account_id === acc.id);
+      const entries = cashflowEntries.filter(e => e.account_id === acc.id && !((e as any).is_future_payment && !(e as any).is_paid));
       const receitas = entries.filter(e => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
       const despesas = entries.filter(e => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
       return { ...acc, saldo: receitas - despesas };
