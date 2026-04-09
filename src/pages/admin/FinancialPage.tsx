@@ -296,6 +296,9 @@ export function FinancialPage() {
       });
   }, [budgets, versions, clients, selectedMonth]);
 
+  // Transfer state
+  const [transferDialog, setTransferDialog] = useState(false);
+  const [transferForm, setTransferForm] = useState({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' });
 
   // ======== Cashflow logic ========
   const filteredCashflow = useMemo(() => {
