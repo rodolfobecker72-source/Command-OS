@@ -14,11 +14,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -127,6 +128,8 @@ export function FinancialPage() {
     revenue_center_id: '',
     cost_center_id: '',
     notes: '',
+    is_future_payment: false,
+    payment_due_date: null as Date | null,
   });
 
   // Centers state
@@ -354,12 +357,13 @@ export function FinancialPage() {
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
-    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '' });
+    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null });
     setCashflowDialog(true);
   }
 
   function openEditEntry(e: CashflowEntry) {
     setEditingEntry(e);
+    const entry = e as any;
     setEntryForm({
       type: e.type as any,
       description: e.description,
@@ -370,6 +374,8 @@ export function FinancialPage() {
       revenue_center_id: e.revenue_center_id || '',
       cost_center_id: e.cost_center_id || '',
       notes: e.notes,
+      is_future_payment: entry.is_future_payment || false,
+      payment_due_date: entry.payment_due_date ? new Date(entry.payment_due_date + 'T12:00:00') : null,
     });
     setCashflowDialog(true);
   }
@@ -390,6 +396,10 @@ export function FinancialPage() {
       revenue_center_id: entryForm.type === 'receita' ? (entryForm.revenue_center_id || null) : null,
       cost_center_id: entryForm.type === 'despesa' ? (entryForm.cost_center_id || null) : null,
       notes: entryForm.notes,
+      is_future_payment: entryForm.is_future_payment,
+      payment_due_date: entryForm.is_future_payment && entryForm.payment_due_date ? format(entryForm.payment_due_date, 'yyyy-MM-dd') : null,
+      is_paid: entryForm.is_future_payment ? false : true,
+      paid_at: entryForm.is_future_payment ? null : new Date().toISOString(),
     };
 
     if (editingEntry) {
@@ -402,6 +412,12 @@ export function FinancialPage() {
       toast.success('Lançamento criado');
     }
     setCashflowDialog(false);
+    loadData();
+  }
+
+  async function markEntryAsPaid(id: string) {
+    await supabase.from('cashflow_entries').update({ is_paid: true, paid_at: new Date().toISOString() }).eq('id', id);
+    toast.success('Pagamento confirmado');
     loadData();
   }
 
@@ -647,41 +663,67 @@ export function FinancialPage() {
               <CardContent className="p-0 overflow-x-auto">
                 <Table className="min-w-[600px]">
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Projeto / Centro</TableHead>
                       <TableHead>Conta</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCashflow.map(e => (
-                      <TableRow key={e.id}>
+                    {filteredCashflow.map(e => {
+                      const entry = e as any;
+                      const isFuture = entry.is_future_payment;
+                      const isPaid = entry.is_paid;
+                      return (
+                      <TableRow key={e.id} className={cn(isFuture && !isPaid && 'bg-muted/40')}>
                         <TableCell>{e.date ? format(new Date(e.date + 'T12:00:00'), 'dd/MM/yyyy') : '—'}</TableCell>
                         <TableCell>
                           <Badge variant={e.type === 'receita' ? 'default' : 'destructive'} className="text-xs">
                             {e.type === 'receita' ? 'Receita' : 'Despesa'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium">{e.description}</TableCell>
+                        <TableCell className="font-medium">
+                          {e.description}
+                          {isFuture && entry.payment_due_date && (
+                            <span className="block text-xs text-muted-foreground mt-0.5">
+                              Pgto: {format(new Date(entry.payment_due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {budgetLabel(e.budget_id) || revenueCenterName(e.revenue_center_id) || costCenterName(e.cost_center_id) || '—'}
                         </TableCell>
                         <TableCell>{accountName(e.account_id)}</TableCell>
+                        <TableCell>
+                          {isFuture ? (
+                            isPaid ? (
+                              <Badge variant="default" className="text-xs bg-green-600"><Check className="w-3 h-3 mr-1" />Pago</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-orange-600 border-orange-400"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>
+                            )
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className={cn("text-right font-medium", e.type === 'receita' ? 'text-green-600' : 'text-destructive')}>
                           {e.type === 'despesa' ? '- ' : ''}{currencyFmt(Number(e.value))}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-1">
+                            {isFuture && !isPaid && (
+                              <Button size="sm" variant="ghost" className="text-green-600" title="Confirmar pagamento" onClick={() => markEntryAsPaid(e.id)}><Check className="w-4 h-4" /></Button>
+                            )}
                             <Button size="sm" variant="ghost" onClick={() => openEditEntry(e)}><Pencil className="w-4 h-4" /></Button>
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteEntry(e.id)}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );})}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -764,6 +806,33 @@ export function FinancialPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+
+                {entryForm.type === 'despesa' && (
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="future-payment" className="cursor-pointer">Pagamento futuro</Label>
+                    </div>
+                    <Switch id="future-payment" checked={entryForm.is_future_payment} onCheckedChange={v => setEntryForm(f => ({ ...f, is_future_payment: v }))} />
+                  </div>
+                )}
+
+                {entryForm.is_future_payment && (
+                  <div>
+                    <Label>Data de Pagamento</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !entryForm.payment_due_date && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {entryForm.payment_due_date ? format(entryForm.payment_due_date, 'dd/MM/yyyy') : 'Selecionar data'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={entryForm.payment_due_date || undefined} onSelect={d => d && setEntryForm(f => ({ ...f, payment_due_date: d }))} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 )}
 
