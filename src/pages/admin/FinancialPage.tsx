@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight, Repeat } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
