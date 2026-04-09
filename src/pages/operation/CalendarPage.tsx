@@ -69,8 +69,14 @@ export function CalendarPage() {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [showDeliveries, setShowDeliveries] = useState(true);
 
-  // Only show approved budgets on the calendar
+  // Approved budgets
   const approvedBudgets = useMemo(() => budgets.filter(b => b.status === 'aprovada'), [budgets]);
+
+  // Pending (non-approved) budgets with execution dates
+  const pendingBudgets = useMemo(
+    () => budgets.filter(b => b.status !== 'aprovada' && b.executionStartDate),
+    [budgets],
+  );
 
   // Approved budgets with execution dates for the calendar grid
   const calendarEvents = useMemo(
@@ -165,6 +171,7 @@ export function CalendarPage() {
           <CalendarMonthView
             currentDate={currentDate}
             events={calendarEvents}
+            pendingEvents={pendingBudgets}
             deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
             onDeliveryClick={handleDeliveryClick}
@@ -173,6 +180,7 @@ export function CalendarPage() {
           <CalendarWeekView
             currentDate={currentDate}
             events={calendarEvents}
+            pendingEvents={pendingBudgets}
             deliveryEvents={showDeliveries ? deliveryEvents : []}
             onEventClick={handleEventClick}
             onDeliveryClick={handleDeliveryClick}
