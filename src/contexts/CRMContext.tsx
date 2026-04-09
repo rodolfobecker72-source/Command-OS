@@ -117,6 +117,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     execution: row.execution as ProjectExecution | null,
     rejectionReason: row.rejection_reason || '',
     rejectionObservation: row.rejection_observation || '',
+    pdfReleased: row.pdf_released ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -858,6 +859,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.currentVersion !== undefined) dbUpdates.current_version = updates.currentVersion;
       if (updates.rejectionReason !== undefined) dbUpdates.rejection_reason = updates.rejectionReason;
       if (updates.rejectionObservation !== undefined) dbUpdates.rejection_observation = updates.rejectionObservation;
+      if (updates.pdfReleased !== undefined) dbUpdates.pdf_released = updates.pdfReleased;
 
       if (Object.keys(dbUpdates).length > 0) {
         const { error } = await supabase.from('budgets').update(dbUpdates).eq('id', id);

@@ -317,6 +317,7 @@ export interface Budget {
   execution: ProjectExecution | null; // Execution tracking when approved
   rejectionReason: string;
   rejectionObservation: string;
+  pdfReleased: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
