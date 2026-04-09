@@ -395,6 +395,10 @@ export function FinancialPage() {
       revenue_center_id: entryForm.type === 'receita' ? (entryForm.revenue_center_id || null) : null,
       cost_center_id: entryForm.type === 'despesa' ? (entryForm.cost_center_id || null) : null,
       notes: entryForm.notes,
+      is_future_payment: entryForm.is_future_payment,
+      payment_due_date: entryForm.is_future_payment && entryForm.payment_due_date ? format(entryForm.payment_due_date, 'yyyy-MM-dd') : null,
+      is_paid: entryForm.is_future_payment ? false : true,
+      paid_at: entryForm.is_future_payment ? null : new Date().toISOString(),
     };
 
     if (editingEntry) {
@@ -407,6 +411,12 @@ export function FinancialPage() {
       toast.success('Lançamento criado');
     }
     setCashflowDialog(false);
+    loadData();
+  }
+
+  async function markEntryAsPaid(id: string) {
+    await supabase.from('cashflow_entries').update({ is_paid: true, paid_at: new Date().toISOString() }).eq('id', id);
+    toast.success('Pagamento confirmado');
     loadData();
   }
 
