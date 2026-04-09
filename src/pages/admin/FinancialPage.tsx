@@ -59,6 +59,8 @@ interface CashflowEntry {
   revenue_center_id: string | null;
   cost_center_id: string | null;
   notes: string;
+  is_future_payment: boolean;
+  is_paid: boolean;
 }
 
 interface CenterItem {
@@ -331,8 +333,9 @@ export function FinancialPage() {
 
   const cashflowSummary = useMemo(() => {
     const totalReceitas = filteredCashflow.filter(e => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
-    const totalDespesas = filteredCashflow.filter(e => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
-    return { totalReceitas, totalDespesas, saldo: totalReceitas - totalDespesas };
+    const despesasEfetivadas = filteredCashflow.filter(e => e.type === 'despesa' && (!e.is_future_payment || e.is_paid)).reduce((s, e) => s + Number(e.value), 0);
+    const despesasProgramadas = filteredCashflow.filter(e => e.type === 'despesa' && e.is_future_payment && !e.is_paid).reduce((s, e) => s + Number(e.value), 0);
+    return { totalReceitas, totalDespesas: despesasEfetivadas, despesasProgramadas, saldo: totalReceitas - despesasEfetivadas };
   }, [filteredCashflow]);
 
   // ======== Painel Financeiro data ========
@@ -802,7 +805,7 @@ export function FinancialPage() {
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /> Receitas</div>
@@ -813,6 +816,12 @@ export function FinancialPage() {
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowDownCircle className="w-4 h-4 text-destructive" /> Despesas</div>
                 <p className="text-xl font-bold text-destructive">{currencyFmt(cashflowSummary.totalDespesas)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Clock className="w-4 h-4 text-yellow-600" /> Pagamentos Programados</div>
+                <p className="text-xl font-bold text-yellow-600">{currencyFmt(cashflowSummary.despesasProgramadas)}</p>
               </CardContent>
             </Card>
             <Card>
