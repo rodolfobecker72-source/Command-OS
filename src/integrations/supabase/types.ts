@@ -429,6 +429,66 @@ export type Database = {
           },
         ]
       }
+      credit_cards: {
+        Row: {
+          account_id: string | null
+          brand: string
+          closing_day: number
+          created_at: string
+          credit_limit: number
+          due_day: number
+          id: string
+          is_active: boolean
+          last_digits: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          brand?: string
+          closing_day?: number
+          created_at?: string
+          credit_limit?: number
+          due_day?: number
+          id?: string
+          is_active?: boolean
+          last_digits?: string
+          name?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          account_id?: string | null
+          brand?: string
+          closing_day?: number
+          created_at?: string
+          credit_limit?: number
+          due_day?: number
+          id?: string
+          is_active?: boolean
+          last_digits?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_cards_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_cards_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_accounts: {
         Row: {
           account_number: string
