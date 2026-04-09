@@ -369,7 +369,7 @@ export async function generateProposalPDF({
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
-    doc.text(`${serviceIndex + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}`, margin, y);
+    doc.text(`${serviceIndex + 1}. ${catLookup[service.serviceType] || SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}`, margin, y);
     y += 6;
     
     doc.setFontSize(smallSize);
@@ -538,8 +538,8 @@ export async function generateProposalPDF({
     const serviceValue = weight * totalToDistribute;
 
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType] || [];
-    const objLabel = objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
-    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
+    const objLabel = objLookup[service.serviceType]?.[service.objective] || objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
+    const label = `${idx + 1}. ${catLookup[service.serviceType] || SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
     doc.text(label, margin, y);
     doc.text(formatCurrency(serviceValue), pageWidth - margin, y, { align: 'right' });
     y += 7;
