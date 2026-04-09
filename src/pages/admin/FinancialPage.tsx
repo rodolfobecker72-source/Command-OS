@@ -287,8 +287,8 @@ export function FinancialPage() {
           totalRealCost += sRealCost;
           return {
             id: s.id || `svc-${idx}`,
-            name: s.objective || s.description?.substring(0, 40) || 'Serviço',
-            categoryLabel: s.serviceType || '',
+            name: (objectiveLabels[s.serviceType]?.[s.objective] || s.objective || s.description?.substring(0, 40) || 'Serviço'),
+            categoryLabel: categoryLabels[s.serviceType] || s.serviceType || '',
             value: sValue,
             realCost: sRealCost,
             margin: sValue - sRealCost,
