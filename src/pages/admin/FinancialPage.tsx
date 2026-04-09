@@ -783,6 +783,33 @@ export function FinancialPage() {
                   </div>
                 )}
 
+                {entryForm.type === 'despesa' && (
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="future-payment" className="cursor-pointer">Pagamento futuro</Label>
+                    </div>
+                    <Switch id="future-payment" checked={entryForm.is_future_payment} onCheckedChange={v => setEntryForm(f => ({ ...f, is_future_payment: v }))} />
+                  </div>
+                )}
+
+                {entryForm.is_future_payment && (
+                  <div>
+                    <Label>Data de Pagamento</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !entryForm.payment_due_date && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {entryForm.payment_due_date ? format(entryForm.payment_due_date, 'dd/MM/yyyy') : 'Selecionar data'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={entryForm.payment_due_date || undefined} onSelect={d => d && setEntryForm(f => ({ ...f, payment_due_date: d }))} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+
                 <div>
                   <Label>Observações</Label>
                   <Textarea value={entryForm.notes} onChange={e => setEntryForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
