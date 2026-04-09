@@ -130,6 +130,10 @@ export function FinancialPage() {
     notes: '',
     is_future_payment: false,
     payment_due_date: null as Date | null,
+    is_credit_card: false,
+    credit_card_id: '',
+    installment_value: '',
+    installments: '1',
   });
 
   // Centers state
@@ -349,15 +353,38 @@ export function FinancialPage() {
       });
     });
 
+    // Future expenses by month (pending payments)
+    const futureExpensesByMonth: { month: string; label: string; totalValue: number; totalPaid: number; pending: number }[] = [];
+    const futureExpenses = cashflowEntries.filter(e => e.type === 'despesa' && (e as any).is_future_payment && !(e as any).is_paid);
+    const expMonthsSet = new Set<string>();
+    futureExpenses.forEach(e => {
+      const dueDate = (e as any).payment_due_date;
+      if (dueDate) expMonthsSet.add(dueDate.substring(0, 7));
+    });
+    Array.from(expMonthsSet).sort().forEach(m => {
+      const monthEntries = futureExpenses.filter(e => (e as any).payment_due_date?.substring(0, 7) === m);
+      const total = monthEntries.reduce((s, e) => s + Number(e.value), 0);
+      futureExpensesByMonth.push({
+        month: m,
+        label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }),
+        totalValue: total,
+        totalPaid: 0,
+        pending: total,
+      });
+    });
+    const totalDespesasPrevistas = futureExpensesByMonth.reduce((s, r) => s + r.pending, 0);
+
     const totalSaldo = accountBalances.reduce((s, a) => s + a.saldo, 0);
     const totalRecebiveis = receivablesByMonth.reduce((s, r) => s + Math.max(0, r.remaining), 0);
 
-    return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis };
+    return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis, futureExpensesByMonth, totalDespesasPrevistas };
   }, [accounts, cashflowEntries, budgets, versions]);
+
+  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1' };
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
-    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null });
+    setEntryForm({ ...defaultEntryForm, type: tipo });
     setCashflowDialog(true);
   }
 
@@ -365,6 +392,7 @@ export function FinancialPage() {
     setEditingEntry(e);
     const entry = e as any;
     setEntryForm({
+      ...defaultEntryForm,
       type: e.type as any,
       description: e.description,
       value: String(e.value),
@@ -383,6 +411,43 @@ export function FinancialPage() {
   async function saveEntry() {
     const wid = workspace!.id;
     if (!entryForm.description.trim()) { toast.error('Descrição é obrigatória'); return; }
+
+    // Credit card: create multiple installment entries
+    if (entryForm.is_credit_card && entryForm.type === 'despesa') {
+      const parcVal = Number(entryForm.installment_value);
+      const parcQty = Number(entryForm.installments) || 1;
+      if (parcVal <= 0) { toast.error('Valor da parcela deve ser maior que zero'); return; }
+
+      const selectedCard = creditCards.find(c => c.id === entryForm.credit_card_id);
+      const entries = [];
+      for (let i = 0; i < parcQty; i++) {
+        const dueDate = new Date(entryForm.date);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        entries.push({
+          workspace_id: wid,
+          type: 'despesa',
+          description: `${entryForm.description} (${i + 1}/${parcQty})`,
+          value: parcVal,
+          date: format(entryForm.date, 'yyyy-MM-dd'),
+          account_id: selectedCard?.account_id || entryForm.account_id || null,
+          budget_id: null,
+          revenue_center_id: null,
+          cost_center_id: entryForm.cost_center_id || null,
+          notes: entryForm.notes ? `${entryForm.notes} | Cartão: ${selectedCard?.name || ''}` : `Cartão: ${selectedCard?.name || ''}`,
+          is_future_payment: true,
+          payment_due_date: format(dueDate, 'yyyy-MM-dd'),
+          is_paid: false,
+          paid_at: null,
+        });
+      }
+      const { error } = await supabase.from('cashflow_entries').insert(entries);
+      if (error) { toast.error('Erro ao criar parcelas'); return; }
+      toast.success(`${parcQty} parcela(s) criada(s)`);
+      setCashflowDialog(false);
+      loadData();
+      return;
+    }
+
     if (!entryForm.value || Number(entryForm.value) <= 0) { toast.error('Valor deve ser maior que zero'); return; }
 
     const data: any = {
@@ -809,7 +874,48 @@ export function FinancialPage() {
                   </div>
                 )}
 
-                {entryForm.type === 'despesa' && (
+                {entryForm.type === 'despesa' && creditCards.length > 0 && (
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <CreditCardIcon className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="credit-card-toggle" className="cursor-pointer">Compra no Cartão de Crédito</Label>
+                    </div>
+                    <Switch id="credit-card-toggle" checked={entryForm.is_credit_card} onCheckedChange={v => setEntryForm(f => ({ ...f, is_credit_card: v, is_future_payment: v ? true : f.is_future_payment }))} />
+                  </div>
+                )}
+
+                {entryForm.is_credit_card && entryForm.type === 'despesa' && (
+                  <div className="space-y-4 p-3 rounded-md border bg-muted/30">
+                    <div>
+                      <Label>Cartão</Label>
+                      <Select value={entryForm.credit_card_id} onValueChange={v => setEntryForm(f => ({ ...f, credit_card_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar cartão" /></SelectTrigger>
+                        <SelectContent>
+                          {creditCards.filter(c => c.is_active).map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name} •••• {c.last_digits}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Valor da Parcela (R$)</Label>
+                        <Input type="number" min="0" step="0.01" value={entryForm.installment_value} onChange={e => setEntryForm(f => ({ ...f, installment_value: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label>Nº de Parcelas</Label>
+                        <Input type="number" min="1" max="48" value={entryForm.installments} onChange={e => setEntryForm(f => ({ ...f, installments: e.target.value }))} />
+                      </div>
+                    </div>
+                    {Number(entryForm.installment_value) > 0 && Number(entryForm.installments) > 0 && (
+                      <p className="text-sm font-medium">
+                        Total: {currencyFmt(Number(entryForm.installment_value) * Number(entryForm.installments))} ({entryForm.installments}x de {currencyFmt(Number(entryForm.installment_value))})
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {entryForm.type === 'despesa' && !entryForm.is_credit_card && (
                   <div className="flex items-center justify-between p-3 rounded-md border">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
@@ -1087,7 +1193,7 @@ export function FinancialPage() {
         {/* ===================== PAINEL FINANCEIRO ===================== */}
         <TabsContent value="painel" className="space-y-6">
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Wallet className="w-4 h-4" /> Saldo Total (Contas)</div>
@@ -1096,14 +1202,20 @@ export function FinancialPage() {
             </Card>
             <Card>
               <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-orange-500" /> Total a Receber</div>
-                <p className="text-2xl font-bold text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /> Receita Prevista</div>
+                <p className="text-2xl font-bold text-green-600">{currencyFmt(painelData.totalRecebiveis)}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4 text-green-600" /> Projeção (Saldo + Recebíveis)</div>
-                <p className="text-2xl font-bold text-green-600">{currencyFmt(painelData.totalSaldo + painelData.totalRecebiveis)}</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowDownCircle className="w-4 h-4 text-destructive" /> Despesas Previstas</div>
+                <p className="text-2xl font-bold text-destructive">{currencyFmt(painelData.totalDespesasPrevistas)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4" /> Projeção (Saldo + Prev.)</div>
+                <p className={cn("text-2xl font-bold", (painelData.totalSaldo + painelData.totalRecebiveis - painelData.totalDespesasPrevistas) >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(painelData.totalSaldo + painelData.totalRecebiveis - painelData.totalDespesasPrevistas)}</p>
               </CardContent>
             </Card>
           </div>
@@ -1132,7 +1244,7 @@ export function FinancialPage() {
 
           {/* Receivables by month */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Valores a Receber por Mês</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Receita Prevista por Mês</CardTitle></CardHeader>
             <CardContent>
               {painelData.receivablesByMonth.filter(r => r.remaining > 0).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Todos os projetos estão pagos.</p>
@@ -1160,6 +1272,37 @@ export function FinancialPage() {
                       <TableCell className="text-right">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalValue, 0))}</TableCell>
                       <TableCell className="text-right text-green-600">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalPaid, 0))}</TableCell>
                       <TableCell className="text-right text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Despesas Previstas por Mês */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Despesas Previstas por Mês</CardTitle></CardHeader>
+            <CardContent>
+              {painelData.futureExpensesByMonth.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa futura pendente.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mês</TableHead>
+                      <TableHead className="text-right">Valor Pendente</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {painelData.futureExpensesByMonth.map(r => (
+                      <TableRow key={r.month}>
+                        <TableCell className="font-medium">{r.label}</TableCell>
+                        <TableCell className="text-right text-destructive font-medium">{currencyFmt(r.pending)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="font-bold border-t-2">
+                      <TableCell>Total</TableCell>
+                      <TableCell className="text-right text-destructive">{currencyFmt(painelData.totalDespesasPrevistas)}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
