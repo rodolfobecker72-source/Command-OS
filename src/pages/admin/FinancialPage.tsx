@@ -313,7 +313,7 @@ export function FinancialPage() {
           status: b.status,
         };
       });
-  }, [budgets, versions, clients, selectedMonth]);
+  }, [budgets, versions, clients, selectedMonth, categoryLabels, objectiveLabels]);
 
   // Transfer state
   const [transferDialog, setTransferDialog] = useState(false);
