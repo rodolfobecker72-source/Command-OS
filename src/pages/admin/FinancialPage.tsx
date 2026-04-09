@@ -1329,24 +1329,6 @@ export function FinancialPage() {
                 <p className={cn("text-2xl font-bold", painelData.totalSaldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(painelData.totalSaldo)}</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /> Receita Prevista</div>
-                <p className="text-2xl font-bold text-green-600">{currencyFmt(painelData.totalRecebiveis)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><ArrowDownCircle className="w-4 h-4 text-destructive" /> Despesas Previstas</div>
-                <p className="text-2xl font-bold text-destructive">{currencyFmt(painelData.totalDespesasPrevistas)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><TrendingUp className="w-4 h-4" /> Projeção (Saldo + Prev.)</div>
-                <p className={cn("text-2xl font-bold", (painelData.totalSaldo + painelData.totalRecebiveis - painelData.totalDespesasPrevistas) >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(painelData.totalSaldo + painelData.totalRecebiveis - painelData.totalDespesasPrevistas)}</p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Account balances */}
