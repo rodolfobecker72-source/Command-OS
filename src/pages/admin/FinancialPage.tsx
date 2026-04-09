@@ -367,7 +367,7 @@ export function FinancialPage() {
       if (dueDate) expMonthsSet.add(dueDate.substring(0, 7));
     });
     Array.from(expMonthsSet).sort().forEach(m => {
-      const monthEntries = futureExpenses.filter(e => (e as any).payment_due_date?.substring(0, 7) === m);
+      const monthEntries = futureExpenses.filter(e => ((e as any).payment_due_date || e.date)?.substring(0, 7) === m);
       const total = monthEntries.reduce((s, e) => s + Number(e.value), 0);
       futureExpensesByMonth.push({
         month: m,
