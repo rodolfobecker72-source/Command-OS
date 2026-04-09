@@ -1164,6 +1164,82 @@ export function FinancialPage() {
             )}
           </div>
 
+          {/* Cartões de Crédito */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Cartões de Crédito</h2>
+              <Dialog open={cardDialog} onOpenChange={setCardDialog}>
+                <DialogTrigger asChild>
+                  <Button onClick={openNewCard} size="sm"><Plus className="w-4 h-4 mr-1" /> Novo Cartão</Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                  <DialogHeader><DialogTitle>{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div><Label>Nome / Apelido</Label><Input value={cardForm.name} onChange={e => setCardForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Cartão Empresarial" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Últimos 4 dígitos</Label><Input value={cardForm.last_digits} onChange={e => setCardForm(f => ({ ...f, last_digits: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="0000" maxLength={4} /></div>
+                      <div>
+                        <Label>Bandeira</Label>
+                        <Select value={cardForm.brand} onValueChange={v => setCardForm(f => ({ ...f, brand: v }))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{CARD_BRANDS.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div><Label>Limite</Label><Input type="number" value={cardForm.credit_limit} onChange={e => setCardForm(f => ({ ...f, credit_limit: e.target.value }))} placeholder="0,00" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Dia de Fechamento</Label><Input type="number" min={1} max={31} value={cardForm.closing_day} onChange={e => setCardForm(f => ({ ...f, closing_day: e.target.value }))} /></div>
+                      <div><Label>Dia de Vencimento</Label><Input type="number" min={1} max={31} value={cardForm.due_day} onChange={e => setCardForm(f => ({ ...f, due_day: e.target.value }))} /></div>
+                    </div>
+                    <div>
+                      <Label>Conta Vinculada</Label>
+                      <Select value={cardForm.account_id} onValueChange={v => setCardForm(f => ({ ...f, account_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+                        <SelectContent>
+                          {accounts.filter(a => a.is_active).map(a => <SelectItem key={a.id} value={a.id}>{a.name} — {a.bank}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={saveCard} className="w-full">Salvar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {creditCards.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground"><Wallet className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhum cartão cadastrado.</CardContent></Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table className="min-w-[600px]">
+                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Bandeira</TableHead><TableHead>Final</TableHead><TableHead>Conta Vinculada</TableHead><TableHead className="hidden sm:table-cell">Fechamento</TableHead><TableHead className="hidden sm:table-cell">Vencimento</TableHead><TableHead>Limite</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {creditCards.map(card => (
+                        <TableRow key={card.id}>
+                          <TableCell className="font-medium">{card.name}</TableCell>
+                          <TableCell>{card.brand}</TableCell>
+                          <TableCell>•••• {card.last_digits || '—'}</TableCell>
+                          <TableCell>{accounts.find(a => a.id === card.account_id)?.name || '—'}</TableCell>
+                          <TableCell className="hidden sm:table-cell">Dia {card.closing_day}</TableCell>
+                          <TableCell className="hidden sm:table-cell">Dia {card.due_day}</TableCell>
+                          <TableCell>{currencyFmt(card.credit_limit)}</TableCell>
+                          <TableCell><Badge variant={card.is_active ? 'default' : 'secondary'}>{card.is_active ? 'Ativo' : 'Inativo'}</Badge></TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => toggleCard(card.id, card.is_active)}>{card.is_active ? 'Desativar' : 'Ativar'}</Button>
+                              <Button size="sm" variant="ghost" onClick={() => openEditCard(card)}><Pencil className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteCard(card.id)}><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           {/* Centros de Receita e Custo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Revenue Centers */}
