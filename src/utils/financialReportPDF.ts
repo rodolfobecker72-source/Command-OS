@@ -14,6 +14,8 @@ interface FinancialReportParams {
   client: Client;
   userName: string;
   layoutSettings?: PDFLayoutSettings | null;
+  categoryLabels?: Record<string, string>;
+  objectiveLabels?: Record<string, Record<string, string>>;
 }
 
 async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
