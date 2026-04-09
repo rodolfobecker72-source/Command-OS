@@ -135,7 +135,11 @@ export function FinancialPage() {
   const [newRevenueCenterName, setNewRevenueCenterName] = useState('');
   const [newCostCenterName, setNewCostCenterName] = useState('');
 
-  // Payment dialog state
+  // Credit cards state
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [cardDialog, setCardDialog] = useState(false);
+  const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
+  const [cardForm, setCardForm] = useState({ name: '', last_digits: '', brand: 'Visa', credit_limit: '', closing_day: '1', due_day: '10', account_id: '' });
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [paymentProject, setPaymentProject] = useState<any>(null);
   const [paymentForm, setPaymentForm] = useState({
