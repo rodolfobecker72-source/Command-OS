@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 interface CalendarWeekViewProps {
   currentDate: Date;
   events: Budget[];
+  pendingEvents?: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
   onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
@@ -37,7 +38,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarWeekViewProps) {
+export function CalendarWeekView({ currentDate, events, pendingEvents = [], deliveryEvents, onEventClick, onDeliveryClick }: CalendarWeekViewProps) {
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { locale: ptBR });
     const weekEnd = endOfWeek(currentDate, { locale: ptBR });
@@ -77,6 +78,7 @@ export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventC
         {days.map((day, i) => {
           const today = isToday(day);
           const dayEvents = getEventsForDay(day, events);
+          const dayPending = getEventsForDay(day, pendingEvents);
           const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
 
           return (
@@ -87,13 +89,21 @@ export function CalendarWeekView({ currentDate, events, deliveryEvents, onEventC
                 today && 'bg-primary/5',
               )}
             >
-              {dayEvents.length === 0 && dayDeliveries.length === 0 && (
+              {dayEvents.length === 0 && dayPending.length === 0 && dayDeliveries.length === 0 && (
                 <p className="text-[10px] text-muted-foreground/40 text-center pt-4">—</p>
               )}
               {dayEvents.map(ev => (
                 <CalendarEventCard
                   key={ev.id}
                   budget={ev}
+                  onClick={() => onEventClick(ev)}
+                />
+              ))}
+              {dayPending.map(ev => (
+                <CalendarEventCard
+                  key={`pending-${ev.id}`}
+                  budget={ev}
+                  eventType="pending"
                   onClick={() => onEventClick(ev)}
                 />
               ))}

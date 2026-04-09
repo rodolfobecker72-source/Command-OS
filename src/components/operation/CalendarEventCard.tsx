@@ -2,7 +2,7 @@ import { Budget } from '@/types/crm';
 import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 
-export type CalendarEventType = 'execution' | 'delivery';
+export type CalendarEventType = 'execution' | 'delivery' | 'pending';
 
 export interface CalendarDeliveryEvent {
   id: string;
@@ -26,10 +26,13 @@ export function CalendarEventCard({ budget, compact = false, onClick, eventType 
   const client = clients.find(c => c.id === budget.clientId);
 
   const isDelivery = eventType === 'delivery';
+  const isPending = eventType === 'pending';
   const statusStyle = isDelivery
     ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
-    : 'bg-success/15 border-success/30 text-success';
-  const dotColor = isDelivery ? 'bg-blue-500' : 'bg-success';
+    : isPending
+      ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
+      : 'bg-success/15 border-success/30 text-success';
+  const dotColor = isDelivery ? 'bg-blue-500' : isPending ? 'bg-yellow-500' : 'bg-success';
 
   if (compact) {
     return (
