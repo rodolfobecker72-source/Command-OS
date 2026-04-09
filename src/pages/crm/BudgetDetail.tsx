@@ -611,7 +611,14 @@ export function BudgetDetail() {
     return null;
   };
 
+  const isVendedor = role === 'vendedor';
+  const canDownloadPDF = !isVendedor || budget?.status === 'aprovada';
+
   const generatePDFForVersion = async (version: BudgetVersion) => {
+    if (!canDownloadPDF) {
+      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      return;
+    }
     if (!version.services || version.services.length === 0) {
       toast.error('Versão não possui serviços');
       return;
