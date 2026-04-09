@@ -359,9 +359,11 @@ export function FinancialPage() {
     return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis };
   }, [accounts, cashflowEntries, budgets, versions]);
 
+  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1' };
+
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
-    setEntryForm({ type: tipo, description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null });
+    setEntryForm({ ...defaultEntryForm, type: tipo });
     setCashflowDialog(true);
   }
 
@@ -369,6 +371,7 @@ export function FinancialPage() {
     setEditingEntry(e);
     const entry = e as any;
     setEntryForm({
+      ...defaultEntryForm,
       type: e.type as any,
       description: e.description,
       value: String(e.value),
@@ -387,6 +390,43 @@ export function FinancialPage() {
   async function saveEntry() {
     const wid = workspace!.id;
     if (!entryForm.description.trim()) { toast.error('Descrição é obrigatória'); return; }
+
+    // Credit card: create multiple installment entries
+    if (entryForm.is_credit_card && entryForm.type === 'despesa') {
+      const parcVal = Number(entryForm.installment_value);
+      const parcQty = Number(entryForm.installments) || 1;
+      if (parcVal <= 0) { toast.error('Valor da parcela deve ser maior que zero'); return; }
+
+      const selectedCard = creditCards.find(c => c.id === entryForm.credit_card_id);
+      const entries = [];
+      for (let i = 0; i < parcQty; i++) {
+        const dueDate = new Date(entryForm.date);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        entries.push({
+          workspace_id: wid,
+          type: 'despesa',
+          description: `${entryForm.description} (${i + 1}/${parcQty})`,
+          value: parcVal,
+          date: format(entryForm.date, 'yyyy-MM-dd'),
+          account_id: selectedCard?.account_id || entryForm.account_id || null,
+          budget_id: null,
+          revenue_center_id: null,
+          cost_center_id: entryForm.cost_center_id || null,
+          notes: entryForm.notes ? `${entryForm.notes} | Cartão: ${selectedCard?.name || ''}` : `Cartão: ${selectedCard?.name || ''}`,
+          is_future_payment: true,
+          payment_due_date: format(dueDate, 'yyyy-MM-dd'),
+          is_paid: false,
+          paid_at: null,
+        });
+      }
+      const { error } = await supabase.from('cashflow_entries').insert(entries);
+      if (error) { toast.error('Erro ao criar parcelas'); return; }
+      toast.success(`${parcQty} parcela(s) criada(s)`);
+      setCashflowDialog(false);
+      loadData();
+      return;
+    }
+
     if (!entryForm.value || Number(entryForm.value) <= 0) { toast.error('Valor deve ser maior que zero'); return; }
 
     const data: any = {
