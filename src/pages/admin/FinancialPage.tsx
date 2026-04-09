@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +66,21 @@ interface CenterItem {
   name: string;
   is_active: boolean;
 }
+
+interface CreditCard {
+  id: string;
+  workspace_id: string;
+  account_id: string | null;
+  name: string;
+  last_digits: string;
+  brand: string;
+  credit_limit: number;
+  closing_day: number;
+  due_day: number;
+  is_active: boolean;
+}
+
+const CARD_BRANDS = ['Visa', 'Mastercard', 'Elo', 'American Express', 'Hipercard', 'Outro'];
 
 const ACCOUNT_TYPES = [
   { value: 'corrente', label: 'Conta Corrente' },
@@ -120,7 +135,11 @@ export function FinancialPage() {
   const [newRevenueCenterName, setNewRevenueCenterName] = useState('');
   const [newCostCenterName, setNewCostCenterName] = useState('');
 
-  // Payment dialog state
+  // Credit cards state
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [cardDialog, setCardDialog] = useState(false);
+  const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
+  const [cardForm, setCardForm] = useState({ name: '', last_digits: '', brand: 'Visa', credit_limit: '', closing_day: '1', due_day: '10', account_id: '' });
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [paymentProject, setPaymentProject] = useState<any>(null);
   const [paymentForm, setPaymentForm] = useState({
@@ -139,7 +158,7 @@ export function FinancialPage() {
     setLoading(true);
     const wid = workspace!.id;
 
-    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes] = await Promise.all([
+    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes, crRes] = await Promise.all([
       supabase.from('budgets').select('*').eq('workspace_id', wid).in('status', ['aprovada', 'em_execucao', 'concluido']),
       supabase.from('budget_versions').select('*').eq('workspace_id', wid),
       supabase.from('clients').select('id, company_name').eq('workspace_id', wid),
@@ -148,6 +167,7 @@ export function FinancialPage() {
       supabase.from('cashflow_entries').select('*').eq('workspace_id', wid).order('date', { ascending: false }),
       supabase.from('revenue_centers').select('*').eq('workspace_id', wid).order('name'),
       supabase.from('cost_centers').select('*').eq('workspace_id', wid).order('name'),
+      supabase.from('credit_cards').select('*').eq('workspace_id', wid).order('name'),
     ]);
 
     if (bRes.data) setBudgets(bRes.data as any);
@@ -166,7 +186,37 @@ export function FinancialPage() {
     if (cfRes.data) setCashflowEntries(cfRes.data as any);
     if (rcRes.data) setRevenueCenters(rcRes.data as any);
     if (ccRes.data) setCostCenters(ccRes.data as any);
+    if (crRes.data) setCreditCards(crRes.data as any);
     setLoading(false);
+  }
+
+  // ======== Credit Card CRUD ========
+  function openNewCard() { setEditingCard(null); setCardForm({ name: '', last_digits: '', brand: 'Visa', credit_limit: '', closing_day: '1', due_day: '10', account_id: '' }); setCardDialog(true); }
+  function openEditCard(card: CreditCard) { setEditingCard(card); setCardForm({ name: card.name, last_digits: card.last_digits, brand: card.brand, credit_limit: String(card.credit_limit), closing_day: String(card.closing_day), due_day: String(card.due_day), account_id: card.account_id || '' }); setCardDialog(true); }
+  async function saveCard() {
+    if (!workspace?.id || !cardForm.name) return;
+    const payload = { workspace_id: workspace.id, name: cardForm.name, last_digits: cardForm.last_digits, brand: cardForm.brand, credit_limit: Number(cardForm.credit_limit) || 0, closing_day: Number(cardForm.closing_day) || 1, due_day: Number(cardForm.due_day) || 10, account_id: cardForm.account_id || null };
+    if (editingCard) {
+      const { error } = await supabase.from('credit_cards').update(payload).eq('id', editingCard.id);
+      if (error) { toast.error('Erro ao atualizar cartão'); return; }
+      toast.success('Cartão atualizado');
+    } else {
+      const { error } = await supabase.from('credit_cards').insert(payload);
+      if (error) { toast.error('Erro ao criar cartão'); return; }
+      toast.success('Cartão cadastrado');
+    }
+    setCardDialog(false);
+    loadData();
+  }
+  async function deleteCard(id: string) {
+    if (!confirm('Excluir este cartão?')) return;
+    await supabase.from('credit_cards').delete().eq('id', id);
+    toast.success('Cartão excluído');
+    loadData();
+  }
+  async function toggleCard(id: string, currentActive: boolean) {
+    await supabase.from('credit_cards').update({ is_active: !currentActive }).eq('id', id);
+    loadData();
   }
 
   // ======== Helper: get payment status for a project ========
@@ -1103,6 +1153,82 @@ export function FinancialPage() {
                             <div className="flex justify-center gap-1">
                               <Button size="sm" variant="ghost" onClick={() => openEditAccount(acc)}><Pencil className="w-4 h-4" /></Button>
                               <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAccount(acc.id)}><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Cartões de Crédito */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Cartões de Crédito</h2>
+              <Dialog open={cardDialog} onOpenChange={setCardDialog}>
+                <DialogTrigger asChild>
+                  <Button onClick={openNewCard} size="sm"><Plus className="w-4 h-4 mr-1" /> Novo Cartão</Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                  <DialogHeader><DialogTitle>{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div><Label>Nome / Apelido</Label><Input value={cardForm.name} onChange={e => setCardForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Cartão Empresarial" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Últimos 4 dígitos</Label><Input value={cardForm.last_digits} onChange={e => setCardForm(f => ({ ...f, last_digits: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="0000" maxLength={4} /></div>
+                      <div>
+                        <Label>Bandeira</Label>
+                        <Select value={cardForm.brand} onValueChange={v => setCardForm(f => ({ ...f, brand: v }))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{CARD_BRANDS.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div><Label>Limite</Label><Input type="number" value={cardForm.credit_limit} onChange={e => setCardForm(f => ({ ...f, credit_limit: e.target.value }))} placeholder="0,00" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><Label>Dia de Fechamento</Label><Input type="number" min={1} max={31} value={cardForm.closing_day} onChange={e => setCardForm(f => ({ ...f, closing_day: e.target.value }))} /></div>
+                      <div><Label>Dia de Vencimento</Label><Input type="number" min={1} max={31} value={cardForm.due_day} onChange={e => setCardForm(f => ({ ...f, due_day: e.target.value }))} /></div>
+                    </div>
+                    <div>
+                      <Label>Conta Vinculada</Label>
+                      <Select value={cardForm.account_id} onValueChange={v => setCardForm(f => ({ ...f, account_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecione a conta" /></SelectTrigger>
+                        <SelectContent>
+                          {accounts.filter(a => a.is_active).map(a => <SelectItem key={a.id} value={a.id}>{a.name} — {a.bank}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={saveCard} className="w-full">Salvar</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {creditCards.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground"><Wallet className="w-10 h-10 mx-auto mb-2 opacity-50" />Nenhum cartão cadastrado.</CardContent></Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table className="min-w-[600px]">
+                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Bandeira</TableHead><TableHead>Final</TableHead><TableHead>Conta Vinculada</TableHead><TableHead className="hidden sm:table-cell">Fechamento</TableHead><TableHead className="hidden sm:table-cell">Vencimento</TableHead><TableHead>Limite</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Ações</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {creditCards.map(card => (
+                        <TableRow key={card.id}>
+                          <TableCell className="font-medium">{card.name}</TableCell>
+                          <TableCell>{card.brand}</TableCell>
+                          <TableCell>•••• {card.last_digits || '—'}</TableCell>
+                          <TableCell>{accounts.find(a => a.id === card.account_id)?.name || '—'}</TableCell>
+                          <TableCell className="hidden sm:table-cell">Dia {card.closing_day}</TableCell>
+                          <TableCell className="hidden sm:table-cell">Dia {card.due_day}</TableCell>
+                          <TableCell>{currencyFmt(card.credit_limit)}</TableCell>
+                          <TableCell><Badge variant={card.is_active ? 'default' : 'secondary'}>{card.is_active ? 'Ativo' : 'Inativo'}</Badge></TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => toggleCard(card.id, card.is_active)}>{card.is_active ? 'Desativar' : 'Ativar'}</Button>
+                              <Button size="sm" variant="ghost" onClick={() => openEditCard(card)}><Pencil className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteCard(card.id)}><Trash2 className="w-4 h-4" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
