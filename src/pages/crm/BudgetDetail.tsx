@@ -625,6 +625,8 @@ export function BudgetDetail() {
         client,
         responsibleUser: profile ? { id: profile.id, name: profile.name, photo: profile.photo_url || '' } : null,
         layoutSettings,
+        categoryLabels: serviceCategories.reduce((acc, c) => { acc[c.key] = c.label; return acc; }, {} as Record<string, string>),
+        objectiveLabels: (() => { const map: Record<string, Record<string, string>> = {}; const objectives = getObjectivesForCategory ? serviceCategories.flatMap(c => (getObjectivesForCategory(c.key) || []).map(o => ({ ...o, categoryKey: c.key }))) : []; objectives.forEach(o => { if (!map[o.categoryKey]) map[o.categoryKey] = {}; map[o.categoryKey][o.key || o.value] = o.label; }); return map; })(),
       });
       toast.success(`PDF V${version.version} gerado com sucesso!`);
     } catch (error) {
