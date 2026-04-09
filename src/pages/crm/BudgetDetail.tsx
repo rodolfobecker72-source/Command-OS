@@ -617,7 +617,7 @@ export function BudgetDetail() {
 
   const generatePDFForVersion = async (version: BudgetVersion) => {
     if (!canDownloadPDF) {
-      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      toast.error('O PDF ainda não foi liberado pelo administrador');
       return;
     }
     if (!version.services || version.services.length === 0) {
@@ -653,7 +653,7 @@ export function BudgetDetail() {
 
   const generateContract = async () => {
     if (!canDownloadPDF) {
-      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      toast.error('O PDF ainda não foi liberado pelo administrador');
       return;
     }
     if (!currentVersionData || !client || !budget) {
