@@ -158,7 +158,7 @@ export function FinancialPage() {
     setLoading(true);
     const wid = workspace!.id;
 
-    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes] = await Promise.all([
+    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes, crRes] = await Promise.all([
       supabase.from('budgets').select('*').eq('workspace_id', wid).in('status', ['aprovada', 'em_execucao', 'concluido']),
       supabase.from('budget_versions').select('*').eq('workspace_id', wid),
       supabase.from('clients').select('id, company_name').eq('workspace_id', wid),
@@ -167,6 +167,7 @@ export function FinancialPage() {
       supabase.from('cashflow_entries').select('*').eq('workspace_id', wid).order('date', { ascending: false }),
       supabase.from('revenue_centers').select('*').eq('workspace_id', wid).order('name'),
       supabase.from('cost_centers').select('*').eq('workspace_id', wid).order('name'),
+      supabase.from('credit_cards').select('*').eq('workspace_id', wid).order('name'),
     ]);
 
     if (bRes.data) setBudgets(bRes.data as any);
