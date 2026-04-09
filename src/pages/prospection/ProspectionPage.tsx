@@ -149,7 +149,7 @@ export function ProspectionPage() {
           || lead.city.toLowerCase().includes(q);
       }
       return true;
-    });
+    }).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR'));
   }, [leads, filterYear, filterMonth, filterOrigin, filterResponsible, filterAcquisition, search]);
 
   // Metrics
