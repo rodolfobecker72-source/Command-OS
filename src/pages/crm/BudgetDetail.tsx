@@ -943,6 +943,25 @@ export function BudgetDetail() {
                             Gerar Minuta
                           </Button>
                         )}
+                        {/* Liberar PDF button - only for admin/owner */}
+                        {isAdminOrOwner && budget.currentVersion > 0 && (
+                          <Button
+                            variant={budget.pdfReleased ? "outline" : "default"}
+                            size="sm"
+                            className={`h-7 gap-1 text-xs ${budget.pdfReleased ? 'border-success text-success' : ''}`}
+                            onClick={async () => {
+                              const newValue = !budget.pdfReleased;
+                              await updateBudget(budget.id, { pdfReleased: newValue });
+                              toast.success(newValue ? 'PDF liberado para download' : 'Liberação do PDF revogada');
+                            }}
+                          >
+                            {budget.pdfReleased ? (
+                              <><CheckCircle className="w-3 h-3" /> PDF Liberado</>
+                            ) : (
+                              <><Lock className="w-3 h-3" /> Liberar PDF</>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
