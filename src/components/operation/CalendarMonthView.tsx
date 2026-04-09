@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 interface CalendarMonthViewProps {
   currentDate: Date;
   events: Budget[];
+  pendingEvents?: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
   onEventClick: (budget: Budget) => void;
   onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
@@ -42,7 +43,7 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarMonthView({ currentDate, events, deliveryEvents, onEventClick, onDeliveryClick }: CalendarMonthViewProps) {
+export function CalendarMonthView({ currentDate, events, pendingEvents = [], deliveryEvents, onEventClick, onDeliveryClick }: CalendarMonthViewProps) {
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
@@ -66,6 +67,7 @@ export function CalendarMonthView({ currentDate, events, deliveryEvents, onEvent
           const inMonth = isSameMonth(day, currentDate);
           const today = isToday(day);
           const dayEvents = getEventsForDay(day, events);
+          const dayPending = getEventsForDay(day, pendingEvents);
           const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
 
           return (
@@ -94,6 +96,15 @@ export function CalendarMonthView({ currentDate, events, deliveryEvents, onEvent
                     key={ev.id}
                     budget={ev}
                     compact
+                    onClick={() => onEventClick(ev)}
+                  />
+                ))}
+                {dayPending.map(ev => (
+                  <CalendarEventCard
+                    key={`pending-${ev.id}`}
+                    budget={ev}
+                    compact
+                    eventType="pending"
                     onClick={() => onEventClick(ev)}
                   />
                 ))}
