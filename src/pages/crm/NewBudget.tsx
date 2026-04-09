@@ -713,10 +713,12 @@ export function NewBudget() {
                     <Input
                       id="proposalId"
                       value={formData.proposalId}
-                      readOnly
-                      className="bg-muted"
+                      onChange={(e) =>
+                        setFormData({ ...formData, proposalId: e.target.value })
+                      }
+                      placeholder="Ex: 900"
                     />
-                    <p className="text-xs text-muted-foreground">Gerado automaticamente</p>
+                    <p className="text-xs text-muted-foreground">Sugestão automática: {nextProposalId}</p>
                   </div>
 
                   {/* Project Name */}
@@ -1093,7 +1095,7 @@ export function NewBudget() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Objetivo e Descrição */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-4">
                         <div className="space-y-2">
                           <Label>Objetivo</Label>
                           <Select
@@ -1122,7 +1124,7 @@ export function NewBudget() {
                             onChange={(e) =>
                               updateService(service.id, { description: e.target.value })
                             }
-                            rows={2}
+                            rows={4}
                           />
                         </div>
                       </div>
@@ -1515,7 +1517,7 @@ export function NewBudget() {
           )}
 
           {/* Actions */}
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <Button
               type="button"
               variant="outline"
@@ -1524,6 +1526,89 @@ export function NewBudget() {
             >
               Cancelar
             </Button>
+            {formData.clientId && formData.projectDescription.trim() && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (isSubmitting || submittingRef.current) return;
+                  if (!formData.clientId || !formData.projectDescription.trim()) {
+                    toast.error('Preencha o cliente e o briefing para salvar como rascunho');
+                    return;
+                  }
+                  submittingRef.current = true;
+                  setIsSubmitting(true);
+                  try {
+                    const newBudget = await addBudget({
+                      proposalId: formData.proposalId.trim(),
+                      projectName: formData.projectName || 'Rascunho',
+                      projectDescription: formData.projectDescription,
+                      clientId: formData.clientId,
+                      serviceType: services[0]?.serviceType || '',
+                      objective: services[0]?.objective as any || '',
+                      description: services.map(s => `[${s.serviceType}] ${s.description}`).join('\n\n'),
+                      paymentTerms: formData.paymentTerms,
+                      includesTax: formData.includesTax,
+                      includesLogistics: formData.includesLogistics,
+                      includesAccommodation: formData.includesAccommodation,
+                      includesMeals: formData.includesMeals,
+                      includesRawMaterial: formData.includesRawMaterial,
+                      includesTechnicalVisit: formData.includesTechnicalVisit,
+                      hasExecutionDate: formData.hasExecutionDate,
+                      executionStartDate: formData.executionStartDate,
+                      executionEndDate: formData.executionEndDate,
+                      location: formData.location,
+                      driveUrl: (formData as any).driveUrl || '',
+                      executionMonth: null,
+                      status: formData.status,
+                      rejectionReason: '',
+                      rejectionObservation: '',
+                    });
+                    if (!newBudget) {
+                      toast.error('Erro ao salvar rascunho');
+                      return;
+                    }
+                    if (services.length > 0) {
+                      await addBudgetVersion(newBudget.id, {
+                        services: services.map(s => ({
+                          id: s.id,
+                          serviceType: s.serviceType,
+                          objective: s.objective,
+                          description: s.description,
+                          costs: s.costs,
+                          fixedCostPercentage: formData.fixedCostPercentage,
+                          nfCostPercentage: formData.nfCostPercentage,
+                          targetMargin: s.targetMargin,
+                        })),
+                        operationalCosts: operationalCosts,
+                        costs: [],
+                        productionCost: totals.productionCost,
+                        fixedCostPercentage: formData.fixedCostPercentage,
+                        nfCostPercentage: formData.nfCostPercentage,
+                        totalCost: totals.totalCosts,
+                        fullPrice: totals.totalProjectValue,
+                        discount4Price: totals.totalProjectValue * 0.96,
+                        discount5Price: totals.totalProjectValue * 0.95,
+                        margin: formData.targetMargin,
+                        reason: 'Rascunho inicial',
+                      });
+                    }
+                    toast.success('Rascunho salvo com sucesso!');
+                    navigate('/crm');
+                  } catch (error: any) {
+                    toast.error('Erro ao salvar rascunho: ' + (error?.message || 'Erro desconhecido'));
+                  } finally {
+                    setIsSubmitting(false);
+                    submittingRef.current = false;
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Salvar Rascunho
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
