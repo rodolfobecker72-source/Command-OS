@@ -631,10 +631,6 @@ export function FinancialPage() {
     return months;
   }, []);
 
-  // Transfer state
-  const [transferDialog, setTransferDialog] = useState(false);
-  const [transferForm, setTransferForm] = useState({ from_account_id: '', to_account_id: '', value: '', date: new Date(), description: '' });
-
 
 
   // Helper: get name lookups
