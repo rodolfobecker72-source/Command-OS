@@ -47,6 +47,8 @@ interface PDFGeneratorParams {
   client: Client;
   responsibleUser: PDFUser | null;
   layoutSettings?: PDFLayoutSettings | null;
+  categoryLabels?: Record<string, string>;
+  objectiveLabels?: Record<string, Record<string, string>>;
 }
 
 // Helper function to load image as base64 with dimensions
