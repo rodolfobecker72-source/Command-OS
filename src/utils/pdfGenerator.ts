@@ -83,9 +83,13 @@ export async function generateProposalPDF({
   client,
   responsibleUser,
   layoutSettings,
+  categoryLabels: catLabels,
+  objectiveLabels: objLabels,
   existingDoc,
   skipSave,
 }: PDFGeneratorParams & { existingDoc?: jsPDF; skipSave?: boolean }): Promise<jsPDF> {
+  const catLookup = catLabels || {};
+  const objLookup = objLabels || {};
   const doc = existingDoc || new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
