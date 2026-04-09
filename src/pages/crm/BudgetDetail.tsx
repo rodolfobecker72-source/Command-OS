@@ -101,6 +101,7 @@ import {
   Flag,
   HardDrive,
   Layers,
+  LockKeyhole,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -958,7 +959,7 @@ export function BudgetDetail() {
                             {budget.pdfReleased ? (
                               <><CheckCircle className="w-3 h-3" /> PDF Liberado</>
                             ) : (
-                              <><Lock className="w-3 h-3" /> Liberar PDF</>
+                              <><LockKeyhole className="w-3 h-3" /> Liberar PDF</>
                             )}
                           </Button>
                         )}
