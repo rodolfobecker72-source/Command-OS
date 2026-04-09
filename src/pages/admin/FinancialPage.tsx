@@ -1048,22 +1048,6 @@ export function FinancialPage() {
             </CardContent>
           </Card>
 
-          {/* Receivables chart */}
-          {painelData.receivablesByMonth.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Recebimentos por Mês</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={painelData.receivablesByMonth.filter(r => r.totalValue > 0)}>
-                    <CartesianAxis /><XAxis dataKey="label" /><YAxis tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: number) => currencyFmt(v)} /><Legend />
-                    <Bar dataKey="totalPaid" name="Recebido" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="remaining" name="A Receber" fill="hsl(30 95% 55%)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
 
