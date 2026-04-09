@@ -1436,6 +1436,60 @@ export function FinancialPage() {
             </DialogContent>
           </Dialog>
 
+          {/* Resumo Receita x Despesa por Mês */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Resumo Mensal — Receita x Despesa Prevista</CardTitle></CardHeader>
+            <CardContent>
+              {(() => {
+                const allMonths = new Set<string>();
+                painelData.receivablesByMonth.forEach(r => { if (r.remaining > 0) allMonths.add(r.month); });
+                painelData.futureExpensesByMonth.forEach(r => allMonths.add(r.month));
+                const sorted = Array.from(allMonths).sort();
+                if (sorted.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma previsão pendente.</p>;
+                const recMap: Record<string, typeof painelData.receivablesByMonth[0]> = {};
+                painelData.receivablesByMonth.forEach(r => { recMap[r.month] = r; });
+                const despMap: Record<string, typeof painelData.futureExpensesByMonth[0]> = {};
+                painelData.futureExpensesByMonth.forEach(r => { despMap[r.month] = r; });
+                let totalRec = 0, totalDesp = 0;
+                const rows = sorted.map(m => {
+                  const rec = recMap[m]?.remaining && recMap[m].remaining > 0 ? recMap[m].remaining : 0;
+                  const desp = despMap[m]?.pending || 0;
+                  totalRec += rec;
+                  totalDesp += desp;
+                  return { month: m, label: format(new Date(m + '-01'), 'MMM/yy', { locale: ptBR }), rec, desp, saldo: rec - desp };
+                });
+                return (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mês</TableHead>
+                        <TableHead className="text-right">Receita Prevista</TableHead>
+                        <TableHead className="text-right">Despesa Prevista</TableHead>
+                        <TableHead className="text-right">Saldo Previsto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map(r => (
+                        <TableRow key={r.month}>
+                          <TableCell className="font-medium">{r.label}</TableCell>
+                          <TableCell className="text-right text-green-600">{currencyFmt(r.rec)}</TableCell>
+                          <TableCell className="text-right text-destructive">{currencyFmt(r.desp)}</TableCell>
+                          <TableCell className={cn("text-right font-medium", r.saldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(r.saldo)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-bold border-t-2">
+                        <TableCell>Total</TableCell>
+                        <TableCell className="text-right text-green-600">{currencyFmt(totalRec)}</TableCell>
+                        <TableCell className="text-right text-destructive">{currencyFmt(totalDesp)}</TableCell>
+                        <TableCell className={cn("text-right", (totalRec - totalDesp) >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(totalRec - totalDesp)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
           {/* Receivables by month */}
           <Card>
             <CardHeader><CardTitle className="text-base">Receita Prevista por Mês</CardTitle></CardHeader>
