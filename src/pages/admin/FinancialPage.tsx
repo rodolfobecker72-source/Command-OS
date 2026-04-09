@@ -331,8 +331,9 @@ export function FinancialPage() {
 
   const cashflowSummary = useMemo(() => {
     const totalReceitas = filteredCashflow.filter(e => e.type === 'receita').reduce((s, e) => s + Number(e.value), 0);
-    const totalDespesas = filteredCashflow.filter(e => e.type === 'despesa').reduce((s, e) => s + Number(e.value), 0);
-    return { totalReceitas, totalDespesas, saldo: totalReceitas - totalDespesas };
+    const despesasEfetivadas = filteredCashflow.filter(e => e.type === 'despesa' && (!e.is_future_payment || e.is_paid)).reduce((s, e) => s + Number(e.value), 0);
+    const despesasProgramadas = filteredCashflow.filter(e => e.type === 'despesa' && e.is_future_payment && !e.is_paid).reduce((s, e) => s + Number(e.value), 0);
+    return { totalReceitas, totalDespesas: despesasEfetivadas, despesasProgramadas, saldo: totalReceitas - despesasEfetivadas };
   }, [filteredCashflow]);
 
   // ======== Painel Financeiro data ========
