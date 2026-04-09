@@ -130,6 +130,10 @@ export function FinancialPage() {
     notes: '',
     is_future_payment: false,
     payment_due_date: null as Date | null,
+    is_credit_card: false,
+    credit_card_id: '',
+    installment_value: '',
+    installments: '1',
   });
 
   // Centers state
