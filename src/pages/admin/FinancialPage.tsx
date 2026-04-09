@@ -1509,36 +1509,6 @@ export function FinancialPage() {
             </CardContent>
           </Card>
 
-          {/* Despesas Previstas por Mês */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Despesas Previstas por Mês</CardTitle></CardHeader>
-            <CardContent>
-              {painelData.futureExpensesByMonth.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa futura pendente.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mês</TableHead>
-                      <TableHead className="text-right">Valor Pendente</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {painelData.futureExpensesByMonth.map(r => (
-                      <TableRow key={r.month}>
-                        <TableCell className="font-medium">{r.label}</TableCell>
-                        <TableCell className="text-right text-destructive font-medium">{currencyFmt(r.pending)}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow className="font-bold border-t-2">
-                      <TableCell>Total</TableCell>
-                      <TableCell className="text-right text-destructive">{currencyFmt(painelData.totalDespesasPrevistas)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
 
         </TabsContent>
 
