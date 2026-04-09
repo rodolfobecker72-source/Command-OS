@@ -651,6 +651,10 @@ export function BudgetDetail() {
   };
 
   const generateContract = async () => {
+    if (!canDownloadPDF) {
+      toast.error('Somente propostas aprovadas podem ser baixadas por vendedores');
+      return;
+    }
     if (!currentVersionData || !client || !budget) {
       toast.error('Dados insuficientes para gerar minuta');
       return;
