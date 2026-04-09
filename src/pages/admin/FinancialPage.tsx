@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight, Repeat } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -134,6 +134,8 @@ export function FinancialPage() {
     credit_card_id: '',
     installment_value: '',
     installments: '1',
+    is_recurring: false,
+    recurring_end_month: '',
   });
 
   // Centers state
@@ -383,7 +385,7 @@ export function FinancialPage() {
     return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis, futureExpensesByMonth, totalDespesasPrevistas };
   }, [accounts, cashflowEntries, budgets, versions]);
 
-  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1' };
+  const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1', is_recurring: false, recurring_end_month: '' };
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
     setEditingEntry(null);
@@ -446,6 +448,56 @@ export function FinancialPage() {
       const { error } = await supabase.from('cashflow_entries').insert(entries);
       if (error) { toast.error('Erro ao criar parcelas'); return; }
       toast.success(`${parcQty} parcela(s) criada(s)`);
+      setCashflowDialog(false);
+      loadData();
+      return;
+    }
+
+    // Recurring expense: create one entry per month from start to end
+    if (entryForm.is_recurring && entryForm.type === 'despesa' && !entryForm.is_credit_card) {
+      const val = Number(entryForm.value);
+      if (!val || val <= 0) { toast.error('Valor deve ser maior que zero'); return; }
+      if (!entryForm.recurring_end_month) { toast.error('Selecione o mês de término'); return; }
+
+      const startDate = new Date(entryForm.date);
+      const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const [endY, endM] = entryForm.recurring_end_month.split('-').map(Number);
+      const endMonth = new Date(endY, endM - 1, 1);
+
+      if (endMonth < startMonth) { toast.error('Mês de término deve ser igual ou posterior ao mês de início'); return; }
+
+      const entries: any[] = [];
+      const current = new Date(startMonth);
+
+      while (current <= endMonth) {
+        const dayInMonth = Math.min(startDate.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate());
+        const entryDate = new Date(current.getFullYear(), current.getMonth(), dayInMonth);
+        const dueDate = entryForm.is_future_payment && entryForm.payment_due_date
+          ? new Date(current.getFullYear(), current.getMonth(), Math.min(entryForm.payment_due_date.getDate(), new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()))
+          : entryDate;
+
+        entries.push({
+          workspace_id: wid,
+          type: 'despesa',
+          description: entryForm.description,
+          value: val,
+          date: format(entryDate, 'yyyy-MM-dd'),
+          account_id: entryForm.account_id || null,
+          budget_id: null,
+          revenue_center_id: null,
+          cost_center_id: entryForm.cost_center_id || null,
+          notes: [entryForm.notes, 'Despesa contínua'].filter(Boolean).join(' | '),
+          is_future_payment: entryForm.is_future_payment,
+          payment_due_date: entryForm.is_future_payment ? format(dueDate, 'yyyy-MM-dd') : null,
+          is_paid: false,
+          paid_at: null,
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
+
+      const { error } = await supabase.from('cashflow_entries').insert(entries);
+      if (error) { toast.error('Erro ao criar despesas contínuas'); return; }
+      toast.success(`${entries.length} lançamento(s) contínuo(s) criado(s)`);
       setCashflowDialog(false);
       loadData();
       return;
@@ -949,6 +1001,50 @@ export function FinancialPage() {
                 )}
 
                 {entryForm.type === 'despesa' && !entryForm.is_credit_card && (
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="recurring-toggle" className="cursor-pointer">Despesa Contínua (mensal)</Label>
+                    </div>
+                    <Switch id="recurring-toggle" checked={entryForm.is_recurring} onCheckedChange={v => setEntryForm(f => ({ ...f, is_recurring: v }))} />
+                  </div>
+                )}
+
+                {entryForm.is_recurring && entryForm.type === 'despesa' && (
+                  <div className="space-y-3 p-3 rounded-md border bg-muted/30">
+                    <p className="text-sm text-muted-foreground">Um lançamento será criado para cada mês, da data de início até o mês de término selecionado.</p>
+                    <div>
+                      <Label>Mês de Término</Label>
+                      <Select value={entryForm.recurring_end_month} onValueChange={v => setEntryForm(f => ({ ...f, recurring_end_month: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar mês de término" /></SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const options: { value: string; label: string }[] = [];
+                            const start = new Date(entryForm.date);
+                            for (let i = 0; i < 24; i++) {
+                              const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+                              options.push({ value: format(d, 'yyyy-MM'), label: format(d, 'MMMM yyyy', { locale: ptBR }) });
+                            }
+                            return options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>);
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {entryForm.recurring_end_month && Number(entryForm.value) > 0 && (() => {
+                      const startMonth = new Date(entryForm.date.getFullYear(), entryForm.date.getMonth(), 1);
+                      const [ey, em] = entryForm.recurring_end_month.split('-').map(Number);
+                      const endMonth = new Date(ey, em - 1, 1);
+                      const months = (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + endMonth.getMonth() - startMonth.getMonth() + 1;
+                      return months > 0 ? (
+                        <p className="text-sm font-medium">
+                          {months} lançamento(s) de {currencyFmt(Number(entryForm.value))} = Total: {currencyFmt(months * Number(entryForm.value))}
+                        </p>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
+                {entryForm.type === 'despesa' && !entryForm.is_credit_card && !entryForm.is_recurring && (
                   <div className="flex items-center justify-between p-3 rounded-md border">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
