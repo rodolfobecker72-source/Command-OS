@@ -233,9 +233,11 @@ interface CRMContextType {
   addServiceCategory: (category: Omit<ServiceCategory, 'id' | 'order'>) => Promise<void>;
   updateServiceCategory: (id: string, updates: Partial<ServiceCategory>) => Promise<void>;
   deleteServiceCategory: (id: string) => Promise<void>;
+  reorderServiceCategories: (categories: ServiceCategory[]) => Promise<void>;
   addServiceObjective: (objective: Omit<ServiceObjective, 'id' | 'order'>) => Promise<void>;
   updateServiceObjective: (id: string, updates: Partial<ServiceObjective>) => Promise<void>;
   deleteServiceObjective: (id: string) => Promise<void>;
+  reorderServiceObjectives: (objectives: ServiceObjective[]) => Promise<void>;
   getObjectivesForCategory: (categoryKey: string) => { value: string; label: string }[];
   getCategoryLabel: (key: string) => string;
 
@@ -695,6 +697,25 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro: ' + e.message); }
   };
 
+  const reorderServiceCategories = async (newCategories: ServiceCategory[]) => {
+    const previous = serviceCategories;
+    const reordered = newCategories.map((cat, index) => ({ ...cat, order: index }));
+    setServiceCategories(reordered);
+    try {
+      const results = await Promise.all(
+        reordered.map(cat => supabase.from('service_categories').update({ order: cat.order }).eq('id', cat.id))
+      );
+      const failed = results.find(r => r.error);
+      if (failed?.error) {
+        toast.error('Erro ao reordenar categorias');
+        setServiceCategories(previous);
+      }
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+      setServiceCategories(previous);
+    }
+  };
+
   const addServiceObjective = async (objectiveData: Omit<ServiceObjective, 'id' | 'order'>) => {
     const wsId = await ensureWorkspace();
     if (!wsId) return;
@@ -728,6 +749,29 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setServiceObjectives(prev => prev.filter(obj => obj.id !== id));
     } catch (e: any) { toast.error('Erro: ' + e.message); }
+  };
+
+  const reorderServiceObjectives = async (newObjectives: ServiceObjective[]) => {
+    const previous = serviceObjectives;
+    const reordered = newObjectives.map((obj, index) => ({ ...obj, order: index }));
+    const reorderedIds = new Set(reordered.map(o => o.id));
+    setServiceObjectives(prev => [
+      ...prev.filter(o => !reorderedIds.has(o.id)),
+      ...reordered,
+    ]);
+    try {
+      const results = await Promise.all(
+        reordered.map(obj => supabase.from('service_objectives').update({ order: obj.order }).eq('id', obj.id))
+      );
+      const failed = results.find(r => r.error);
+      if (failed?.error) {
+        toast.error('Erro ao reordenar objetivos');
+        setServiceObjectives(previous);
+      }
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+      setServiceObjectives(previous);
+    }
   };
 
   const getObjectivesForCategory = (categoryKey: string) => {
@@ -1463,8 +1507,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     addBudgetVersion, updateBudgetVersion, deleteLastVersion, approveBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,
     kanbanColumns, addKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, getStatusLabel,
-    serviceCategories, serviceObjectives, addServiceCategory, updateServiceCategory, deleteServiceCategory,
-    addServiceObjective, updateServiceObjective, deleteServiceObjective, getObjectivesForCategory, getCategoryLabel,
+    serviceCategories, serviceObjectives, addServiceCategory, updateServiceCategory, deleteServiceCategory, reorderServiceCategories,
+    addServiceObjective, updateServiceObjective, deleteServiceObjective, reorderServiceObjectives, getObjectivesForCategory, getCategoryLabel,
     hardDrives, addHardDrive, updateHardDrive, deleteHardDrive, allocateProjectToHD, removeProjectFromHD,
     legacyProjects, addLegacyProject, deleteLegacyProject, getLegacyProject, getHDForBudget,
     scoreHistory, getClientScoreHistory,
