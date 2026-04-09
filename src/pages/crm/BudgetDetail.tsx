@@ -100,6 +100,7 @@ import {
   ExternalLink,
   Flag,
   HardDrive,
+  Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -1197,7 +1198,7 @@ export function BudgetDetail() {
                   return (
                   <AnimatePresence mode="popLayout">
                     {displayServices.map((service, index) => {
-                      const Icon = SERVICE_ICONS[service.serviceType];
+                      const Icon = SERVICE_ICONS[service.serviceType] || Layers;
                       const objectives = getObjectivesForCategory(service.serviceType);
                       const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
                       const calc = calculateServiceTotals(service);
@@ -1715,7 +1716,7 @@ export function BudgetDetail() {
 
                                       {/* Services */}
                                       {newVersionServices.map((service, serviceIndex) => {
-                                        const Icon = SERVICE_ICONS[service.serviceType];
+                                        const Icon = SERVICE_ICONS[service.serviceType] || Layers;
                                         const objectives = getObjectivesForCategory(service.serviceType);
                                         const calc = calculateServiceTotals(service);
 
@@ -2283,7 +2284,7 @@ export function BudgetDetail() {
 
                     {/* Services Execution */}
                     {budget.execution.services.map((service) => {
-                      const Icon = SERVICE_ICONS[service.serviceType];
+                      const Icon = SERVICE_ICONS[service.serviceType] || Layers;
                       const objectives = getObjectivesForCategory(service.serviceType);
                       const objectiveLabel = objectives.find(o => o.value === service.objective)?.label || service.objective;
                       const extraCosts = service.extraCosts || [];
