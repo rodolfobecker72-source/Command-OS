@@ -487,8 +487,8 @@ export function FinancialPage() {
           revenue_center_id: null,
           cost_center_id: entryForm.cost_center_id || null,
           notes: [entryForm.notes, 'Despesa contínua'].filter(Boolean).join(' | '),
-          is_future_payment: entryForm.is_future_payment,
-          payment_due_date: entryForm.is_future_payment ? format(dueDate, 'yyyy-MM-dd') : null,
+          is_future_payment: true,
+          payment_due_date: format(dueDate, 'yyyy-MM-dd'),
           is_paid: false,
           paid_at: null,
         });
