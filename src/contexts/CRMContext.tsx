@@ -233,9 +233,11 @@ interface CRMContextType {
   addServiceCategory: (category: Omit<ServiceCategory, 'id' | 'order'>) => Promise<void>;
   updateServiceCategory: (id: string, updates: Partial<ServiceCategory>) => Promise<void>;
   deleteServiceCategory: (id: string) => Promise<void>;
+  reorderServiceCategories: (categories: ServiceCategory[]) => Promise<void>;
   addServiceObjective: (objective: Omit<ServiceObjective, 'id' | 'order'>) => Promise<void>;
   updateServiceObjective: (id: string, updates: Partial<ServiceObjective>) => Promise<void>;
   deleteServiceObjective: (id: string) => Promise<void>;
+  reorderServiceObjectives: (objectives: ServiceObjective[]) => Promise<void>;
   getObjectivesForCategory: (categoryKey: string) => { value: string; label: string }[];
   getCategoryLabel: (key: string) => string;
 
