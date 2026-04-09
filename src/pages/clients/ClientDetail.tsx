@@ -552,7 +552,7 @@ export function ClientDetail() {
                                     key={type}
                                     className="px-2 py-0.5 text-xs font-medium bg-foreground/10 rounded"
                                   >
-                                    {SERVICE_TYPE_LABELS[type]}
+                                    {SERVICE_TYPE_LABELS[type] || type}
                                   </span>
                                 ))}
                               </div>

@@ -47,6 +47,8 @@ interface PDFGeneratorParams {
   client: Client;
   responsibleUser: PDFUser | null;
   layoutSettings?: PDFLayoutSettings | null;
+  categoryLabels?: Record<string, string>;
+  objectiveLabels?: Record<string, Record<string, string>>;
 }
 
 // Helper function to load image as base64 with dimensions
@@ -81,9 +83,13 @@ export async function generateProposalPDF({
   client,
   responsibleUser,
   layoutSettings,
+  categoryLabels: catLabels,
+  objectiveLabels: objLabels,
   existingDoc,
   skipSave,
 }: PDFGeneratorParams & { existingDoc?: jsPDF; skipSave?: boolean }): Promise<jsPDF> {
+  const catLookup = catLabels || {};
+  const objLookup = objLabels || {};
   const doc = existingDoc || new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -363,7 +369,7 @@ export async function generateProposalPDF({
     doc.setFontSize(normalSize);
     doc.setFont('helvetica', 'bold');
     setColor(black);
-    doc.text(`${serviceIndex + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}`, margin, y);
+    doc.text(`${serviceIndex + 1}. ${catLookup[service.serviceType] || SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}`, margin, y);
     y += 6;
     
     doc.setFontSize(smallSize);
@@ -532,8 +538,8 @@ export async function generateProposalPDF({
     const serviceValue = weight * totalToDistribute;
 
     const objectives = OBJECTIVES_BY_SERVICE[service.serviceType] || [];
-    const objLabel = objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
-    const label = `${idx + 1}. ${SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
+    const objLabel = objLookup[service.serviceType]?.[service.objective] || objectives?.find(o => o.value === service.objective)?.label || service.objective || '';
+    const label = `${idx + 1}. ${catLookup[service.serviceType] || SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
     doc.text(label, margin, y);
     doc.text(formatCurrency(serviceValue), pageWidth - margin, y, { align: 'right' });
     y += 7;

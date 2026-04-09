@@ -14,6 +14,8 @@ interface FinancialReportParams {
   client: Client;
   userName: string;
   layoutSettings?: PDFLayoutSettings | null;
+  categoryLabels?: Record<string, string>;
+  objectiveLabels?: Record<string, Record<string, string>>;
 }
 
 async function loadImageAsBase64(url: string): Promise<{ base64: string; width: number; height: number }> {
@@ -37,7 +39,9 @@ async function loadImageAsBase64(url: string): Promise<{ base64: string; width: 
   });
 }
 
-export async function generateFinancialReportPDF({ budget, client, userName, layoutSettings }: FinancialReportParams): Promise<void> {
+export async function generateFinancialReportPDF({ budget, client, userName, layoutSettings, categoryLabels: catLabels, objectiveLabels: objLabels }: FinancialReportParams): Promise<void> {
+  const catLookup = catLabels || {};
+  const objLookup = objLabels || {};
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -225,8 +229,8 @@ export async function generateFinancialReportPDF({ budget, client, userName, lay
       const svcTotal = svcRealTotal + extraCostsTotal;
       totalCustosReais += svcTotal;
 
-      const objLabel = svc.objective || '';
-      const svcLabel = `${idx + 1}. ${SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
+      const objLabel = objLookup[svc.serviceType]?.[svc.objective] || svc.objective || '';
+      const svcLabel = `${idx + 1}. ${catLookup[svc.serviceType] || SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType}${objLabel ? ` — ${objLabel}` : ''}`;
       drawRow(svcLabel, formatCurrency(svcTotal));
 
       // Detail: individual costs

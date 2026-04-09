@@ -105,6 +105,8 @@ export function FinancialPage() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [goals, setGoals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
+  const [objectiveLabels, setObjectiveLabels] = useState<Record<string, Record<string, string>>>({});
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   // Account form state
@@ -167,7 +169,7 @@ export function FinancialPage() {
     setLoading(true);
     const wid = workspace!.id;
 
-    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes, crRes] = await Promise.all([
+    const [bRes, vRes, cRes, aRes, gRes, cfRes, rcRes, ccRes, crRes, scRes, soRes] = await Promise.all([
       supabase.from('budgets').select('*').eq('workspace_id', wid).in('status', ['aprovada', 'em_execucao', 'concluido']),
       supabase.from('budget_versions').select('*').eq('workspace_id', wid),
       supabase.from('clients').select('id, company_name').eq('workspace_id', wid),
@@ -177,6 +179,8 @@ export function FinancialPage() {
       supabase.from('revenue_centers').select('*').eq('workspace_id', wid).order('name'),
       supabase.from('cost_centers').select('*').eq('workspace_id', wid).order('name'),
       supabase.from('credit_cards').select('*').eq('workspace_id', wid).order('name'),
+      supabase.from('service_categories').select('*').eq('workspace_id', wid),
+      supabase.from('service_objectives').select('*').eq('workspace_id', wid),
     ]);
 
     if (bRes.data) setBudgets(bRes.data as any);
@@ -196,6 +200,19 @@ export function FinancialPage() {
     if (rcRes.data) setRevenueCenters(rcRes.data as any);
     if (ccRes.data) setCostCenters(ccRes.data as any);
     if (crRes.data) setCreditCards(crRes.data as any);
+    if (scRes.data) {
+      const catMap: Record<string, string> = {};
+      scRes.data.forEach((c: any) => { catMap[c.key] = c.label; });
+      setCategoryLabels(catMap);
+    }
+    if (soRes.data) {
+      const objMap: Record<string, Record<string, string>> = {};
+      soRes.data.forEach((o: any) => {
+        if (!objMap[o.category_key]) objMap[o.category_key] = {};
+        objMap[o.category_key][o.key] = o.label;
+      });
+      setObjectiveLabels(objMap);
+    }
     setLoading(false);
   }
 
@@ -270,8 +287,8 @@ export function FinancialPage() {
           totalRealCost += sRealCost;
           return {
             id: s.id || `svc-${idx}`,
-            name: s.objective || s.description?.substring(0, 40) || 'Serviço',
-            categoryLabel: s.serviceType || '',
+            name: (objectiveLabels[s.serviceType]?.[s.objective] || s.objective || s.description?.substring(0, 40) || 'Serviço'),
+            categoryLabel: categoryLabels[s.serviceType] || s.serviceType || '',
             value: sValue,
             realCost: sRealCost,
             margin: sValue - sRealCost,
@@ -296,7 +313,7 @@ export function FinancialPage() {
           status: b.status,
         };
       });
-  }, [budgets, versions, clients, selectedMonth]);
+  }, [budgets, versions, clients, selectedMonth, categoryLabels, objectiveLabels]);
 
   // Transfer state
   const [transferDialog, setTransferDialog] = useState(false);
