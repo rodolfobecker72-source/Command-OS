@@ -505,7 +505,7 @@ export function FinancialPage() {
           type: 'despesa',
           description: `${entryForm.description} (${i + 1}/${parcQty})`,
           value: parcVal,
-          date: format(entryForm.date, 'yyyy-MM-dd'),
+          date: format(dueDate, 'yyyy-MM-dd'),
           account_id: selectedCard?.account_id || entryForm.account_id || null,
           budget_id: null,
           revenue_center_id: null,
