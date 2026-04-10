@@ -276,6 +276,7 @@ export type Database = {
           budget_id: string | null
           cost_center_id: string | null
           created_at: string
+          credit_card_id: string | null
           date: string
           description: string
           id: string
@@ -295,6 +296,7 @@ export type Database = {
           budget_id?: string | null
           cost_center_id?: string | null
           created_at?: string
+          credit_card_id?: string | null
           date?: string
           description?: string
           id?: string
@@ -314,6 +316,7 @@ export type Database = {
           budget_id?: string | null
           cost_center_id?: string | null
           created_at?: string
+          credit_card_id?: string | null
           date?: string
           description?: string
           id?: string
@@ -341,6 +344,13 @@ export type Database = {
             columns: ["cost_center_id"]
             isOneToOne: false
             referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_entries_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
             referencedColumns: ["id"]
           },
           {
