@@ -1534,35 +1534,82 @@ export function FinancialPage() {
                             <TableBody>
                               {invoiceMonths.map(m => {
                                 const inv = cardInvoices[card.id][m];
+                                const invoiceKey = `${card.id}-${m}`;
+                                const isExpanded = expandedInvoice === invoiceKey;
                                 return (
-                                  <TableRow key={m}>
-                                    <TableCell className="font-medium">
-                                      {m !== 'sem-data' ? format(new Date(m + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR }) : 'Sem data'}
-                                    </TableCell>
-                                    <TableCell className="text-right">{currencyFmt(inv.total)}</TableCell>
-                                    <TableCell className="text-right text-green-600">{currencyFmt(inv.paid)}</TableCell>
-                                    <TableCell className={cn("text-right font-medium", inv.pending > 0 ? 'text-orange-500' : 'text-green-600')}>
-                                      {currencyFmt(inv.pending)}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {inv.pending > 0 ? (
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="text-xs"
-                                          onClick={() => {
-                                            setInvoicePayTarget({ cardId: card.id, month: m, entries: inv.entries, total: inv.pending });
-                                            setInvoicePayForm({ account_id: card.account_id || '', date: new Date() });
-                                            setInvoicePayDialog(true);
-                                          }}
-                                        >
-                                          <Check className="w-3 h-3 mr-1" /> Pagar Fatura
-                                        </Button>
-                                      ) : (
-                                        <Badge variant="default" className="text-xs bg-green-600"><Check className="w-3 h-3 mr-1" /> Paga</Badge>
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
+                                  <React.Fragment key={m}>
+                                    <TableRow 
+                                      className="cursor-pointer hover:bg-muted/50"
+                                      onClick={() => setExpandedInvoice(isExpanded ? null : invoiceKey)}
+                                    >
+                                      <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2">
+                                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                          {m !== 'sem-data' ? format(new Date(m + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR }) : 'Sem data'}
+                                          <Badge variant="secondary" className="text-xs">{inv.entries.length} item(ns)</Badge>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-right">{currencyFmt(inv.total)}</TableCell>
+                                      <TableCell className="text-right text-green-600">{currencyFmt(inv.paid)}</TableCell>
+                                      <TableCell className={cn("text-right font-medium", inv.pending > 0 ? 'text-orange-500' : 'text-green-600')}>
+                                        {currencyFmt(inv.pending)}
+                                      </TableCell>
+                                      <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                                        {inv.pending > 0 ? (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-xs"
+                                            onClick={() => {
+                                              setInvoicePayTarget({ cardId: card.id, month: m, entries: inv.entries, total: inv.pending });
+                                              setInvoicePayForm({ account_id: card.account_id || '', date: new Date() });
+                                              setInvoicePayDialog(true);
+                                            }}
+                                          >
+                                            <Check className="w-3 h-3 mr-1" /> Pagar Fatura
+                                          </Button>
+                                        ) : (
+                                          <Badge variant="default" className="text-xs bg-green-600"><Check className="w-3 h-3 mr-1" /> Paga</Badge>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                    {isExpanded && (
+                                      <TableRow>
+                                        <TableCell colSpan={5} className="p-0">
+                                          <div className="bg-muted/30 border-t">
+                                            <Table>
+                                              <TableHeader>
+                                                <TableRow>
+                                                  <TableHead className="text-xs pl-10">Descrição</TableHead>
+                                                  <TableHead className="text-xs">Data Compra</TableHead>
+                                                  <TableHead className="text-xs">Vencimento</TableHead>
+                                                  <TableHead className="text-xs text-right">Valor</TableHead>
+                                                  <TableHead className="text-xs text-center">Status</TableHead>
+                                                </TableRow>
+                                              </TableHeader>
+                                              <TableBody>
+                                                {inv.entries.map(entry => (
+                                                  <TableRow key={entry.id} className="text-xs">
+                                                    <TableCell className="py-1.5 pl-10">{entry.description}</TableCell>
+                                                    <TableCell className="py-1.5">{entry.date ? format(new Date(entry.date + 'T12:00:00'), 'dd/MM/yy') : '—'}</TableCell>
+                                                    <TableCell className="py-1.5">{(entry as any).payment_due_date ? format(new Date((entry as any).payment_due_date + 'T12:00:00'), 'dd/MM/yy') : '—'}</TableCell>
+                                                    <TableCell className="py-1.5 text-right">{currencyFmt(Number(entry.value))}</TableCell>
+                                                    <TableCell className="py-1.5 text-center">
+                                                      {(entry as any).is_paid ? (
+                                                        <Badge variant="default" className="text-xs bg-green-600">Pago</Badge>
+                                                      ) : (
+                                                        <Badge variant="outline" className="text-xs text-orange-500 border-orange-500">Pendente</Badge>
+                                                      )}
+                                                    </TableCell>
+                                                  </TableRow>
+                                                ))}
+                                              </TableBody>
+                                            </Table>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    )}
+                                  </React.Fragment>
                                 );
                               })}
                             </TableBody>
