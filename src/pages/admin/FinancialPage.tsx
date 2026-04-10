@@ -409,6 +409,7 @@ export function FinancialPage() {
   const [invoicePayDialog, setInvoicePayDialog] = useState(false);
   const [invoicePayTarget, setInvoicePayTarget] = useState<{ cardId: string; month: string; entries: CashflowEntry[]; total: number } | null>(null);
   const [invoicePayForm, setInvoicePayForm] = useState({ account_id: '', date: new Date() });
+  const [expandedInvoice, setExpandedInvoice] = useState<string | null>(null);
 
   // Credit card invoices for Painel
   const cardInvoices = useMemo(() => {
