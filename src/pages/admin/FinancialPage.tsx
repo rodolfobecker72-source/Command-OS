@@ -405,6 +405,57 @@ export function FinancialPage() {
     return { accountBalances, receivablesByMonth, totalSaldo, totalRecebiveis, futureExpensesByMonth, totalDespesasPrevistas };
   }, [accounts, cashflowEntries, budgets, versions]);
 
+  // Invoice payment state
+  const [invoicePayDialog, setInvoicePayDialog] = useState(false);
+  const [invoicePayTarget, setInvoicePayTarget] = useState<{ cardId: string; month: string; entries: CashflowEntry[]; total: number } | null>(null);
+  const [invoicePayForm, setInvoicePayForm] = useState({ account_id: '', date: new Date() });
+
+  // Credit card invoices for Painel
+  const cardInvoices = useMemo(() => {
+    const cardEntries = cashflowEntries.filter(e => e.type === 'despesa' && (e as any).credit_card_id);
+    const grouped: Record<string, Record<string, { entries: CashflowEntry[]; total: number; paid: number; pending: number }>> = {};
+    
+    cardEntries.forEach(e => {
+      const cardId = (e as any).credit_card_id as string;
+      const dueDate = (e as any).payment_due_date || e.date;
+      const month = dueDate?.substring(0, 7) || 'sem-data';
+      
+      if (!grouped[cardId]) grouped[cardId] = {};
+      if (!grouped[cardId][month]) grouped[cardId][month] = { entries: [], total: 0, paid: 0, pending: 0 };
+      
+      grouped[cardId][month].entries.push(e);
+      const val = Number(e.value);
+      grouped[cardId][month].total += val;
+      if ((e as any).is_paid) {
+        grouped[cardId][month].paid += val;
+      } else {
+        grouped[cardId][month].pending += val;
+      }
+    });
+    
+    return grouped;
+  }, [cashflowEntries]);
+
+  async function payCardInvoice() {
+    if (!invoicePayTarget || !workspace) return;
+    if (!invoicePayForm.account_id) { toast.error('Selecione uma conta financeira'); return; }
+    
+    const pendingEntries = invoicePayTarget.entries.filter(e => !(e as any).is_paid);
+    if (pendingEntries.length === 0) { toast.error('Nenhuma parcela pendente'); return; }
+    
+    const ids = pendingEntries.map(e => e.id);
+    const { error } = await supabase
+      .from('cashflow_entries')
+      .update({ is_paid: true, paid_at: new Date().toISOString(), account_id: invoicePayForm.account_id })
+      .in('id', ids);
+    
+    if (error) { toast.error('Erro ao pagar fatura'); return; }
+    toast.success(`Fatura paga! ${pendingEntries.length} item(ns) confirmado(s)`);
+    setInvoicePayDialog(false);
+    setInvoicePayTarget(null);
+    loadData();
+  }
+
   const defaultEntryForm = { type: 'receita' as 'receita' | 'despesa', description: '', value: '', date: new Date(), account_id: '', budget_id: '', revenue_center_id: '', cost_center_id: '', notes: '', is_future_payment: false, payment_due_date: null as Date | null, is_credit_card: false, credit_card_id: '', installment_value: '', installments: '1', is_recurring: false, recurring_end_month: '' };
 
   function openNewEntry(tipo: 'receita' | 'despesa' = 'receita') {
