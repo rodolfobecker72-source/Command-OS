@@ -73,9 +73,9 @@ export function CalendarPage() {
   const approvedBudgets = useMemo(() => budgets.filter(b => b.status === 'aprovada'), [budgets]);
 
   // Pending (non-approved) budgets with execution dates
-  // Budgets in any non-approved phase that have execution dates → yellow
+  // Budgets in any non-approved phase that have execution dates → yellow (exclude "nao_aprovada")
   const pendingBudgets = useMemo(
-    () => budgets.filter(b => b.status !== 'aprovada' && b.executionStartDate),
+    () => budgets.filter(b => b.status !== 'aprovada' && b.status !== 'nao_aprovada' && b.executionStartDate),
     [budgets],
   );
 
