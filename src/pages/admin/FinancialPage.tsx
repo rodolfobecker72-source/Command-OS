@@ -1498,7 +1498,137 @@ export function FinancialPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Resumo Receita x Despesa por Mês */}
+          {/* ======== Faturas de Cartão de Crédito ======== */}
+          {creditCards.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCardIcon className="w-5 h-5" /> Faturas de Cartão de Crédito
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Object.keys(cardInvoices).length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa de cartão lançada.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {creditCards.filter(c => cardInvoices[c.id]).map(card => {
+                      const invoiceMonths = Object.keys(cardInvoices[card.id]).sort();
+                      return (
+                        <div key={card.id} className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CreditCardIcon className="w-4 h-4 text-muted-foreground" />
+                            <h4 className="font-semibold text-sm">{card.name} •••• {card.last_digits}</h4>
+                            <Badge variant="outline" className="text-xs">{card.brand}</Badge>
+                          </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Mês</TableHead>
+                                <TableHead className="text-right">Total Fatura</TableHead>
+                                <TableHead className="text-right">Pago</TableHead>
+                                <TableHead className="text-right">Pendente</TableHead>
+                                <TableHead className="text-center">Ações</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {invoiceMonths.map(m => {
+                                const inv = cardInvoices[card.id][m];
+                                return (
+                                  <TableRow key={m}>
+                                    <TableCell className="font-medium">
+                                      {m !== 'sem-data' ? format(new Date(m + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR }) : 'Sem data'}
+                                    </TableCell>
+                                    <TableCell className="text-right">{currencyFmt(inv.total)}</TableCell>
+                                    <TableCell className="text-right text-green-600">{currencyFmt(inv.paid)}</TableCell>
+                                    <TableCell className={cn("text-right font-medium", inv.pending > 0 ? 'text-orange-500' : 'text-green-600')}>
+                                      {currencyFmt(inv.pending)}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                      {inv.pending > 0 ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="text-xs"
+                                          onClick={() => {
+                                            setInvoicePayTarget({ cardId: card.id, month: m, entries: inv.entries, total: inv.pending });
+                                            setInvoicePayForm({ account_id: card.account_id || '', date: new Date() });
+                                            setInvoicePayDialog(true);
+                                          }}
+                                        >
+                                          <Check className="w-3 h-3 mr-1" /> Pagar Fatura
+                                        </Button>
+                                      ) : (
+                                        <Badge variant="default" className="text-xs bg-green-600"><Check className="w-3 h-3 mr-1" /> Paga</Badge>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Invoice Pay Dialog */}
+          <Dialog open={invoicePayDialog} onOpenChange={setInvoicePayDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CreditCardIcon className="w-5 h-5" /> Pagar Fatura do Cartão
+                </DialogTitle>
+              </DialogHeader>
+              {invoicePayTarget && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+                    <p className="font-medium">
+                      {creditCards.find(c => c.id === invoicePayTarget.cardId)?.name} — {invoicePayTarget.month !== 'sem-data' ? format(new Date(invoicePayTarget.month + '-01T12:00:00'), 'MMMM yyyy', { locale: ptBR }) : 'Sem data'}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {invoicePayTarget.entries.filter(e => !(e as any).is_paid).length} item(ns) pendente(s)
+                    </p>
+                    <p className="text-lg font-bold text-orange-500">{currencyFmt(invoicePayTarget.total)}</p>
+                  </div>
+
+                  <div className="max-h-40 overflow-y-auto border rounded-md">
+                    <Table>
+                      <TableBody>
+                        {invoicePayTarget.entries.filter(e => !(e as any).is_paid).map(e => (
+                          <TableRow key={e.id}>
+                            <TableCell className="text-xs py-1.5">{e.description}</TableCell>
+                            <TableCell className="text-xs text-right py-1.5 text-destructive">{currencyFmt(Number(e.value))}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div>
+                    <Label>Conta para Débito *</Label>
+                    <Select value={invoicePayForm.account_id} onValueChange={v => setInvoicePayForm(f => ({ ...f, account_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecionar conta" /></SelectTrigger>
+                      <SelectContent>
+                        {accounts.filter(a => a.is_active).map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button onClick={payCardInvoice} className="w-full">
+                    <Check className="w-4 h-4 mr-2" /> Confirmar Pagamento da Fatura
+                  </Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+
           <Card>
             <CardHeader><CardTitle className="text-base">Resumo Mensal — Receita x Despesa Prevista</CardTitle></CardHeader>
             <CardContent>
