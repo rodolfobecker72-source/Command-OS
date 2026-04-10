@@ -514,6 +514,7 @@ export function FinancialPage() {
           payment_due_date: format(dueDate, 'yyyy-MM-dd'),
           is_paid: false,
           paid_at: null,
+          credit_card_id: entryForm.credit_card_id || null,
         });
       }
       const { error } = await supabase.from('cashflow_entries').insert(entries);
