@@ -119,7 +119,17 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
     doc.text(label, margin, y);
     doc.setFont('helvetica', 'normal');
     setColor(darkGray);
-    doc.text(value, margin + labelWidth, y);
+    const maxValueWidth = contentWidth - labelWidth;
+    const valueLines = doc.splitTextToSize(value, maxValueWidth) as string[];
+    for (let li = 0; li < valueLines.length; li++) {
+      if (li === 0) {
+        doc.text(valueLines[li], margin + labelWidth, y);
+      } else {
+        y += 4.5;
+        ensureSpace(5);
+        doc.text(valueLines[li], margin + labelWidth, y);
+      }
+    }
     y += 7;
   };
 
