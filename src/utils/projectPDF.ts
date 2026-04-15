@@ -217,6 +217,11 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
     || (budget.versions?.length ? [...budget.versions].sort((a, c) => c.version - a.version)[0] : null);
 
   if (latestVersion?.services?.length) {
+    // Always start services on a new page
+    addHeader();
+    addFooter();
+    doc.addPage();
+    y = contentStartY;
     drawSectionTitle('SERVIÇOS E PRAZOS DE ENTREGA');
 
     const services = latestVersion.services as ServiceItem[];
