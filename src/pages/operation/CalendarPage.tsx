@@ -234,14 +234,20 @@ export function CalendarPage() {
       <Dialog open={!!selectedBudget} onOpenChange={open => { if (!open) { setSelectedBudget(null); setSelectedServiceId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedServiceId ? (
-                <Package className="w-5 h-5 text-blue-500" />
-              ) : (
-                <CalendarDays className="w-5 h-5 text-primary" />
-              )}
-              {selectedBudget?.proposalId} - {selectedBudget?.projectName}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                {selectedServiceId ? (
+                  <Package className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <CalendarDays className="w-5 h-5 text-primary" />
+                )}
+                {selectedBudget?.proposalId} - {selectedBudget?.projectName}
+              </DialogTitle>
+              <Button variant="outline" size="sm" className="gap-1.5 mr-6" onClick={handleDownloadPDF}>
+                <Download className="w-4 h-4" />
+                PDF
+              </Button>
+            </div>
           </DialogHeader>
 
           {selectedBudget && (
