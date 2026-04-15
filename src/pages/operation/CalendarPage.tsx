@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarEventCard, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
-import { ChevronLeft, ChevronRight, CalendarDays, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Package, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
 import { Budget } from '@/types/crm';
@@ -13,6 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { Header } from '@/components/layout/Header';
+import { generateProjectPDF } from '@/utils/projectPDF';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
   const events: CalendarDeliveryEvent[] = [];
@@ -125,6 +128,26 @@ export function CalendarPage() {
     ? clients.find(c => c.id === selectedBudget.clientId)
     : null;
 
+  const handleDownloadPDF = useCallback(async () => {
+    if (!selectedBudget || !client) return;
+    try {
+      const { data: layoutData } = await supabase
+        .from('workspace_layout')
+        .select('*')
+        .single();
+      const layoutSettings = layoutData ? {
+        logoUrl: layoutData.logo_url,
+        companyName: layoutData.company_name,
+        website: layoutData.website,
+        email: layoutData.email,
+      } : null;
+      await generateProjectPDF({ budget: selectedBudget, client, layoutSettings });
+      toast.success('PDF gerado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao gerar PDF');
+    }
+  }, [selectedBudget, client]);
 
 
   return (
@@ -211,14 +234,20 @@ export function CalendarPage() {
       <Dialog open={!!selectedBudget} onOpenChange={open => { if (!open) { setSelectedBudget(null); setSelectedServiceId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedServiceId ? (
-                <Package className="w-5 h-5 text-blue-500" />
-              ) : (
-                <CalendarDays className="w-5 h-5 text-primary" />
-              )}
-              {selectedBudget?.proposalId} - {selectedBudget?.projectName}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                {selectedServiceId ? (
+                  <Package className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <CalendarDays className="w-5 h-5 text-primary" />
+                )}
+                {selectedBudget?.proposalId} - {selectedBudget?.projectName}
+              </DialogTitle>
+              <Button variant="outline" size="sm" className="gap-1.5 mr-6" onClick={handleDownloadPDF}>
+                <Download className="w-4 h-4" />
+                PDF
+              </Button>
+            </div>
           </DialogHeader>
 
           {selectedBudget && (
