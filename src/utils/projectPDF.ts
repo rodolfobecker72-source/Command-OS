@@ -111,15 +111,16 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
   };
 
   const drawLabelValue = (label: string, value: string) => {
-    ensureSpace(10);
+    ensureSpace(8);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     setColor(gray);
+    const labelWidth = doc.getTextWidth(label + '  ');
     doc.text(label, margin, y);
     doc.setFont('helvetica', 'normal');
     setColor(darkGray);
-    doc.text(value, margin + 2, y + 5);
-    y += 12;
+    doc.text(value, margin + labelWidth, y);
+    y += 7;
   };
 
   // ===== PAGE 1 =====
@@ -153,25 +154,41 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
 
   // ===== CLIENT =====
   drawSectionTitle('CLIENTE');
-  drawLabelValue('Empresa', client.companyName);
-  drawLabelValue('Responsável', client.responsiblePerson);
-  if (client.email) drawLabelValue('E-mail', client.email);
-  if (client.phone) drawLabelValue('Telefone', client.phone);
+  drawLabelValue('Empresa:', client.companyName);
+  drawLabelValue('Responsável:', client.responsiblePerson);
+  if (client.phone) drawLabelValue('Telefone:', client.phone);
 
+  y += 3;
   drawLine(y);
   y += 10;
 
   // ===== EXECUTION INFO =====
   drawSectionTitle('INFORMAÇÕES DA EXECUÇÃO');
-  if (budget.location) drawLabelValue('Local', budget.location);
+  if (budget.location) drawLabelValue('Local:', budget.location);
 
   if (budget.executionStartDate) {
-    drawLabelValue('Início', format(new Date(budget.executionStartDate), 'dd/MM/yyyy'));
+    drawLabelValue('Início:', format(new Date(budget.executionStartDate), 'dd/MM/yyyy'));
   }
   if (budget.executionEndDate) {
-    drawLabelValue('Fim', format(new Date(budget.executionEndDate), 'dd/MM/yyyy'));
+    drawLabelValue('Fim:', format(new Date(budget.executionEndDate), 'dd/MM/yyyy'));
   }
 
+  if (budget.objective) {
+    y += 2;
+    drawLabelValue('Objetivo:', '');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    setColor(darkGray);
+    const objLines = doc.splitTextToSize(budget.objective, contentWidth) as string[];
+    for (const line of objLines) {
+      ensureSpace(5);
+      doc.text(line, margin, y);
+      y += 4.5;
+    }
+    y += 3;
+  }
+
+  y += 3;
   drawLine(y);
   y += 10;
 
@@ -184,24 +201,6 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
     setColor(darkGray);
     const descLines = doc.splitTextToSize(budget.projectDescription, contentWidth) as string[];
     for (const line of descLines) {
-      ensureSpace(6);
-      doc.text(line, margin, y);
-      y += 5;
-    }
-    y += 8;
-    drawLine(y);
-    y += 10;
-  }
-
-  // ===== OBJECTIVE =====
-  if (budget.objective) {
-    drawSectionTitle('OBJETIVO');
-    ensureSpace(20);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    setColor(darkGray);
-    const objLines = doc.splitTextToSize(budget.objective, contentWidth) as string[];
-    for (const line of objLines) {
       ensureSpace(6);
       doc.text(line, margin, y);
       y += 5;
@@ -256,51 +255,32 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
         y += 3;
       }
 
-      // Delivery info
-      if (svc.deliveryType) {
-        ensureSpace(12);
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        setColor(gray);
-        doc.text('Prazo de Entrega:', margin + 2, y);
-
-        doc.setFont('helvetica', 'normal');
-        setColor(darkGray);
-        let deliveryText = '';
+      // Delivery date
+      if (svc.deliveryType && execStart) {
+        ensureSpace(8);
+        let deliveryDate: Date | null = null;
         if (svc.deliveryType === 'realtime') {
-          deliveryText = 'Real time (mesmo dia da execução)';
-        } else {
-          const label = svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos';
-          deliveryText = `${svc.deliveryDays} ${label}`;
+          deliveryDate = new Date(execStart);
+        } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
+          deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
+          deliveryDate = addDays(deliveryDate, -1);
+        } else if (svc.deliveryType === 'dias_corridos' && svc.deliveryDays) {
+          deliveryDate = addDays(execStart, svc.deliveryDays);
+          deliveryDate = addDays(deliveryDate, -1);
         }
-        doc.text(deliveryText, margin + 38, y);
-        y += 5;
-
-        // Calculated delivery date
-        if (execStart) {
-          let deliveryDate: Date | null = null;
-          if (svc.deliveryType === 'realtime') {
-            deliveryDate = new Date(execStart);
-          } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
-            deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
-            deliveryDate = addDays(deliveryDate, -1);
-          } else if (svc.deliveryType === 'dias_corridos' && svc.deliveryDays) {
-            deliveryDate = addDays(execStart, svc.deliveryDays);
-            deliveryDate = addDays(deliveryDate, -1);
-          }
-          if (deliveryDate) {
-            doc.setFont('helvetica', 'bold');
-            setColor(accentBlue);
-            doc.text(`📅 Data prevista: ${format(deliveryDate, 'dd/MM/yyyy')}`, margin + 2, y);
-            y += 5;
-          }
+        if (deliveryDate) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          setColor(accentBlue);
+          doc.text(`Data de Entrega: ${format(deliveryDate, 'dd/MM/yyyy')}`, margin + 2, y);
+          y += 5;
         }
-      } else {
+      } else if (!svc.deliveryType) {
         ensureSpace(8);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'italic');
         setColor(gray);
-        doc.text('Prazo de entrega não definido', margin + 2, y);
+        doc.text('Data de entrega não definida', margin + 2, y);
         y += 5;
       }
 
