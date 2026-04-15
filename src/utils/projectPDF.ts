@@ -119,7 +119,17 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
     doc.text(label, margin, y);
     doc.setFont('helvetica', 'normal');
     setColor(darkGray);
-    doc.text(value, margin + labelWidth, y);
+    const maxValueWidth = contentWidth - labelWidth;
+    const valueLines = doc.splitTextToSize(value, maxValueWidth) as string[];
+    for (let li = 0; li < valueLines.length; li++) {
+      if (li === 0) {
+        doc.text(valueLines[li], margin + labelWidth, y);
+      } else {
+        y += 4.5;
+        ensureSpace(5);
+        doc.text(valueLines[li], margin + labelWidth, y);
+      }
+    }
     y += 7;
   };
 
@@ -174,18 +184,7 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
   }
 
   if (budget.objective) {
-    y += 2;
-    drawLabelValue('Objetivo:', '');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    setColor(darkGray);
-    const objLines = doc.splitTextToSize(budget.objective, contentWidth) as string[];
-    for (const line of objLines) {
-      ensureSpace(5);
-      doc.text(line, margin, y);
-      y += 4.5;
-    }
-    y += 3;
+    drawLabelValue('Objetivo:', budget.objective);
   }
 
   y += 3;
@@ -218,6 +217,11 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
     || (budget.versions?.length ? [...budget.versions].sort((a, c) => c.version - a.version)[0] : null);
 
   if (latestVersion?.services?.length) {
+    // Always start services on a new page
+    addHeader();
+    addFooter();
+    doc.addPage();
+    y = contentStartY;
     drawSectionTitle('SERVIÇOS E PRAZOS DE ENTREGA');
 
     const services = latestVersion.services as ServiceItem[];
@@ -291,6 +295,7 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.3);
         doc.line(margin + 10, y - 4, pageWidth - margin - 10, y - 4);
+        y += 6;
       }
     }
   }
