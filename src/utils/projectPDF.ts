@@ -295,6 +295,7 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.3);
         doc.line(margin + 10, y - 4, pageWidth - margin - 10, y - 4);
+        y += 6;
       }
     }
   }
