@@ -174,18 +174,7 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
   }
 
   if (budget.objective) {
-    y += 2;
-    drawLabelValue('Objetivo:', '');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    setColor(darkGray);
-    const objLines = doc.splitTextToSize(budget.objective, contentWidth) as string[];
-    for (const line of objLines) {
-      ensureSpace(5);
-      doc.text(line, margin, y);
-      y += 4.5;
-    }
-    y += 3;
+    drawLabelValue('Objetivo:', budget.objective);
   }
 
   y += 3;
