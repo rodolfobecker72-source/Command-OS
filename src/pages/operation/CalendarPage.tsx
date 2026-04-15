@@ -128,6 +128,26 @@ export function CalendarPage() {
     ? clients.find(c => c.id === selectedBudget.clientId)
     : null;
 
+  const handleDownloadPDF = useCallback(async () => {
+    if (!selectedBudget || !client) return;
+    try {
+      const { data: layoutData } = await supabase
+        .from('workspace_layout')
+        .select('*')
+        .single();
+      const layoutSettings = layoutData ? {
+        logoUrl: layoutData.logo_url,
+        companyName: layoutData.company_name,
+        website: layoutData.website,
+        email: layoutData.email,
+      } : null;
+      await generateProjectPDF({ budget: selectedBudget, client, layoutSettings });
+      toast.success('PDF gerado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao gerar PDF');
+    }
+  }, [selectedBudget, client]);
 
 
   return (
