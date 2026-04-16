@@ -113,6 +113,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   };
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getDefaultOpen);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
