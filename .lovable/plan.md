@@ -1,65 +1,41 @@
 
 
-# Plano: Fluxo de Caixa + Centros de Custo/Receita
+# Plano: Central de Mídias
 
 ## Resumo
+Criar a página "Central de Mídias" dentro do grupo **Projetos** na sidebar, permitindo cadastrar HDs, alocar projetos a eles e visualizar capacidades. A tabela `hard_drives` já existe no banco com a estrutura necessária (label, capacity_gb, projects como JSONB).
 
-Adicionar ao módulo Financeiro:
-- Nova aba **Fluxo de Caixa** (primeiro item) para lançamento de receitas e despesas vinculadas a contas financeiras
-- Nova aba **Configurações** (último item) para gerenciar centros de receita externa e centros de custo
+## O que será construído
 
-## Novas tabelas no banco de dados
+**3 abas de visualização** (conforme prints):
+1. **Projetos por HD** — Lista expandível de cada HD com barra de progresso e seus projetos
+2. **Lista de Projetos** — Tabela com todos os projetos alocados em todos os HDs
+3. **Capacidades** — Grid de cards com resumo visual de cada HD
 
-### 1. `revenue_centers` — Centros de receita externa
-- `id`, `workspace_id`, `name`, `is_active`, `created_at`
+**Métricas no topo**: HDs Cadastrados, Capacidade Total, Espaço Utilizado, Projetos Cadastrados
 
-### 2. `cost_centers` — Centros de custo
-- `id`, `workspace_id`, `name`, `is_active`, `created_at`
+**Ações**: Novo HD (dialog), Alocar Projeto (dialog), Editar HD, Excluir HD
 
-### 3. `cashflow_entries` — Lançamentos de fluxo de caixa
-- `id`, `workspace_id`
-- `type` — `receita` ou `despesa`
-- `description` — descrição do lançamento
-- `value` — valor (sempre positivo)
-- `date` — data do lançamento
-- `account_id` — referência à conta financeira
-- `budget_id` — (nullable) vínculo com projeto aprovado (para receitas de projeto)
-- `revenue_center_id` — (nullable) vínculo com centro de receita (para receitas externas)
-- `cost_center_id` — (nullable) vínculo com centro de custo (para despesas não-projeto)
-- `notes`, `created_at`, `updated_at`
-
-RLS em todas as tabelas com `has_workspace_access`.
-
-## Alterações na interface (`FinancialPage.tsx`)
-
-### Aba "Fluxo de Caixa" (primeira posição)
-- Filtro por mês e por conta financeira
-- Tabela com colunas: Data, Tipo (badge receita/despesa), Descrição, Projeto ou Centro, Conta, Valor
-- Resumo no topo: Total Receitas, Total Despesas, Saldo do período
-- Botão "Novo Lançamento" abre dialog com:
-  - Tipo (Receita / Despesa)
-  - Descrição, Valor, Data
-  - Conta financeira (select das contas cadastradas)
-  - Se receita: opção de vincular a Projeto ou Centro de Receita
-  - Se despesa: opção de vincular a Centro de Custo
-  - Observações
-
-### Aba "Configurações" (última posição)
-- Duas seções lado a lado ou empilhadas:
-  - **Centros de Receita**: CRUD simples (nome, ativo/inativo)
-  - **Centros de Custo**: CRUD simples (nome, ativo/inativo)
-
-### Ordem final das abas
-1. Fluxo de Caixa
-2. Projetos do Mês
-3. Painel Anual
-4. Contas Financeiras
-5. Configurações
+**Busca e filtros**: Campo de busca + filtro por HD
 
 ## Detalhes técnicos
 
-- Migration SQL cria as 3 tabelas com RLS policies
-- Queries usam `supabase.from('cashflow_entries')` com joins em `financial_accounts`, `revenue_centers`, `cost_centers` e `budgets`
-- Para receitas de projeto, o select de projetos lista budgets aprovados do workspace
-- Todos os lançamentos são manuais (não automáticos) — o usuário lança receita/despesa quando desejar
+### 1. Registrar página no sistema
+- `src/config/pages.ts` — Adicionar entrada `central-midia` no grupo Projetos
+- `src/components/layout/Sidebar.tsx` — Adicionar item "Central de Mídias" com ícone `HardDrive` no grupo Projetos
+- `src/App.tsx` — Adicionar rota `/central-midia` com PageGuard
+
+### 2. Criar página `src/pages/operation/MediaCenterPage.tsx`
+- Usar a tabela `hard_drives` existente (campos: label, capacity_gb, projects JSONB)
+- JSONB `projects` armazena array de `{ projectNumber, clientName, sizeGb }`
+- 3 abas com Tabs component
+- Dialog para cadastrar novo HD (Identificador + Capacidade em GB)
+- Dialog para alocar projeto a um HD (Número do projeto, Cliente, Tamanho em GB)
+- Cálculos de espaço utilizado, livre, percentual
+- Barra de progresso visual para cada HD
+- Busca por HD, projeto ou cliente
+- Botão de ordenar por espaço disponível na aba Capacidades
+
+### 3. Sem alterações no banco de dados
+A tabela `hard_drives` já possui todos os campos necessários com RLS configurado.
 
