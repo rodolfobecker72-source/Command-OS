@@ -47,7 +47,8 @@ function formatStorage(gb: number): string {
 }
 
 export function MediaCenterPage() {
-  const { workspaceId } = useAuth();
+  const { workspace } = useAuth();
+  const workspaceId = workspace?.id;
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
