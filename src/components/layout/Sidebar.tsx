@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -212,12 +213,16 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
         {/* User profile & logout (visible on mobile) */}
         <div className="pt-2 mt-2 border-t border-sidebar-border md:hidden">
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div
+            className="flex items-center gap-3 px-3 py-2 cursor-pointer rounded-lg hover:bg-sidebar-accent transition-colors"
+            onClick={() => setProfileDialogOpen(true)}
+          >
             <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
               {profile ? getInitials(profile.name) : 'U'}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{profile?.name || 'Usuário'}</p>
+              <p className="text-xs text-muted-foreground">Editar perfil</p>
             </div>
           </div>
           <button
@@ -228,6 +233,8 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             <span className="text-sm font-medium">Sair</span>
           </button>
         </div>
+
+        <ProfileEditDialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen} />
       </div>
     </aside>
   );
