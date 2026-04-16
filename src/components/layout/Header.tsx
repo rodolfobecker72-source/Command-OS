@@ -1,4 +1,5 @@
-import { Bell, Search, MessageCircle, LogOut, Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Search, MessageCircle, LogOut, Menu, UserPen } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 
 interface HeaderProps {
   title: string;
@@ -25,6 +27,7 @@ interface OutletContextType {
 export function Header({ title, subtitle }: HeaderProps) {
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   let onOpenMobileMenu: (() => void) | undefined;
   try {
@@ -106,8 +109,9 @@ export function Header({ title, subtitle }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/usuarios')}>
-              Usuários
+            <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+              <UserPen className="w-4 h-4 mr-2" />
+              Meu Perfil
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -119,6 +123,8 @@ export function Header({ title, subtitle }: HeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ProfileEditDialog open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
     </header>
   );
