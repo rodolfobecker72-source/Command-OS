@@ -18,6 +18,7 @@ import {
   FileImage,
   LogOut,
   CalendarDays,
+  HardDrive,
   Wrench,
   DollarSign,
   Building2,
@@ -55,6 +56,7 @@ const navGroups: NavGroup[] = [
     icon: Wrench,
     items: [
       { name: 'Calendário', href: '/calendario', icon: CalendarDays, pageKey: 'calendario' },
+      { name: 'Central de Mídias', href: '/central-midia', icon: HardDrive, pageKey: 'central-midia' },
     ],
   },
   {
