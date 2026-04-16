@@ -17,6 +17,7 @@ export const APP_PAGES: AppPage[] = [
 
   // Operação / Projetos
   { key: 'calendario', label: 'Calendário', href: '/calendario', group: 'Projetos' },
+  { key: 'central-midia', label: 'Central de Mídias', href: '/central-midia', group: 'Projetos' },
 
   // Configurações
   { key: 'categorias', label: 'Categorias de Serviço', href: '/categorias', group: 'Configurações', restrictedFrom: ['vendedor', 'time_hero'] },
