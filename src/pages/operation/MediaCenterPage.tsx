@@ -722,11 +722,53 @@ export function MediaCenterPage() {
             </div>
             <div className="space-y-2">
               <Label>Cliente</Label>
-              <Input
-                placeholder="Nome do cliente"
-                value={allocateClientName}
-                onChange={(e) => setAllocateClientName(e.target.value)}
-              />
+              <Popover open={clientPickerOpen} onOpenChange={setClientPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className={cn(
+                      'w-full justify-between font-normal',
+                      !allocateClientName && 'text-muted-foreground'
+                    )}
+                  >
+                    {allocateClientName || 'Selecione um cliente ativo...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[200]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente ativo encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {activeClients.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.name}
+                            onSelect={() => {
+                              setAllocateClientName(c.name);
+                              setClientPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                allocateClientName === c.name ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                            {c.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground">
+                Lista contém apenas clientes com orçamento aprovado ou projeto cadastrado.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Tamanho (GB)</Label>
