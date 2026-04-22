@@ -50,6 +50,12 @@ function formatStorage(gb: number): string {
   return `${gb.toFixed(0)} GB`;
 }
 
+function getCapacityColor(pct: number): string {
+  if (pct >= 90) return 'bg-destructive';
+  if (pct >= 70) return 'bg-warning';
+  return 'bg-success';
+}
+
 export function MediaCenterPage() {
   const { workspace } = useAuth();
   const workspaceId = workspace?.id;
