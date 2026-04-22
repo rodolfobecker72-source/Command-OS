@@ -462,7 +462,7 @@ export function MediaCenterPage() {
                       <span>{pct.toFixed(0)}% utilizado</span>
                       <span>{formatStorage(Math.max(0, free))} livre</span>
                     </div>
-                    <Progress value={pct} className="h-2.5" />
+                    <Progress value={pct} className="h-2.5" indicatorClassName={getCapacityColor(pct)} />
                   </div>
 
                   {/* Expand projects */}
@@ -605,7 +605,7 @@ export function MediaCenterPage() {
                         <span>{pct.toFixed(0)}% utilizado</span>
                         <span>{formatStorage(Math.max(0, free))} livre</span>
                       </div>
-                      <Progress value={pct} className="h-2.5" />
+                      <Progress value={pct} className="h-2.5" indicatorClassName={getCapacityColor(pct)} />
                     </div>
 
                     <div className="flex justify-between text-xs text-muted-foreground">
