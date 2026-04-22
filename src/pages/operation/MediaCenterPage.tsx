@@ -12,6 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import {
   HardDrive,
   Database,
@@ -71,6 +75,8 @@ export function MediaCenterPage() {
   const [allocateClientName, setAllocateClientName] = useState('');
   const [allocateSizeGb, setAllocateSizeGb] = useState('');
 
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
+
   const { data: hardDrives = [], isLoading } = useQuery({
     queryKey: ['hard_drives', workspaceId],
     queryFn: async () => {
@@ -85,6 +91,27 @@ export function MediaCenterPage() {
         ...hd,
         projects: (Array.isArray(hd.projects) ? hd.projects : []) as unknown as HdProject[],
       })) as HardDriveRow[];
+    },
+    enabled: !!workspaceId,
+  });
+
+  // Active clients: clients with approved budgets OR legacy projects
+  const { data: activeClients = [] } = useQuery({
+    queryKey: ['active_clients', workspaceId],
+    queryFn: async () => {
+      if (!workspaceId) return [];
+      const [clientsRes, budgetsRes, legacyRes] = await Promise.all([
+        supabase.from('clients').select('id, company_name').eq('workspace_id', workspaceId),
+        supabase.from('budgets').select('client_id').eq('workspace_id', workspaceId).eq('status', 'aprovada'),
+        supabase.from('legacy_projects').select('client_id').eq('workspace_id', workspaceId),
+      ]);
+      const activeIds = new Set<string>();
+      (budgetsRes.data || []).forEach((b: any) => b.client_id && activeIds.add(b.client_id));
+      (legacyRes.data || []).forEach((l: any) => l.client_id && activeIds.add(l.client_id));
+      return (clientsRes.data || [])
+        .filter((c: any) => activeIds.has(c.id))
+        .map((c: any) => ({ id: c.id, name: c.company_name }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     },
     enabled: !!workspaceId,
   });
@@ -695,11 +722,53 @@ export function MediaCenterPage() {
             </div>
             <div className="space-y-2">
               <Label>Cliente</Label>
-              <Input
-                placeholder="Nome do cliente"
-                value={allocateClientName}
-                onChange={(e) => setAllocateClientName(e.target.value)}
-              />
+              <Popover open={clientPickerOpen} onOpenChange={setClientPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className={cn(
+                      'w-full justify-between font-normal',
+                      !allocateClientName && 'text-muted-foreground'
+                    )}
+                  >
+                    {allocateClientName || 'Selecione um cliente ativo...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[200]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar cliente..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente ativo encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {activeClients.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.name}
+                            onSelect={() => {
+                              setAllocateClientName(c.name);
+                              setClientPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                allocateClientName === c.name ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                            {c.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground">
+                Lista contém apenas clientes com orçamento aprovado ou projeto cadastrado.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Tamanho (GB)</Label>
