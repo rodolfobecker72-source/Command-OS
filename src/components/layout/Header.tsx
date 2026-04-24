@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Search, MessageCircle, LogOut, Menu, UserPen } from 'lucide-react';
+import { Search, LogOut, Menu, UserPen } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -83,21 +83,10 @@ export function Header({ title, subtitle }: HeaderProps) {
           />
         </div>
 
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative rounded-xl text-muted-foreground hover:text-foreground h-9 w-9">
-          <Bell className="w-4 h-4 md:w-5 md:h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </Button>
-
-        {/* Messages - hidden on small mobile */}
-        <Button variant="ghost" size="icon" className="rounded-xl text-muted-foreground hover:text-foreground h-9 w-9 hidden sm:flex">
-          <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
-        </Button>
-
-        {/* User Menu - hidden on mobile (accessible via sidebar) */}
+        {/* User Menu - visible on all viewports */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-xl ml-1 hidden md:flex">
+            <Button variant="ghost" size="icon" className="rounded-xl ml-1">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={profile?.photo_url || undefined} alt={profile?.name} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
