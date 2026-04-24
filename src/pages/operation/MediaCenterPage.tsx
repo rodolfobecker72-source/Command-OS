@@ -803,5 +803,7 @@ export function MediaCenterPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
+
