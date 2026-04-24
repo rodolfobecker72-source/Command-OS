@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { Header } from '@/components/layout/Header';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import {
   HardDrive,
@@ -318,12 +319,9 @@ export function MediaCenterPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold">Central de Mídias</h1>
-        <p className="text-muted-foreground text-sm">Gerencie seus HDs e projetos armazenados</p>
-      </div>
+    <>
+      <Header title="Central de Mídias" subtitle="Gerencie seus HDs e projetos armazenados" />
+      <div className="p-4 md:p-6 space-y-6">
 
       {/* Tabs */}
       <Tabs defaultValue="por-hd" className="space-y-4">
@@ -806,5 +804,7 @@ export function MediaCenterPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
+
