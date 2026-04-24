@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Search, LogOut, Menu, UserPen } from 'lucide-react';
+import { LogOut, Menu, UserPen } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Input } from '@/components/ui/input';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -74,14 +74,6 @@ export function Header({ title, subtitle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 md:gap-2 shrink-0">
-        {/* Search - hidden on mobile */}
-        <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            className="pl-9 w-56 h-9 bg-card border-border/60 rounded-xl focus:bg-card"
-          />
-        </div>
 
         {/* User Menu - visible on all viewports */}
         <DropdownMenu>
