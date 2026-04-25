@@ -55,6 +55,7 @@ export function CRMKanban() {
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
