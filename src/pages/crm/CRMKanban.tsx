@@ -38,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -55,6 +55,7 @@ export function CRMKanban() {
   const [activeCard, setActiveCard] = useState<CRMCard | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -85,18 +86,31 @@ export function CRMKanban() {
     return [...months].sort();
   }, [cards, filterMode]);
 
-  // Filter cards by month
+  // Filter cards by month and search
   const filteredCards = useMemo(() => {
-    if (monthFilter === 'all') return cards;
-    if (filterMode === 'execution') {
-      return cards.filter(c => c.executionMonth === monthFilter);
+    let result = cards;
+    if (monthFilter !== 'all') {
+      if (filterMode === 'execution') {
+        result = result.filter(c => c.executionMonth === monthFilter);
+      } else {
+        result = result.filter(c => {
+          const d = new Date(c.createdAt);
+          const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          return ym === monthFilter;
+        });
+      }
     }
-    return cards.filter(c => {
-      const d = new Date(c.createdAt);
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      return ym === monthFilter;
-    });
-  }, [cards, monthFilter, filterMode]);
+    const term = searchTerm.trim().toLowerCase();
+    if (term) {
+      result = result.filter(c =>
+        c.projectName.toLowerCase().includes(term) ||
+        c.clientName.toLowerCase().includes(term) ||
+        c.id.toLowerCase().includes(term) ||
+        c.budgetId.toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [cards, monthFilter, filterMode, searchTerm]);
 
   // Sort columns by order
   const sortedColumns = useMemo(() => {
@@ -250,6 +264,15 @@ export function CRMKanban() {
               {filteredCards.length} projeto(s)
             </p>
             <KanbanColumnManager />
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por ID, projeto ou cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
             <Select value={filterMode} onValueChange={(v) => { setFilterMode(v as 'all' | 'execution'); setMonthFilter('all'); }}>
               <SelectTrigger className="w-44 md:w-52 h-9">
                 <SelectValue />
