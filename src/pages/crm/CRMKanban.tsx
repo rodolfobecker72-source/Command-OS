@@ -86,18 +86,31 @@ export function CRMKanban() {
     return [...months].sort();
   }, [cards, filterMode]);
 
-  // Filter cards by month
+  // Filter cards by month and search
   const filteredCards = useMemo(() => {
-    if (monthFilter === 'all') return cards;
-    if (filterMode === 'execution') {
-      return cards.filter(c => c.executionMonth === monthFilter);
+    let result = cards;
+    if (monthFilter !== 'all') {
+      if (filterMode === 'execution') {
+        result = result.filter(c => c.executionMonth === monthFilter);
+      } else {
+        result = result.filter(c => {
+          const d = new Date(c.createdAt);
+          const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          return ym === monthFilter;
+        });
+      }
     }
-    return cards.filter(c => {
-      const d = new Date(c.createdAt);
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      return ym === monthFilter;
-    });
-  }, [cards, monthFilter, filterMode]);
+    const term = searchTerm.trim().toLowerCase();
+    if (term) {
+      result = result.filter(c =>
+        c.projectName.toLowerCase().includes(term) ||
+        c.clientName.toLowerCase().includes(term) ||
+        c.id.toLowerCase().includes(term) ||
+        c.budgetId.toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [cards, monthFilter, filterMode, searchTerm]);
 
   // Sort columns by order
   const sortedColumns = useMemo(() => {
