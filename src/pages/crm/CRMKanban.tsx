@@ -38,7 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
