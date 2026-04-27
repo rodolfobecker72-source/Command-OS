@@ -143,7 +143,7 @@ export function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="Clientes" subtitle="Gerencie sua base de clientes" />
+      <Header title="Cadastro" subtitle="Gerencie sua base de cadastros" />
 
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Filters and Actions */}
@@ -151,9 +151,9 @@ export function ClientDashboard() {
           <CardHeader className="pb-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <CardTitle>Lista de Clientes</CardTitle>
+                <CardTitle>Lista de empresas cadastradas</CardTitle>
                 <CardDescription>
-                  {filteredClients.length} cliente(s) encontrado(s)
+                  {filteredClients.length} cadastro(s) encontrado(s)
                 </CardDescription>
               </div>
               <Button
@@ -161,7 +161,7 @@ export function ClientDashboard() {
                 className="btn-hero"
               >
                 <Plus className="w-4 h-4" />
-                Novo Cliente
+                Novo Cadastro
               </Button>
             </div>
           </CardHeader>
@@ -173,10 +173,10 @@ export function ClientDashboard() {
                   Todos ({clients.length})
                 </TabsTrigger>
                 <TabsTrigger value="ativos">
-                  Ativos ({activeCount})
+                  Cliente ({activeCount})
                 </TabsTrigger>
                 <TabsTrigger value="inativos">
-                  Inativos ({inactiveCount})
+                  Cadastros Inativos ({inactiveCount})
                 </TabsTrigger>
               </TabsList>
             </Tabs>
