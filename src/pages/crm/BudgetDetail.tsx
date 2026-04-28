@@ -1241,8 +1241,33 @@ export function BudgetDetail() {
                     </div>
                   </div>
                 )}
+                {/* Add Service Buttons (edit mode) */}
+                {isEditingVersion && (
+                  <Card className="card-elevated">
+                    <CardContent className="pt-6 space-y-2">
+                      <Label>Adicionar Serviço</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {[...serviceCategories].sort((a, b) => a.order - b.order).map((category) => {
+                          const Icon = SERVICE_ICONS[category.key] || Film;
+                          return (
+                            <Button
+                              key={category.key}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addEditService(category.key)}
+                            >
+                              <Icon className="w-4 h-4 mr-1" />
+                              {category.label}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
                 {/* Services by Type */}
-                {currentVersionData && currentVersionData.services && currentVersionData.services.length > 0 && (() => {
+                {currentVersionData && ((isEditingVersion ? editVersionServices.length > 0 : (currentVersionData.services && currentVersionData.services.length > 0))) && (() => {
                   const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
                   const cvd = currentVersionData;
                   const opTotal = (isEditingVersion ? editVersionOperationalCosts : (cvd.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
