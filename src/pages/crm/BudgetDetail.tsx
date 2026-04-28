@@ -661,6 +661,10 @@ export function BudgetDetail() {
       toast.error('Dados insuficientes para gerar minuta');
       return;
     }
+    if (!client.legalRepresentativeName?.trim() || !client.legalRepresentativeCpf?.trim()) {
+      toast.error('Cadastre o nome e CPF do representante legal do cliente antes de gerar a minuta.');
+      return;
+    }
     try {
       const { data: templateData } = await supabase
         .from('workspace_contract_template')
