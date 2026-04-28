@@ -512,6 +512,26 @@ export function BudgetDetail() {
     ));
   };
 
+  const addEditService = (serviceType: ServiceType) => {
+    setEditVersionServices(prev => [
+      ...prev,
+      {
+        id: uuidv4(),
+        serviceType,
+        objective: '',
+        description: '',
+        costs: [],
+        fixedCostPercentage: 0,
+        nfCostPercentage: 0,
+        targetMargin: 0,
+      },
+    ]);
+  };
+
+  const removeEditService = (serviceId: string) => {
+    setEditVersionServices(prev => prev.filter(s => s.id !== serviceId));
+  };
+
   const removeEditCost = (serviceId: string, costId: string) => {
     setEditVersionServices(prev => prev.map(s =>
       s.id === serviceId ? { ...s, costs: s.costs.filter(c => c.id !== costId) } : s
