@@ -298,6 +298,28 @@ export function CRMKanban() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => setHideValues(v => !v)}
+              title={hideValues ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {hideValues ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <span className="hidden md:inline ml-1">{hideValues ? 'Mostrar valores' : 'Ocultar valores'}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => setViewMode(v => v === 'kanban' ? 'list' : 'kanban')}
+              title={viewMode === 'kanban' ? 'Visualizar em lista' : 'Visualizar em kanban'}
+            >
+              {viewMode === 'kanban' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+              <span className="hidden md:inline ml-1">{viewMode === 'kanban' ? 'Lista' : 'Kanban'}</span>
+            </Button>
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
