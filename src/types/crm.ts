@@ -166,6 +166,8 @@ export interface Client {
   companyName: string;
   cnpj: string;
   responsiblePerson: string;
+  legalRepresentativeName: string;
+  legalRepresentativeCpf: string;
   email: string;
   phone: string;
   leadOrigin: LeadOrigin;
