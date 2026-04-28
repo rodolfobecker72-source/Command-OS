@@ -41,6 +41,8 @@ export function EditClient() {
     documentType: 'cnpj' as 'cnpj' | 'cpf',
     document: '',
     responsiblePerson: '',
+    legalRepresentativeName: '',
+    legalRepresentativeCpf: '',
     email: '',
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
@@ -58,6 +60,10 @@ export function EditClient() {
         documentType: docType,
         document: formatDocumentInput(cleanedDoc, docType),
         responsiblePerson: client.responsiblePerson,
+        legalRepresentativeName: client.legalRepresentativeName || '',
+        legalRepresentativeCpf: client.legalRepresentativeCpf
+          ? formatDocumentInput(client.legalRepresentativeCpf, 'cpf')
+          : '',
         email: client.email || '',
         phone: formatPhoneInput(client.phone),
         leadOrigin: client.leadOrigin,
@@ -124,6 +130,8 @@ export function EditClient() {
         companyName: formData.companyName,
         cnpj: formData.document.replace(/\D/g, ''),
         responsiblePerson: formData.responsiblePerson,
+        legalRepresentativeName: formData.legalRepresentativeName,
+        legalRepresentativeCpf: formData.legalRepresentativeCpf.replace(/\D/g, ''),
         email: formData.email.trim(),
         phone: formData.phone.replace(/\D/g, ''),
         leadOrigin: formData.leadOrigin as LeadOrigin,
