@@ -155,7 +155,11 @@ export async function generateContractPDF(params: ContractPDFParams) {
   const replacements: Record<string, string> = {
     '{{empresa_cliente}}': client.companyName || '',
     '{{cnpj}}': client.cnpj ? formatCNPJ(client.cnpj) : '',
-    '{{responsavel}}': client.responsiblePerson || '',
+    '{{responsavel}}': client.legalRepresentativeName || client.responsiblePerson || '',
+    '{{representante_legal}}': client.legalRepresentativeName || '',
+    '{{cpf_representante}}': client.legalRepresentativeCpf
+      ? client.legalRepresentativeCpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+      : '',
     '{{email_cliente}}': client.email || '',
     '{{telefone_cliente}}': client.phone ? formatPhone(client.phone) : '',
     '{{empresa_contratada}}': layoutSettings?.companyName || '',
