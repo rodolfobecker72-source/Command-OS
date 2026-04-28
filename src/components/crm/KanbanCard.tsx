@@ -113,7 +113,7 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
 
           {/* Value & Execution Month */}
           <div className="flex items-center justify-between flex-wrap gap-1">
-            {card.value && (
+            {card.value && !hideValue && (
               <span className="text-sm font-semibold text-accent">
                 {formatCurrency(card.value)}
               </span>
@@ -129,7 +129,11 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
           {/* Actions (visible on hover) */}
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              onClick={() => navigate(`/crm/orcamento/${card.budgetId}`)}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/crm/orcamento/${card.budgetId}`);
+              }}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-accent transition-colors"
             >
               <FileText className="w-3 h-3" />
