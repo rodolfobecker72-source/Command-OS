@@ -13,7 +13,8 @@ const DEFAULT_TEMPLATE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
 CONTRATANTE: {{empresa_cliente}}
 CNPJ: {{cnpj}}
-Responsável: {{responsavel}}
+Representante Legal: {{representante_legal}}
+CPF: {{cpf_representante}}
 E-mail: {{email_cliente}}
 Telefone: {{telefone_cliente}}
 
