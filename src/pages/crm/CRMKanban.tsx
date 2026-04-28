@@ -363,66 +363,37 @@ export function CRMKanban() {
             </DragOverlay>
           </DndContext>
         ) : (
-          <div className="space-y-4">
-            {sortedColumns.map((column) => {
-              const columnCards = cardsByStatus[column.key] || [];
-              return (
-                <div key={column.id} className="border border-border rounded-xl bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-                    <h3 className="font-semibold text-sm">{column.label}</h3>
-                    <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
-                      {columnCards.length}
-                    </span>
-                  </div>
-                  {columnCards.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground text-sm">
-                      Nenhum projeto nesta etapa
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-border">
-                      {columnCards.map((card) => (
-                        <button
-                          key={card.id}
-                          onClick={() => navigate(`/crm/orcamento/${card.budgetId}`)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
-                        >
-                          <ScoreBadge score={card.clientScore} size="sm" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-sm truncate">{card.projectName}</span>
-                              {card.currentVersion > 0 && (
-                                <span className="text-[10px] text-muted-foreground">V{card.currentVersion}</span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">{card.clientName}</p>
-                          </div>
-                          <div className="hidden md:flex items-center gap-1.5 flex-wrap">
-                            {card.serviceTypes.map((type) => (
-                              <Badge key={type} variant="outline" className="text-[10px]">
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                          {card.executionMonth && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 hidden sm:inline-flex">
-                              <CalendarIcon className="w-2.5 h-2.5" />
-                              {formatExecutionMonth(card.executionMonth)}
-                            </Badge>
-                          )}
-                          {card.value && !hideValues && (
-                            <span className="text-sm font-semibold text-accent whitespace-nowrap">
-                              {formatCurrency(card.value)}
-                            </span>
-                          )}
-                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-4">
+              {sortedColumns.map((column) => {
+                const columnCards = cardsByStatus[column.key] || [];
+                const total = columnCards.reduce((sum, c) => sum + (c.value || 0), 0);
+                return (
+                  <ListColumn
+                    key={column.id}
+                    columnKey={column.key}
+                    label={column.label}
+                    cards={columnCards}
+                    total={total}
+                    hideValues={hideValues}
+                  />
+                );
+              })}
+            </div>
+
+            <DragOverlay>
+              {activeCard ? (
+                <div className="bg-card border border-border rounded-md shadow-xl opacity-90">
+                  <KanbanListRow card={activeCard} hideValues={hideValues} />
                 </div>
-              );
-            })}
-          </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
 
         {/* Approval Dialog for Drag */}
