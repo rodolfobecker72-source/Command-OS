@@ -557,8 +557,30 @@ export function BudgetDetail() {
   };
 
   const handleSaveVersionEdit = async () => {
-    if (!currentVersionData) return;
     const { productionCost, totalCosts, totalProjectValue } = editVersionTotals;
+    if (!currentVersionData) {
+      if (editVersionServices.length === 0) {
+        toast.error('Adicione ao menos um serviço antes de salvar.');
+        return;
+      }
+      await addBudgetVersion(budget.id, {
+        services: editVersionServices,
+        operationalCosts: editVersionOperationalCosts,
+        costs: [],
+        productionCost,
+        fixedCostPercentage: 0,
+        nfCostPercentage: editVersionNfPct,
+        totalCost: totalCosts,
+        fullPrice: totalProjectValue,
+        discount4Price: totalProjectValue * 0.96,
+        discount5Price: totalProjectValue * 0.95,
+        margin: editVersionTargetMargin,
+        reason: 'Versão inicial',
+      });
+      setIsEditingVersion(false);
+      toast.success('Versão criada com sucesso!');
+      return;
+    }
     await updateBudgetVersion(budget.id, currentVersionData.id, {
       services: editVersionServices,
       operationalCosts: editVersionOperationalCosts,
