@@ -1247,7 +1247,7 @@ export function BudgetDetail() {
             {activeTab === 'budget' && (
               <>
                 {/* Edit Version Button */}
-                {currentVersionData && budget.status !== 'aprovada' && !isEditingVersion && (
+                {budget.status !== 'aprovada' && !isEditingVersion && (
                   <div className="flex justify-end">
                     <Button variant="outline" size="sm" onClick={startEditingVersion}>
                       <Edit2 className="w-4 h-4 mr-2" />
