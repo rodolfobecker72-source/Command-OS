@@ -3,7 +3,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CRMCard, CRMStatus } from '@/types/crm';
+import { CRMCard, CRMStatus, formatCurrency } from '@/types/crm';
 import { KanbanCard } from './KanbanCard';
 import { motion } from 'framer-motion';
 
