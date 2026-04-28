@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
+import { FileText, Calendar as CalendarIcon, GripVertical, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { DuplicateBudgetDialog } from './DuplicateBudgetDialog';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 function formatExecutionMonth(ym: string): string {
