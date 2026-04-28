@@ -41,6 +41,8 @@ export function EditClient() {
     documentType: 'cnpj' as 'cnpj' | 'cpf',
     document: '',
     responsiblePerson: '',
+    legalRepresentativeName: '',
+    legalRepresentativeCpf: '',
     email: '',
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
@@ -58,6 +60,10 @@ export function EditClient() {
         documentType: docType,
         document: formatDocumentInput(cleanedDoc, docType),
         responsiblePerson: client.responsiblePerson,
+        legalRepresentativeName: client.legalRepresentativeName || '',
+        legalRepresentativeCpf: client.legalRepresentativeCpf
+          ? formatDocumentInput(client.legalRepresentativeCpf, 'cpf')
+          : '',
         email: client.email || '',
         phone: formatPhoneInput(client.phone),
         leadOrigin: client.leadOrigin,
@@ -124,6 +130,8 @@ export function EditClient() {
         companyName: formData.companyName,
         cnpj: formData.document.replace(/\D/g, ''),
         responsiblePerson: formData.responsiblePerson,
+        legalRepresentativeName: formData.legalRepresentativeName,
+        legalRepresentativeCpf: formData.legalRepresentativeCpf.replace(/\D/g, ''),
         email: formData.email.trim(),
         phone: formData.phone.replace(/\D/g, ''),
         leadOrigin: formData.leadOrigin as LeadOrigin,
@@ -356,6 +364,37 @@ export function EditClient() {
                   )}
                 </div>
 
+                {/* Legal Representative */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border bg-muted/30">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-semibold">Representante Legal da Empresa</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="legalRepresentativeName">Nome</Label>
+                    <Input
+                      id="legalRepresentativeName"
+                      placeholder="Nome completo"
+                      value={formData.legalRepresentativeName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, legalRepresentativeName: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="legalRepresentativeCpf">CPF</Label>
+                    <Input
+                      id="legalRepresentativeCpf"
+                      placeholder="000.000.000-00"
+                      value={formData.legalRepresentativeCpf}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          legalRepresentativeCpf: formatDocumentInput(e.target.value, 'cpf'),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
 
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">
