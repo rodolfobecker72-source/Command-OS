@@ -488,11 +488,17 @@ export function BudgetDetail() {
 
   // ===== Inline version editing handlers =====
   const startEditingVersion = () => {
-    if (!currentVersionData) return;
-    setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
-    setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
-    setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
-    setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    if (currentVersionData) {
+      setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
+      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+      setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
+      setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    } else {
+      setEditVersionServices([]);
+      setEditVersionOperationalCosts([]);
+      setEditVersionNfPct(13);
+      setEditVersionTargetMargin(0);
+    }
     setIsEditingVersion(true);
   };
 
@@ -551,8 +557,30 @@ export function BudgetDetail() {
   };
 
   const handleSaveVersionEdit = async () => {
-    if (!currentVersionData) return;
     const { productionCost, totalCosts, totalProjectValue } = editVersionTotals;
+    if (!currentVersionData) {
+      if (editVersionServices.length === 0) {
+        toast.error('Adicione ao menos um serviço antes de salvar.');
+        return;
+      }
+      await addBudgetVersion(budget.id, {
+        services: editVersionServices,
+        operationalCosts: editVersionOperationalCosts,
+        costs: [],
+        productionCost,
+        fixedCostPercentage: 0,
+        nfCostPercentage: editVersionNfPct,
+        totalCost: totalCosts,
+        fullPrice: totalProjectValue,
+        discount4Price: totalProjectValue * 0.96,
+        discount5Price: totalProjectValue * 0.95,
+        margin: editVersionTargetMargin,
+        reason: 'Versão inicial',
+      });
+      setIsEditingVersion(false);
+      toast.success('Versão criada com sucesso!');
+      return;
+    }
     await updateBudgetVersion(budget.id, currentVersionData.id, {
       services: editVersionServices,
       operationalCosts: editVersionOperationalCosts,
@@ -1219,17 +1247,17 @@ export function BudgetDetail() {
             {activeTab === 'budget' && (
               <>
                 {/* Edit Version Button */}
-                {currentVersionData && budget.status !== 'aprovada' && !isEditingVersion && (
+                {budget.status !== 'aprovada' && !isEditingVersion && (
                   <div className="flex justify-end">
                     <Button variant="outline" size="sm" onClick={startEditingVersion}>
                       <Edit2 className="w-4 h-4 mr-2" />
-                      Editar versão atual
+                      {currentVersionData ? 'Editar versão atual' : 'Adicionar serviços'}
                     </Button>
                   </div>
                 )}
                 {isEditingVersion && (
                   <div className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                    <p className="text-sm font-medium text-warning">Editando V{currentVersionData?.version} — alterações serão salvas na versão atual</p>
+                    <p className="text-sm font-medium text-warning">{currentVersionData ? `Editando V${currentVersionData.version} — alterações serão salvas na versão atual` : 'Criando primeira versão do orçamento'}</p>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveVersionEdit}>
                         <Save className="w-4 h-4 mr-2" />
@@ -1267,14 +1295,13 @@ export function BudgetDetail() {
                   </Card>
                 )}
                 {/* Services by Type */}
-                {currentVersionData && ((isEditingVersion ? editVersionServices.length > 0 : (currentVersionData.services && currentVersionData.services.length > 0))) && (() => {
-                  const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
-                  const cvd = currentVersionData;
-                  const opTotal = (isEditingVersion ? editVersionOperationalCosts : (cvd.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
+                {((isEditingVersion && editVersionServices.length > 0) || (currentVersionData && currentVersionData.services && currentVersionData.services.length > 0)) && (() => {
+                  const displayServices = isEditingVersion ? editVersionServices : (currentVersionData?.services || []);
+                  const opTotal = (isEditingVersion ? editVersionOperationalCosts : (currentVersionData?.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
                   const totalProdCost = displayServices.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
-                  const displayNfPct = isEditingVersion ? editVersionNfPct : cvd.nfCostPercentage;
-                  const displayMargin = isEditingVersion ? editVersionTargetMargin : cvd.margin;
-                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : cvd.fullPrice;
+                  const displayNfPct = isEditingVersion ? editVersionNfPct : (currentVersionData?.nfCostPercentage ?? 13);
+                  const displayMargin = isEditingVersion ? editVersionTargetMargin : (currentVersionData?.margin ?? 0);
+                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : (currentVersionData?.fullPrice ?? 0);
                   const projNfValue = displayFullPrice * (displayNfPct / 100);
                   const projMarginValue = displayFullPrice - totalProdCost - opTotal - projNfValue;
 
