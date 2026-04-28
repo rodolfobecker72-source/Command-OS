@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Film, Camera, Smartphone, FileText, Calendar, AlertCircle } from 'lucide-react';
+import { GripVertical, Film, Camera, Smartphone, FileText, Calendar, AlertCircle, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCRM } from '@/contexts/CRMContext';
+import { DuplicateBudgetDialog } from './DuplicateBudgetDialog';
 
 interface KanbanCardProps {
   card: CRMCard;
@@ -29,6 +31,7 @@ function formatExecutionMonth(ym: string): string {
 
 export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
   const navigate = useNavigate();
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
   const { getCategoryLabel } = useCRM();
   const {
     attributes,
@@ -127,7 +130,7 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
           </div>
 
           {/* Actions (visible on hover) */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
@@ -139,9 +142,29 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
               <FileText className="w-3 h-3" />
               Ver orçamento
             </button>
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDuplicateOpen(true);
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+              title="Duplicar para outros meses"
+            >
+              <Copy className="w-3 h-3" />
+              Duplicar
+            </button>
           </div>
         </div>
       </div>
+
+      <DuplicateBudgetDialog
+        open={duplicateOpen}
+        onOpenChange={setDuplicateOpen}
+        budgetId={card.budgetId}
+        projectName={card.projectName}
+        baseExecutionMonth={card.executionMonth}
+      />
     </motion.div>
   );
 }
