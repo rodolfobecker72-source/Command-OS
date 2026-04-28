@@ -919,6 +919,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     }
     return createdCount;
   };
+
+  const updateBudget = async (id: string, updates: Partial<Budget>) => {
     try {
       const dbUpdates: any = {};
       if (updates.proposalId !== undefined) dbUpdates.proposal_id = updates.proposalId;
