@@ -61,7 +61,9 @@ CONTRATADA: {{empresa_contratada}}`;
 const AVAILABLE_VARIABLES = [
   { key: '{{empresa_cliente}}', desc: 'Nome da empresa do cliente' },
   { key: '{{cnpj}}', desc: 'CNPJ do cliente' },
-  { key: '{{responsavel}}', desc: 'Responsável pelo cliente' },
+  { key: '{{responsavel}}', desc: 'Responsável pelo cliente (usa representante legal se cadastrado)' },
+  { key: '{{representante_legal}}', desc: 'Nome do representante legal do cliente' },
+  { key: '{{cpf_representante}}', desc: 'CPF do representante legal do cliente' },
   { key: '{{email_cliente}}', desc: 'E-mail do cliente' },
   { key: '{{telefone_cliente}}', desc: 'Telefone do cliente' },
   { key: '{{empresa_contratada}}', desc: 'Nome da sua empresa (do layout)' },
