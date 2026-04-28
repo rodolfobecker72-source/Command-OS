@@ -1251,13 +1251,13 @@ export function BudgetDetail() {
                   <div className="flex justify-end">
                     <Button variant="outline" size="sm" onClick={startEditingVersion}>
                       <Edit2 className="w-4 h-4 mr-2" />
-                      Editar versão atual
+                      {currentVersionData ? 'Editar versão atual' : 'Adicionar serviços'}
                     </Button>
                   </div>
                 )}
                 {isEditingVersion && (
                   <div className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                    <p className="text-sm font-medium text-warning">Editando V{currentVersionData?.version} — alterações serão salvas na versão atual</p>
+                    <p className="text-sm font-medium text-warning">{currentVersionData ? `Editando V${currentVersionData.version} — alterações serão salvas na versão atual` : 'Criando primeira versão do orçamento'}</p>
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveVersionEdit}>
                         <Save className="w-4 h-4 mr-2" />
