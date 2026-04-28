@@ -43,6 +43,8 @@ function clientFromDb(row: any): Client {
     companyName: row.company_name,
     cnpj: row.cnpj,
     responsiblePerson: row.responsible_person,
+    legalRepresentativeName: row.legal_representative_name || '',
+    legalRepresentativeCpf: row.legal_representative_cpf || '',
     email: row.email,
     phone: row.phone,
     leadOrigin: row.lead_origin as LeadOrigin,
@@ -59,6 +61,8 @@ function clientToDb(c: Partial<Client>, workspaceId?: string): any {
   if (c.companyName !== undefined) row.company_name = c.companyName;
   if (c.cnpj !== undefined) row.cnpj = c.cnpj;
   if (c.responsiblePerson !== undefined) row.responsible_person = c.responsiblePerson;
+  if (c.legalRepresentativeName !== undefined) row.legal_representative_name = c.legalRepresentativeName;
+  if (c.legalRepresentativeCpf !== undefined) row.legal_representative_cpf = c.legalRepresentativeCpf;
   if (c.email !== undefined) row.email = c.email;
   if (c.phone !== undefined) row.phone = c.phone;
   if (c.leadOrigin !== undefined) row.lead_origin = c.leadOrigin;
