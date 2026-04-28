@@ -12,6 +12,7 @@ interface KanbanColumnProps {
   cards: CRMCard[];
   color: string;
   label?: string;
+  hideValue?: boolean;
 }
 
 const defaultColumnColors: Record<string, { bg: string; border: string; dot: string }> = {
