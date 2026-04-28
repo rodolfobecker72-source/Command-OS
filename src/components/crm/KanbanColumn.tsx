@@ -27,7 +27,7 @@ const defaultColumnColors: Record<string, { bg: string; border: string; dot: str
 
 const fallbackColors = { bg: 'bg-muted/50', border: 'border-border', dot: 'bg-muted-foreground' };
 
-export function KanbanColumn({ status, cards, label }: KanbanColumnProps) {
+export function KanbanColumn({ status, cards, label, hideValue }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   const colors = defaultColumnColors[status] || fallbackColors;
@@ -65,7 +65,7 @@ export function KanbanColumn({ status, cards, label }: KanbanColumnProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <KanbanCard card={card} />
+              <KanbanCard card={card} hideValue={hideValue} />
             </motion.div>
           ))}
         </SortableContext>
