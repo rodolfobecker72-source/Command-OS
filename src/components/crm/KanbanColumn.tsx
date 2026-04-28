@@ -31,6 +31,7 @@ export function KanbanColumn({ status, cards, label, hideValue }: KanbanColumnPr
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   const colors = defaultColumnColors[status] || fallbackColors;
+  const total = cards.reduce((sum, c) => sum + (c.value || 0), 0);
 
   return (
     <div
@@ -46,9 +47,14 @@ export function KanbanColumn({ status, cards, label, hideValue }: KanbanColumnPr
             <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
             <h3 className="font-semibold text-sm">{label || status}</h3>
           </div>
-          <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
-            {cards.length}
-          </span>
+          <div className="flex items-center gap-2">
+            {!hideValue && total > 0 && (
+              <span className="text-[11px] font-semibold text-accent">{formatCurrency(total)}</span>
+            )}
+            <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+              {cards.length}
+            </span>
+          </div>
         </div>
       </div>
 
