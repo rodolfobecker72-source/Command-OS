@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
+import { FileText, Calendar as CalendarIcon, GripVertical, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { DuplicateBudgetDialog } from './DuplicateBudgetDialog';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 function formatExecutionMonth(ym: string): string {
@@ -20,6 +22,7 @@ interface Props {
 
 export function KanbanListRow({ card, hideValues }: Props) {
   const navigate = useNavigate();
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     resizeObserverConfig: { disabled: true },
@@ -74,11 +77,30 @@ export function KanbanListRow({ card, hideValues }: Props) {
       >
         <FileText className="w-4 h-4" />
       </button>
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          setDuplicateOpen(true);
+        }}
+        className="text-muted-foreground hover:text-accent transition-colors shrink-0"
+        title="Duplicar para outros meses"
+      >
+        <Copy className="w-4 h-4" />
+      </button>
       {card.value !== undefined && card.value !== null && !hideValues && (
         <span className="text-sm font-semibold text-accent whitespace-nowrap ml-auto min-w-[110px] text-right">
           {formatCurrency(card.value)}
         </span>
       )}
+      <DuplicateBudgetDialog
+        open={duplicateOpen}
+        onOpenChange={setDuplicateOpen}
+        budgetId={card.budgetId}
+        projectName={card.projectName}
+        baseExecutionMonth={card.executionMonth}
+      />
     </div>
   );
 }

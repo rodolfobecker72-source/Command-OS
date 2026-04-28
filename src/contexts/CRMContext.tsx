@@ -214,6 +214,7 @@ interface CRMContextType {
   getBudget: (id: string) => Budget | undefined;
 
   addBudgetVersion: (budgetId: string, version: Omit<BudgetVersion, 'id' | 'budgetId' | 'version' | 'createdAt'>) => Promise<void>;
+  duplicateBudget: (budgetId: string, executionMonths: string[]) => Promise<number>;
   updateBudgetVersion: (budgetId: string, versionId: string, updates: Partial<BudgetVersion>) => Promise<void>;
   deleteLastVersion: (budgetId: string) => Promise<void>;
   approveBudget: (budgetId: string, versionNumber: number, executionMonth?: string) => Promise<void>;
@@ -831,6 +832,92 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       toast.error('Erro ao criar orçamento: ' + e.message);
       return null;
     }
+  };
+
+  const duplicateBudget = async (budgetId: string, executionMonths: string[]): Promise<number> => {
+    const wsId = await ensureWorkspace();
+    if (!wsId) {
+      toast.error('Workspace não encontrado.');
+      return 0;
+    }
+    const original = budgets.find(b => b.id === budgetId);
+    if (!original) {
+      toast.error('Orçamento original não encontrado.');
+      return 0;
+    }
+    // Próximo proposalId disponível
+    const numericIds = budgets.map(b => parseInt(b.proposalId, 10)).filter(n => !isNaN(n));
+    let nextId = numericIds.length > 0 ? Math.max(...numericIds, 899) + 1 : 900;
+
+    // Pega a versão a duplicar: aprovada (se houver) ou a corrente
+    const sourceVersion = original.versions.find(v => v.version === (original.approvedVersion ?? original.currentVersion));
+
+    let createdCount = 0;
+    for (const month of executionMonths) {
+      try {
+        const { data: newBudgetRow, error: insErr } = await supabase.from('budgets').insert({
+          workspace_id: wsId,
+          proposal_id: String(nextId),
+          project_name: original.projectName,
+          project_description: original.projectDescription || '',
+          client_id: original.clientId,
+          service_type: original.serviceType || '',
+          objective: original.objective || '',
+          description: original.description || '',
+          payment_terms: original.paymentTerms || '',
+          includes_tax: original.includesTax,
+          includes_logistics: original.includesLogistics,
+          includes_accommodation: original.includesAccommodation,
+          includes_meals: original.includesMeals,
+          includes_raw_material: original.includesRawMaterial ?? false,
+          includes_technical_visit: original.includesTechnicalVisit ?? false,
+          has_execution_date: false,
+          execution_start_date: null,
+          execution_end_date: null,
+          location: original.location ?? '',
+          drive_url: original.driveUrl || '',
+          status: 'oportunidade_mapeada',
+          execution_month: month,
+        }).select().single();
+        if (insErr) throw insErr;
+
+        let createdVersion: BudgetVersion | null = null;
+        if (sourceVersion) {
+          const { data: vRow, error: vErr } = await supabase.from('budget_versions').insert({
+            workspace_id: wsId,
+            budget_id: newBudgetRow.id,
+            version: 1,
+            services: sourceVersion.services as any,
+            operational_costs: sourceVersion.operationalCosts as any,
+            costs: sourceVersion.costs as any,
+            production_cost: sourceVersion.productionCost,
+            fixed_cost_percentage: sourceVersion.fixedCostPercentage,
+            nf_cost_percentage: sourceVersion.nfCostPercentage,
+            total_cost: sourceVersion.totalCost,
+            full_price: sourceVersion.fullPrice,
+            discount4_price: sourceVersion.discount4Price,
+            discount5_price: sourceVersion.discount5Price,
+            margin: sourceVersion.margin,
+            reason: `Duplicado de #${original.proposalId} (${month})`,
+            is_rejected: false,
+            rejection_reason: null,
+          }).select().single();
+          if (vErr) throw vErr;
+          createdVersion = budgetVersionFromDb(vRow);
+          await supabase.from('budgets').update({ current_version: 1 }).eq('id', newBudgetRow.id);
+          newBudgetRow.current_version = 1;
+        }
+
+        const newBudget = budgetFromDb(newBudgetRow, createdVersion ? [createdVersion] : []);
+        setBudgets(prev => [...prev, newBudget]);
+        nextId++;
+        createdCount++;
+      } catch (e: any) {
+        console.error('[CRM] duplicateBudget: erro para mês', month, e.message);
+        toast.error(`Erro ao duplicar para ${month}: ${e.message}`);
+      }
+    }
+    return createdCount;
   };
 
   const updateBudget = async (id: string, updates: Partial<Budget>) => {
@@ -1510,7 +1597,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     isLoading,
     clients, addClient, updateClient, deleteClient, getClient, getClientScoreBreakdown,
     budgets, addBudget, updateBudget, updateBudgetStatus, deleteBudget, getBudget,
-    addBudgetVersion, updateBudgetVersion, deleteLastVersion, approveBudget,
+    addBudgetVersion, updateBudgetVersion, deleteLastVersion, approveBudget, duplicateBudget,
     updateExecution, updateExecutionCost, addExtraCost, removeExtraCost, finalizeExecution, addDeliveryLink, removeDeliveryLink,
     kanbanColumns, addKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, getStatusLabel,
     serviceCategories, serviceObjectives, addServiceCategory, updateServiceCategory, deleteServiceCategory, reorderServiceCategories,
