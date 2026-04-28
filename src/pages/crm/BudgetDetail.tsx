@@ -1295,14 +1295,13 @@ export function BudgetDetail() {
                   </Card>
                 )}
                 {/* Services by Type */}
-                {currentVersionData && ((isEditingVersion ? editVersionServices.length > 0 : (currentVersionData.services && currentVersionData.services.length > 0))) && (() => {
-                  const displayServices = isEditingVersion ? editVersionServices : currentVersionData.services;
-                  const cvd = currentVersionData;
-                  const opTotal = (isEditingVersion ? editVersionOperationalCosts : (cvd.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
+                {((isEditingVersion && editVersionServices.length > 0) || (currentVersionData && currentVersionData.services && currentVersionData.services.length > 0)) && (() => {
+                  const displayServices = isEditingVersion ? editVersionServices : (currentVersionData?.services || []);
+                  const opTotal = (isEditingVersion ? editVersionOperationalCosts : (currentVersionData?.operationalCosts || [])).reduce((sum, c) => sum + c.value, 0);
                   const totalProdCost = displayServices.reduce((sum, s) => sum + s.costs.reduce((s2, c) => s2 + c.value, 0), 0);
-                  const displayNfPct = isEditingVersion ? editVersionNfPct : cvd.nfCostPercentage;
-                  const displayMargin = isEditingVersion ? editVersionTargetMargin : cvd.margin;
-                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : cvd.fullPrice;
+                  const displayNfPct = isEditingVersion ? editVersionNfPct : (currentVersionData?.nfCostPercentage ?? 13);
+                  const displayMargin = isEditingVersion ? editVersionTargetMargin : (currentVersionData?.margin ?? 0);
+                  const displayFullPrice = isEditingVersion ? editVersionTotals.totalProjectValue : (currentVersionData?.fullPrice ?? 0);
                   const projNfValue = displayFullPrice * (displayNfPct / 100);
                   const projMarginValue = displayFullPrice - totalProdCost - opTotal - projNfValue;
 
