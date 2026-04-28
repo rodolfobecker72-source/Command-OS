@@ -1369,6 +1369,16 @@ export function BudgetDetail() {
                                     ) : null}
                                   </div>
                                 </div>
+                                {isEditingVersion && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeEditService(service.id)}
+                                    title="Remover serviço"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                )}
                               </div>
                               {isEditingVersion && (
                                 <Textarea
