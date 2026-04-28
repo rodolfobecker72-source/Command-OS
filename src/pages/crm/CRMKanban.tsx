@@ -38,7 +38,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Eye, EyeOff, LayoutGrid, List, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { formatCurrency } from '@/types/crm';
 import { useNavigate } from 'react-router-dom';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -56,6 +59,8 @@ export function CRMKanban() {
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [hideValues, setHideValues] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -293,6 +298,28 @@ export function CRMKanban() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => setHideValues(v => !v)}
+              title={hideValues ? 'Mostrar valores' : 'Ocultar valores'}
+            >
+              {hideValues ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <span className="hidden md:inline ml-1">{hideValues ? 'Mostrar valores' : 'Ocultar valores'}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => setViewMode(v => v === 'kanban' ? 'list' : 'kanban')}
+              title={viewMode === 'kanban' ? 'Visualizar em lista' : 'Visualizar em kanban'}
+            >
+              {viewMode === 'kanban' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+              <span className="hidden md:inline ml-1">{viewMode === 'kanban' ? 'Lista' : 'Kanban'}</span>
+            </Button>
           </div>
           <Button
             onClick={() => navigate('/crm/orcamento/novo')}
@@ -303,33 +330,97 @@ export function CRMKanban() {
           </Button>
         </div>
 
-        {/* Kanban Board */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
-            {sortedColumns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                status={column.key}
-                cards={cardsByStatus[column.key] || []}
-                color=""
-                label={column.label}
-              />
-            ))}
-          </div>
+        {/* Board: Kanban or List */}
+        {viewMode === 'kanban' ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+              {sortedColumns.map((column) => (
+                <KanbanColumn
+                  key={column.id}
+                  status={column.key}
+                  cards={cardsByStatus[column.key] || []}
+                  color=""
+                  label={column.label}
+                  hideValue={hideValues}
+                />
+              ))}
+            </div>
 
-          <DragOverlay>
-            {activeCard ? (
-              <div className="transform rotate-3 opacity-90">
-                <KanbanCard card={activeCard} />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            <DragOverlay>
+              {activeCard ? (
+                <div className="transform rotate-3 opacity-90">
+                  <KanbanCard card={activeCard} hideValue={hideValues} />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        ) : (
+          <div className="space-y-4">
+            {sortedColumns.map((column) => {
+              const columnCards = cardsByStatus[column.key] || [];
+              return (
+                <div key={column.id} className="border border-border rounded-xl bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+                    <h3 className="font-semibold text-sm">{column.label}</h3>
+                    <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+                      {columnCards.length}
+                    </span>
+                  </div>
+                  {columnCards.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground text-sm">
+                      Nenhum projeto nesta etapa
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border">
+                      {columnCards.map((card) => (
+                        <button
+                          key={card.id}
+                          onClick={() => navigate(`/crm/orcamento/${card.budgetId}`)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors text-left"
+                        >
+                          <ScoreBadge score={card.clientScore} size="sm" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm truncate">{card.projectName}</span>
+                              {card.currentVersion > 0 && (
+                                <span className="text-[10px] text-muted-foreground">V{card.currentVersion}</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{card.clientName}</p>
+                          </div>
+                          <div className="hidden md:flex items-center gap-1.5 flex-wrap">
+                            {card.serviceTypes.map((type) => (
+                              <Badge key={type} variant="outline" className="text-[10px]">
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                          {card.executionMonth && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 hidden sm:inline-flex">
+                              <CalendarIcon className="w-2.5 h-2.5" />
+                              {formatExecutionMonth(card.executionMonth)}
+                            </Badge>
+                          )}
+                          {card.value && !hideValues && (
+                            <span className="text-sm font-semibold text-accent whitespace-nowrap">
+                              {formatCurrency(card.value)}
+                            </span>
+                          )}
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Approval Dialog for Drag */}
         <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>

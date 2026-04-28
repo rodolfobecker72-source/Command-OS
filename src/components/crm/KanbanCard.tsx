@@ -10,6 +10,7 @@ import { useCRM } from '@/contexts/CRMContext';
 
 interface KanbanCardProps {
   card: CRMCard;
+  hideValue?: boolean;
 }
 
 const serviceIcons: Record<string, typeof Film> = {
@@ -26,7 +27,7 @@ function formatExecutionMonth(ym: string): string {
   return `${MONTH_NAMES_PT[idx] || month}/${year}`;
 }
 
-export function KanbanCard({ card }: KanbanCardProps) {
+export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
   const navigate = useNavigate();
   const { getCategoryLabel } = useCRM();
   const {
@@ -49,17 +50,15 @@ export function KanbanCard({ card }: KanbanCardProps) {
     <motion.div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`kanban-card group ${isDragging ? 'opacity-50 shadow-xl z-50' : ''}`}
+      className={`kanban-card group cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 shadow-xl z-50' : ''}`}
     >
       <div className="flex items-start gap-3">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-        >
+        {/* Drag Handle (visual indicator) */}
+        <div className="mt-1 text-muted-foreground">
           <GripVertical className="w-4 h-4" />
         </div>
 
@@ -114,7 +113,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
 
           {/* Value & Execution Month */}
           <div className="flex items-center justify-between flex-wrap gap-1">
-            {card.value && (
+            {card.value && !hideValue && (
               <span className="text-sm font-semibold text-accent">
                 {formatCurrency(card.value)}
               </span>
@@ -130,7 +129,11 @@ export function KanbanCard({ card }: KanbanCardProps) {
           {/* Actions (visible on hover) */}
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              onClick={() => navigate(`/crm/orcamento/${card.budgetId}`)}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/crm/orcamento/${card.budgetId}`);
+              }}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-accent transition-colors"
             >
               <FileText className="w-3 h-3" />
