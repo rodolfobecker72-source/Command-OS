@@ -38,7 +38,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Eye, EyeOff, LayoutGrid, List, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { formatCurrency } from '@/types/crm';
 import { useNavigate } from 'react-router-dom';
 
 const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -56,6 +59,8 @@ export function CRMKanban() {
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'execution'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [hideValues, setHideValues] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
 
   // Approval via drag states
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
