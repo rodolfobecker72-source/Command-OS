@@ -55,6 +55,41 @@ function formatExecutionMonth(ym: string): string {
   return `${MONTH_NAMES_PT[idx] || month}/${year}`;
 }
 
+function ListColumn({ columnKey, label, cards, total, hideValues }: { columnKey: string; label: string; cards: CRMCard[]; total: number; hideValues: boolean }) {
+  const { setNodeRef, isOver } = useDroppable({ id: columnKey });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`border border-border rounded-xl bg-card overflow-hidden ${isOver ? 'ring-2 ring-accent' : ''}`}
+    >
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+        <h3 className="font-semibold text-sm">{label}</h3>
+        <div className="flex items-center gap-2">
+          {!hideValues && total > 0 && (
+            <span className="text-xs font-semibold text-accent">{formatCurrency(total)}</span>
+          )}
+          <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+            {cards.length}
+          </span>
+        </div>
+      </div>
+      {cards.length === 0 ? (
+        <div className="text-center py-6 text-muted-foreground text-sm">
+          Nenhum projeto nesta etapa
+        </div>
+      ) : (
+        <SortableContext items={cards.map(c => c.id)} strategy={verticalListSortingStrategy}>
+          <div className="divide-y divide-border">
+            {cards.map((card) => (
+              <KanbanListRow key={card.id} card={card} hideValues={hideValues} />
+            ))}
+          </div>
+        </SortableContext>
+      )}
+    </div>
+  );
+}
+
 export function CRMKanban() {
   const { getCRMCards, moveCard, kanbanColumns, approveBudget, updateBudget } = useCRM();
   const navigate = useNavigate();
