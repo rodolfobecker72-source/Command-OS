@@ -488,11 +488,17 @@ export function BudgetDetail() {
 
   // ===== Inline version editing handlers =====
   const startEditingVersion = () => {
-    if (!currentVersionData) return;
-    setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
-    setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
-    setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
-    setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    if (currentVersionData) {
+      setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
+      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+      setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
+      setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+    } else {
+      setEditVersionServices([]);
+      setEditVersionOperationalCosts([]);
+      setEditVersionNfPct(13);
+      setEditVersionTargetMargin(0);
+    }
     setIsEditingVersion(true);
   };
 
