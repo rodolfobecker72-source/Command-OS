@@ -377,6 +377,8 @@ export type Database = {
           email: string
           id: string
           lead_origin: string
+          legal_representative_cpf: string
+          legal_representative_name: string
           phone: string
           responsible_person: string
           score: number
@@ -391,6 +393,8 @@ export type Database = {
           email?: string
           id?: string
           lead_origin?: string
+          legal_representative_cpf?: string
+          legal_representative_name?: string
           phone?: string
           responsible_person?: string
           score?: number
@@ -405,6 +409,8 @@ export type Database = {
           email?: string
           id?: string
           lead_origin?: string
+          legal_representative_cpf?: string
+          legal_representative_name?: string
           phone?: string
           responsible_person?: string
           score?: number
