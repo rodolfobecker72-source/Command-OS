@@ -495,6 +495,9 @@ export async function generateProposalPDF({
       const costDescLines = doc.splitTextToSize(cost.description, contentWidth - 15);
       const itemHeight = costDescLines.length * 5 + 3;
       ensureSpace(itemHeight);
+      doc.setFontSize(smallSize);
+      doc.setFont('helvetica', 'normal');
+      setColor(darkGray);
       
       doc.text(`${costIndex + 1}`, opCol1, y);
       doc.text(costDescLines, opCol2, y);
