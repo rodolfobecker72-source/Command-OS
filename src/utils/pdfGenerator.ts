@@ -400,6 +400,9 @@ export async function generateProposalPDF({
       setColor(darkGray);
       descLines.forEach((line: string, idx: number) => {
         ensureSpace(6);
+        doc.setFontSize(normalSize);
+        doc.setFont('helvetica', 'normal');
+        setColor(darkGray);
         if (idx < descLines.length - 1) {
           doc.text(line, margin, y, { align: 'justify', maxWidth: contentWidth });
         } else {
@@ -430,6 +433,9 @@ export async function generateProposalPDF({
         const costDescLines = doc.splitTextToSize(cost.description, contentWidth - 15);
         const itemHeight = costDescLines.length * 5 + 3;
         ensureSpace(itemHeight);
+        doc.setFontSize(smallSize);
+        doc.setFont('helvetica', 'normal');
+        setColor(darkGray);
         
         doc.text(`${costIndex + 1}`, col1, y);
         doc.text(costDescLines, col2, y);
@@ -489,6 +495,9 @@ export async function generateProposalPDF({
       const costDescLines = doc.splitTextToSize(cost.description, contentWidth - 15);
       const itemHeight = costDescLines.length * 5 + 3;
       ensureSpace(itemHeight);
+      doc.setFontSize(smallSize);
+      doc.setFont('helvetica', 'normal');
+      setColor(darkGray);
       
       doc.text(`${costIndex + 1}`, opCol1, y);
       doc.text(costDescLines, opCol2, y);
