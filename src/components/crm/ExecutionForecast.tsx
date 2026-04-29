@@ -16,7 +16,7 @@ interface ForecastEntry {
   label: string;
   count: number;
   value: number;
-  projects: { name: string; client: string; value: number }[];
+  projects: { proposalId?: string; name: string; client: string; value: number }[];
 }
 
 interface ExecutionForecastProps {
