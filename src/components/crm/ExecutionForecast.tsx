@@ -269,7 +269,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
               <TableBody>
                 {projectsDialog?.projects.map((p, i) => (
                   <TableRow key={i}>
-                    <TableCell className="text-sm font-medium py-3">{p.name}</TableCell>
+                    <TableCell className="text-sm font-medium py-3">{p.proposalId ? `#${p.proposalId} — ${p.name}` : p.name}</TableCell>
                     <TableCell className="text-sm py-3">{p.client}</TableCell>
                     <TableCell className="text-right text-sm font-semibold py-3">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
