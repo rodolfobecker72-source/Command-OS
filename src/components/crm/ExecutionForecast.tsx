@@ -16,7 +16,7 @@ interface ForecastEntry {
   label: string;
   count: number;
   value: number;
-  projects: { name: string; client: string; value: number }[];
+  projects: { proposalId?: string; name: string; client: string; value: number }[];
 }
 
 interface ExecutionForecastProps {
@@ -47,7 +47,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
   const currentYear = new Date().getFullYear();
   const [filterYear, setFilterYear] = useState(String(currentYear));
   const [filterMonth, setFilterMonth] = useState('all');
-  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { name: string; client: string; value: number }[] } | null>(null);
+  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { proposalId?: string; name: string; client: string; value: number }[] } | null>(null);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
@@ -269,7 +269,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
               <TableBody>
                 {projectsDialog?.projects.map((p, i) => (
                   <TableRow key={i}>
-                    <TableCell className="text-sm font-medium py-3">{p.name}</TableCell>
+                    <TableCell className="text-sm font-medium py-3">{p.proposalId ? `#${p.proposalId} — ${p.name}` : p.name}</TableCell>
                     <TableCell className="text-sm py-3">{p.client}</TableCell>
                     <TableCell className="text-right text-sm font-semibold py-3">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
