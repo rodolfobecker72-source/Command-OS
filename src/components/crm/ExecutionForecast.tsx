@@ -252,40 +252,54 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
 
       {/* Projects Dialog — larger */}
       <Dialog open={!!projectsDialog} onOpenChange={() => setProjectsDialog(null)}>
-        <DialogContent className="max-w-2xl w-[95vw]">
+        <DialogContent className="max-w-5xl w-[95vw]">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-primary" />
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              <FolderOpen className="w-6 h-6 text-primary" />
               Projetos — {projectsDialog?.label}
             </DialogTitle>
           </DialogHeader>
-          <div className="max-h-[60vh] overflow-auto">
+          <div className="max-h-[70vh] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Projeto</TableHead>
-                  <TableHead className="text-xs">Cliente</TableHead>
-                  <TableHead className="text-xs text-right">Valor</TableHead>
+                  <TableHead className="text-sm">ID</TableHead>
+                  <TableHead className="text-sm">Projeto</TableHead>
+                  <TableHead className="text-sm">Cliente</TableHead>
+                  <TableHead className="text-sm text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {projectsDialog?.projects.map((p, i) => (
                   <TableRow key={i}>
-                    <TableCell className="text-sm font-medium py-3">{p.proposalId ? `#${p.proposalId} — ${p.name}` : p.name}</TableCell>
-                    <TableCell className="text-sm py-3">{p.client}</TableCell>
-                    <TableCell className="text-right text-sm font-semibold py-3">{formatCurrency(p.value)}</TableCell>
+                    <TableCell className="text-base font-mono text-muted-foreground py-3.5">{p.proposalId || '—'}</TableCell>
+                    <TableCell className="text-base font-medium py-3.5">
+                      {p.id ? (
+                        <button
+                          type="button"
+                          onClick={() => { setProjectsDialog(null); navigate(`/crm/orcamento/${p.id}`); }}
+                          className="text-primary hover:underline text-left"
+                        >
+                          {p.name}
+                        </button>
+                      ) : (
+                        p.name
+                      )}
+                    </TableCell>
+                    <TableCell className="text-base py-3.5">{p.client}</TableCell>
+                    <TableCell className="text-right text-base font-semibold py-3.5">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
                 ))}
                 {projectsDialog?.projects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
+                    <TableCell colSpan={4} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
           {projectsDialog && projectsDialog.projects.length > 0 && (
-            <div className="flex justify-between items-center text-sm font-semibold pt-3 border-t">
+            <div className="flex justify-between items-center text-base font-semibold pt-3 border-t">
               <span className="text-muted-foreground">{projectsDialog.projects.length} projeto{projectsDialog.projects.length !== 1 ? 's' : ''}</span>
               <span>Total: {formatCurrency(projectsDialog.projects.reduce((s, p) => s + p.value, 0))}</span>
             </div>
