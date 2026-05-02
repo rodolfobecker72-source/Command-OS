@@ -354,6 +354,7 @@ export interface CRMCard {
   rejectionReason?: string;
   rejectionObservation?: string;
   createdAt: string;
+  isRecurring?: boolean;
 }
 
 // Utility functions
