@@ -103,7 +103,7 @@ export function CRMDashboard() {
   // Execution forecast
   const executionForecast = useMemo(() => {
     const allApproved = budgets.filter(b => b.status === 'aprovada');
-    const map: Record<string, { count: number; value: number; projects: { proposalId: string; name: string; client: string; value: number }[] }> = {};
+    const map: Record<string, { count: number; value: number; projects: { id: string; proposalId: string; name: string; client: string; value: number }[] }> = {};
     allApproved.forEach(b => {
       const month = b.executionMonth;
       if (!month) return;
