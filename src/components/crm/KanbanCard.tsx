@@ -71,9 +71,17 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-sm truncate">{card.projectName}</h4>
-              <p className="text-xs text-muted-foreground truncate">
-                {card.clientName}
-              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-xs text-muted-foreground truncate">
+                  {card.clientName}
+                </p>
+                {card.isRecurring && (
+                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wide text-accent border border-accent/30 bg-accent/5 rounded px-1 py-0 leading-none h-4">
+                    <Copy className="w-2.5 h-2.5" />
+                    Recorrente
+                  </span>
+                )}
+              </div>
             </div>
             <ScoreBadge score={card.clientScore} size="sm" />
           </div>

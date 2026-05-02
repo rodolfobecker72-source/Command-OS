@@ -49,6 +49,12 @@ export function KanbanListRow({ card, hideValues }: Props) {
           {card.currentVersion > 0 && (
             <span className="text-[10px] text-muted-foreground">V{card.currentVersion}</span>
           )}
+          {card.isRecurring && (
+            <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wide text-accent border border-accent/30 bg-accent/5 rounded px-1 py-0 leading-none h-4">
+              <Copy className="w-2.5 h-2.5" />
+              Recorrente
+            </span>
+          )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{card.clientName}</p>
       </div>
