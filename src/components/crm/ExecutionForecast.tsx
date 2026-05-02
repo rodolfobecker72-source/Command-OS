@@ -45,10 +45,11 @@ function KPICard({ icon: Icon, iconBg, iconColor, label, value }: {
 }
 
 export function ExecutionForecast({ executionForecast, executionTotalValue, getGoalForMonth }: ExecutionForecastProps) {
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const [filterYear, setFilterYear] = useState(String(currentYear));
   const [filterMonth, setFilterMonth] = useState('all');
-  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { proposalId?: string; name: string; client: string; value: number }[] } | null>(null);
+  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { id?: string; proposalId?: string; name: string; client: string; value: number }[] } | null>(null);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
