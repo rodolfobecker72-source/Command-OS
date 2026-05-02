@@ -111,6 +111,7 @@ export function CRMDashboard() {
       map[month].count++;
       map[month].value += b.finalValue || 0;
       map[month].projects.push({
+        id: b.id,
         proposalId: b.proposalId,
         name: b.projectName || b.proposalId,
         client: clientMap[b.clientId]?.companyName || '—',
