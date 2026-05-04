@@ -401,6 +401,7 @@ export function NewBudget() {
         rejectionReason: '',
         rejectionObservation: '',
         pdfReleased: false,
+        hideNfInPdf: false,
       });
 
       if (!newBudget) {
