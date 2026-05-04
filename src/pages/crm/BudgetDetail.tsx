@@ -1015,22 +1015,6 @@ export function BudgetDetail() {
                             )}
                           </Button>
                         )}
-                        {/* Ocultar NF no PDF toggle */}
-                        {isAdminOrOwner && (
-                          <Button
-                            variant={budget.hideNfInPdf ? "default" : "outline"}
-                            size="sm"
-                            className="h-7 gap-1 text-xs"
-                            onClick={async () => {
-                              const newValue = !budget.hideNfInPdf;
-                              await updateBudget(budget.id, { hideNfInPdf: newValue });
-                              toast.success(newValue ? 'NF será ocultada no PDF (diluída nos serviços)' : 'NF voltará a aparecer no PDF');
-                            }}
-                            title="Quando ativo, o valor da NF é diluído proporcionalmente nos serviços e não aparece como linha separada no PDF"
-                          >
-                            {budget.hideNfInPdf ? '✓ NF oculta no PDF' : 'Ocultar NF no PDF'}
-                          </Button>
-                        )}
                       </div>
                     </div>
 
@@ -2383,6 +2367,32 @@ export function BudgetDetail() {
                         </div>
                       </CardContent>
                     </Card>
+                  </motion.div>
+                )}
+
+                {/* Ocultar NF no PDF toggle */}
+                {isAdminOrOwner && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="mt-4"
+                  >
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const newValue = !budget.hideNfInPdf;
+                        await updateBudget(budget.id, { hideNfInPdf: newValue });
+                        toast.success(newValue ? 'NF será ocultada no PDF (diluída nos serviços)' : 'NF voltará a aparecer no PDF');
+                      }}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Quando ativo, o valor da NF é diluído proporcionalmente nos serviços e não aparece como linha separada no PDF"
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideNfInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                        {budget.hideNfInPdf && <CheckCircle className="w-3 h-3" />}
+                      </span>
+                      Ocultar Nota Fiscal no PDF (diluir valor nos serviços)
+                    </button>
                   </motion.div>
                 )}
               </>
