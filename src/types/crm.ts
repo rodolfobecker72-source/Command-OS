@@ -320,6 +320,7 @@ export interface Budget {
   rejectionReason: string;
   rejectionObservation: string;
   pdfReleased: boolean;
+  hideNfInPdf: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
