@@ -122,6 +122,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     rejectionReason: row.rejection_reason || '',
     rejectionObservation: row.rejection_observation || '',
     pdfReleased: row.pdf_released ?? false,
+    hideNfInPdf: row.hide_nf_in_pdf ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
