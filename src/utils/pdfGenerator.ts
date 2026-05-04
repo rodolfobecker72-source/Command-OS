@@ -537,7 +537,7 @@ export async function generateProposalPDF({
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-  const totalToDistribute = totalProductionCost + marginValue;
+  const totalToDistribute = totalProductionCost + marginValue + (hideNf ? nfValue : 0);
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
@@ -562,9 +562,11 @@ export async function generateProposalPDF({
     y += 7;
   }
 
-  doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
-  doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
-  y += 6;
+  if (!hideNf) {
+    doc.text(`Nota Fiscal (${versionNfPercentage}%)`, margin, y);
+    doc.text(formatCurrency(nfValue), pageWidth - margin, y, { align: 'right' });
+    y += 6;
+  }
   drawLine(y);
   y += 10;
 
