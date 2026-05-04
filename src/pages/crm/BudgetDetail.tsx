@@ -1015,6 +1015,22 @@ export function BudgetDetail() {
                             )}
                           </Button>
                         )}
+                        {/* Ocultar NF no PDF toggle */}
+                        {isAdminOrOwner && (
+                          <Button
+                            variant={budget.hideNfInPdf ? "default" : "outline"}
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            onClick={async () => {
+                              const newValue = !budget.hideNfInPdf;
+                              await updateBudget(budget.id, { hideNfInPdf: newValue });
+                              toast.success(newValue ? 'NF será ocultada no PDF (diluída nos serviços)' : 'NF voltará a aparecer no PDF');
+                            }}
+                            title="Quando ativo, o valor da NF é diluído proporcionalmente nos serviços e não aparece como linha separada no PDF"
+                          >
+                            {budget.hideNfInPdf ? '✓ NF oculta no PDF' : 'Ocultar NF no PDF'}
+                          </Button>
+                        )}
                       </div>
                     </div>
 
