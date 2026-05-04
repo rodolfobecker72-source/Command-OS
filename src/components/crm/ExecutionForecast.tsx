@@ -270,7 +270,14 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {projectsDialog?.projects.map((p, i) => (
+                {[...(projectsDialog?.projects ?? [])].sort((a, b) => {
+                  const na = parseInt((a.proposalId || '').replace(/\D/g, ''), 10);
+                  const nb = parseInt((b.proposalId || '').replace(/\D/g, ''), 10);
+                  if (isNaN(na) && isNaN(nb)) return (a.proposalId || '').localeCompare(b.proposalId || '');
+                  if (isNaN(na)) return 1;
+                  if (isNaN(nb)) return -1;
+                  return na - nb;
+                }).map((p, i) => (
                   <TableRow key={i}>
                     <TableCell className="text-base font-mono text-muted-foreground py-3.5">{p.proposalId || '—'}</TableCell>
                     <TableCell className="text-base font-medium py-3.5">
