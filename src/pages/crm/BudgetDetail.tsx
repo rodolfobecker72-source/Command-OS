@@ -2395,9 +2395,6 @@ export function BudgetDetail() {
                     </button>
                   </motion.div>
                 )}
-                {/* Close stray motion */}
-                {false && (
-                  <motion.div />
               </>
             )}
 
