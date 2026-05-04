@@ -1030,7 +1030,7 @@ export function NewBudget() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-3">
-                  {[...serviceCategories].sort((a, b) => a.order - b.order).map((category) => {
+                  {Array.from(new Map(serviceCategories.map(c => [c.key, c])).values()).sort((a, b) => a.order - b.order).map((category) => {
                     const Icon = SERVICE_ICONS[category.key] || Layers;
                     return (
                       <Button
@@ -1531,7 +1531,7 @@ export function NewBudget() {
             >
               Cancelar
             </Button>
-            {formData.clientId && formData.projectDescription.trim() && (
+            {(
               <Button
                 type="button"
                 variant="secondary"
