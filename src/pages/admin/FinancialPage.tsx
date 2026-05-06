@@ -811,7 +811,7 @@ export function FinancialPage() {
   return (
     <div>
       <Header title="Financeiro" subtitle="Gestão financeira" />
-      <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 w-full">
 
       <Tabs defaultValue="painel">
         <TabsList className="grid grid-cols-2 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
