@@ -2597,7 +2597,7 @@ export function BudgetDetail() {
                                   <TableRow className="bg-warning/5">
                                     <TableHead>Descrição</TableHead>
                                     <TableHead className="text-right">Valor</TableHead>
-                                    <TableHead>Fornecedor</TableHead>
+                                    <TableHead>Equipe</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Data Pgto</TableHead>
                                     <TableHead className="w-10"></TableHead>
