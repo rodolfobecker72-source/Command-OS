@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Menu, UserPen } from 'lucide-react';
+import { LogOut, Menu, UserPen, Wallet } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface OutletContextType {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { profile, logout } = useAuth();
+  const { profile, logout, role } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -94,6 +94,12 @@ export function Header({ title, subtitle }: HeaderProps) {
               <UserPen className="w-4 h-4 mr-2" />
               Meu Perfil
             </DropdownMenuItem>
+            {role && role !== 'owner' && (
+              <DropdownMenuItem onClick={() => navigate('/meu-financeiro')}>
+                <Wallet className="w-4 h-4 mr-2" />
+                Meu Financeiro
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive"

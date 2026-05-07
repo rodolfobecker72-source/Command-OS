@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TeamMemberSelect } from '@/components/crm/TeamMemberSelect';
 import {
   Select,
   SelectContent,
@@ -2520,7 +2521,7 @@ export function BudgetDetail() {
                                   <TableHead>Descrição</TableHead>
                                   <TableHead className="text-right">Orçado</TableHead>
                                   <TableHead className="text-right">Real</TableHead>
-                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Equipe</TableHead>
                                   <TableHead>Status</TableHead>
                                   <TableHead>Data Pgto</TableHead>
                                 </TableRow>
@@ -2546,16 +2547,9 @@ export function BudgetDetail() {
                                       />
                                     </TableCell>
                                     <TableCell>
-                                      <Input
-                                        type="text"
+                                      <TeamMemberSelect
                                         value={cost.supplier || ''}
-                                        onChange={(e) => handleUpdateExecutionSupplier(
-                                          service.id,
-                                          cost.id,
-                                          e.target.value
-                                        )}
-                                        placeholder="Quem executou"
-                                        className="w-32 h-8"
+                                        onChange={(v) => handleUpdateExecutionSupplier(service.id, cost.id, v)}
                                       />
                                     </TableCell>
                                     <TableCell>
@@ -2603,7 +2597,7 @@ export function BudgetDetail() {
                                   <TableRow className="bg-warning/5">
                                     <TableHead>Descrição</TableHead>
                                     <TableHead className="text-right">Valor</TableHead>
-                                    <TableHead>Fornecedor</TableHead>
+                                    <TableHead>Equipe</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Data Pgto</TableHead>
                                     <TableHead className="w-10"></TableHead>
@@ -2627,16 +2621,9 @@ export function BudgetDetail() {
                                         />
                                       </TableCell>
                                       <TableCell>
-                                        <Input
-                                          type="text"
+                                        <TeamMemberSelect
                                           value={cost.supplier || ''}
-                                          onChange={(e) => handleUpdateExtraCostSupplier(
-                                            service.id,
-                                            cost.id,
-                                            e.target.value
-                                          )}
-                                          placeholder="Quem executou"
-                                          className="w-32 h-8"
+                                          onChange={(v) => handleUpdateExtraCostSupplier(service.id, cost.id, v)}
                                         />
                                       </TableCell>
                                       <TableCell>
@@ -2756,7 +2743,7 @@ export function BudgetDetail() {
                                   <TableHead>Descrição</TableHead>
                                   <TableHead className="text-right">Orçado</TableHead>
                                   <TableHead className="text-right">Real</TableHead>
-                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Equipe</TableHead>
                                   <TableHead>Status</TableHead>
                                   <TableHead>Data Pgto</TableHead>
                                 </TableRow>
@@ -2784,18 +2771,15 @@ export function BudgetDetail() {
                                       />
                                     </TableCell>
                                     <TableCell>
-                                      <Input
-                                        type="text"
+                                      <TeamMemberSelect
                                         value={cost.supplier || ''}
-                                        onChange={(e) => {
+                                        onChange={(v) => {
                                           updateExecution(budget.id, {
                                             operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
-                                              c.id === cost.id ? { ...c, supplier: e.target.value } : c
+                                              c.id === cost.id ? { ...c, supplier: v } : c
                                             ),
                                           });
                                         }}
-                                        placeholder="Quem executou"
-                                        className="w-32 h-8"
                                       />
                                     </TableCell>
                                     <TableCell>
@@ -3280,11 +3264,10 @@ export function BudgetDetail() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Fornecedor</Label>
-              <Input
+              <Label>Equipe</Label>
+              <TeamMemberSelect
                 value={newExtraCostSupplier}
-                onChange={(e) => setNewExtraCostSupplier(e.target.value)}
-                placeholder="Quem executou"
+                onChange={setNewExtraCostSupplier}
               />
             </div>
           </div>

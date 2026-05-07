@@ -35,6 +35,7 @@ import { MediaCenterPage } from "@/pages/operation/MediaCenterPage";
 import { FinancialPage } from '@/pages/admin/FinancialPage';
 import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
+import MyFinancePage from "@/pages/MyFinancePage";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
@@ -105,6 +106,9 @@ const App = () => (
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
+
+                  {/* Meu Financeiro (avatar menu) */}
+                  <Route path="/meu-financeiro" element={<MyFinancePage />} />
                 </Route>
               </Route>
               
