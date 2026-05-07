@@ -814,9 +814,9 @@ export function BudgetDetail() {
 
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate('/crm')}>
+          <Button variant="ghost" onClick={() => navigate(backTo)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao CRM
+            {backLabel}
           </Button>
 
           <div className="flex items-center gap-2">
