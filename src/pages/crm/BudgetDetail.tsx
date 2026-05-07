@@ -102,6 +102,8 @@ import {
   HardDrive,
   Layers,
   LockKeyhole,
+  Eye,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -196,6 +198,56 @@ export function BudgetDetail() {
   // Notion link state
   const [notionInput, setNotionInput] = useState('');
   const [isEditingNotion, setIsEditingNotion] = useState(false);
+
+  // Document upload states (contract / NF)
+  const [uploadingDoc, setUploadingDoc] = useState<'contract' | 'nf' | null>(null);
+
+  const handleDocUpload = async (type: 'contract' | 'nf', file: File) => {
+    if (!budget || !workspace) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('Arquivo muito grande (máx 20MB)');
+      return;
+    }
+    setUploadingDoc(type);
+    try {
+      const path = `${workspace.id}/${budget.id}/${type}-${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from('budget-documents')
+        .upload(path, file, { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw upErr;
+      await updateBudget(budget.id, type === 'contract' ? { contractUrl: path } : { nfUrl: path });
+      toast.success(type === 'nf' ? 'Nota Fiscal enviada' : 'Contrato enviado');
+    } catch (e: any) {
+      toast.error(e.message || 'Falha no upload');
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const handleViewDoc = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from('budget-documents')
+      .createSignedUrl(path, 3600);
+    if (error || !data) {
+      toast.error('Não foi possível abrir o arquivo');
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleRemoveDoc = async (type: 'contract' | 'nf') => {
+    if (!budget) return;
+    const path = type === 'contract' ? budget.contractUrl : budget.nfUrl;
+    if (path) {
+      await supabase.storage.from('budget-documents').remove([path]);
+    }
+    await updateBudget(budget.id, type === 'contract' ? { contractUrl: null } : { nfUrl: null });
+    toast.success('Arquivo removido');
+  };
   // Calculate totals for new version (hooks must be before early returns)
   const newVersionOperationalTotal = useMemo(() => {
     return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
@@ -3064,15 +3116,66 @@ export function BudgetDetail() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Button variant="outline" className="flex-1">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Contrato
-                        </Button>
-                        <Button variant="outline" className="flex-1">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Nota Fiscal
-                        </Button>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {/* Contract */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Contrato</p>
+                          {budget.contractUrl ? (
+                            <div className="flex gap-2">
+                              <Button variant="outline" className="flex-1" onClick={() => handleViewDoc(budget.contractUrl!)}>
+                                <Eye className="w-4 h-4 mr-2" /> Visualizar
+                              </Button>
+                              <Button variant="outline" size="icon" onClick={() => handleRemoveDoc('contract')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="block">
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={(e) => e.target.files?.[0] && handleDocUpload('contract', e.target.files[0])}
+                              />
+                              <Button variant="outline" className="w-full" asChild disabled={uploadingDoc === 'contract'}>
+                                <span>
+                                  {uploadingDoc === 'contract' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                                  Upload Contrato (PDF)
+                                </span>
+                              </Button>
+                            </label>
+                          )}
+                        </div>
+
+                        {/* NF */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Nota Fiscal</p>
+                          {budget.nfUrl ? (
+                            <div className="flex gap-2">
+                              <Button variant="outline" className="flex-1" onClick={() => handleViewDoc(budget.nfUrl!)}>
+                                <Eye className="w-4 h-4 mr-2" /> Visualizar
+                              </Button>
+                              <Button variant="outline" size="icon" onClick={() => handleRemoveDoc('nf')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="block">
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={(e) => e.target.files?.[0] && handleDocUpload('nf', e.target.files[0])}
+                              />
+                              <Button variant="outline" className="w-full" asChild disabled={uploadingDoc === 'nf'}>
+                                <span>
+                                  {uploadingDoc === 'nf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                                  Upload Nota Fiscal (PDF)
+                                </span>
+                              </Button>
+                            </label>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
