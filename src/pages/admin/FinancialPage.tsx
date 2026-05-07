@@ -818,6 +818,7 @@ export function FinancialPage() {
           <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
           <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
+          <TabsTrigger value="cartoes" className="text-xs sm:text-sm whitespace-nowrap">Cartão de Crédito</TabsTrigger>
           <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
         </TabsList>
 
@@ -1499,8 +1500,111 @@ export function FinancialPage() {
             </DialogContent>
           </Dialog>
 
-          {/* ======== Faturas de Cartão de Crédito ======== */}
-          {creditCards.length > 0 && (
+
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Resumo Mensal — Receita x Despesa Prevista</CardTitle></CardHeader>
+            <CardContent>
+              {(() => {
+                const allMonths = new Set<string>();
+                painelData.receivablesByMonth.forEach(r => { if (r.remaining > 0) allMonths.add(r.month); });
+                painelData.futureExpensesByMonth.forEach(r => allMonths.add(r.month));
+                const sorted = Array.from(allMonths).sort();
+                if (sorted.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma previsão pendente.</p>;
+                const recMap: Record<string, typeof painelData.receivablesByMonth[0]> = {};
+                painelData.receivablesByMonth.forEach(r => { recMap[r.month] = r; });
+                const despMap: Record<string, typeof painelData.futureExpensesByMonth[0]> = {};
+                painelData.futureExpensesByMonth.forEach(r => { despMap[r.month] = r; });
+                let totalRec = 0, totalDesp = 0;
+                const rows = sorted.map(m => {
+                  const rec = recMap[m]?.remaining && recMap[m].remaining > 0 ? recMap[m].remaining : 0;
+                  const desp = despMap[m]?.pending || 0;
+                  totalRec += rec;
+                  totalDesp += desp;
+                  return { month: m, label: format(new Date(m + '-01T12:00:00'), 'MMM/yy', { locale: ptBR }), rec, desp, saldo: rec - desp };
+                });
+                return (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mês</TableHead>
+                        <TableHead className="text-right">Receita Prevista</TableHead>
+                        <TableHead className="text-right">Despesa Prevista</TableHead>
+                        <TableHead className="text-right">Saldo Previsto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map(r => (
+                        <TableRow key={r.month}>
+                          <TableCell className="font-medium">{r.label}</TableCell>
+                          <TableCell className="text-right text-green-600">{currencyFmt(r.rec)}</TableCell>
+                          <TableCell className="text-right text-destructive">{currencyFmt(r.desp)}</TableCell>
+                          <TableCell className={cn("text-right font-medium", r.saldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(r.saldo)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-bold border-t-2">
+                        <TableCell>Total</TableCell>
+                        <TableCell className="text-right text-green-600">{currencyFmt(totalRec)}</TableCell>
+                        <TableCell className="text-right text-destructive">{currencyFmt(totalDesp)}</TableCell>
+                        <TableCell className={cn("text-right", (totalRec - totalDesp) >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(totalRec - totalDesp)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Receivables by month */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Receita Prevista por Mês</CardTitle></CardHeader>
+            <CardContent>
+              {painelData.receivablesByMonth.filter(r => r.remaining > 0).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Todos os projetos estão pagos.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mês</TableHead>
+                      <TableHead className="text-right">Valor Total</TableHead>
+                      <TableHead className="text-right">Recebido</TableHead>
+                      <TableHead className="text-right">A Receber</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {painelData.receivablesByMonth.filter(r => r.remaining > 0).map(r => (
+                      <TableRow key={r.month}>
+                        <TableCell className="font-medium">{r.label}</TableCell>
+                        <TableCell className="text-right">{currencyFmt(r.totalValue)}</TableCell>
+                        <TableCell className="text-right text-green-600">{currencyFmt(r.totalPaid)}</TableCell>
+                        <TableCell className="text-right text-orange-500 font-medium">{currencyFmt(r.remaining)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="font-bold border-t-2">
+                      <TableCell>Total</TableCell>
+                      <TableCell className="text-right">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalValue, 0))}</TableCell>
+                      <TableCell className="text-right text-green-600">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalPaid, 0))}</TableCell>
+                      <TableCell className="text-right text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+
+        </TabsContent>
+
+
+        {/* ===================== CARTÃO DE CRÉDITO ===================== */}
+        <TabsContent value="cartoes" className="space-y-6">
+          {creditCards.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Nenhum cartão cadastrado. Adicione cartões em Configurações.
+              </CardContent>
+            </Card>
+          ) : (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1538,7 +1642,7 @@ export function FinancialPage() {
                                 const isExpanded = expandedInvoice === invoiceKey;
                                 return (
                                   <React.Fragment key={m}>
-                                    <TableRow 
+                                    <TableRow
                                       className="cursor-pointer hover:bg-muted/50"
                                       onClick={() => setExpandedInvoice(isExpanded ? null : invoiceKey)}
                                     >
@@ -1675,99 +1779,6 @@ export function FinancialPage() {
               )}
             </DialogContent>
           </Dialog>
-
-
-          <Card>
-            <CardHeader><CardTitle className="text-base">Resumo Mensal — Receita x Despesa Prevista</CardTitle></CardHeader>
-            <CardContent>
-              {(() => {
-                const allMonths = new Set<string>();
-                painelData.receivablesByMonth.forEach(r => { if (r.remaining > 0) allMonths.add(r.month); });
-                painelData.futureExpensesByMonth.forEach(r => allMonths.add(r.month));
-                const sorted = Array.from(allMonths).sort();
-                if (sorted.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhuma previsão pendente.</p>;
-                const recMap: Record<string, typeof painelData.receivablesByMonth[0]> = {};
-                painelData.receivablesByMonth.forEach(r => { recMap[r.month] = r; });
-                const despMap: Record<string, typeof painelData.futureExpensesByMonth[0]> = {};
-                painelData.futureExpensesByMonth.forEach(r => { despMap[r.month] = r; });
-                let totalRec = 0, totalDesp = 0;
-                const rows = sorted.map(m => {
-                  const rec = recMap[m]?.remaining && recMap[m].remaining > 0 ? recMap[m].remaining : 0;
-                  const desp = despMap[m]?.pending || 0;
-                  totalRec += rec;
-                  totalDesp += desp;
-                  return { month: m, label: format(new Date(m + '-01T12:00:00'), 'MMM/yy', { locale: ptBR }), rec, desp, saldo: rec - desp };
-                });
-                return (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mês</TableHead>
-                        <TableHead className="text-right">Receita Prevista</TableHead>
-                        <TableHead className="text-right">Despesa Prevista</TableHead>
-                        <TableHead className="text-right">Saldo Previsto</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rows.map(r => (
-                        <TableRow key={r.month}>
-                          <TableCell className="font-medium">{r.label}</TableCell>
-                          <TableCell className="text-right text-green-600">{currencyFmt(r.rec)}</TableCell>
-                          <TableCell className="text-right text-destructive">{currencyFmt(r.desp)}</TableCell>
-                          <TableCell className={cn("text-right font-medium", r.saldo >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(r.saldo)}</TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow className="font-bold border-t-2">
-                        <TableCell>Total</TableCell>
-                        <TableCell className="text-right text-green-600">{currencyFmt(totalRec)}</TableCell>
-                        <TableCell className="text-right text-destructive">{currencyFmt(totalDesp)}</TableCell>
-                        <TableCell className={cn("text-right", (totalRec - totalDesp) >= 0 ? 'text-green-600' : 'text-destructive')}>{currencyFmt(totalRec - totalDesp)}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                );
-              })()}
-            </CardContent>
-          </Card>
-
-          {/* Receivables by month */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Receita Prevista por Mês</CardTitle></CardHeader>
-            <CardContent>
-              {painelData.receivablesByMonth.filter(r => r.remaining > 0).length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Todos os projetos estão pagos.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mês</TableHead>
-                      <TableHead className="text-right">Valor Total</TableHead>
-                      <TableHead className="text-right">Recebido</TableHead>
-                      <TableHead className="text-right">A Receber</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {painelData.receivablesByMonth.filter(r => r.remaining > 0).map(r => (
-                      <TableRow key={r.month}>
-                        <TableCell className="font-medium">{r.label}</TableCell>
-                        <TableCell className="text-right">{currencyFmt(r.totalValue)}</TableCell>
-                        <TableCell className="text-right text-green-600">{currencyFmt(r.totalPaid)}</TableCell>
-                        <TableCell className="text-right text-orange-500 font-medium">{currencyFmt(r.remaining)}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow className="font-bold border-t-2">
-                      <TableCell>Total</TableCell>
-                      <TableCell className="text-right">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalValue, 0))}</TableCell>
-                      <TableCell className="text-right text-green-600">{currencyFmt(painelData.receivablesByMonth.filter(r => r.remaining > 0).reduce((s, r) => s + r.totalPaid, 0))}</TableCell>
-                      <TableCell className="text-right text-orange-500">{currencyFmt(painelData.totalRecebiveis)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-
         </TabsContent>
 
 
