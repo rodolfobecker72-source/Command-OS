@@ -1207,6 +1207,7 @@ export function FinancialPage() {
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="text-right">Custo Real</TableHead>
                       <TableHead className="text-right">NF</TableHead>
+                      <TableHead className="text-center">Status NF</TableHead>
                       <TableHead className="text-right">Margem</TableHead>
                       <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
