@@ -94,6 +94,12 @@ export function Header({ title, subtitle }: HeaderProps) {
               <UserPen className="w-4 h-4 mr-2" />
               Meu Perfil
             </DropdownMenuItem>
+            {role && role !== 'owner' && (
+              <DropdownMenuItem onClick={() => navigate('/meu-financeiro')}>
+                <Wallet className="w-4 h-4 mr-2" />
+                Meu Financeiro
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive"
