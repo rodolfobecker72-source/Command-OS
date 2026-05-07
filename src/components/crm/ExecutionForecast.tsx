@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/types/crm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Target, DollarSign, TrendingUp, FolderOpen } from 'lucide-react';
+import { Calendar, Target, DollarSign, TrendingUp, FolderOpen, FileCheck2, FileX2 } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
