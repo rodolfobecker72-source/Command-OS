@@ -20,6 +20,7 @@ import {
 import {
   Plus, Search, Pencil, Trash2, Package, ExternalLink, Loader2, DollarSign, Hash,
 } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
 
 interface Asset {
   id: string;
@@ -159,7 +160,9 @@ export function PatrimonioPage() {
   }), [assets]);
 
   return (
-    <div className="space-y-6">
+    <div>
+      <Header title="Patrimônio" subtitle="Cadastro dos bens e equipamentos" />
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -352,6 +355,7 @@ export function PatrimonioPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }
