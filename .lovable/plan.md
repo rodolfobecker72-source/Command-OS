@@ -1,41 +1,44 @@
+## Plano
 
+### 1) Renomear "Fornecedor" → "Equipe" na execução
+Em `src/pages/crm/BudgetDetail.tsx`:
+- Trocar todos os 4 cabeçalhos `Fornecedor` por `Equipe` (linhas 2523, 2606, 2759 e o painel de adicionar gasto extra ~3283).
+- Trocar placeholders `"Quem executou"` por `"Selecione quem executou"`.
 
-# Plano: Central de Mídias
+### 2) Substituir Input de texto por um seletor de Equipe + opção Freela
+Criar um novo componente `src/components/crm/TeamMemberSelect.tsx`:
+- Carrega membros do workspace via `workspace_members` + `profiles` (mesmo padrão usado em `UsersPage.tsx`).
+- Renderiza um `Select` com:
+  - Lista de usuários cadastrados (nome).
+  - Item especial **"Freela"** que, ao selecionar, abre um pequeno `Input` inline ao lado para digitar o nome do freela.
+- Valor armazenado no campo `cost.supplier` (string) seguindo um formato simples:
+  - Membro: `"Nome do membro"` (mesma string do nome) — assim o financeiro continua funcionando.
+  - Freela: `"Freela: Nome digitado"`.
+- Substituir os 4 `<Input>` de fornecedor (custos principais, gastos extras, custos operacionais e o dialog de adicionar custo extra ~linha 3287) por esse novo componente.
 
-## Resumo
-Criar a página "Central de Mídias" dentro do grupo **Projetos** na sidebar, permitindo cadastrar HDs, alocar projetos a eles e visualizar capacidades. A tabela `hard_drives` já existe no banco com a estrutura necessária (label, capacity_gb, projects como JSONB).
+### 3) Área "Meu Financeiro" para usuários (não-owner)
+Header (`src/components/layout/Header.tsx`):
+- No `DropdownMenu` do avatar, adicionar item **"Meu Financeiro"** (ícone `Wallet`) visível quando `role !== 'owner'`. Navega para `/meu-financeiro`.
 
-## O que será construído
+Nova página `src/pages/MyFinancePage.tsx`:
+- Cabeçalho padrão (Header) + layout responsivo.
+- Carrega todos os `budgets` aprovados do workspace, percorre `execution.services[].costs`, `execution.extraCosts` e `operationalCosts/extraOperationalCosts`, filtrando entradas onde `cost.supplier === profile.name` (ou começando com este nome).
+- Agrupa por **mês** (a partir de `executionMonth` do orçamento) e lista:
+  - Mês | Projeto (proposalId + cliente) | Descrição do serviço | Valor (real) | Status (`paymentStatus` com badge) | Data de pagamento.
+- Totais no topo: Total Recebido, Total Pendente, Total no Mês corrente.
+- Sem alteração de banco — somente leitura.
 
-**3 abas de visualização** (conforme prints):
-1. **Projetos por HD** — Lista expandível de cada HD com barra de progresso e seus projetos
-2. **Lista de Projetos** — Tabela com todos os projetos alocados em todos os HDs
-3. **Capacidades** — Grid de cards com resumo visual de cada HD
+Registrar rota em `src/App.tsx` e em `src/config/pages.ts` (entrada apenas para `PageGuard`; sem item na sidebar — acesso é exclusivo via menu do avatar).
 
-**Métricas no topo**: HDs Cadastrados, Capacidade Total, Espaço Utilizado, Projetos Cadastrados
+### Detalhes técnicos
+- Reutilizar mesmo padrão de query do `UsersPage` para listar membros.
+- Manter `cost.supplier` como string (sem migração).
+- Owner também verá o item, mas costuma já enxergar tudo no Financeiro — pode ser ocultado se desejado.
 
-**Ações**: Novo HD (dialog), Alocar Projeto (dialog), Editar HD, Excluir HD
-
-**Busca e filtros**: Campo de busca + filtro por HD
-
-## Detalhes técnicos
-
-### 1. Registrar página no sistema
-- `src/config/pages.ts` — Adicionar entrada `central-midia` no grupo Projetos
-- `src/components/layout/Sidebar.tsx` — Adicionar item "Central de Mídias" com ícone `HardDrive` no grupo Projetos
-- `src/App.tsx` — Adicionar rota `/central-midia` com PageGuard
-
-### 2. Criar página `src/pages/operation/MediaCenterPage.tsx`
-- Usar a tabela `hard_drives` existente (campos: label, capacity_gb, projects JSONB)
-- JSONB `projects` armazena array de `{ projectNumber, clientName, sizeGb }`
-- 3 abas com Tabs component
-- Dialog para cadastrar novo HD (Identificador + Capacidade em GB)
-- Dialog para alocar projeto a um HD (Número do projeto, Cliente, Tamanho em GB)
-- Cálculos de espaço utilizado, livre, percentual
-- Barra de progresso visual para cada HD
-- Busca por HD, projeto ou cliente
-- Botão de ordenar por espaço disponível na aba Capacidades
-
-### 3. Sem alterações no banco de dados
-A tabela `hard_drives` já possui todos os campos necessários com RLS configurado.
-
+### Arquivos afetados
+- `src/pages/crm/BudgetDetail.tsx`
+- `src/components/crm/TeamMemberSelect.tsx` (novo)
+- `src/components/layout/Header.tsx`
+- `src/pages/MyFinancePage.tsx` (novo)
+- `src/App.tsx`
+- `src/config/pages.ts`
