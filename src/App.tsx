@@ -106,6 +106,9 @@ const App = () => (
                   
                   {/* About */}
                   <Route path="/sobre" element={<AboutPage />} />
+
+                  {/* Meu Financeiro (avatar menu) */}
+                  <Route path="/meu-financeiro" element={<MyFinancePage />} />
                 </Route>
               </Route>
               
