@@ -313,7 +313,16 @@ export function FinancialPage() {
           margin,
           marginPercent: finalValue > 0 ? (margin / finalValue) * 100 : 0,
           status: b.status,
+          nfUrl: b.nf_url,
         };
+      })
+      .sort((a, c) => {
+        const na = parseInt(String(a.proposalId || '').replace(/\D/g, ''), 10);
+        const nb = parseInt(String(c.proposalId || '').replace(/\D/g, ''), 10);
+        if (isNaN(na) && isNaN(nb)) return String(a.proposalId || '').localeCompare(String(c.proposalId || ''));
+        if (isNaN(na)) return 1;
+        if (isNaN(nb)) return -1;
+        return na - nb;
       });
   }, [budgets, versions, clients, selectedMonth, categoryLabels, objectiveLabels]);
 
