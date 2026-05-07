@@ -1274,7 +1274,7 @@ export function FinancialPage() {
                                 >
                                   <CircleDollarSign className={cn("w-5 h-5", paymentIconColor)} />
                                 </Button>
-                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }} title="Ver no CRM"><ExternalLink className="w-4 h-4" /></Button>
+                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}?tab=execution&from=financeiro`); }} title="Abrir Execução"><ExternalLink className="w-4 h-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
