@@ -2743,7 +2743,7 @@ export function BudgetDetail() {
                                   <TableHead>Descrição</TableHead>
                                   <TableHead className="text-right">Orçado</TableHead>
                                   <TableHead className="text-right">Real</TableHead>
-                                  <TableHead>Fornecedor</TableHead>
+                                  <TableHead>Equipe</TableHead>
                                   <TableHead>Status</TableHead>
                                   <TableHead>Data Pgto</TableHead>
                                 </TableRow>
