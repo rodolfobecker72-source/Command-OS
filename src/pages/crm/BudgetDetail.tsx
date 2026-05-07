@@ -3116,15 +3116,66 @@ export function BudgetDetail() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Button variant="outline" className="flex-1">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Contrato
-                        </Button>
-                        <Button variant="outline" className="flex-1">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Nota Fiscal
-                        </Button>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {/* Contract */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Contrato</p>
+                          {budget.contractUrl ? (
+                            <div className="flex gap-2">
+                              <Button variant="outline" className="flex-1" onClick={() => handleViewDoc(budget.contractUrl!)}>
+                                <Eye className="w-4 h-4 mr-2" /> Visualizar
+                              </Button>
+                              <Button variant="outline" size="icon" onClick={() => handleRemoveDoc('contract')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="block">
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={(e) => e.target.files?.[0] && handleDocUpload('contract', e.target.files[0])}
+                              />
+                              <Button variant="outline" className="w-full" asChild disabled={uploadingDoc === 'contract'}>
+                                <span>
+                                  {uploadingDoc === 'contract' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                                  Upload Contrato (PDF)
+                                </span>
+                              </Button>
+                            </label>
+                          )}
+                        </div>
+
+                        {/* NF */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Nota Fiscal</p>
+                          {budget.nfUrl ? (
+                            <div className="flex gap-2">
+                              <Button variant="outline" className="flex-1" onClick={() => handleViewDoc(budget.nfUrl!)}>
+                                <Eye className="w-4 h-4 mr-2" /> Visualizar
+                              </Button>
+                              <Button variant="outline" size="icon" onClick={() => handleRemoveDoc('nf')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="block">
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                onChange={(e) => e.target.files?.[0] && handleDocUpload('nf', e.target.files[0])}
+                              />
+                              <Button variant="outline" className="w-full" asChild disabled={uploadingDoc === 'nf'}>
+                                <span>
+                                  {uploadingDoc === 'nf' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                                  Upload Nota Fiscal (PDF)
+                                </span>
+                              </Button>
+                            </label>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
