@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 
-import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight, Repeat, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Plus, Pencil, Trash2, ExternalLink, Landmark, CalendarIcon, Settings, ArrowUpCircle, ArrowDownCircle, CircleDollarSign, Wallet, CreditCard as CreditCardIcon, Check, Clock, ArrowLeftRight, Repeat, ChevronDown, ChevronUp, Eye, FileCheck2, FileX2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -313,7 +313,16 @@ export function FinancialPage() {
           margin,
           marginPercent: finalValue > 0 ? (margin / finalValue) * 100 : 0,
           status: b.status,
+          nfUrl: b.nf_url,
         };
+      })
+      .sort((a, c) => {
+        const na = parseInt(String(a.proposalId || '').replace(/\D/g, ''), 10);
+        const nb = parseInt(String(c.proposalId || '').replace(/\D/g, ''), 10);
+        if (isNaN(na) && isNaN(nb)) return String(a.proposalId || '').localeCompare(String(c.proposalId || ''));
+        if (isNaN(na)) return 1;
+        if (isNaN(nb)) return -1;
+        return na - nb;
       });
   }, [budgets, versions, clients, selectedMonth, categoryLabels, objectiveLabels]);
 
@@ -1198,6 +1207,7 @@ export function FinancialPage() {
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="text-right">Custo Real</TableHead>
                       <TableHead className="text-right">NF</TableHead>
+                      <TableHead className="text-center">Status NF</TableHead>
                       <TableHead className="text-right">Margem</TableHead>
                       <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
@@ -1234,6 +1244,25 @@ export function FinancialPage() {
                             <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
                             <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
                             <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
+                            <TableCell className="text-center">
+                              {p.nfUrl ? (
+                                <a
+                                  href={p.nfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Visualizar NF emitida"
+                                >
+                                  <Badge variant="outline" className="text-[10px] gap-1 border-success/30 bg-success/10 text-success cursor-pointer hover:bg-success/20">
+                                    <FileCheck2 className="w-3 h-3" /> Emitida
+                                  </Badge>
+                                </a>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground">
+                                  <FileX2 className="w-3 h-3" /> Pendente
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
                             <TableCell className="text-center">
                               <div className="flex justify-center gap-1">
