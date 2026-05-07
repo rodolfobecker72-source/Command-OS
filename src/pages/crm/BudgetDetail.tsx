@@ -3264,11 +3264,10 @@ export function BudgetDetail() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Fornecedor</Label>
-              <Input
+              <Label>Equipe</Label>
+              <TeamMemberSelect
                 value={newExtraCostSupplier}
-                onChange={(e) => setNewExtraCostSupplier(e.target.value)}
-                placeholder="Quem executou"
+                onChange={setNewExtraCostSupplier}
               />
             </div>
           </div>
