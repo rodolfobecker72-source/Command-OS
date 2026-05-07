@@ -295,12 +295,23 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                       )}
                     </TableCell>
                     <TableCell className="text-base py-3.5">{p.client}</TableCell>
+                    <TableCell className="text-center py-3.5">
+                      {p.hasNf ? (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-success/30 bg-success/10 text-success">
+                          <FileCheck2 className="w-3 h-3" /> Emitida
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground">
+                          <FileX2 className="w-3 h-3" /> Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right text-base font-semibold py-3.5">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
                 ))}
                 {projectsDialog?.projects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
+                    <TableCell colSpan={5} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
                   </TableRow>
                 )}
               </TableBody>
