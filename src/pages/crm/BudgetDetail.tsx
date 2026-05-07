@@ -198,6 +198,56 @@ export function BudgetDetail() {
   // Notion link state
   const [notionInput, setNotionInput] = useState('');
   const [isEditingNotion, setIsEditingNotion] = useState(false);
+
+  // Document upload states (contract / NF)
+  const [uploadingDoc, setUploadingDoc] = useState<'contract' | 'nf' | null>(null);
+
+  const handleDocUpload = async (type: 'contract' | 'nf', file: File) => {
+    if (!budget || !workspace) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF são aceitos');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('Arquivo muito grande (máx 20MB)');
+      return;
+    }
+    setUploadingDoc(type);
+    try {
+      const path = `${workspace.id}/${budget.id}/${type}-${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from('budget-documents')
+        .upload(path, file, { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw upErr;
+      await updateBudget(budget.id, type === 'contract' ? { contractUrl: path } : { nfUrl: path });
+      toast.success(type === 'nf' ? 'Nota Fiscal enviada' : 'Contrato enviado');
+    } catch (e: any) {
+      toast.error(e.message || 'Falha no upload');
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const handleViewDoc = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from('budget-documents')
+      .createSignedUrl(path, 3600);
+    if (error || !data) {
+      toast.error('Não foi possível abrir o arquivo');
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleRemoveDoc = async (type: 'contract' | 'nf') => {
+    if (!budget) return;
+    const path = type === 'contract' ? budget.contractUrl : budget.nfUrl;
+    if (path) {
+      await supabase.storage.from('budget-documents').remove([path]);
+    }
+    await updateBudget(budget.id, type === 'contract' ? { contractUrl: null } : { nfUrl: null });
+    toast.success('Arquivo removido');
+  };
   // Calculate totals for new version (hooks must be before early returns)
   const newVersionOperationalTotal = useMemo(() => {
     return newVersionOperationalCosts.reduce((sum, c) => sum + c.value, 0);
