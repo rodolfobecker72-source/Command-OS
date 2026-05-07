@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Menu, UserPen } from 'lucide-react';
+import { LogOut, Menu, UserPen, Wallet } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
