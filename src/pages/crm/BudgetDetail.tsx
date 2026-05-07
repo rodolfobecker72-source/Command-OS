@@ -164,7 +164,12 @@ export function BudgetDetail() {
   const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
   const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
   const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState('budget');
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get('from');
+  const initialTab = searchParams.get('tab') === 'execution' ? 'execution' : 'budget';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const backTo = fromParam === 'financeiro' ? '/financeiro?tab=projetos' : '/crm';
+  const backLabel = fromParam === 'financeiro' ? 'Voltar para Projetos/Mês' : 'Voltar ao CRM';
   const [deleteOpen, setDeleteOpen] = useState(false);
   
   // Inline version editing states
