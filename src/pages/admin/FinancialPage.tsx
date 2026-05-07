@@ -98,6 +98,7 @@ const currencyFmt = (v: number) =>
 export function FinancialPage() {
   const { workspace } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(now, 'yyyy-MM'));
   
