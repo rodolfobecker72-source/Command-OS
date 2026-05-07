@@ -355,6 +355,7 @@ export function PatrimonioPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }
