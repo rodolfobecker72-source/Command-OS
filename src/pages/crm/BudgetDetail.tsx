@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
@@ -164,7 +164,12 @@ export function BudgetDetail() {
   const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
   const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
   const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState('budget');
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get('from');
+  const initialTab = searchParams.get('tab') === 'execution' ? 'execution' : 'budget';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const backTo = fromParam === 'financeiro' ? '/financeiro?tab=projetos' : '/crm';
+  const backLabel = fromParam === 'financeiro' ? 'Voltar para Projetos/Mês' : 'Voltar ao CRM';
   const [deleteOpen, setDeleteOpen] = useState(false);
   
   // Inline version editing states
@@ -809,9 +814,9 @@ export function BudgetDetail() {
 
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate('/crm')}>
+          <Button variant="ghost" onClick={() => navigate(backTo)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao CRM
+            {backLabel}
           </Button>
 
           <div className="flex items-center gap-2">

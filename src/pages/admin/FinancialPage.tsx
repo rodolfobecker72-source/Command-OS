@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -98,6 +98,7 @@ const currencyFmt = (v: number) =>
 export function FinancialPage() {
   const { workspace } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(now, 'yyyy-MM'));
   
@@ -822,11 +823,11 @@ export function FinancialPage() {
       <Header title="Financeiro" subtitle="Gestão financeira" />
       <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 w-full">
 
-      <Tabs defaultValue="painel">
+      <Tabs defaultValue={searchParams.get('tab') || 'painel'}>
         <TabsList className="grid grid-cols-2 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
           <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
           <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
-          <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos do Mês</TabsTrigger>
+          <TabsTrigger value="projetos" className="text-xs sm:text-sm whitespace-nowrap">Projetos/Mês</TabsTrigger>
           <TabsTrigger value="cartoes" className="text-xs sm:text-sm whitespace-nowrap">Cartão de Crédito</TabsTrigger>
           <TabsTrigger value="config" className="text-xs sm:text-sm whitespace-nowrap">Configurações</TabsTrigger>
         </TabsList>
@@ -1274,7 +1275,7 @@ export function FinancialPage() {
                                 >
                                   <CircleDollarSign className={cn("w-5 h-5", paymentIconColor)} />
                                 </Button>
-                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}`); }} title="Ver no CRM"><ExternalLink className="w-4 h-4" /></Button>
+                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/crm/orcamento/${p.id}?tab=execution&from=financeiro`); }} title="Abrir Execução"><ExternalLink className="w-4 h-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
