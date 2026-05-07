@@ -1244,6 +1244,25 @@ export function FinancialPage() {
                             <TableCell className="text-right font-medium">{currencyFmt(p.totalValue)}</TableCell>
                             <TableCell className="text-right">{currencyFmt(p.totalRealCost)}</TableCell>
                             <TableCell className="text-right">{currencyFmt(p.nfCost)}</TableCell>
+                            <TableCell className="text-center">
+                              {p.nfUrl ? (
+                                <a
+                                  href={p.nfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Visualizar NF emitida"
+                                >
+                                  <Badge variant="outline" className="text-[10px] gap-1 border-success/30 bg-success/10 text-success cursor-pointer hover:bg-success/20">
+                                    <FileCheck2 className="w-3 h-3" /> Emitida
+                                  </Badge>
+                                </a>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground">
+                                  <FileX2 className="w-3 h-3" /> Pendente
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right"><span className={p.margin >= 0 ? 'text-green-600' : 'text-destructive'}>{currencyFmt(p.margin)} ({p.marginPercent.toFixed(1)}%)</span></TableCell>
                             <TableCell className="text-center">
                               <div className="flex justify-center gap-1">
