@@ -266,6 +266,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                   <TableHead className="text-sm">ID</TableHead>
                   <TableHead className="text-sm">Projeto</TableHead>
                   <TableHead className="text-sm">Cliente</TableHead>
+                  <TableHead className="text-sm text-center">NF</TableHead>
                   <TableHead className="text-sm text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
