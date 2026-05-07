@@ -822,7 +822,7 @@ export function FinancialPage() {
       <Header title="Financeiro" subtitle="Gestão financeira" />
       <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 w-full">
 
-      <Tabs defaultValue="painel">
+      <Tabs defaultValue={searchParams.get('tab') || 'painel'}>
         <TabsList className="grid grid-cols-2 sm:inline-flex sm:w-auto w-full gap-1 h-auto">
           <TabsTrigger value="painel" className="text-xs sm:text-sm whitespace-nowrap">Painel Financeiro</TabsTrigger>
           <TabsTrigger value="fluxo" className="text-xs sm:text-sm whitespace-nowrap">Fluxo de Caixa</TabsTrigger>
