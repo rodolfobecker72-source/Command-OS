@@ -2771,18 +2771,15 @@ export function BudgetDetail() {
                                       />
                                     </TableCell>
                                     <TableCell>
-                                      <Input
-                                        type="text"
+                                      <TeamMemberSelect
                                         value={cost.supplier || ''}
-                                        onChange={(e) => {
+                                        onChange={(v) => {
                                           updateExecution(budget.id, {
                                             operationalCosts: (budget.execution?.operationalCosts || []).map(c =>
-                                              c.id === cost.id ? { ...c, supplier: e.target.value } : c
+                                              c.id === cost.id ? { ...c, supplier: v } : c
                                             ),
                                           });
                                         }}
-                                        placeholder="Quem executou"
-                                        className="w-32 h-8"
                                       />
                                     </TableCell>
                                     <TableCell>
