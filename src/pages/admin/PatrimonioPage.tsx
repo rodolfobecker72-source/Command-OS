@@ -20,6 +20,7 @@ import {
 import {
   Plus, Search, Pencil, Trash2, Package, ExternalLink, Loader2, DollarSign, Hash,
 } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
 
 interface Asset {
   id: string;
