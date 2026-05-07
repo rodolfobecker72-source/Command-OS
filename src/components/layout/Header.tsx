@@ -25,7 +25,7 @@ interface OutletContextType {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { profile, logout } = useAuth();
+  const { profile, logout, role } = useAuth();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
