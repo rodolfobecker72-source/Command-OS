@@ -49,7 +49,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
   const currentYear = new Date().getFullYear();
   const [filterYear, setFilterYear] = useState(String(currentYear));
   const [filterMonth, setFilterMonth] = useState('all');
-  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { id?: string; proposalId?: string; name: string; client: string; value: number }[] } | null>(null);
+  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { id?: string; proposalId?: string; name: string; client: string; value: number; hasNf?: boolean }[] } | null>(null);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
