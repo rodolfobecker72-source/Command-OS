@@ -2621,16 +2621,9 @@ export function BudgetDetail() {
                                         />
                                       </TableCell>
                                       <TableCell>
-                                        <Input
-                                          type="text"
+                                        <TeamMemberSelect
                                           value={cost.supplier || ''}
-                                          onChange={(e) => handleUpdateExtraCostSupplier(
-                                            service.id,
-                                            cost.id,
-                                            e.target.value
-                                          )}
-                                          placeholder="Quem executou"
-                                          className="w-32 h-8"
+                                          onChange={(v) => handleUpdateExtraCostSupplier(service.id, cost.id, v)}
                                         />
                                       </TableCell>
                                       <TableCell>
