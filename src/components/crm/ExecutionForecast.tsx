@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/types/crm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Target, DollarSign, TrendingUp, FolderOpen } from 'lucide-react';
+import { Calendar, Target, DollarSign, TrendingUp, FolderOpen, FileCheck2, FileX2 } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -17,7 +17,7 @@ interface ForecastEntry {
   label: string;
   count: number;
   value: number;
-  projects: { id?: string; proposalId?: string; name: string; client: string; value: number }[];
+  projects: { id?: string; proposalId?: string; name: string; client: string; value: number; hasNf?: boolean }[];
 }
 
 interface ExecutionForecastProps {
@@ -49,7 +49,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
   const currentYear = new Date().getFullYear();
   const [filterYear, setFilterYear] = useState(String(currentYear));
   const [filterMonth, setFilterMonth] = useState('all');
-  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { id?: string; proposalId?: string; name: string; client: string; value: number }[] } | null>(null);
+  const [projectsDialog, setProjectsDialog] = useState<{ label: string; projects: { id?: string; proposalId?: string; name: string; client: string; value: number; hasNf?: boolean }[] } | null>(null);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
@@ -266,6 +266,7 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                   <TableHead className="text-sm">ID</TableHead>
                   <TableHead className="text-sm">Projeto</TableHead>
                   <TableHead className="text-sm">Cliente</TableHead>
+                  <TableHead className="text-sm text-center">NF</TableHead>
                   <TableHead className="text-sm text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
@@ -294,12 +295,23 @@ export function ExecutionForecast({ executionForecast, executionTotalValue, getG
                       )}
                     </TableCell>
                     <TableCell className="text-base py-3.5">{p.client}</TableCell>
+                    <TableCell className="text-center py-3.5">
+                      {p.hasNf ? (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-success/30 bg-success/10 text-success">
+                          <FileCheck2 className="w-3 h-3" /> Emitida
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground">
+                          <FileX2 className="w-3 h-3" /> Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right text-base font-semibold py-3.5">{formatCurrency(p.value)}</TableCell>
                   </TableRow>
                 ))}
                 {projectsDialog?.projects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
+                    <TableCell colSpan={5} className="text-sm text-muted-foreground text-center py-8">Nenhum projeto</TableCell>
                   </TableRow>
                 )}
               </TableBody>
