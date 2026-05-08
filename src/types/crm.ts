@@ -196,12 +196,13 @@ export interface ExecutionCostItem extends CostItem {
 }
 
 // Delivery Type
-export type DeliveryType = 'realtime' | 'dias_uteis' | 'dias_corridos';
+export type DeliveryType = 'realtime' | 'dias_uteis' | 'dias_corridos' | 'data_especifica';
 
 export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
   realtime: 'Entrega real time (mesmo dia)',
   dias_uteis: 'Dias úteis',
   dias_corridos: 'Dias corridos',
+  data_especifica: 'Data específica',
 };
 
 // Service Item Interface (for budget with multiple services)
