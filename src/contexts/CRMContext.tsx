@@ -1561,7 +1561,18 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro: ' + e.message); }
   };
 
-  // ============= CRM Card functions =============
+  const reorderProjectColumns = async (orderedIds: string[]) => {
+    try {
+      const updates = orderedIds.map((id, idx) =>
+        supabase.from('project_columns').update({ order: idx }).eq('id', id)
+      );
+      await Promise.all(updates);
+      setProjectColumns(prev => {
+        const map = new Map(prev.map(c => [c.id, c]));
+        return orderedIds.map((id, idx) => ({ ...(map.get(id) as ProjectColumn), order: idx })).filter(Boolean);
+      });
+    } catch (e: any) { toast.error('Erro ao reordenar: ' + e.message); }
+  };
   const getCRMCards = (): CRMCard[] => {
     return budgets.map(budget => {
       const client = getClient(budget.clientId);
