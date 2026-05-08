@@ -99,6 +99,7 @@ interface ServiceItem {
   targetMargin: number;
   deliveryType?: DeliveryType;
   deliveryDays?: number;
+  deliveryDate?: string;
 }
 
 export function NewBudget() {
