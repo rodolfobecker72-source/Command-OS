@@ -16,6 +16,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial', restrictedFrom: ['time_hero'] },
 
   // Operação / Projetos
+  { key: 'gestao-projetos', label: 'Gestão de Projetos', href: '/gestao-projetos', group: 'Projetos' },
   { key: 'calendario', label: 'Calendário', href: '/calendario', group: 'Projetos' },
   { key: 'central-midia', label: 'Central de Mídias', href: '/central-midia', group: 'Projetos' },
 
