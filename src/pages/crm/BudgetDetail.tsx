@@ -2011,7 +2011,8 @@ export function BudgetDetail() {
                                                     onValueChange={(value) =>
                                                       updateNewVersionService(service.id, { 
                                                         deliveryType: value as DeliveryType,
-                                                        deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                                        deliveryDays: value === 'realtime' || value === 'data_especifica' ? undefined : (service.deliveryDays || 1),
+                                                        deliveryDate: value === 'data_especifica' ? service.deliveryDate : undefined,
                                                       })
                                                     }
                                                   >
@@ -2027,7 +2028,7 @@ export function BudgetDetail() {
                                                     </SelectContent>
                                                   </Select>
                                                 </div>
-                                                {service.deliveryType && service.deliveryType !== 'realtime' && (
+                                                {(service.deliveryType === 'dias_uteis' || service.deliveryType === 'dias_corridos') && (
                                                   <div className="space-y-2">
                                                     <Label>Quantidade de dias</Label>
                                                     <Input
@@ -2039,6 +2040,31 @@ export function BudgetDetail() {
                                                       }
                                                       placeholder="Ex: 15"
                                                     />
+                                                  </div>
+                                                )}
+                                                {service.deliveryType === 'data_especifica' && (
+                                                  <div className="space-y-2">
+                                                    <Label>Data de entrega</Label>
+                                                    <Popover>
+                                                      <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-full justify-start">
+                                                          <Calendar className="w-4 h-4 mr-2" />
+                                                          {service.deliveryDate
+                                                            ? format(new Date(service.deliveryDate + 'T12:00:00'), 'dd/MM/yyyy')
+                                                            : 'Selecionar data'}
+                                                        </Button>
+                                                      </PopoverTrigger>
+                                                      <PopoverContent className="w-auto p-0" align="start">
+                                                        <CalendarComponent
+                                                          mode="single"
+                                                          selected={service.deliveryDate ? new Date(service.deliveryDate + 'T12:00:00') : undefined}
+                                                          onSelect={(d) => d && updateNewVersionService(service.id, { deliveryDate: format(d, 'yyyy-MM-dd') })}
+                                                          locale={ptBR}
+                                                          initialFocus
+                                                          className="p-3 pointer-events-auto"
+                                                        />
+                                                      </PopoverContent>
+                                                    </Popover>
                                                   </div>
                                                 )}
                                               </div>
