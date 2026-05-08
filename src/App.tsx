@@ -32,6 +32,7 @@ import { ScorePage } from "@/pages/settings/ScorePage";
 import { ContractTemplatePage } from "@/pages/settings/ContractTemplatePage";
 import { CalendarPage } from "@/pages/operation/CalendarPage";
 import { MediaCenterPage } from "@/pages/operation/MediaCenterPage";
+import { ProjectManagementPage } from "@/pages/projects/ProjectManagementPage";
 import { FinancialPage } from '@/pages/admin/FinancialPage';
 import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
