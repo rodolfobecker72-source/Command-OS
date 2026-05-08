@@ -29,15 +29,13 @@ export function ProjectManagementPage() {
   const toggle = (key: string) => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <div>
-          <h1 className="text-2xl font-semibold">Gestão de Projetos</h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Aqui você pode acompanhar todo fluxo de projetos da produtora, cada uma das demandas,
-            responsáveis, datas, objetivo e muito mais!
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Header
+        title="Gestão de Projetos"
+        subtitle="Acompanhe todo fluxo de projetos da produtora, demandas, responsáveis, datas e objetivos."
+      />
+      <div className="p-4 md:p-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-end gap-4 mb-2">
         <Button variant="outline" size="sm" onClick={() => setManageOpen(true)}>
           <Settings2 className="w-4 h-4 mr-2" />
           Gerenciar status
