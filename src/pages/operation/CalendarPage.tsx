@@ -20,8 +20,8 @@ import { toast } from 'sonner';
 function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
   const events: CalendarDeliveryEvent[] = [];
   for (const b of budgets) {
-    if (b.status !== 'aprovada' || !b.executionStartDate) continue;
-    const execStart = new Date(b.executionStartDate);
+    if (b.status !== 'aprovada') continue;
+    const execStart = b.executionStartDate ? new Date(b.executionStartDate) : null;
     // Use the approved version specifically, fallback to latest by version number
     const approvedVersion = b.approvedVersion != null
       ? b.versions?.find(v => v.version === b.approvedVersion)
@@ -33,7 +33,11 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
     for (const svc of latestVersion.services) {
       if (!svc.deliveryType) continue;
       let deliveryDate: Date;
-      if (svc.deliveryType === 'realtime') {
+      if (svc.deliveryType === 'data_especifica' && (svc as any).deliveryDate) {
+        deliveryDate = new Date((svc as any).deliveryDate + 'T12:00:00');
+      } else if (!execStart) {
+        continue;
+      } else if (svc.deliveryType === 'realtime') {
         deliveryDate = new Date(execStart);
       } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
         deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
@@ -47,7 +51,9 @@ function computeDeliveryEvents(budgets: Budget[]): CalendarDeliveryEvent[] {
 
       const daysLabel = svc.deliveryType === 'realtime'
         ? 'Real time'
-        : `${svc.deliveryDays}d`;
+        : svc.deliveryType === 'data_especifica'
+          ? 'Data'
+          : `${svc.deliveryDays}d`;
 
       events.push({
         id: `${b.id}-delivery-${svc.id}`,
@@ -305,7 +311,11 @@ export function CalendarPage() {
                       )}
                       {svc.deliveryType && (
                         <p className="text-muted-foreground text-[10px] mt-1">
-                          Prazo: {svc.deliveryType === 'realtime' ? 'Real time' : `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                          Prazo: {
+                            svc.deliveryType === 'realtime' ? 'Real time' :
+                            svc.deliveryType === 'data_especifica' ? ((svc as any).deliveryDate || 'Data específica') :
+                            `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`
+                          }
                         </p>
                       )}
                     </div>

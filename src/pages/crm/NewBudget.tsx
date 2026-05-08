@@ -99,6 +99,7 @@ interface ServiceItem {
   targetMargin: number;
   deliveryType?: DeliveryType;
   deliveryDays?: number;
+  deliveryDate?: string;
 }
 
 export function NewBudget() {
@@ -1144,7 +1145,8 @@ export function NewBudget() {
                             onValueChange={(value) =>
                               updateService(service.id, { 
                                 deliveryType: value as DeliveryType,
-                                deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
+                                deliveryDays: value === 'realtime' || value === 'data_especifica' ? undefined : (service.deliveryDays || 1),
+                                deliveryDate: value === 'data_especifica' ? service.deliveryDate : undefined,
                               })
                             }
                           >
@@ -1160,7 +1162,7 @@ export function NewBudget() {
                             </SelectContent>
                           </Select>
                         </div>
-                        {service.deliveryType && service.deliveryType !== 'realtime' && (
+                        {(service.deliveryType === 'dias_uteis' || service.deliveryType === 'dias_corridos') && (
                           <div className="space-y-2">
                             <Label>Quantidade de dias</Label>
                             <Input
@@ -1172,6 +1174,30 @@ export function NewBudget() {
                               }
                               placeholder="Ex: 15"
                             />
+                          </div>
+                        )}
+                        {service.deliveryType === 'data_especifica' && (
+                          <div className="space-y-2">
+                            <Label>Data de entrega</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start">
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {service.deliveryDate
+                                    ? format(new Date(service.deliveryDate + 'T12:00:00'), 'dd/MM/yyyy')
+                                    : 'Selecionar data'}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={service.deliveryDate ? new Date(service.deliveryDate + 'T12:00:00') : undefined}
+                                  onSelect={(d) => d && updateService(service.id, { deliveryDate: format(d, 'yyyy-MM-dd') })}
+                                  initialFocus
+                                  className="p-3 pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         )}
                       </div>

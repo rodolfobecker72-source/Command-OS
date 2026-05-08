@@ -389,6 +389,9 @@ export async function generateProposalPDF({
         deliveryText = `Prazo de entrega: ${service.deliveryDays || ''} dias úteis`;
       } else if (service.deliveryType === 'dias_corridos') {
         deliveryText = `Prazo de entrega: ${service.deliveryDays || ''} dias corridos`;
+      } else if (service.deliveryType === 'data_especifica' && (service as any).deliveryDate) {
+        const d = new Date((service as any).deliveryDate + 'T12:00:00');
+        deliveryText = `Prazo de entrega: ${d.toLocaleDateString('pt-BR')}`;
       }
       if (deliveryText) {
         doc.text(deliveryText, margin, y);
