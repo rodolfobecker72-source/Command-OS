@@ -56,6 +56,7 @@ const navGroups: NavGroup[] = [
     label: 'Projetos',
     icon: Wrench,
     items: [
+      { name: 'Gestão de Projetos', href: '/gestao-projetos', icon: LayoutGrid, pageKey: 'gestao-projetos' },
       { name: 'Calendário', href: '/calendario', icon: CalendarDays, pageKey: 'calendario' },
       { name: 'Central de Mídias', href: '/central-midia', icon: HardDrive, pageKey: 'central-midia' },
     ],
