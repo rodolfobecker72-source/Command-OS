@@ -1429,42 +1429,79 @@ export function BudgetDetail() {
                                       </CardDescription>
                                     )}
                                     {/* Prazo de Entrega */}
-                                    {isEditingVersion ? (
-                                      <div className="flex items-center gap-2 mt-2">
-                                        <Select
-                                          value={service.deliveryType || ''}
-                                          onValueChange={(value) =>
-                                            updateEditService(service.id, { 
-                                              deliveryType: value as DeliveryType,
-                                              deliveryDays: value === 'realtime' ? undefined : (service.deliveryDays || 1),
-                                            })
-                                          }
-                                        >
-                                          <SelectTrigger className="h-8 w-56">
-                                            <SelectValue placeholder="Prazo de entrega..." />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
-                                              <SelectItem key={key} value={key}>{label}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                        {service.deliveryType && service.deliveryType !== 'realtime' && (
-                                          <Input
-                                            type="number"
-                                            min={1}
-                                            className="h-8 w-20"
-                                            value={service.deliveryDays || ''}
-                                            onChange={(e) => updateEditService(service.id, { deliveryDays: parseInt(e.target.value) || 1 })}
-                                            placeholder="Dias"
-                                          />
-                                        )}
-                                      </div>
-                                    ) : service.deliveryType ? (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        Prazo: {service.deliveryType === 'realtime' ? 'Real time (mesmo dia)' : `${service.deliveryDays || ''} ${service.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
-                                      </p>
-                                    ) : null}
+                                    {(() => {
+                                      const editable = isEditingVersion || budget.status === 'aprovada';
+                                      const onChange = (updates: Partial<ServiceItem>) => {
+                                        if (isEditingVersion) updateEditService(service.id, updates);
+                                        else updateApprovedServiceDelivery(service.id, updates);
+                                      };
+                                      if (editable) {
+                                        return (
+                                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            <Select
+                                              value={service.deliveryType || ''}
+                                              onValueChange={(value) =>
+                                                onChange({
+                                                  deliveryType: value as DeliveryType,
+                                                  deliveryDays: value === 'realtime' || value === 'data_especifica' ? undefined : (service.deliveryDays || 1),
+                                                  deliveryDate: value === 'data_especifica' ? service.deliveryDate : undefined,
+                                                })
+                                              }
+                                            >
+                                              <SelectTrigger className="h-8 w-56">
+                                                <SelectValue placeholder="Prazo de entrega..." />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {Object.entries(DELIVERY_TYPE_LABELS).map(([key, label]) => (
+                                                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                            {(service.deliveryType === 'dias_uteis' || service.deliveryType === 'dias_corridos') && (
+                                              <Input
+                                                type="number"
+                                                min={1}
+                                                className="h-8 w-20"
+                                                value={service.deliveryDays || ''}
+                                                onChange={(e) => onChange({ deliveryDays: parseInt(e.target.value) || 1 })}
+                                                placeholder="Dias"
+                                              />
+                                            )}
+                                            {service.deliveryType === 'data_especifica' && (
+                                              <Popover>
+                                                <PopoverTrigger asChild>
+                                                  <Button variant="outline" size="sm" className="h-8">
+                                                    <Calendar className="w-3 h-3 mr-1" />
+                                                    {service.deliveryDate
+                                                      ? format(new Date(service.deliveryDate + 'T12:00:00'), 'dd/MM/yyyy')
+                                                      : 'Selecionar data'}
+                                                  </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                  <CalendarComponent
+                                                    mode="single"
+                                                    selected={service.deliveryDate ? new Date(service.deliveryDate + 'T12:00:00') : undefined}
+                                                    onSelect={(d) => d && onChange({ deliveryDate: format(d, 'yyyy-MM-dd') })}
+                                                    locale={ptBR}
+                                                    initialFocus
+                                                    className="p-3 pointer-events-auto"
+                                                  />
+                                                </PopoverContent>
+                                              </Popover>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                      if (!service.deliveryType) return null;
+                                      const label =
+                                        service.deliveryType === 'realtime' ? 'Real time (mesmo dia)' :
+                                        service.deliveryType === 'data_especifica'
+                                          ? (service.deliveryDate ? format(new Date(service.deliveryDate + 'T12:00:00'), 'dd/MM/yyyy') : 'Data específica')
+                                          : `${service.deliveryDays || ''} ${service.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`;
+                                      return (
+                                        <p className="text-xs text-muted-foreground mt-1">Prazo: {label}</p>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                                 {isEditingVersion && (
