@@ -260,17 +260,21 @@ export async function generateProjectPDF({ budget, client, layoutSettings }: Pro
       }
 
       // Delivery date
-      if (svc.deliveryType && execStart) {
+      if (svc.deliveryType) {
         ensureSpace(8);
         let deliveryDate: Date | null = null;
-        if (svc.deliveryType === 'realtime') {
-          deliveryDate = new Date(execStart);
-        } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
-          deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
-          deliveryDate = addDays(deliveryDate, -1);
-        } else if (svc.deliveryType === 'dias_corridos' && svc.deliveryDays) {
-          deliveryDate = addDays(execStart, svc.deliveryDays);
-          deliveryDate = addDays(deliveryDate, -1);
+        if (svc.deliveryType === 'data_especifica' && (svc as any).deliveryDate) {
+          deliveryDate = new Date((svc as any).deliveryDate + 'T12:00:00');
+        } else if (execStart) {
+          if (svc.deliveryType === 'realtime') {
+            deliveryDate = new Date(execStart);
+          } else if (svc.deliveryType === 'dias_uteis' && svc.deliveryDays) {
+            deliveryDate = addBusinessDays(execStart, svc.deliveryDays);
+            deliveryDate = addDays(deliveryDate, -1);
+          } else if (svc.deliveryType === 'dias_corridos' && svc.deliveryDays) {
+            deliveryDate = addDays(execStart, svc.deliveryDays);
+            deliveryDate = addDays(deliveryDate, -1);
+          }
         }
         if (deliveryDate) {
           doc.setFontSize(9);
