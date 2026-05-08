@@ -564,6 +564,19 @@ export function BudgetDetail() {
     setEditVersionServices(prev => prev.map(s => s.id === serviceId ? { ...s, ...updates } : s));
   };
 
+  // Edit delivery info on approved/current version without entering full edit mode
+  const updateApprovedServiceDelivery = async (serviceId: string, updates: Partial<ServiceItem>) => {
+    if (!budget || !currentVersionData) return;
+    const newServices = currentVersionData.services.map(s =>
+      s.id === serviceId ? { ...s, ...updates } : s
+    );
+    try {
+      await updateBudgetVersion(budget.id, currentVersionData.id, { services: newServices });
+    } catch (e) {
+      toast.error('Erro ao atualizar prazo de entrega');
+    }
+  };
+
   const updateEditCost = (serviceId: string, costId: string, updates: Partial<CostItem>) => {
     setEditVersionServices(prev => prev.map(s =>
       s.id === serviceId ? { ...s, costs: s.costs.map(c => c.id === costId ? { ...c, ...updates } : c) } : s
