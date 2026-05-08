@@ -217,6 +217,7 @@ export interface ServiceItem {
   targetMargin: number;
   deliveryType?: DeliveryType;
   deliveryDays?: number;
+  deliveryDate?: string; // ISO date for 'data_especifica'
 }
 
 // Budget Version Interface
