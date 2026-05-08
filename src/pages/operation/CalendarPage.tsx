@@ -311,7 +311,11 @@ export function CalendarPage() {
                       )}
                       {svc.deliveryType && (
                         <p className="text-muted-foreground text-[10px] mt-1">
-                          Prazo: {svc.deliveryType === 'realtime' ? 'Real time' : `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`}
+                          Prazo: {
+                            svc.deliveryType === 'realtime' ? 'Real time' :
+                            svc.deliveryType === 'data_especifica' ? ((svc as any).deliveryDate || 'Data específica') :
+                            `${svc.deliveryDays} ${svc.deliveryType === 'dias_uteis' ? 'dias úteis' : 'dias corridos'}`
+                          }
                         </p>
                       )}
                     </div>
