@@ -32,6 +32,7 @@ import { ScorePage } from "@/pages/settings/ScorePage";
 import { ContractTemplatePage } from "@/pages/settings/ContractTemplatePage";
 import { CalendarPage } from "@/pages/operation/CalendarPage";
 import { MediaCenterPage } from "@/pages/operation/MediaCenterPage";
+import { ProjectManagementPage } from "@/pages/projects/ProjectManagementPage";
 import { FinancialPage } from '@/pages/admin/FinancialPage';
 import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
@@ -87,6 +88,7 @@ const App = () => (
                   <Route path="/itens-servico" element={<PageGuard pageKey="itens-servico"><ServiceItemsPage /></PageGuard>} />
                   
                   {/* Operação */}
+                  <Route path="/gestao-projetos" element={<PageGuard pageKey="gestao-projetos"><ProjectManagementPage /></PageGuard>} />
                   <Route path="/calendario" element={<PageGuard pageKey="calendario"><CalendarPage /></PageGuard>} />
                   <Route path="/central-midia" element={<PageGuard pageKey="central-midia"><MediaCenterPage /></PageGuard>} />
                   
