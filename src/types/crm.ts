@@ -465,10 +465,9 @@ export interface ProjectColumn {
 }
 
 export const DEFAULT_PROJECT_COLUMNS: ProjectColumn[] = [
-  { id: 'pc1', key: 'planejamento', label: 'Planejamento', color: 'bg-warning', order: 0, isDefault: true },
-  { id: 'pc2', key: 'em_andamento', label: 'Em andamento', color: 'bg-info', order: 1, isDefault: true },
-  { id: 'pc3', key: 'pausado', label: 'Pausado', color: 'bg-muted-foreground', order: 2 },
-  { id: 'pc4', key: 'concluido', label: 'Concluído', color: 'bg-success', order: 3, isDefault: true },
+  { id: 'pc1', key: 'planejamento', label: 'Em planejamento', color: 'bg-info', order: 0, isDefault: true },
+  { id: 'pc2', key: 'em_andamento', label: 'Em execução', color: 'bg-warning', order: 1, isDefault: true },
+  { id: 'pc3', key: 'concluido', label: 'Finalizado', color: 'bg-success', order: 2, isDefault: true },
 ];
 
 export interface ProjectTask {
