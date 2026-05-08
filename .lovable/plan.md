@@ -1,44 +1,65 @@
-## Plano
+## Gestão de Projetos — nova área no grupo Projetos
 
-### 1) Renomear "Fornecedor" → "Equipe" na execução
-Em `src/pages/crm/BudgetDetail.tsx`:
-- Trocar todos os 4 cabeçalhos `Fornecedor` por `Equipe` (linhas 2523, 2606, 2759 e o painel de adicionar gasto extra ~3283).
-- Trocar placeholders `"Quem executou"` por `"Selecione quem executou"`.
+### Visão geral
+Nova página em `/gestao-projetos` que lista projetos agrupados por status, no estilo do print (linhas colapsáveis com badge colorido + contagem). Acessível por padrão a todos os papéis (incluindo `time_hero`, o time operacional). Os status são editáveis: criar novo, renomear, reordenar (drag-and-drop) e escolher cor.
 
-### 2) Substituir Input de texto por um seletor de Equipe + opção Freela
-Criar um novo componente `src/components/crm/TeamMemberSelect.tsx`:
-- Carrega membros do workspace via `workspace_members` + `profiles` (mesmo padrão usado em `UsersPage.tsx`).
-- Renderiza um `Select` com:
-  - Lista de usuários cadastrados (nome).
-  - Item especial **"Freela"** que, ao selecionar, abre um pequeno `Input` inline ao lado para digitar o nome do freela.
-- Valor armazenado no campo `cost.supplier` (string) seguindo um formato simples:
-  - Membro: `"Nome do membro"` (mesma string do nome) — assim o financeiro continua funcionando.
-  - Freela: `"Freela: Nome digitado"`.
-- Substituir os 4 `<Input>` de fornecedor (custos principais, gastos extras, custos operacionais e o dialog de adicionar custo extra ~linha 3287) por esse novo componente.
+Esta entrega prepara apenas a estrutura (página + status configuráveis + DB). O detalhe de cada projeto e os campos (responsáveis, datas, objetivo, etc.) ficam para uma etapa futura.
 
-### 3) Área "Meu Financeiro" para usuários (não-owner)
-Header (`src/components/layout/Header.tsx`):
-- No `DropdownMenu` do avatar, adicionar item **"Meu Financeiro"** (ícone `Wallet`) visível quando `role !== 'owner'`. Navega para `/meu-financeiro`.
+### Banco de dados (nova migração)
 
-Nova página `src/pages/MyFinancePage.tsx`:
-- Cabeçalho padrão (Header) + layout responsivo.
-- Carrega todos os `budgets` aprovados do workspace, percorre `execution.services[].costs`, `execution.extraCosts` e `operationalCosts/extraOperationalCosts`, filtrando entradas onde `cost.supplier === profile.name` (ou começando com este nome).
-- Agrupa por **mês** (a partir de `executionMonth` do orçamento) e lista:
-  - Mês | Projeto (proposalId + cliente) | Descrição do serviço | Valor (real) | Status (`paymentStatus` com badge) | Data de pagamento.
-- Totais no topo: Total Recebido, Total Pendente, Total no Mês corrente.
-- Sem alteração de banco — somente leitura.
+Tabela `project_statuses` (status configuráveis por workspace):
+- `workspace_id` (FK workspaces)
+- `name` (texto, ex.: "Em planejamento")
+- `color` (hex, ex.: `#3b82f6`)
+- `order` (int, para ordenação)
+- `is_default` (bool, marca os 3 status iniciais)
+- timestamps padrão
 
-Registrar rota em `src/App.tsx` e em `src/config/pages.ts` (entrada apenas para `PageGuard`; sem item na sidebar — acesso é exclusivo via menu do avatar).
+Tabela `projects` (estrutura mínima — campos detalhados serão adicionados depois):
+- `workspace_id` (FK workspaces)
+- `name` (texto)
+- `status_id` (FK project_statuses)
+- `budget_id` (FK budgets, opcional — para projetos vindos do CRM aprovado)
+- `order` (int, para ordenação dentro do status)
+- timestamps padrão
+
+RLS: ambas as tabelas usam `has_workspace_access(auth.uid(), workspace_id)` para SELECT/INSERT/UPDATE/DELETE.
+
+Seed automático dos 3 status iniciais por workspace via função/RPC chamada na primeira visita à página caso ainda não existam:
+- "Em planejamento" — azul
+- "Em execução" — laranja
+- "Finalizado" — verde
+
+### Frontend
+
+**Rota & permissão**
+- `src/config/pages.ts`: adicionar entry `{ key: 'gestao-projetos', label: 'Gestão de Projetos', href: '/gestao-projetos', group: 'Projetos' }` (sem `restrictedFrom` — operacional/`time_hero` tem acesso).
+- `src/App.tsx`: registrar rota apontando para nova página.
+
+**Página `src/pages/projects/ProjectManagementPage.tsx`**
+- Header com título "Gestão de Projetos" e descrição: "Aqui você pode acompanhar todo fluxo de projetos da produtora, cada uma das demandas, responsáveis, datas, objetivo e muito mais!"
+- Botão "Gerenciar status" (abre dialog) e botão "Novo projeto" (placeholder por enquanto).
+- Lista de status (cada um colapsável, default expandido) inspirada no print:
+  - Linha do status: `▶` chevron + dot colorido + nome em pílula colorida (bg suave) + contagem.
+  - Ao expandir, mostra os projetos do status (placeholder vazio "Nenhum projeto" inicialmente).
+- Status ordenados por `order` asc.
+
+**Dialog de gestão de status (`ProjectStatusManagerDialog.tsx`)**
+- Lista atual com drag-and-drop (`@dnd-kit/sortable`, já no projeto).
+- Cada linha: nome editável + color picker + botão remover (bloqueado se houver projetos no status; alerta).
+- Botão "Adicionar status".
+- Salvar persiste `order`, `name`, `color`.
+
+**Tokens semânticos**
+- Cores dos status armazenadas como HEX no DB; no render aplicar como inline style usando opacidade para o fundo da pílula (ex.: `style={{ background: color + '1A', color }}`) para manter compatibilidade com o design system, sem hardcode em Tailwind.
 
 ### Detalhes técnicos
-- Reutilizar mesmo padrão de query do `UsersPage` para listar membros.
-- Manter `cost.supplier` como string (sem migração).
-- Owner também verá o item, mas costuma já enxergar tudo no Financeiro — pode ser ocultado se desejado.
+- Mapper snake_case ↔ camelCase em `src/services/projectsService.ts` (novo).
+- Reordenação: ao soltar item, recalcular `order` sequencial e fazer `upsert` em batch.
+- Seed dos status default: RPC `seed_default_project_statuses(workspace_id)` que faz `INSERT … ON CONFLICT DO NOTHING` baseado em nome+workspace. Página chama no mount se a query inicial retornar vazia.
+- A tabela `projects` é criada agora mesmo vazia para já validar RLS e relacionamentos; será expandida na próxima etapa.
 
-### Arquivos afetados
-- `src/pages/crm/BudgetDetail.tsx`
-- `src/components/crm/TeamMemberSelect.tsx` (novo)
-- `src/components/layout/Header.tsx`
-- `src/pages/MyFinancePage.tsx` (novo)
-- `src/App.tsx`
-- `src/config/pages.ts`
+### Fora do escopo desta etapa
+- Formulário/edição detalhada de projetos (campos responsáveis, datas, objetivo, anexos, etc.).
+- Integração automática de orçamentos aprovados virando projetos.
+- Filtros, busca e visualização kanban.
