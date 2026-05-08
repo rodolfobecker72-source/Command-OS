@@ -96,6 +96,7 @@ export function ProjectManagementPage() {
       </div>
 
       <ProjectStatusManagerDialog open={manageOpen} onOpenChange={setManageOpen} />
+      </div>
     </div>
   );
 }
