@@ -88,6 +88,7 @@ const App = () => (
                   <Route path="/itens-servico" element={<PageGuard pageKey="itens-servico"><ServiceItemsPage /></PageGuard>} />
                   
                   {/* Operação */}
+                  <Route path="/gestao-projetos" element={<PageGuard pageKey="gestao-projetos"><ProjectManagementPage /></PageGuard>} />
                   <Route path="/calendario" element={<PageGuard pageKey="calendario"><CalendarPage /></PageGuard>} />
                   <Route path="/central-midia" element={<PageGuard pageKey="central-midia"><MediaCenterPage /></PageGuard>} />
                   
