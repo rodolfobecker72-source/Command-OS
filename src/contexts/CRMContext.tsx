@@ -275,6 +275,7 @@ interface CRMContextType {
   addProjectColumn: (column: Omit<ProjectColumn, 'id' | 'order'>) => Promise<void>;
   updateProjectColumn: (id: string, updates: Partial<ProjectColumn>) => Promise<void>;
   deleteProjectColumn: (id: string) => Promise<void>;
+  reorderProjectColumns: (orderedIds: string[]) => Promise<void>;
 
   getCRMCards: () => CRMCard[];
   getCardsByStatus: (status: CRMStatus) => CRMCard[];
