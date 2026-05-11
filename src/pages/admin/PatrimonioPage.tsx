@@ -105,9 +105,10 @@ export function PatrimonioPage() {
       value: Number(asset.value) || 0,
       serial_number: asset.serial_number,
       hero_asset_number: asset.hero_asset_number,
-      photo: asset.photo,
       reference_link: asset.reference_link,
       assigned_to: asset.assigned_to,
+      category: (asset.category as AssetCategory) || 'equipamento',
+      needs_insurance: !!asset.needs_insurance,
     });
     setDialogOpen(true);
   }
