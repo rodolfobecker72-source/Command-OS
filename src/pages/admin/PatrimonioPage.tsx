@@ -140,9 +140,13 @@ export function PatrimonioPage() {
       return;
     }
     setSaving(true);
+    const qty = Math.max(1, Number(form.quantity) || 1);
+    const units = qty > 1 ? syncUnits(form.units, qty) : [];
     const payload = {
       ...form,
       value: Number(form.value) || 0,
+      quantity: qty,
+      units,
       workspace_id: workspace.id,
     };
     const query = editingId
