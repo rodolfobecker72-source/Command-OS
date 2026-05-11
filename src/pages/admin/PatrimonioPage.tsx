@@ -43,6 +43,8 @@ interface Asset {
   needs_insurance: boolean;
   quantity: number;
   units: AssetUnit[];
+  is_active: boolean;
+  inactive_reason: string;
   created_at: string;
   updated_at: string;
 }
