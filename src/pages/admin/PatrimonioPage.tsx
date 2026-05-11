@@ -49,6 +49,7 @@ interface Asset {
 interface AssetUnit {
   serial_number: string;
   hero_asset_number: string;
+  [key: string]: string;
 }
 
 const emptyForm = {
