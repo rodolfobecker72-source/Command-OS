@@ -41,8 +41,14 @@ interface Asset {
   category: AssetCategory;
   needs_insurance: boolean;
   quantity: number;
+  units: AssetUnit[];
   created_at: string;
   updated_at: string;
+}
+
+interface AssetUnit {
+  serial_number: string;
+  hero_asset_number: string;
 }
 
 const emptyForm = {
@@ -56,7 +62,16 @@ const emptyForm = {
   category: 'equipamento' as AssetCategory,
   needs_insurance: false,
   quantity: 1,
+  units: [] as AssetUnit[],
 };
+
+function syncUnits(units: AssetUnit[], quantity: number): AssetUnit[] {
+  const qty = Math.max(1, quantity);
+  if (qty <= 1) return [];
+  const next = units.slice(0, qty);
+  while (next.length < qty) next.push({ serial_number: '', hero_asset_number: '' });
+  return next;
+}
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
