@@ -168,7 +168,8 @@ export function PatrimonioPage() {
 
   const totals = useMemo(() => ({
     count: assets.length,
-    value: assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0),
+    units: assets.reduce((sum, a) => sum + (Number(a.quantity) || 1), 0),
+    value: assets.reduce((sum, a) => sum + (Number(a.value) || 0) * (Number(a.quantity) || 1), 0),
   }), [assets]);
 
   return (
