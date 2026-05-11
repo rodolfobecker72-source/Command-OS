@@ -41,8 +41,15 @@ interface Asset {
   category: AssetCategory;
   needs_insurance: boolean;
   quantity: number;
+  units: AssetUnit[];
   created_at: string;
   updated_at: string;
+}
+
+interface AssetUnit {
+  serial_number: string;
+  hero_asset_number: string;
+  [key: string]: string;
 }
 
 const emptyForm = {
@@ -56,7 +63,16 @@ const emptyForm = {
   category: 'equipamento' as AssetCategory,
   needs_insurance: false,
   quantity: 1,
+  units: [] as AssetUnit[],
 };
+
+function syncUnits(units: AssetUnit[], quantity: number): AssetUnit[] {
+  const qty = Math.max(1, quantity);
+  if (qty <= 1) return [];
+  const next = units.slice(0, qty);
+  while (next.length < qty) next.push({ serial_number: '', hero_asset_number: '' });
+  return next;
+}
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
@@ -112,6 +128,7 @@ export function PatrimonioPage() {
       category: (asset.category as AssetCategory) || 'equipamento',
       needs_insurance: !!asset.needs_insurance,
       quantity: Number(asset.quantity) || 1,
+      units: syncUnits(Array.isArray(asset.units) ? (asset.units as AssetUnit[]) : [], Number(asset.quantity) || 1),
     });
     setDialogOpen(true);
   }
@@ -123,9 +140,13 @@ export function PatrimonioPage() {
       return;
     }
     setSaving(true);
+    const qty = Math.max(1, Number(form.quantity) || 1);
+    const units = qty > 1 ? syncUnits(form.units, qty) : [];
     const payload = {
       ...form,
       value: Number(form.value) || 0,
+      quantity: qty,
+      units,
       workspace_id: workspace.id,
     };
     const query = editingId
@@ -162,7 +183,11 @@ export function PatrimonioPage() {
       a.description.toLowerCase().includes(s) ||
       a.serial_number.toLowerCase().includes(s) ||
       a.hero_asset_number.toLowerCase().includes(s) ||
-      a.assigned_to.toLowerCase().includes(s),
+      a.assigned_to.toLowerCase().includes(s) ||
+      (Array.isArray(a.units) && a.units.some(u =>
+        (u.serial_number || '').toLowerCase().includes(s) ||
+        (u.hero_asset_number || '').toLowerCase().includes(s),
+      )),
     );
   }, [assets, search]);
 
@@ -217,16 +242,30 @@ export function PatrimonioPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade</Label>
-                  <Input id="quantity" type="number" min="1" step="1" value={form.quantity} onChange={(e) => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={form.quantity}
+                    onChange={(e) => {
+                      const q = Math.max(1, parseInt(e.target.value) || 1);
+                      setForm(f => ({ ...f, quantity: q, units: q > 1 ? syncUnits(f.units, q) : [] }));
+                    }}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
-                  <Input id="hero_asset_number" value={form.hero_asset_number} onChange={(e) => setForm(f => ({ ...f, hero_asset_number: e.target.value }))} placeholder="Ex: HERO-0001" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="serial_number">Nº de Série</Label>
-                  <Input id="serial_number" value={form.serial_number} onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))} placeholder="Serial do fabricante" />
-                </div>
+                {form.quantity <= 1 && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
+                      <Input id="hero_asset_number" value={form.hero_asset_number} onChange={(e) => setForm(f => ({ ...f, hero_asset_number: e.target.value }))} placeholder="Ex: HERO-0001" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="serial_number">Nº de Série</Label>
+                      <Input id="serial_number" value={form.serial_number} onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))} placeholder="Serial do fabricante" />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="assigned_to">Responsável / Alocado em</Label>
                   <Input id="assigned_to" value={form.assigned_to} onChange={(e) => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="Pessoa ou local" />
@@ -258,6 +297,39 @@ export function PatrimonioPage() {
                     Necessita de seguro
                   </Label>
                 </div>
+                {form.quantity > 1 && (
+                  <div className="sm:col-span-2 space-y-3 rounded-md border p-3 bg-muted/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Unidades ({form.quantity})</Label>
+                      <span className="text-xs text-muted-foreground">Nº Patrimônio Hero e Nº de Série de cada unidade</span>
+                    </div>
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {syncUnits(form.units, form.quantity).map((u, idx) => (
+                        <div key={idx} className="grid sm:grid-cols-[auto_1fr_1fr] gap-2 items-center">
+                          <div className="text-xs font-mono text-muted-foreground w-8">#{idx + 1}</div>
+                          <Input
+                            placeholder="Nº Patrimônio Hero"
+                            value={u.hero_asset_number}
+                            onChange={(e) => setForm(f => {
+                              const next = syncUnits(f.units, f.quantity);
+                              next[idx] = { ...next[idx], hero_asset_number: e.target.value };
+                              return { ...f, units: next };
+                            })}
+                          />
+                          <Input
+                            placeholder="Nº de Série"
+                            value={u.serial_number}
+                            onChange={(e) => setForm(f => {
+                              const next = syncUnits(f.units, f.quantity);
+                              next[idx] = { ...next[idx], serial_number: e.target.value };
+                              return { ...f, units: next };
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -381,8 +453,28 @@ export function PatrimonioPage() {
                           {isEstrutura ? 'Estrutura' : 'Equipamento'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
-                      <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
+                      <TableCell className="text-sm font-mono">
+                        {Array.isArray(a.units) && a.units.length > 0
+                          ? (
+                            <div className="space-y-0.5">
+                              {a.units.map((u, i) => (
+                                <div key={i} className="text-xs">{u.hero_asset_number || '—'}</div>
+                              ))}
+                            </div>
+                          )
+                          : (a.hero_asset_number || '—')}
+                      </TableCell>
+                      <TableCell className="text-sm font-mono">
+                        {Array.isArray(a.units) && a.units.length > 0
+                          ? (
+                            <div className="space-y-0.5">
+                              {a.units.map((u, i) => (
+                                <div key={i} className="text-xs">{u.serial_number || '—'}</div>
+                              ))}
+                            </div>
+                          )
+                          : (a.serial_number || '—')}
+                      </TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
                       <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
                       <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>

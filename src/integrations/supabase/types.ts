@@ -28,6 +28,7 @@ export type Database = {
           quantity: number
           reference_link: string
           serial_number: string
+          units: Json
           updated_at: string
           value: number
           workspace_id: string
@@ -45,6 +46,7 @@ export type Database = {
           quantity?: number
           reference_link?: string
           serial_number?: string
+          units?: Json
           updated_at?: string
           value?: number
           workspace_id: string
@@ -62,6 +64,7 @@ export type Database = {
           quantity?: number
           reference_link?: string
           serial_number?: string
+          units?: Json
           updated_at?: string
           value?: number
           workspace_id?: string
