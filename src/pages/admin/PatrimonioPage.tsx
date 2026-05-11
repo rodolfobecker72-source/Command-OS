@@ -318,6 +318,7 @@ export function PatrimonioPage() {
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Item</TableHead>
+                    <TableHead>Categoria</TableHead>
                     <TableHead>Nº Hero</TableHead>
                     <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
@@ -326,19 +327,25 @@ export function PatrimonioPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((a) => (
+                  {filtered.map((a) => {
+                    const isEstrutura = a.category === 'estrutura';
+                    const Icon = isEstrutura ? Building2 : Package;
+                    return (
                     <TableRow key={a.id}>
                       <TableCell>
-                        {a.photo ? (
-                          <img src={a.photo} alt={a.name} className="w-10 h-10 rounded object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                            <Package className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{a.name}</div>
+                        <div className="font-medium flex items-center gap-2 flex-wrap">
+                          {a.name}
+                          {a.needs_insurance && (
+                            <Badge variant="secondary" className="gap-1">
+                              <ShieldCheck className="w-3 h-3" /> Seguro
+                            </Badge>
+                          )}
+                        </div>
                         {a.description && (
                           <div className="text-xs text-muted-foreground line-clamp-1">{a.description}</div>
                         )}
@@ -347,6 +354,11 @@ export function PatrimonioPage() {
                             <ExternalLink className="w-3 h-3" /> referência
                           </a>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={isEstrutura ? 'outline' : 'default'}>
+                          {isEstrutura ? 'Estrutura' : 'Equipamento'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
                       <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
@@ -363,7 +375,7 @@ export function PatrimonioPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
             </div>
