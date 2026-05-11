@@ -55,6 +55,7 @@ const emptyForm = {
   assigned_to: '',
   category: 'equipamento' as AssetCategory,
   needs_insurance: false,
+  quantity: 1,
 };
 
 function formatCurrency(value: number): string {
