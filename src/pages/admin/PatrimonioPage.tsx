@@ -384,7 +384,9 @@ export function PatrimonioPage() {
                       <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
                       <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value))}</TableCell>
+                      <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value) * (Number(a.quantity) || 1))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button size="icon" variant="ghost" onClick={() => openEdit(a)}>
