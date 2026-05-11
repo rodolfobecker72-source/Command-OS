@@ -341,7 +341,9 @@ export function PatrimonioPage() {
                     <TableHead>Nº Hero</TableHead>
                     <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
+                    <TableHead className="text-right">Valor unit.</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="w-24 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
