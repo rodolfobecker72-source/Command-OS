@@ -211,8 +211,12 @@ export function PatrimonioPage() {
                   <Textarea id="description" rows={3} value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Detalhes, modelo, acessórios..." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="value">Valor (R$)</Label>
+                  <Label htmlFor="value">Valor unitário (R$)</Label>
                   <Input id="value" type="number" step="0.01" min="0" value={form.value} onChange={(e) => setForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantidade</Label>
+                  <Input id="quantity" type="number" min="1" step="1" value={form.quantity} onChange={(e) => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
