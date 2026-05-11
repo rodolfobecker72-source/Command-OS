@@ -898,6 +898,41 @@ export function BudgetDetail() {
           </Tabs>
         )}
 
+        {budget.status === 'nao_aprovada' && (budget.rejectionReason || budget.rejectionObservation) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="border-destructive/40 bg-destructive/5">
+              <CardHeader className="pb-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-destructive/10">
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base text-destructive">
+                      Proposta reprovada
+                    </CardTitle>
+                    {budget.rejectionReason && (
+                      <CardDescription className="text-destructive/80 font-medium mt-1">
+                        {budget.rejectionReason}
+                      </CardDescription>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              {budget.rejectionObservation && (
+                <CardContent className="pt-0">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">
+                    {budget.rejectionObservation}
+                  </p>
+                </CardContent>
+              )}
+            </Card>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Info */}
           <div className="lg:col-span-2 space-y-6">
