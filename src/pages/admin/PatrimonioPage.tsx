@@ -111,6 +111,7 @@ export function PatrimonioPage() {
       assigned_to: asset.assigned_to,
       category: (asset.category as AssetCategory) || 'equipamento',
       needs_insurance: !!asset.needs_insurance,
+      quantity: Number(asset.quantity) || 1,
     });
     setDialogOpen(true);
   }
