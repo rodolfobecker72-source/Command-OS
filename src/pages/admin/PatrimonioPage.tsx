@@ -293,6 +293,39 @@ export function PatrimonioPage() {
                     Necessita de seguro
                   </Label>
                 </div>
+                {form.quantity > 1 && (
+                  <div className="sm:col-span-2 space-y-3 rounded-md border p-3 bg-muted/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Unidades ({form.quantity})</Label>
+                      <span className="text-xs text-muted-foreground">Nº Patrimônio Hero e Nº de Série de cada unidade</span>
+                    </div>
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {syncUnits(form.units, form.quantity).map((u, idx) => (
+                        <div key={idx} className="grid sm:grid-cols-[auto_1fr_1fr] gap-2 items-center">
+                          <div className="text-xs font-mono text-muted-foreground w-8">#{idx + 1}</div>
+                          <Input
+                            placeholder="Nº Patrimônio Hero"
+                            value={u.hero_asset_number}
+                            onChange={(e) => setForm(f => {
+                              const next = syncUnits(f.units, f.quantity);
+                              next[idx] = { ...next[idx], hero_asset_number: e.target.value };
+                              return { ...f, units: next };
+                            })}
+                          />
+                          <Input
+                            placeholder="Nº de Série"
+                            value={u.serial_number}
+                            onChange={(e) => setForm(f => {
+                              const next = syncUnits(f.units, f.quantity);
+                              next[idx] = { ...next[idx], serial_number: e.target.value };
+                              return { ...f, units: next };
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
