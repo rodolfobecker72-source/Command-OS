@@ -441,22 +441,19 @@ export function PatrimonioPage() {
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Item</TableHead>
-                    <TableHead>Categoria</TableHead>
                     <TableHead>Nº Hero</TableHead>
-                    <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead className="text-right">Qtd</TableHead>
-                    <TableHead className="text-right">Valor unit.</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="w-24 text-right">Ações</TableHead>
+                    <TableHead className="w-32 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((a) => {
                     const isEstrutura = a.category === 'estrutura';
                     const Icon = isEstrutura ? Building2 : Package;
+                    const inactive = a.is_active === false;
                     return (
-                    <TableRow key={a.id}>
+                    <TableRow key={a.id} className={inactive ? 'opacity-60' : ''}>
                       <TableCell>
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                           <Icon className="w-4 h-4 text-muted-foreground" />
@@ -465,25 +462,17 @@ export function PatrimonioPage() {
                       <TableCell>
                         <div className="font-medium flex items-center gap-2 flex-wrap">
                           {a.name}
+                          {inactive && (
+                            <Badge variant="destructive" className="gap-1">
+                              <PowerOff className="w-3 h-3" /> Inativo
+                            </Badge>
+                          )}
                           {a.needs_insurance && (
                             <Badge variant="secondary" className="gap-1">
                               <ShieldCheck className="w-3 h-3" /> Seguro
                             </Badge>
                           )}
                         </div>
-                        {a.description && (
-                          <div className="text-xs text-muted-foreground line-clamp-1">{a.description}</div>
-                        )}
-                        {a.reference_link && (
-                          <a href={a.reference_link} target="_blank" rel="noreferrer" className="text-xs text-accent inline-flex items-center gap-1 hover:underline">
-                            <ExternalLink className="w-3 h-3" /> referência
-                          </a>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={isEstrutura ? 'outline' : 'default'}>
-                          {isEstrutura ? 'Estrutura' : 'Equipamento'}
-                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm font-mono">
                         {Array.isArray(a.units) && a.units.length > 0
@@ -496,27 +485,17 @@ export function PatrimonioPage() {
                           )
                           : (a.hero_asset_number || '—')}
                       </TableCell>
-                      <TableCell className="text-sm font-mono">
-                        {Array.isArray(a.units) && a.units.length > 0
-                          ? (
-                            <div className="space-y-0.5">
-                              {a.units.map((u, i) => (
-                                <div key={i} className="text-xs">{u.serial_number || '—'}</div>
-                              ))}
-                            </div>
-                          )
-                          : (a.serial_number || '—')}
-                      </TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
                       <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value) * (Number(a.quantity) || 1))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(a)}>
+                          <Button size="icon" variant="ghost" onClick={() => setViewAsset(a)} title="Ver detalhes">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(a)} title="Editar">
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteId(a.id)}>
+                          <Button size="icon" variant="ghost" onClick={() => setDeleteId(a.id)} title="Excluir">
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
