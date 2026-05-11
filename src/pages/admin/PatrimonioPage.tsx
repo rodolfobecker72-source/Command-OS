@@ -509,6 +509,109 @@ export function PatrimonioPage() {
         </CardContent>
       </Card>
 
+
+      <Dialog open={!!viewAsset} onOpenChange={(o) => !o && setViewAsset(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {viewAsset && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 flex-wrap">
+                  {viewAsset.name}
+                  {viewAsset.is_active === false && (
+                    <Badge variant="destructive" className="gap-1">
+                      <PowerOff className="w-3 h-3" /> Inativo
+                    </Badge>
+                  )}
+                  {viewAsset.needs_insurance && (
+                    <Badge variant="secondary" className="gap-1">
+                      <ShieldCheck className="w-3 h-3" /> Seguro
+                    </Badge>
+                  )}
+                </DialogTitle>
+                <DialogDescription>Detalhes completos do item</DialogDescription>
+              </DialogHeader>
+              <div className="grid sm:grid-cols-2 gap-4 py-2 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground">Categoria</div>
+                  <div className="font-medium">{viewAsset.category === 'estrutura' ? 'Estrutura' : 'Equipamento'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Responsável / Alocação</div>
+                  <div className="font-medium">{viewAsset.assigned_to || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Quantidade</div>
+                  <div className="font-medium">{Number(viewAsset.quantity) || 1}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Valor unitário</div>
+                  <div className="font-medium">{formatCurrency(Number(viewAsset.value))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Valor total</div>
+                  <div className="font-medium">{formatCurrency(Number(viewAsset.value) * (Number(viewAsset.quantity) || 1))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Status</div>
+                  <div className="font-medium">{viewAsset.is_active === false ? 'Inativo' : 'Ativo'}</div>
+                </div>
+                {viewAsset.is_active === false && viewAsset.inactive_reason && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Motivo da inativação</div>
+                    <div className="font-medium">{viewAsset.inactive_reason}</div>
+                  </div>
+                )}
+                {viewAsset.description && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Descrição</div>
+                    <div className="whitespace-pre-wrap">{viewAsset.description}</div>
+                  </div>
+                )}
+                {Array.isArray(viewAsset.units) && viewAsset.units.length > 0 ? (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground mb-1">Unidades</div>
+                    <div className="rounded-md border divide-y">
+                      {viewAsset.units.map((u, i) => (
+                        <div key={i} className="grid grid-cols-[auto_1fr_1fr] gap-2 p-2 text-xs">
+                          <span className="font-mono text-muted-foreground">#{i + 1}</span>
+                          <span><span className="text-muted-foreground">Hero:</span> {u.hero_asset_number || '—'}</span>
+                          <span><span className="text-muted-foreground">Série:</span> {u.serial_number || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Nº Patrimônio Hero</div>
+                      <div className="font-mono">{viewAsset.hero_asset_number || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Nº de Série</div>
+                      <div className="font-mono">{viewAsset.serial_number || '—'}</div>
+                    </div>
+                  </>
+                )}
+                {viewAsset.reference_link && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Link de referência</div>
+                    <a href={viewAsset.reference_link} target="_blank" rel="noreferrer" className="text-accent inline-flex items-center gap-1 hover:underline break-all">
+                      <ExternalLink className="w-3 h-3" /> {viewAsset.reference_link}
+                    </a>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setViewAsset(null)}>Fechar</Button>
+                <Button onClick={() => { const a = viewAsset; setViewAsset(null); openEdit(a); }}>
+                  <Pencil className="w-4 h-4 mr-2" /> Editar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
