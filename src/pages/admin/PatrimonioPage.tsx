@@ -305,6 +305,30 @@ export function PatrimonioPage() {
                     Necessita de seguro
                   </Label>
                 </div>
+                <div className="sm:col-span-2 space-y-2 rounded-md border p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="is_active" className="cursor-pointer flex items-center gap-2 font-normal">
+                      <PowerOff className="w-4 h-4 text-muted-foreground" />
+                      Item ativo no patrimônio
+                    </Label>
+                    <Switch
+                      id="is_active"
+                      checked={form.is_active}
+                      onCheckedChange={(c) => setForm(f => ({ ...f, is_active: c }))}
+                    />
+                  </div>
+                  {!form.is_active && (
+                    <div className="space-y-1 pt-1">
+                      <Label htmlFor="inactive_reason" className="text-xs text-muted-foreground">Motivo da inativação</Label>
+                      <Input
+                        id="inactive_reason"
+                        value={form.inactive_reason}
+                        onChange={(e) => setForm(f => ({ ...f, inactive_reason: e.target.value }))}
+                        placeholder="Ex: vendido, perda, troca, doação..."
+                      />
+                    </div>
+                  )}
+                </div>
                 {form.quantity > 1 && (
                   <div className="sm:col-span-2 space-y-3 rounded-md border p-3 bg-muted/20">
                     <div className="flex items-center justify-between">
