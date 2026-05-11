@@ -449,8 +449,28 @@ export function PatrimonioPage() {
                           {isEstrutura ? 'Estrutura' : 'Equipamento'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
-                      <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
+                      <TableCell className="text-sm font-mono">
+                        {Array.isArray(a.units) && a.units.length > 0
+                          ? (
+                            <div className="space-y-0.5">
+                              {a.units.map((u, i) => (
+                                <div key={i} className="text-xs">{u.hero_asset_number || '—'}</div>
+                              ))}
+                            </div>
+                          )
+                          : (a.hero_asset_number || '—')}
+                      </TableCell>
+                      <TableCell className="text-sm font-mono">
+                        {Array.isArray(a.units) && a.units.length > 0
+                          ? (
+                            <div className="space-y-0.5">
+                              {a.units.map((u, i) => (
+                                <div key={i} className="text-xs">{u.serial_number || '—'}</div>
+                              ))}
+                            </div>
+                          )
+                          : (a.serial_number || '—')}
+                      </TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
                       <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
                       <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>
