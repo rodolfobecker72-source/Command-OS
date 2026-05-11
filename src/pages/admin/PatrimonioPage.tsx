@@ -93,6 +93,7 @@ export function PatrimonioPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewAsset, setViewAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     if (workspace?.id) loadAssets();
