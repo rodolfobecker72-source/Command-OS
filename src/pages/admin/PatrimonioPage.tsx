@@ -40,6 +40,7 @@ interface Asset {
   assigned_to: string;
   category: AssetCategory;
   needs_insurance: boolean;
+  quantity: number;
   created_at: string;
   updated_at: string;
 }
@@ -54,6 +55,7 @@ const emptyForm = {
   assigned_to: '',
   category: 'equipamento' as AssetCategory,
   needs_insurance: false,
+  quantity: 1,
 };
 
 function formatCurrency(value: number): string {
@@ -109,6 +111,7 @@ export function PatrimonioPage() {
       assigned_to: asset.assigned_to,
       category: (asset.category as AssetCategory) || 'equipamento',
       needs_insurance: !!asset.needs_insurance,
+      quantity: Number(asset.quantity) || 1,
     });
     setDialogOpen(true);
   }
@@ -165,7 +168,8 @@ export function PatrimonioPage() {
 
   const totals = useMemo(() => ({
     count: assets.length,
-    value: assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0),
+    units: assets.reduce((sum, a) => sum + (Number(a.quantity) || 1), 0),
+    value: assets.reduce((sum, a) => sum + (Number(a.value) || 0) * (Number(a.quantity) || 1), 0),
   }), [assets]);
 
   return (
@@ -208,8 +212,12 @@ export function PatrimonioPage() {
                   <Textarea id="description" rows={3} value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Detalhes, modelo, acessórios..." />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="value">Valor (R$)</Label>
+                  <Label htmlFor="value">Valor unitário (R$)</Label>
                   <Input id="value" type="number" step="0.01" min="0" value={form.value} onChange={(e) => setForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantidade</Label>
+                  <Input id="quantity" type="number" min="1" step="1" value={form.quantity} onChange={(e) => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
@@ -264,7 +272,7 @@ export function PatrimonioPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
@@ -273,6 +281,17 @@ export function PatrimonioPage() {
             <div>
               <p className="text-xs text-muted-foreground">Itens cadastrados</p>
               <p className="text-xl font-bold">{totals.count}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Quantidade total</p>
+              <p className="text-xl font-bold">{totals.units}</p>
             </div>
           </CardContent>
         </Card>
@@ -322,7 +341,9 @@ export function PatrimonioPage() {
                     <TableHead>Nº Hero</TableHead>
                     <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
+                    <TableHead className="text-right">Valor unit.</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="w-24 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -363,7 +384,9 @@ export function PatrimonioPage() {
                       <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
                       <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value))}</TableCell>
+                      <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value) * (Number(a.quantity) || 1))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button size="icon" variant="ghost" onClick={() => openEdit(a)}>

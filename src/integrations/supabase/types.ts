@@ -25,6 +25,7 @@ export type Database = {
           name: string
           needs_insurance: boolean
           photo: string
+          quantity: number
           reference_link: string
           serial_number: string
           updated_at: string
@@ -41,6 +42,7 @@ export type Database = {
           name?: string
           needs_insurance?: boolean
           photo?: string
+          quantity?: number
           reference_link?: string
           serial_number?: string
           updated_at?: string
@@ -57,6 +59,7 @@ export type Database = {
           name?: string
           needs_insurance?: boolean
           photo?: string
+          quantity?: number
           reference_link?: string
           serial_number?: string
           updated_at?: string
