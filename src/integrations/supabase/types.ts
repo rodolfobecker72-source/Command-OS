@@ -22,6 +22,8 @@ export type Database = {
           description: string
           hero_asset_number: string
           id: string
+          inactive_reason: string
+          is_active: boolean
           name: string
           needs_insurance: boolean
           photo: string
@@ -40,6 +42,8 @@ export type Database = {
           description?: string
           hero_asset_number?: string
           id?: string
+          inactive_reason?: string
+          is_active?: boolean
           name?: string
           needs_insurance?: boolean
           photo?: string
@@ -58,6 +62,8 @@ export type Database = {
           description?: string
           hero_asset_number?: string
           id?: string
+          inactive_reason?: string
+          is_active?: boolean
           name?: string
           needs_insurance?: boolean
           photo?: string
