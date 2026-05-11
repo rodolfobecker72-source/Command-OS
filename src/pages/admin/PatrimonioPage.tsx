@@ -183,7 +183,11 @@ export function PatrimonioPage() {
       a.description.toLowerCase().includes(s) ||
       a.serial_number.toLowerCase().includes(s) ||
       a.hero_asset_number.toLowerCase().includes(s) ||
-      a.assigned_to.toLowerCase().includes(s),
+      a.assigned_to.toLowerCase().includes(s) ||
+      (Array.isArray(a.units) && a.units.some(u =>
+        (u.serial_number || '').toLowerCase().includes(s) ||
+        (u.hero_asset_number || '').toLowerCase().includes(s),
+      )),
     );
   }, [assets, search]);
 
