@@ -18,8 +18,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck,
+  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck, Eye, PowerOff,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Header } from '@/components/layout/Header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
