@@ -18,9 +18,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Plus, Search, Pencil, Trash2, Package, ExternalLink, Loader2, DollarSign, Hash,
+  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+
+type AssetCategory = 'equipamento' | 'estrutura';
 
 interface Asset {
   id: string;
@@ -33,6 +38,8 @@ interface Asset {
   photo: string;
   reference_link: string;
   assigned_to: string;
+  category: AssetCategory;
+  needs_insurance: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,9 +50,10 @@ const emptyForm = {
   value: 0,
   serial_number: '',
   hero_asset_number: '',
-  photo: '',
   reference_link: '',
   assigned_to: '',
+  category: 'equipamento' as AssetCategory,
+  needs_insurance: false,
 };
 
 function formatCurrency(value: number): string {
