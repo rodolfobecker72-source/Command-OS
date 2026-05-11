@@ -128,6 +128,7 @@ export function PatrimonioPage() {
       category: (asset.category as AssetCategory) || 'equipamento',
       needs_insurance: !!asset.needs_insurance,
       quantity: Number(asset.quantity) || 1,
+      units: syncUnits(Array.isArray(asset.units) ? (asset.units as AssetUnit[]) : [], Number(asset.quantity) || 1),
     });
     setDialogOpen(true);
   }
