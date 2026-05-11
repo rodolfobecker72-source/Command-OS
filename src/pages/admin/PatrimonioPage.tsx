@@ -223,13 +223,32 @@ export function PatrimonioPage() {
                   <Label htmlFor="assigned_to">Responsável / Alocado em</Label>
                   <Input id="assigned_to" value={form.assigned_to} onChange={(e) => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="Pessoa ou local" />
                 </div>
-                <div className="sm:col-span-2 space-y-2">
-                  <Label htmlFor="photo">URL da foto</Label>
-                  <Input id="photo" value={form.photo} onChange={(e) => setForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." />
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoria</Label>
+                  <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v as AssetCategory }))}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equipamento">Equipamento</SelectItem>
+                      <SelectItem value="estrutura">Estrutura</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor="reference_link">Link de referência</Label>
                   <Input id="reference_link" value={form.reference_link} onChange={(e) => setForm(f => ({ ...f, reference_link: e.target.value }))} placeholder="Ex: link da nota fiscal ou loja" />
+                </div>
+                <div className="sm:col-span-2 flex items-center gap-2 rounded-md border p-3 bg-muted/30">
+                  <Checkbox
+                    id="needs_insurance"
+                    checked={form.needs_insurance}
+                    onCheckedChange={(c) => setForm(f => ({ ...f, needs_insurance: c === true }))}
+                  />
+                  <Label htmlFor="needs_insurance" className="cursor-pointer flex items-center gap-2 font-normal">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    Necessita de seguro
+                  </Label>
                 </div>
               </div>
             </div>
