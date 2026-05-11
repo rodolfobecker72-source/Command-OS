@@ -40,6 +40,7 @@ interface Asset {
   assigned_to: string;
   category: AssetCategory;
   needs_insurance: boolean;
+  quantity: number;
   created_at: string;
   updated_at: string;
 }
