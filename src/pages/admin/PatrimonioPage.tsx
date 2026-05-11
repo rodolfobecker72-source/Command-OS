@@ -134,6 +134,8 @@ export function PatrimonioPage() {
       needs_insurance: !!asset.needs_insurance,
       quantity: Number(asset.quantity) || 1,
       units: syncUnits(Array.isArray(asset.units) ? (asset.units as AssetUnit[]) : [], Number(asset.quantity) || 1),
+      is_active: asset.is_active !== false,
+      inactive_reason: asset.inactive_reason || '',
     });
     setDialogOpen(true);
   }
