@@ -67,6 +67,8 @@ const emptyForm = {
   needs_insurance: false,
   quantity: 1,
   units: [] as AssetUnit[],
+  is_active: true,
+  inactive_reason: '',
 };
 
 function syncUnits(units: AssetUnit[], quantity: number): AssetUnit[] {
