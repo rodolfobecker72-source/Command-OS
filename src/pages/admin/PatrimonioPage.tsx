@@ -18,9 +18,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Plus, Search, Pencil, Trash2, Package, ExternalLink, Loader2, DollarSign, Hash,
+  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+
+type AssetCategory = 'equipamento' | 'estrutura';
 
 interface Asset {
   id: string;
@@ -33,6 +38,8 @@ interface Asset {
   photo: string;
   reference_link: string;
   assigned_to: string;
+  category: AssetCategory;
+  needs_insurance: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,9 +50,10 @@ const emptyForm = {
   value: 0,
   serial_number: '',
   hero_asset_number: '',
-  photo: '',
   reference_link: '',
   assigned_to: '',
+  category: 'equipamento' as AssetCategory,
+  needs_insurance: false,
 };
 
 function formatCurrency(value: number): string {
@@ -97,9 +105,10 @@ export function PatrimonioPage() {
       value: Number(asset.value) || 0,
       serial_number: asset.serial_number,
       hero_asset_number: asset.hero_asset_number,
-      photo: asset.photo,
       reference_link: asset.reference_link,
       assigned_to: asset.assigned_to,
+      category: (asset.category as AssetCategory) || 'equipamento',
+      needs_insurance: !!asset.needs_insurance,
     });
     setDialogOpen(true);
   }
@@ -214,13 +223,32 @@ export function PatrimonioPage() {
                   <Label htmlFor="assigned_to">Responsável / Alocado em</Label>
                   <Input id="assigned_to" value={form.assigned_to} onChange={(e) => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="Pessoa ou local" />
                 </div>
-                <div className="sm:col-span-2 space-y-2">
-                  <Label htmlFor="photo">URL da foto</Label>
-                  <Input id="photo" value={form.photo} onChange={(e) => setForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." />
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoria</Label>
+                  <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v as AssetCategory }))}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equipamento">Equipamento</SelectItem>
+                      <SelectItem value="estrutura">Estrutura</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor="reference_link">Link de referência</Label>
                   <Input id="reference_link" value={form.reference_link} onChange={(e) => setForm(f => ({ ...f, reference_link: e.target.value }))} placeholder="Ex: link da nota fiscal ou loja" />
+                </div>
+                <div className="sm:col-span-2 flex items-center gap-2 rounded-md border p-3 bg-muted/30">
+                  <Checkbox
+                    id="needs_insurance"
+                    checked={form.needs_insurance}
+                    onCheckedChange={(c) => setForm(f => ({ ...f, needs_insurance: c === true }))}
+                  />
+                  <Label htmlFor="needs_insurance" className="cursor-pointer flex items-center gap-2 font-normal">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    Necessita de seguro
+                  </Label>
                 </div>
               </div>
             </div>
@@ -290,6 +318,7 @@ export function PatrimonioPage() {
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Item</TableHead>
+                    <TableHead>Categoria</TableHead>
                     <TableHead>Nº Hero</TableHead>
                     <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
@@ -298,19 +327,25 @@ export function PatrimonioPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((a) => (
+                  {filtered.map((a) => {
+                    const isEstrutura = a.category === 'estrutura';
+                    const Icon = isEstrutura ? Building2 : Package;
+                    return (
                     <TableRow key={a.id}>
                       <TableCell>
-                        {a.photo ? (
-                          <img src={a.photo} alt={a.name} className="w-10 h-10 rounded object-cover" />
-                        ) : (
-                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                            <Package className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{a.name}</div>
+                        <div className="font-medium flex items-center gap-2 flex-wrap">
+                          {a.name}
+                          {a.needs_insurance && (
+                            <Badge variant="secondary" className="gap-1">
+                              <ShieldCheck className="w-3 h-3" /> Seguro
+                            </Badge>
+                          )}
+                        </div>
                         {a.description && (
                           <div className="text-xs text-muted-foreground line-clamp-1">{a.description}</div>
                         )}
@@ -319,6 +354,11 @@ export function PatrimonioPage() {
                             <ExternalLink className="w-3 h-3" /> referência
                           </a>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={isEstrutura ? 'outline' : 'default'}>
+                          {isEstrutura ? 'Estrutura' : 'Equipamento'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm font-mono">{a.hero_asset_number || '—'}</TableCell>
                       <TableCell className="text-sm font-mono">{a.serial_number || '—'}</TableCell>
@@ -335,7 +375,7 @@ export function PatrimonioPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
             </div>

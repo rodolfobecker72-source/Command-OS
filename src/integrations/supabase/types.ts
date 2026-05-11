@@ -17,11 +17,13 @@ export type Database = {
       assets: {
         Row: {
           assigned_to: string
+          category: string
           created_at: string
           description: string
           hero_asset_number: string
           id: string
           name: string
+          needs_insurance: boolean
           photo: string
           reference_link: string
           serial_number: string
@@ -31,11 +33,13 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string
+          category?: string
           created_at?: string
           description?: string
           hero_asset_number?: string
           id?: string
           name?: string
+          needs_insurance?: boolean
           photo?: string
           reference_link?: string
           serial_number?: string
@@ -45,11 +49,13 @@ export type Database = {
         }
         Update: {
           assigned_to?: string
+          category?: string
           created_at?: string
           description?: string
           hero_asset_number?: string
           id?: string
           name?: string
+          needs_insurance?: boolean
           photo?: string
           reference_link?: string
           serial_number?: string
