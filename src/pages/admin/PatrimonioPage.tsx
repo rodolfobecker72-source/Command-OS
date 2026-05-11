@@ -238,16 +238,30 @@ export function PatrimonioPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade</Label>
-                  <Input id="quantity" type="number" min="1" step="1" value={form.quantity} onChange={(e) => setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={form.quantity}
+                    onChange={(e) => {
+                      const q = Math.max(1, parseInt(e.target.value) || 1);
+                      setForm(f => ({ ...f, quantity: q, units: q > 1 ? syncUnits(f.units, q) : [] }));
+                    }}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
-                  <Input id="hero_asset_number" value={form.hero_asset_number} onChange={(e) => setForm(f => ({ ...f, hero_asset_number: e.target.value }))} placeholder="Ex: HERO-0001" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="serial_number">Nº de Série</Label>
-                  <Input id="serial_number" value={form.serial_number} onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))} placeholder="Serial do fabricante" />
-                </div>
+                {form.quantity <= 1 && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="hero_asset_number">Nº Patrimônio Hero</Label>
+                      <Input id="hero_asset_number" value={form.hero_asset_number} onChange={(e) => setForm(f => ({ ...f, hero_asset_number: e.target.value }))} placeholder="Ex: HERO-0001" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="serial_number">Nº de Série</Label>
+                      <Input id="serial_number" value={form.serial_number} onChange={(e) => setForm(f => ({ ...f, serial_number: e.target.value }))} placeholder="Serial do fabricante" />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="assigned_to">Responsável / Alocado em</Label>
                   <Input id="assigned_to" value={form.assigned_to} onChange={(e) => setForm(f => ({ ...f, assigned_to: e.target.value }))} placeholder="Pessoa ou local" />
