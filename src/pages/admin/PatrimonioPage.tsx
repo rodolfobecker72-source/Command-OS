@@ -109,7 +109,7 @@ export function PatrimonioPage() {
     if (error) {
       toast.error('Erro ao carregar patrimônio: ' + error.message);
     } else {
-      setAssets((data as Asset[]) || []);
+      setAssets((data as unknown as Asset[]) || []);
     }
     setLoading(false);
   }
