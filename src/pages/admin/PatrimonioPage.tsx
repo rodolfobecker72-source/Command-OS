@@ -18,8 +18,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck,
+  Plus, Search, Pencil, Trash2, Package, Building2, ExternalLink, Loader2, DollarSign, Hash, ShieldCheck, Eye, PowerOff,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Header } from '@/components/layout/Header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,6 +43,8 @@ interface Asset {
   needs_insurance: boolean;
   quantity: number;
   units: AssetUnit[];
+  is_active: boolean;
+  inactive_reason: string;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +67,8 @@ const emptyForm = {
   needs_insurance: false,
   quantity: 1,
   units: [] as AssetUnit[],
+  is_active: true,
+  inactive_reason: '',
 };
 
 function syncUnits(units: AssetUnit[], quantity: number): AssetUnit[] {
@@ -88,6 +93,7 @@ export function PatrimonioPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewAsset, setViewAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     if (workspace?.id) loadAssets();
@@ -104,7 +110,7 @@ export function PatrimonioPage() {
     if (error) {
       toast.error('Erro ao carregar patrimônio: ' + error.message);
     } else {
-      setAssets((data as Asset[]) || []);
+      setAssets((data as unknown as Asset[]) || []);
     }
     setLoading(false);
   }
@@ -129,6 +135,8 @@ export function PatrimonioPage() {
       needs_insurance: !!asset.needs_insurance,
       quantity: Number(asset.quantity) || 1,
       units: syncUnits(Array.isArray(asset.units) ? (asset.units as AssetUnit[]) : [], Number(asset.quantity) || 1),
+      is_active: asset.is_active !== false,
+      inactive_reason: asset.inactive_reason || '',
     });
     setDialogOpen(true);
   }
@@ -297,6 +305,30 @@ export function PatrimonioPage() {
                     Necessita de seguro
                   </Label>
                 </div>
+                <div className="sm:col-span-2 space-y-2 rounded-md border p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="is_active" className="cursor-pointer flex items-center gap-2 font-normal">
+                      <PowerOff className="w-4 h-4 text-muted-foreground" />
+                      Item ativo no patrimônio
+                    </Label>
+                    <Switch
+                      id="is_active"
+                      checked={form.is_active}
+                      onCheckedChange={(c) => setForm(f => ({ ...f, is_active: c }))}
+                    />
+                  </div>
+                  {!form.is_active && (
+                    <div className="space-y-1 pt-1">
+                      <Label htmlFor="inactive_reason" className="text-xs text-muted-foreground">Motivo da inativação</Label>
+                      <Input
+                        id="inactive_reason"
+                        value={form.inactive_reason}
+                        onChange={(e) => setForm(f => ({ ...f, inactive_reason: e.target.value }))}
+                        placeholder="Ex: vendido, perda, troca, doação..."
+                      />
+                    </div>
+                  )}
+                </div>
                 {form.quantity > 1 && (
                   <div className="sm:col-span-2 space-y-3 rounded-md border p-3 bg-muted/20">
                     <div className="flex items-center justify-between">
@@ -409,22 +441,19 @@ export function PatrimonioPage() {
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Item</TableHead>
-                    <TableHead>Categoria</TableHead>
                     <TableHead>Nº Hero</TableHead>
-                    <TableHead>Nº Série</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead className="text-right">Qtd</TableHead>
-                    <TableHead className="text-right">Valor unit.</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="w-24 text-right">Ações</TableHead>
+                    <TableHead className="w-32 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((a) => {
                     const isEstrutura = a.category === 'estrutura';
                     const Icon = isEstrutura ? Building2 : Package;
+                    const inactive = a.is_active === false;
                     return (
-                    <TableRow key={a.id}>
+                    <TableRow key={a.id} className={inactive ? 'opacity-60' : ''}>
                       <TableCell>
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                           <Icon className="w-4 h-4 text-muted-foreground" />
@@ -433,25 +462,17 @@ export function PatrimonioPage() {
                       <TableCell>
                         <div className="font-medium flex items-center gap-2 flex-wrap">
                           {a.name}
+                          {inactive && (
+                            <Badge variant="destructive" className="gap-1">
+                              <PowerOff className="w-3 h-3" /> Inativo
+                            </Badge>
+                          )}
                           {a.needs_insurance && (
                             <Badge variant="secondary" className="gap-1">
                               <ShieldCheck className="w-3 h-3" /> Seguro
                             </Badge>
                           )}
                         </div>
-                        {a.description && (
-                          <div className="text-xs text-muted-foreground line-clamp-1">{a.description}</div>
-                        )}
-                        {a.reference_link && (
-                          <a href={a.reference_link} target="_blank" rel="noreferrer" className="text-xs text-accent inline-flex items-center gap-1 hover:underline">
-                            <ExternalLink className="w-3 h-3" /> referência
-                          </a>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={isEstrutura ? 'outline' : 'default'}>
-                          {isEstrutura ? 'Estrutura' : 'Equipamento'}
-                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm font-mono">
                         {Array.isArray(a.units) && a.units.length > 0
@@ -464,27 +485,17 @@ export function PatrimonioPage() {
                           )
                           : (a.hero_asset_number || '—')}
                       </TableCell>
-                      <TableCell className="text-sm font-mono">
-                        {Array.isArray(a.units) && a.units.length > 0
-                          ? (
-                            <div className="space-y-0.5">
-                              {a.units.map((u, i) => (
-                                <div key={i} className="text-xs">{u.serial_number || '—'}</div>
-                              ))}
-                            </div>
-                          )
-                          : (a.serial_number || '—')}
-                      </TableCell>
                       <TableCell className="text-sm">{a.assigned_to || '—'}</TableCell>
                       <TableCell className="text-right font-medium">{Number(a.quantity) || 1}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(Number(a.value))}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(Number(a.value) * (Number(a.quantity) || 1))}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(a)}>
+                          <Button size="icon" variant="ghost" onClick={() => setViewAsset(a)} title="Ver detalhes">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(a)} title="Editar">
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteId(a.id)}>
+                          <Button size="icon" variant="ghost" onClick={() => setDeleteId(a.id)} title="Excluir">
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
@@ -497,6 +508,109 @@ export function PatrimonioPage() {
           )}
         </CardContent>
       </Card>
+
+
+      <Dialog open={!!viewAsset} onOpenChange={(o) => !o && setViewAsset(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {viewAsset && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 flex-wrap">
+                  {viewAsset.name}
+                  {viewAsset.is_active === false && (
+                    <Badge variant="destructive" className="gap-1">
+                      <PowerOff className="w-3 h-3" /> Inativo
+                    </Badge>
+                  )}
+                  {viewAsset.needs_insurance && (
+                    <Badge variant="secondary" className="gap-1">
+                      <ShieldCheck className="w-3 h-3" /> Seguro
+                    </Badge>
+                  )}
+                </DialogTitle>
+                <DialogDescription>Detalhes completos do item</DialogDescription>
+              </DialogHeader>
+              <div className="grid sm:grid-cols-2 gap-4 py-2 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground">Categoria</div>
+                  <div className="font-medium">{viewAsset.category === 'estrutura' ? 'Estrutura' : 'Equipamento'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Responsável / Alocação</div>
+                  <div className="font-medium">{viewAsset.assigned_to || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Quantidade</div>
+                  <div className="font-medium">{Number(viewAsset.quantity) || 1}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Valor unitário</div>
+                  <div className="font-medium">{formatCurrency(Number(viewAsset.value))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Valor total</div>
+                  <div className="font-medium">{formatCurrency(Number(viewAsset.value) * (Number(viewAsset.quantity) || 1))}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Status</div>
+                  <div className="font-medium">{viewAsset.is_active === false ? 'Inativo' : 'Ativo'}</div>
+                </div>
+                {viewAsset.is_active === false && viewAsset.inactive_reason && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Motivo da inativação</div>
+                    <div className="font-medium">{viewAsset.inactive_reason}</div>
+                  </div>
+                )}
+                {viewAsset.description && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Descrição</div>
+                    <div className="whitespace-pre-wrap">{viewAsset.description}</div>
+                  </div>
+                )}
+                {Array.isArray(viewAsset.units) && viewAsset.units.length > 0 ? (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground mb-1">Unidades</div>
+                    <div className="rounded-md border divide-y">
+                      {viewAsset.units.map((u, i) => (
+                        <div key={i} className="grid grid-cols-[auto_1fr_1fr] gap-2 p-2 text-xs">
+                          <span className="font-mono text-muted-foreground">#{i + 1}</span>
+                          <span><span className="text-muted-foreground">Hero:</span> {u.hero_asset_number || '—'}</span>
+                          <span><span className="text-muted-foreground">Série:</span> {u.serial_number || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Nº Patrimônio Hero</div>
+                      <div className="font-mono">{viewAsset.hero_asset_number || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Nº de Série</div>
+                      <div className="font-mono">{viewAsset.serial_number || '—'}</div>
+                    </div>
+                  </>
+                )}
+                {viewAsset.reference_link && (
+                  <div className="sm:col-span-2">
+                    <div className="text-xs text-muted-foreground">Link de referência</div>
+                    <a href={viewAsset.reference_link} target="_blank" rel="noreferrer" className="text-accent inline-flex items-center gap-1 hover:underline break-all">
+                      <ExternalLink className="w-3 h-3" /> {viewAsset.reference_link}
+                    </a>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setViewAsset(null)}>Fechar</Button>
+                <Button onClick={() => { const a = viewAsset; setViewAsset(null); openEdit(a); }}>
+                  <Pencil className="w-4 h-4 mr-2" /> Editar
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
