@@ -493,13 +493,20 @@ export function PatrimonioPage() {
                     return (
                     <TableRow key={a.id} className={inactive ? 'opacity-60' : ''}>
                       <TableCell>
-                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isEstrutura ? 'bg-accent/15 text-accent' : 'bg-primary/10 text-primary'}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium flex items-center gap-2 flex-wrap">
                           {a.name}
+                          <Badge
+                            variant="outline"
+                            className={`gap-1 ${isEstrutura ? 'border-accent/40 text-accent bg-accent/5' : 'border-primary/40 text-primary bg-primary/5'}`}
+                          >
+                            <Icon className="w-3 h-3" />
+                            {isEstrutura ? 'Estrutura' : 'Equipamento'}
+                          </Badge>
                           {inactive && (
                             <Badge variant="destructive" className="gap-1">
                               <PowerOff className="w-3 h-3" /> Inativo
