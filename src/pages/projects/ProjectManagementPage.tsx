@@ -24,6 +24,13 @@ export function ProjectManagementPage() {
       if (!map[card.status]) map[card.status] = [];
       map[card.status].push(card);
     }
+    const numOf = (c: typeof projectCards[number]) => {
+      const n = parseInt(String(c.proposalId ?? '').replace(/\D/g, ''), 10);
+      return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+    };
+    for (const key of Object.keys(map)) {
+      map[key] = [...map[key]].sort((a, b) => numOf(a) - numOf(b));
+    }
     return map;
   }, [projectColumns, projectCards]);
 
