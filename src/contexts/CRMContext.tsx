@@ -960,10 +960,17 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       }
 
-      // Sync proposalId to project_cards if changed
-      if (updates.proposalId !== undefined) {
-        await supabase.from('project_cards').update({ proposal_id: updates.proposalId }).eq('budget_id', id);
-        setProjectCards(prev => prev.map(pc => pc.budgetId === id ? { ...pc, proposalId: updates.proposalId! } : pc));
+      // Sync proposalId/projectName to project_cards if changed
+      const pcUpdates: any = {};
+      if (updates.proposalId !== undefined) pcUpdates.proposal_id = updates.proposalId;
+      if (updates.projectName !== undefined) pcUpdates.project_name = updates.projectName;
+      if (Object.keys(pcUpdates).length > 0) {
+        await supabase.from('project_cards').update(pcUpdates).eq('budget_id', id);
+        setProjectCards(prev => prev.map(pc => pc.budgetId === id ? {
+          ...pc,
+          ...(updates.proposalId !== undefined ? { proposalId: updates.proposalId } : {}),
+          ...(updates.projectName !== undefined ? { projectName: updates.projectName } : {}),
+        } : pc));
       }
 
       setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b));
