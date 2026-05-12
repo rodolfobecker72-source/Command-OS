@@ -79,12 +79,29 @@ export function ProjectManagementPage() {
                       {cards.map((card) => (
                         <li
                           key={card.id}
-                          className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 cursor-pointer"
+                          className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3"
                         >
-                          <span className="font-medium">{card.projectName}</span>
-                          {card.clientName && (
-                            <span className="text-muted-foreground"> · {card.clientName}</span>
-                          )}
+                          <div className="min-w-0 flex-1">
+                            <span className="font-medium">{card.projectName}</span>
+                            {card.clientName && (
+                              <span className="text-muted-foreground"> · {card.clientName}</span>
+                            )}
+                          </div>
+                          <Select
+                            value={card.status}
+                            onValueChange={(value) => updateProjectCard(card.id, { status: value })}
+                          >
+                            <SelectTrigger className="h-7 w-[170px] text-xs shrink-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[200]">
+                              {sortedColumns.map((c) => (
+                                <SelectItem key={c.key} value={c.key} className="text-xs">
+                                  {c.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </li>
                       ))}
                     </ul>
