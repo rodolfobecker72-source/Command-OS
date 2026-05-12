@@ -594,10 +594,15 @@ export function PatrimonioPage() {
                 )}
                 {viewAsset.reference_link && (
                   <div className="sm:col-span-2">
-                    <div className="text-xs text-muted-foreground">Link de referência</div>
-                    <a href={viewAsset.reference_link} target="_blank" rel="noreferrer" className="text-accent inline-flex items-center gap-1 hover:underline break-all">
-                      <ExternalLink className="w-3 h-3" /> {viewAsset.reference_link}
-                    </a>
+                    <div className="text-xs text-muted-foreground mb-1">Link de referência</div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(viewAsset.reference_link, '_blank', 'noopener,noreferrer')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" /> Acessar link
+                    </Button>
                   </div>
                 )}
               </div>
