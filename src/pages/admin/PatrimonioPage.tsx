@@ -183,10 +183,16 @@ export function PatrimonioPage() {
     setDeleteId(null);
   }
 
+  const [categoryFilter, setCategoryFilter] = useState<'todos' | AssetCategory>('todos');
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return assets;
-    return assets.filter(a =>
+    let list = assets;
+    if (categoryFilter !== 'todos') {
+      list = list.filter(a => a.category === categoryFilter);
+    }
+    if (!s) return list;
+    return list.filter(a =>
       a.name.toLowerCase().includes(s) ||
       a.description.toLowerCase().includes(s) ||
       a.serial_number.toLowerCase().includes(s) ||
@@ -197,7 +203,7 @@ export function PatrimonioPage() {
         (u.hero_asset_number || '').toLowerCase().includes(s),
       )),
     );
-  }, [assets, search]);
+  }, [assets, search, categoryFilter]);
 
   const totals = useMemo(() => ({
     count: assets.length,
