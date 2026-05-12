@@ -183,10 +183,16 @@ export function PatrimonioPage() {
     setDeleteId(null);
   }
 
+  const [categoryFilter, setCategoryFilter] = useState<'todos' | AssetCategory>('todos');
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return assets;
-    return assets.filter(a =>
+    let list = assets;
+    if (categoryFilter !== 'todos') {
+      list = list.filter(a => a.category === categoryFilter);
+    }
+    if (!s) return list;
+    return list.filter(a =>
       a.name.toLowerCase().includes(s) ||
       a.description.toLowerCase().includes(s) ||
       a.serial_number.toLowerCase().includes(s) ||
@@ -197,12 +203,14 @@ export function PatrimonioPage() {
         (u.hero_asset_number || '').toLowerCase().includes(s),
       )),
     );
-  }, [assets, search]);
+  }, [assets, search, categoryFilter]);
 
   const totals = useMemo(() => ({
     count: assets.length,
     units: assets.reduce((sum, a) => sum + (Number(a.quantity) || 1), 0),
     value: assets.reduce((sum, a) => sum + (Number(a.value) || 0) * (Number(a.quantity) || 1), 0),
+    equipamentos: assets.filter(a => a.category === 'equipamento').reduce((s, a) => s + (Number(a.quantity) || 1), 0),
+    estruturas: assets.filter(a => a.category === 'estrutura').reduce((s, a) => s + (Number(a.quantity) || 1), 0),
   }), [assets]);
 
   return (
@@ -412,15 +420,45 @@ export function PatrimonioPage() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome, série, patrimônio ou responsável..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search + Filtros */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, série, patrimônio ou responsável..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-1 p-1 bg-muted rounded-md">
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'todos' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('todos')}
+          >
+            Todos ({totals.units})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'equipamento' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('equipamento')}
+            className="gap-1.5"
+          >
+            <Package className="w-3.5 h-3.5" /> Equipamentos ({totals.equipamentos})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'estrutura' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('estrutura')}
+            className="gap-1.5"
+          >
+            <Building2 className="w-3.5 h-3.5" /> Estruturas ({totals.estruturas})
+          </Button>
+        </div>
       </div>
 
       {/* List */}
@@ -455,13 +493,20 @@ export function PatrimonioPage() {
                     return (
                     <TableRow key={a.id} className={inactive ? 'opacity-60' : ''}>
                       <TableCell>
-                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isEstrutura ? 'bg-accent/15 text-accent' : 'bg-primary/10 text-primary'}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium flex items-center gap-2 flex-wrap">
                           {a.name}
+                          <Badge
+                            variant="outline"
+                            className={`gap-1 ${isEstrutura ? 'border-accent/40 text-accent bg-accent/5' : 'border-primary/40 text-primary bg-primary/5'}`}
+                          >
+                            <Icon className="w-3 h-3" />
+                            {isEstrutura ? 'Estrutura' : 'Equipamento'}
+                          </Badge>
                           {inactive && (
                             <Badge variant="destructive" className="gap-1">
                               <PowerOff className="w-3 h-3" /> Inativo
