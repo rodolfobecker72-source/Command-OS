@@ -493,7 +493,7 @@ export function PatrimonioPage() {
                     return (
                     <TableRow key={a.id} className={inactive ? 'opacity-60' : ''}>
                       <TableCell>
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isEstrutura ? 'bg-accent/15 text-accent' : 'bg-primary/10 text-primary'}`}>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isEstrutura ? 'bg-orange-500/15 text-orange-600' : 'bg-primary/10 text-primary'}`}>
                           <Icon className="w-4 h-4" />
                         </div>
                       </TableCell>
@@ -502,7 +502,7 @@ export function PatrimonioPage() {
                           {a.name}
                           <Badge
                             variant="outline"
-                            className={`gap-1 ${isEstrutura ? 'border-accent/40 text-accent bg-accent/5' : 'border-primary/40 text-primary bg-primary/5'}`}
+                            className={`gap-1 ${isEstrutura ? 'border-orange-500/40 text-orange-600 bg-orange-500/10' : 'border-primary/40 text-primary bg-primary/5'}`}
                           >
                             <Icon className="w-3 h-3" />
                             {isEstrutura ? 'Estrutura' : 'Equipamento'}
