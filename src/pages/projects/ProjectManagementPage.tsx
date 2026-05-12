@@ -83,7 +83,7 @@ export function ProjectManagementPage() {
                         >
                           <div className="min-w-0 flex-1">
                             {card.proposalId && (
-                              <span className="text-muted-foreground font-mono mr-1">#{card.proposalId}</span>
+                              <span className="font-medium">{card.proposalId} - </span>
                             )}
                             <span className="font-medium">{card.projectName}</span>
                             {card.clientName && (
