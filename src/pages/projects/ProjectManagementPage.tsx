@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { ChevronRight, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCRM } from '@/contexts/CRMContext';
 import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusManagerDialog';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
 export function ProjectManagementPage() {
-  const { projectColumns, projectCards } = useCRM();
+  const { projectColumns, projectCards, updateProjectCard } = useCRM();
   const [manageOpen, setManageOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
