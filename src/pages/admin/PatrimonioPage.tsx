@@ -420,15 +420,45 @@ export function PatrimonioPage() {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome, série, patrimônio ou responsável..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search + Filtros */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, série, patrimônio ou responsável..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-1 p-1 bg-muted rounded-md">
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'todos' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('todos')}
+          >
+            Todos ({totals.units})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'equipamento' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('equipamento')}
+            className="gap-1.5"
+          >
+            <Package className="w-3.5 h-3.5" /> Equipamentos ({totals.equipamentos})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === 'estrutura' ? 'default' : 'ghost'}
+            onClick={() => setCategoryFilter('estrutura')}
+            className="gap-1.5"
+          >
+            <Building2 className="w-3.5 h-3.5" /> Estruturas ({totals.estruturas})
+          </Button>
+        </div>
       </div>
 
       {/* List */}
