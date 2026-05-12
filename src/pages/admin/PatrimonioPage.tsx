@@ -209,6 +209,8 @@ export function PatrimonioPage() {
     count: assets.length,
     units: assets.reduce((sum, a) => sum + (Number(a.quantity) || 1), 0),
     value: assets.reduce((sum, a) => sum + (Number(a.value) || 0) * (Number(a.quantity) || 1), 0),
+    equipamentos: assets.filter(a => a.category === 'equipamento').reduce((s, a) => s + (Number(a.quantity) || 1), 0),
+    estruturas: assets.filter(a => a.category === 'estrutura').reduce((s, a) => s + (Number(a.quantity) || 1), 0),
   }), [assets]);
 
   return (
