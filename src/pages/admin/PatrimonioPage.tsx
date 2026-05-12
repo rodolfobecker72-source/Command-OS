@@ -513,7 +513,7 @@ export function PatrimonioPage() {
                             </Badge>
                           )}
                           {a.needs_insurance && (
-                            <Badge variant="secondary" className="gap-1">
+                            <Badge variant="outline" className="gap-1 border-green-600/40 text-green-700 bg-green-500/10">
                               <ShieldCheck className="w-3 h-3" /> Seguro
                             </Badge>
                           )}
@@ -568,7 +568,7 @@ export function PatrimonioPage() {
                     </Badge>
                   )}
                   {viewAsset.needs_insurance && (
-                    <Badge variant="secondary" className="gap-1">
+                    <Badge variant="outline" className="gap-1 border-green-600/40 text-green-700 bg-green-500/10">
                       <ShieldCheck className="w-3 h-3" /> Seguro
                     </Badge>
                   )}
