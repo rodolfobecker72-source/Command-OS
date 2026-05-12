@@ -82,6 +82,9 @@ export function ProjectManagementPage() {
                           className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3"
                         >
                           <div className="min-w-0 flex-1">
+                            {card.proposalId && (
+                              <span className="text-muted-foreground font-mono mr-1">#{card.proposalId}</span>
+                            )}
                             <span className="font-medium">{card.projectName}</span>
                             {card.clientName && (
                               <span className="text-muted-foreground"> · {card.clientName}</span>
