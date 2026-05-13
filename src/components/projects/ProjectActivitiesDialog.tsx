@@ -577,80 +577,119 @@ function SortableCard({
 
   const isOverdue = activity.dueDate && activity.status !== 'concluido' && activity.dueDate < new Date().toISOString().slice(0, 10);
 
+  const assignee = members.find(m => m.id === activity.assignedToUserId);
+  const initials = assignee?.name
+    ? assignee.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    : '?';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group rounded-md border bg-card px-3 py-2 text-sm flex flex-col gap-1.5 hover:border-primary/40"
+      className="group relative rounded-lg border bg-card p-3 text-sm flex flex-col gap-2 hover:border-primary/40 shadow-sm"
     >
-      <div className="flex items-center gap-2">
-        <div className="flex-1 min-w-0" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
-          {isEditing ? (
-            <Input
-              autoFocus
-              value={editTitle}
-              onChange={e => onChangeEdit(e.target.value)}
-              onBlur={() => onSaveEdit(activity.id)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') onSaveEdit(activity.id);
-                if (e.key === 'Escape') onSaveEdit(activity.id);
-              }}
-              className="h-7"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => onStartEdit(activity.id, activity.title)}
-              className={cn(
-                'text-left w-full truncate cursor-text',
-                activity.status === 'concluido' && 'line-through text-muted-foreground'
-              )}
-              title={activity.title}
-            >
-              {activity.title}
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => onDelete(activity.id)}
-          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-          title="Remover"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+      <button
+        type="button"
+        onClick={() => onDelete(activity.id)}
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+        title="Remover"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+
+      {/* Title */}
+      <div className="pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+        {isEditing ? (
+          <Input
+            autoFocus
+            value={editTitle}
+            onChange={e => onChangeEdit(e.target.value)}
+            onBlur={() => onSaveEdit(activity.id)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') onSaveEdit(activity.id);
+              if (e.key === 'Escape') onSaveEdit(activity.id);
+            }}
+            className="h-7"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => onStartEdit(activity.id, activity.title)}
+            className={cn(
+              'text-left w-full font-semibold leading-tight cursor-text break-words',
+              activity.status === 'concluido' && 'line-through text-muted-foreground'
+            )}
+            title={activity.title}
+          >
+            {activity.title}
+          </button>
+        )}
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <Select
-          value={activity.assignedToUserId || UNASSIGNED}
-          onValueChange={(v) => onUpdateAssignee(activity.id, v === UNASSIGNED ? null : v)}
-        >
-          <SelectTrigger className="h-6 text-[11px] flex-1 bg-transparent border-dashed px-1.5">
-            <span className="flex items-center gap-1 truncate">
-              <User className="w-3 h-3 shrink-0 text-muted-foreground" />
-              <SelectValue placeholder="Responsável" />
+      {/* Responsável */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
+          >
+            <Avatar className="w-5 h-5">
+              {assignee?.photoUrl && <AvatarImage src={assignee.photoUrl} alt={assignee.name} />}
+              <AvatarFallback className="text-[9px] bg-muted">
+                {assignee ? initials : <User className="w-3 h-3" />}
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate">
+              {assignee ? assignee.name : 'Sem responsável'}
             </span>
-          </SelectTrigger>
-          <SelectContent className="z-[200]">
-            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-            {members.map(m => (
-              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className={cn(
-          'flex items-center gap-1 rounded-md border border-dashed px-1.5 h-6 bg-transparent',
-          isOverdue && 'border-destructive/60 text-destructive'
-        )}>
-          <Calendar className="w-3 h-3 shrink-0 text-muted-foreground" />
-          <input
-            type="date"
-            value={activity.dueDate || ''}
-            onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
-            className="text-[11px] bg-transparent outline-none w-[100px]"
-          />
-        </div>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-1 z-[200]" align="start">
+          <div className="max-h-60 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => onUpdateAssignee(activity.id, null)}
+              className={cn(
+                'w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted',
+                !activity.assignedToUserId && 'bg-muted'
+              )}
+            >
+              Sem responsável
+            </button>
+            {members.map(m => {
+              const mInitials = m.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => onUpdateAssignee(activity.id, m.id)}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted flex items-center gap-2',
+                    activity.assignedToUserId === m.id && 'bg-muted'
+                  )}
+                >
+                  <Avatar className="w-5 h-5">
+                    {m.photoUrl && <AvatarImage src={m.photoUrl} alt={m.name} />}
+                    <AvatarFallback className="text-[9px] bg-muted-foreground/20">{mInitials}</AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{m.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Date */}
+      <div className={cn('flex items-center gap-2 text-xs', isOverdue ? 'text-destructive' : 'text-muted-foreground')}>
+        <Calendar className="w-3.5 h-3.5 shrink-0" />
+        <input
+          type="date"
+          value={activity.dueDate || ''}
+          onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
+          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1"
+          placeholder="Sem prazo"
+        />
       </div>
     </div>
   );
@@ -658,15 +697,27 @@ function SortableCard({
 
 function ActivityCard({ activity, members, dragging }: { activity: Activity; members: MemberOption[]; dragging?: boolean }) {
   const assignee = members.find(m => m.id === activity.assignedToUserId);
+  const initials = assignee?.name
+    ? assignee.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    : '?';
   return (
-    <div className={cn('rounded-md border bg-card px-3 py-2 text-sm shadow-lg', dragging && 'rotate-2')}>
-      <div>{activity.title}</div>
-      {(assignee || activity.dueDate) && (
-        <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
-          {assignee && <span className="flex items-center gap-1"><User className="w-3 h-3" />{assignee.name}</span>}
-          {activity.dueDate && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDateBR(activity.dueDate)}</span>}
+    <div className={cn('rounded-lg border bg-card p-3 text-sm shadow-lg flex flex-col gap-2', dragging && 'rotate-2')}>
+      <div className="font-semibold leading-tight">{activity.title}</div>
+      {assignee && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Avatar className="w-5 h-5">
+            {assignee.photoUrl && <AvatarImage src={assignee.photoUrl} alt={assignee.name} />}
+            <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+          </Avatar>
+          <span className="truncate">{assignee.name}</span>
+        </div>
+      )}
+      {activity.dueDate && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5" />{formatDateBR(activity.dueDate)}
         </div>
       )}
     </div>
   );
 }
+
