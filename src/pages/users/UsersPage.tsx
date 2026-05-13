@@ -201,7 +201,11 @@ export function UsersPage() {
 
   const handleEditMember = (member: MemberWithProfile) => {
     setEditingMember(member);
-    setEditForm({ name: member.profile?.name || '', role: member.role });
+    setEditForm({
+      name: member.profile?.name || '',
+      role: member.role,
+      birthDate: member.profile?.birth_date || '',
+    });
     setAvatarFile(null);
     setAvatarPreview(member.profile?.photo_url || null);
     setIsEditOpen(true);
