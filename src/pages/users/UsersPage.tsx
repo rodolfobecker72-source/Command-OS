@@ -190,7 +190,7 @@ export function UsersPage() {
 
       toast.success(`Membro ${createForm.name.trim()} criado com sucesso!`);
       setIsCreateOpen(false);
-      setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
+      setCreateForm({ name: '', email: '', password: '', role: 'vendedor', birthDate: '' });
       loadMembers();
     } catch (err: any) {
       toast.error('Erro ao criar membro: ' + err.message);
@@ -342,7 +342,7 @@ export function UsersPage() {
             {canManage && (
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
-                if (!open) setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
+                if (!open) setCreateForm({ name: '', email: '', password: '', role: 'vendedor', birthDate: '' });
               }}>
                 <DialogTrigger asChild>
                   <Button>
