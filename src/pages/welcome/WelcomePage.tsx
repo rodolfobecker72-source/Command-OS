@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -13,6 +14,28 @@ interface BirthdayMember {
   day: number;
   month: number;
   weekday: string;
+}
+
+interface ActivityItem {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  projectName: string;
+  isOverdue: boolean;
+}
+
+interface UserActivities {
+  userId: string;
+  name: string;
+  photoUrl: string | null;
+  overdue: ActivityItem[];
+  toStart: ActivityItem[];
+}
+
+function formatDateBR(iso: string | null) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
 function getGreeting(hour: number) {
@@ -39,6 +62,7 @@ function getWeekRange(ref: Date) {
 export function WelcomePage() {
   const { profile, workspace } = useAuth();
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
+  const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
@@ -98,6 +122,75 @@ export function WelcomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadActivities = async () => {
+      if (!workspace) return;
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { data: activities } = await supabase
+        .from('project_activities')
+        .select('id, title, status, due_date, assigned_to_user_id, project_card_id')
+        .eq('workspace_id', workspace.id)
+        .neq('status', 'concluido')
+        .not('assigned_to_user_id', 'is', null);
+
+      if (!activities || activities.length === 0) {
+        if (!cancelled) setUserActivities([]);
+        return;
+      }
+
+      const cardIds = Array.from(new Set(activities.map((a: any) => a.project_card_id).filter(Boolean)));
+      const userIds = Array.from(new Set(activities.map((a: any) => a.assigned_to_user_id).filter(Boolean)));
+
+      const [{ data: cards }, { data: profiles }] = await Promise.all([
+        cardIds.length
+          ? supabase.from('project_cards').select('id, project_name').in('id', cardIds)
+          : Promise.resolve({ data: [] as any[] }),
+        userIds.length
+          ? supabase.from('profiles').select('id, name, photo_url').in('id', userIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const cardMap = new Map((cards || []).map((c: any) => [c.id, c.project_name]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      const grouped = new Map<string, UserActivities>();
+      for (const a of activities as any[]) {
+        const uid = a.assigned_to_user_id;
+        const prof = profileMap.get(uid);
+        if (!prof) continue;
+        if (!grouped.has(uid)) {
+          grouped.set(uid, {
+            userId: uid,
+            name: prof.name || 'Sem nome',
+            photoUrl: prof.photo_url || null,
+            overdue: [],
+            toStart: [],
+          });
+        }
+        const item: ActivityItem = {
+          id: a.id,
+          title: a.title,
+          dueDate: a.due_date,
+          projectName: cardMap.get(a.project_card_id) || 'Projeto',
+          isOverdue: !!a.due_date && a.due_date < today,
+        };
+        const bucket = grouped.get(uid)!;
+        if (item.isOverdue) bucket.overdue.push(item);
+        else if (a.status === 'nao_iniciado') bucket.toStart.push(item);
+      }
+
+      const list = Array.from(grouped.values())
+        .filter(u => u.overdue.length > 0 || u.toStart.length > 0)
+        .sort((a, b) => b.overdue.length - a.overdue.length || a.name.localeCompare(b.name, 'pt-BR'));
+
+      if (!cancelled) setUserActivities(list);
+    };
+    loadActivities();
+    return () => { cancelled = true; };
+  }, [workspace?.id]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Boas-vindas" />
@@ -148,6 +241,93 @@ export function WelcomePage() {
                     <span className="text-sm font-semibold text-primary tabular-nums">
                       {String(b.day).padStart(2, '0')}/{String(b.month).padStart(2, '0')}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Atividades operacionais por usuário */}
+        {userActivities.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Atividades operacionais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {userActivities.map((u) => (
+                  <li key={u.userId} className="border border-border/60 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-9 h-9">
+                        <AvatarImage src={u.photoUrl || undefined} alt={u.name} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {getInitials(u.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold truncate">{u.name}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-0.5">
+                          {u.overdue.length > 0 && (
+                            <Badge variant="destructive" className="text-[10px] py-0 px-1.5">
+                              {u.overdue.length} em atraso
+                            </Badge>
+                          )}
+                          {u.toStart.length > 0 && (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {u.toStart.length} para iniciar
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {u.overdue.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5" /> Em atraso
+                        </p>
+                        <ul className="space-y-1">
+                          {u.overdue.map((a) => (
+                            <li key={a.id} className="flex items-start gap-2 text-xs bg-destructive/5 rounded px-2 py-1.5">
+                              <span className="flex-1 min-w-0">
+                                <span className="font-medium">{a.title}</span>
+                                <span className="text-muted-foreground"> · {a.projectName}</span>
+                              </span>
+                              <span className="text-destructive font-semibold tabular-nums shrink-0">
+                                {formatDateBR(a.dueDate)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {u.toStart.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Play className="w-3.5 h-3.5" /> Para iniciar
+                        </p>
+                        <ul className="space-y-1">
+                          {u.toStart.map((a) => (
+                            <li key={a.id} className="flex items-start gap-2 text-xs bg-muted/40 rounded px-2 py-1.5">
+                              <span className="flex-1 min-w-0">
+                                <span className="font-medium">{a.title}</span>
+                                <span className="text-muted-foreground"> · {a.projectName}</span>
+                              </span>
+                              {a.dueDate && (
+                                <span className="text-muted-foreground tabular-nums shrink-0">
+                                  {formatDateBR(a.dueDate)}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
