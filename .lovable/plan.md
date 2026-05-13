@@ -1,43 +1,34 @@
-## Tela de Boas-vindas
+## Kanban de Atividades por Projeto
 
-Nova rota `/boas-vindas` que será o primeiro item do menu e a página inicial após login para todos os usuários.
+Hoje, em **Gestão de Projetos**, cada status mostra uma lista simples de projetos. Vou tornar cada projeto **clicável** para abrir um diálogo "Atividades do projeto" com um **kanban próprio** (similar ao exemplo enviado), com 3 colunas fixas:
 
-### Conteúdo da tela
-1. **Saudação dinâmica por horário** + nome do usuário
-   - 5h–12h: "Bom dia, {Nome}"
-   - 12h–18h: "Boa tarde, {Nome}"
-   - 18h–5h: "Boa noite, {Nome}"
-2. **Data atual** formatada em pt-BR (ex.: "quarta-feira, 13 de maio de 2026")
-3. **Resumo rápido** (cards):
-   - Projetos ativos (count de projetos em status diferente de concluído/cancelado, do workspace)
-   - Propostas pendentes (orçamentos em estágios não-finais do CRM)
-4. **Aniversariantes do mês** — lista de membros do workspace com `birth_date` no mês atual, mostrando nome, avatar e dia. Mensagem amigável quando vazio.
+- **Não iniciado**
+- **Em andamento**
+- **Concluído**
 
-### Mudanças técnicas
+Cada coluna terá um botão "+ Nova tarefa" e os cartões podem ser arrastados entre colunas.
 
-**Roteamento (`src/App.tsx`)**
-- Adicionar rota `/boas-vindas` dentro do `AppLayout`, com `PageGuard pageKey="boas-vindas"`.
+### Banco de dados
 
-**Registro de páginas (`src/config/pages.ts`)**
-- Adicionar entrada `{ key: 'boas-vindas', label: 'Boas-vindas', href: '/boas-vindas', group: 'Início' }` sem restrição de role (todos têm acesso).
-- Colocar como **primeiro item** do array `APP_PAGES`, para que `Index.tsx` (que redireciona para a primeira página acessível) leve naturalmente para `/boas-vindas`.
+Nova tabela `project_activities`:
+- `project_card_id` (referência ao projeto)
+- `workspace_id` (isolamento por workspace, com RLS)
+- `title`
+- `status` (`nao_iniciado` | `em_andamento` | `concluido`)
+- `order` (posição na coluna)
 
-**Sidebar (`src/components/layout/Sidebar.tsx`)**
-- Adicionar novo grupo "Início" no topo do `navGroups` com o item Boas-vindas (ícone `Home` ou `Sparkles` do lucide-react).
+RLS por `workspace_id` (mesmo padrão das demais tabelas).
 
-**Página (`src/pages/welcome/WelcomePage.tsx` — novo)**
-- Usa `useAuth()` para nome do usuário e `workspace_id`.
-- Calcula saudação por `new Date().getHours()`.
-- Data via `toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })`.
-- Queries Supabase:
-  - `projects` filtrados pelo workspace e status ativo
-  - `budgets` filtrados pelo workspace em estágios pendentes
-  - `profiles` do workspace com `birth_date` cujo mês = mês atual (parse com `T12:00:00` para evitar timezone shift)
-- Layout em cards usando design tokens semânticos (primary `#002cbe`), responsivo mobile-first, com `Header` padrão.
+### Frontend
 
-**Login redirect**
-- Login já redireciona para `/` que entra no `Index.tsx` → primeira página acessível. Como Boas-vindas será a primeira em `APP_PAGES` e todos têm acesso, isso resolve o "primeira tela ao acessar".
+1. **`src/components/projects/ProjectActivitiesDialog.tsx`** (novo): dialog grande mostrando o kanban. Usa `@dnd-kit` (já instalado) para drag-and-drop entre colunas e reordenação dentro da coluna.
+2. **`src/contexts/CRMContext.tsx`**: novos métodos `loadProjectActivities(projectCardId)`, `addProjectActivity`, `updateProjectActivity`, `deleteProjectActivity`, `reorderProjectActivities`.
+3. **`src/pages/projects/ProjectManagementPage.tsx`**: cada linha de projeto ganha um clique que abre o `ProjectActivitiesDialog` daquele projeto, mantendo o `Select` de status do projeto à direita.
 
-### Não-mudanças
-- Sem migrações de banco (usa `birth_date` já existente).
-- Sem mudanças em RLS, edge functions ou Auth.
+### Comportamento
+- Tarefas concluídas mostram o título com leve fade.
+- Edição inline do título ao clicar no card.
+- Ícone de lixeira no hover para remover.
+- Ordem persistida no banco.
+
+Aprovar para eu seguir com a migração e implementação.
