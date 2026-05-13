@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -95,6 +95,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [driveLink, setDriveLink] = useState('');
   const [driveLinkSaved, setDriveLinkSaved] = useState('');
   const [savingDrive, setSavingDrive] = useState(false);
+  const [briefing, setBriefing] = useState<{
+    objective: string;
+    projectDescription: string;
+    description: string;
+    services: Array<{ serviceType: string; objective: string; description: string; items: Array<{ description: string; quantity: number }> }>;
+  } | null>(null);
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -103,17 +110,61 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     let cancelled = false;
     setLoading(true);
 
-    // Load drive link
-    supabase
-      .from('project_cards')
-      .select('material_link')
-      .eq('id', projectCardId)
-      .maybeSingle()
-      .then(({ data }) => {
-        const link = (data as any)?.material_link || '';
+    // Load drive link + briefing from commercial budget
+    (async () => {
+      const { data: card } = await supabase
+        .from('project_cards')
+        .select('material_link, budget_id')
+        .eq('id', projectCardId)
+        .maybeSingle();
+      const link = (card as any)?.material_link || '';
+      if (!cancelled) {
         setDriveLink(link);
         setDriveLinkSaved(link);
-      });
+      }
+      const budgetId = (card as any)?.budget_id;
+      if (!budgetId) {
+        if (!cancelled) setBriefing(null);
+        return;
+      }
+      const { data: budget } = await supabase
+        .from('budgets')
+        .select('objective, project_description, description, approved_version, current_version')
+        .eq('id', budgetId)
+        .maybeSingle();
+      if (!budget) {
+        if (!cancelled) setBriefing(null);
+        return;
+      }
+      const versionNumber = (budget as any).approved_version ?? (budget as any).current_version;
+      let services: any[] = [];
+      if (versionNumber != null) {
+        const { data: ver } = await supabase
+          .from('budget_versions')
+          .select('services')
+          .eq('budget_id', budgetId)
+          .eq('version', versionNumber)
+          .maybeSingle();
+        services = ((ver as any)?.services || []) as any[];
+      }
+      const mappedServices = services.map((s: any) => ({
+        serviceType: s.serviceType || '',
+        objective: s.objective || '',
+        description: s.description || '',
+        items: (s.costs || []).map((c: any) => ({
+          description: c.description || '',
+          quantity: Number(c.quantity) || 0,
+        })).filter((c: any) => c.description),
+      }));
+      if (!cancelled) {
+        setBriefing({
+          objective: (budget as any).objective || '',
+          projectDescription: (budget as any).project_description || '',
+          description: (budget as any).description || '',
+          services: mappedServices,
+        });
+      }
+    })();
 
     // Load workspace members (excluding vendedor)
     if (workspaceId) {
@@ -384,6 +435,74 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           )}
           {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </div>
+
+        {briefing && (briefing.objective || briefing.projectDescription || briefing.description || briefing.services.length > 0) && (
+          <div className="border border-border rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setBriefingOpen(o => !o)}
+              className="w-full flex items-center gap-2 px-3 py-2 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
+            >
+              {briefingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">Briefing e entregas do projeto</span>
+            </button>
+            {briefingOpen && (
+              <div className="p-4 space-y-4 text-sm">
+                {briefing.objective && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Objetivo</p>
+                    <p className="whitespace-pre-wrap">{briefing.objective}</p>
+                  </div>
+                )}
+                {briefing.projectDescription && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Descrição do projeto</p>
+                    <p className="whitespace-pre-wrap">{briefing.projectDescription}</p>
+                  </div>
+                )}
+                {briefing.description && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Descrição do serviço</p>
+                    <p className="whitespace-pre-wrap">{briefing.description}</p>
+                  </div>
+                )}
+                {briefing.services.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Entregas</p>
+                    {briefing.services.map((s, i) => (
+                      <div key={i} className="border border-border/60 rounded-md p-3 space-y-2 bg-card">
+                        {(s.serviceType || s.objective) && (
+                          <div className="flex flex-wrap gap-2 items-baseline">
+                            {s.serviceType && (
+                              <span className="text-sm font-semibold capitalize">{s.serviceType}</span>
+                            )}
+                            {s.objective && (
+                              <span className="text-xs text-muted-foreground">· {s.objective}</span>
+                            )}
+                          </div>
+                        )}
+                        {s.description && (
+                          <p className="text-xs whitespace-pre-wrap text-muted-foreground">{s.description}</p>
+                        )}
+                        {s.items.length > 0 && (
+                          <ul className="space-y-1">
+                            {s.items.map((it, j) => (
+                              <li key={j} className="text-xs flex items-start gap-2">
+                                <span className="text-muted-foreground tabular-nums shrink-0">{it.quantity}x</span>
+                                <span className="flex-1 whitespace-pre-wrap">{it.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
