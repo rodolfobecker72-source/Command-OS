@@ -804,18 +804,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          birth_date: string | null
           created_at: string
           id: string
           name: string
           photo_url: string | null
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
           id: string
           name?: string
           photo_url?: string | null
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
           id?: string
           name?: string

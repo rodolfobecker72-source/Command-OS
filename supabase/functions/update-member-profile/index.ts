@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { targetUserId, name, photoUrl, role } = await req.json();
+    const { targetUserId, name, photoUrl, role, birthDate } = await req.json();
 
     if (!targetUserId) {
       return new Response(JSON.stringify({ error: "Missing targetUserId" }), {
@@ -78,13 +78,16 @@ Deno.serve(async (req) => {
     // If editing the owner, only allow name/photo changes (no role change)
     const isEditingOwner = targetMember.role === "owner";
 
-    // Update profile (name and/or photo_url)
-    const profileUpdate: Record<string, string> = {};
+    // Update profile (name and/or photo_url and/or birth_date)
+    const profileUpdate: Record<string, string | null> = {};
     if (name !== undefined && name.trim().length > 0) {
       profileUpdate.name = name.trim();
     }
     if (photoUrl !== undefined) {
       profileUpdate.photo_url = photoUrl;
+    }
+    if (birthDate !== undefined) {
+      profileUpdate.birth_date = birthDate || null;
     }
 
     if (Object.keys(profileUpdate).length > 0) {

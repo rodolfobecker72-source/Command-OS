@@ -1,27 +1,18 @@
-## Ajustes no cadastro de Patrimônio
+## Adicionar data de nascimento ao cadastro de membros
 
-### 1. Banco de dados (migration)
-Adicionar duas colunas na tabela `assets`:
-- `category` (text, default `'equipamento'`) — valores aceitos: `equipamento` ou `estrutura`
-- `needs_insurance` (boolean, default `false`) — indica necessidade de seguro
+### Banco de dados
+- Adicionar coluna `birth_date` (date, nullable) na tabela `profiles`.
 
-Sem alterações de RLS (políticas existentes já cobrem por `workspace_id`).
+### Frontend (`src/pages/users/UsersPage.tsx`)
+- Adicionar campo "Data de nascimento" (input type="date") no diálogo **Cadastrar Membro** (opcional).
+- Adicionar o mesmo campo no diálogo **Editar Membro**, pré-preenchido com o valor atual.
+- Mostrar a data formatada (dd/mm/aaaa) na linha da tabela, abaixo do nome do membro.
 
-### 2. Formulário (`PatrimonioPage.tsx`)
-- **Remover** o campo "URL da foto" do dialog de criar/editar.
-- **Adicionar** Select "Categoria" com as opções:
-  - Equipamento
-  - Estrutura
-- **Adicionar** Checkbox "Necessita de seguro".
-- Atualizar `emptyForm`, `openEdit`, `handleSave` e a interface `Asset` para incluir `category` e `needs_insurance` (e remover `photo` do formulário — manteremos a coluna `photo` no banco intocada para não perder dados existentes, apenas removendo do form).
+### Edge Functions
+- `create-member`: aceitar `birthDate` no body e gravar em `profiles.birth_date` após criar o usuário.
+- `update-member-profile`: aceitar `birthDate` no body e incluir no update do profile.
 
-### 3. Listagem
-- Substituir a miniatura de foto (coluna da imagem) por um ícone neutro indicando a categoria (Package para equipamento, Building/Boxes para estrutura).
-- Adicionar coluna **Categoria** (badge).
-- Adicionar indicador visual de **Seguro** (badge "Seguro" quando `needs_insurance = true`).
-- Filtro de busca passa a considerar também `category`.
+### Tipos
+- Estender a interface `Profile` em `src/contexts/AuthContext.tsx` com `birth_date: string | null`.
 
-### Resumo técnico
-- Migration: `ALTER TABLE public.assets ADD COLUMN category text NOT NULL DEFAULT 'equipamento'; ADD COLUMN needs_insurance boolean NOT NULL DEFAULT false;`
-- Frontend: edição apenas em `src/pages/admin/PatrimonioPage.tsx`.
-- Mantemos `photo` no DB para compatibilidade, mas sem expor no formulário.
+Sem mudanças em RLS (políticas existentes da `profiles` já cobrem leitura/atualização).

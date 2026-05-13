@@ -98,11 +98,13 @@ export function UsersPage() {
     email: '',
     password: '',
     role: 'vendedor' as AppRole,
+    birthDate: '',
   });
 
   const [editForm, setEditForm] = useState({
     name: '',
     role: 'vendedor' as AppRole,
+    birthDate: '',
   });
 
   const canManage = currentRole === 'owner';
@@ -170,6 +172,7 @@ export function UsersPage() {
           password: createForm.password,
           name: createForm.name.trim(),
           role: createForm.role,
+          birthDate: createForm.birthDate || null,
         },
       });
 
@@ -188,7 +191,7 @@ export function UsersPage() {
 
       toast.success(`Membro ${createForm.name.trim()} criado com sucesso!`);
       setIsCreateOpen(false);
-      setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
+      setCreateForm({ name: '', email: '', password: '', role: 'vendedor', birthDate: '' });
       loadMembers();
     } catch (err: any) {
       toast.error('Erro ao criar membro: ' + err.message);
@@ -198,7 +201,11 @@ export function UsersPage() {
 
   const handleEditMember = (member: MemberWithProfile) => {
     setEditingMember(member);
-    setEditForm({ name: member.profile?.name || '', role: member.role });
+    setEditForm({
+      name: member.profile?.name || '',
+      role: member.role,
+      birthDate: member.profile?.birth_date || '',
+    });
     setAvatarFile(null);
     setAvatarPreview(member.profile?.photo_url || null);
     setIsEditOpen(true);
@@ -260,6 +267,7 @@ export function UsersPage() {
           name: editForm.name.trim(),
           photoUrl,
           role: editForm.role,
+          birthDate: editForm.birthDate || null,
         },
       });
 
@@ -340,7 +348,7 @@ export function UsersPage() {
             {canManage && (
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
-                if (!open) setCreateForm({ name: '', email: '', password: '', role: 'vendedor' });
+                if (!open) setCreateForm({ name: '', email: '', password: '', role: 'vendedor', birthDate: '' });
               }}>
                 <DialogTrigger asChild>
                   <Button>
@@ -391,6 +399,15 @@ export function UsersPage() {
                       {createForm.password.length > 0 && createForm.password.length < 6 && (
                         <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres</p>
                       )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="create-birth">Data de nascimento</Label>
+                      <Input
+                        id="create-birth"
+                        type="date"
+                        value={createForm.birthDate}
+                        onChange={e => setCreateForm({ ...createForm, birthDate: e.target.value })}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Papel</Label>
@@ -451,6 +468,11 @@ export function UsersPage() {
                             </Avatar>
                             <div>
                               <p className="font-medium">{member.profile?.name || 'Sem nome'}</p>
+                              {member.profile?.birth_date && (
+                                <p className="text-xs text-muted-foreground">
+                                  Nasc.: {new Date(member.profile.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -545,6 +567,17 @@ export function UsersPage() {
                   placeholder="Nome do membro"
                   value={editForm.name}
                   onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+
+              {/* Birth date */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-birth">Data de nascimento</Label>
+                <Input
+                  id="edit-birth"
+                  type="date"
+                  value={editForm.birthDate}
+                  onChange={e => setEditForm({ ...editForm, birthDate: e.target.value })}
                 />
               </div>
 

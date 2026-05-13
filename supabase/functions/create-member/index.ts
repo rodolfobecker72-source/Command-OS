@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, role } = await req.json();
+    const { email, password, name, role, birthDate } = await req.json();
 
     if (!email || !password || !name || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -116,6 +116,14 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Set birth_date on profile (profile row is auto-created by handle_new_user trigger)
+    if (birthDate) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ birth_date: birthDate })
+        .eq("id", newUser.user!.id);
     }
 
     return new Response(JSON.stringify({ success: true, userId: newUser.user!.id }), {
