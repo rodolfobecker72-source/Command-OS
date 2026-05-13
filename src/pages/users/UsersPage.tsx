@@ -401,6 +401,15 @@ export function UsersPage() {
                       )}
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="create-birth">Data de nascimento</Label>
+                      <Input
+                        id="create-birth"
+                        type="date"
+                        value={createForm.birthDate}
+                        onChange={e => setCreateForm({ ...createForm, birthDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label>Papel</Label>
                       <Select
                         value={createForm.role}
