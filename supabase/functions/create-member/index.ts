@@ -118,6 +118,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Set birth_date on profile (profile row is auto-created by handle_new_user trigger)
+    if (birthDate) {
+      await supabaseAdmin
+        .from("profiles")
+        .update({ birth_date: birthDate })
+        .eq("id", newUser.user!.id);
+    }
+
     return new Response(JSON.stringify({ success: true, userId: newUser.user!.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
