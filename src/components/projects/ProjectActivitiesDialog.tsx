@@ -55,7 +55,8 @@ const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass
 ];
 
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
-  const { workspaceId } = useAuth();
+  const { workspace } = useAuth();
+  const workspaceId = workspace?.id;
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
