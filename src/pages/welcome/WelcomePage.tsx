@@ -189,7 +189,7 @@ export function WelcomePage() {
     };
     loadActivities();
     return () => { cancelled = true; };
-  }, [workspace?.id]);
+  }, [workspace?.id, profile?.id]);
 
   return (
     <div className="min-h-screen bg-background">
