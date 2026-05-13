@@ -128,10 +128,10 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         const ids = memberData.map((m: any) => m.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, name')
+          .select('id, name, photo_url')
           .in('id', ids);
         const list: MemberOption[] = (profiles || [])
-          .map((p: any) => ({ id: p.id, name: p.name || '' }))
+          .map((p: any) => ({ id: p.id, name: p.name || '', photoUrl: p.photo_url || null }))
           .filter((p) => p.name)
           .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         if (!cancelled) setMembers(list);
