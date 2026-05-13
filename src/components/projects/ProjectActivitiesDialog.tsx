@@ -63,6 +63,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [driveLink, setDriveLink] = useState('');
+  const [driveLinkSaved, setDriveLinkSaved] = useState('');
+  const [savingDrive, setSavingDrive] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
