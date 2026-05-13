@@ -172,6 +172,7 @@ export function UsersPage() {
           password: createForm.password,
           name: createForm.name.trim(),
           role: createForm.role,
+          birthDate: createForm.birthDate || null,
         },
       });
 
