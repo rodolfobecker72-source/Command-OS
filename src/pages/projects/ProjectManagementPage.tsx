@@ -90,15 +90,23 @@ export function ProjectManagementPage() {
                           key={card.id}
                           className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3"
                         >
-                          <div className="min-w-0 flex-1">
-                            {card.proposalId && (
-                              <span className="font-medium">{card.proposalId} - </span>
-                            )}
-                            <span className="font-medium">{card.projectName}</span>
-                            {card.clientName && (
-                              <span className="text-muted-foreground"> · {card.clientName}</span>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActivitiesFor({ id: card.id, name: `${card.proposalId ? card.proposalId + ' - ' : ''}${card.projectName}${card.clientName ? ' · ' + card.clientName : ''}` })}
+                            className="min-w-0 flex-1 text-left flex items-center gap-2 hover:text-primary"
+                            title="Ver atividades do projeto"
+                          >
+                            <ListChecks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate">
+                              {card.proposalId && (
+                                <span className="font-medium">{card.proposalId} - </span>
+                              )}
+                              <span className="font-medium">{card.projectName}</span>
+                              {card.clientName && (
+                                <span className="text-muted-foreground"> · {card.clientName}</span>
+                              )}
+                            </span>
+                          </button>
                           <Select
                             value={card.status}
                             onValueChange={(value) => updateProjectCard(card.id, { status: value })}
