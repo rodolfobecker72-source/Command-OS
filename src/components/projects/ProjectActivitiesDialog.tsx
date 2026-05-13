@@ -436,6 +436,74 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </div>
 
+        {briefing && (briefing.objective || briefing.projectDescription || briefing.description || briefing.services.length > 0) && (
+          <div className="border border-border rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setBriefingOpen(o => !o)}
+              className="w-full flex items-center gap-2 px-3 py-2 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
+            >
+              {briefingOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold">Briefing e entregas do projeto</span>
+            </button>
+            {briefingOpen && (
+              <div className="p-4 space-y-4 text-sm">
+                {briefing.objective && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Objetivo</p>
+                    <p className="whitespace-pre-wrap">{briefing.objective}</p>
+                  </div>
+                )}
+                {briefing.projectDescription && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Descrição do projeto</p>
+                    <p className="whitespace-pre-wrap">{briefing.projectDescription}</p>
+                  </div>
+                )}
+                {briefing.description && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Descrição do serviço</p>
+                    <p className="whitespace-pre-wrap">{briefing.description}</p>
+                  </div>
+                )}
+                {briefing.services.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Entregas</p>
+                    {briefing.services.map((s, i) => (
+                      <div key={i} className="border border-border/60 rounded-md p-3 space-y-2 bg-card">
+                        {(s.serviceType || s.objective) && (
+                          <div className="flex flex-wrap gap-2 items-baseline">
+                            {s.serviceType && (
+                              <span className="text-sm font-semibold capitalize">{s.serviceType}</span>
+                            )}
+                            {s.objective && (
+                              <span className="text-xs text-muted-foreground">· {s.objective}</span>
+                            )}
+                          </div>
+                        )}
+                        {s.description && (
+                          <p className="text-xs whitespace-pre-wrap text-muted-foreground">{s.description}</p>
+                        )}
+                        {s.items.length > 0 && (
+                          <ul className="space-y-1">
+                            {s.items.map((it, j) => (
+                              <li key={j} className="text-xs flex items-start gap-2">
+                                <span className="text-muted-foreground tabular-nums shrink-0">{it.quantity}x</span>
+                                <span className="flex-1 whitespace-pre-wrap">{it.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando...
