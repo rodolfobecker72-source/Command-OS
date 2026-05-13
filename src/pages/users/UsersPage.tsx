@@ -98,11 +98,13 @@ export function UsersPage() {
     email: '',
     password: '',
     role: 'vendedor' as AppRole,
+    birthDate: '',
   });
 
   const [editForm, setEditForm] = useState({
     name: '',
     role: 'vendedor' as AppRole,
+    birthDate: '',
   });
 
   const canManage = currentRole === 'owner';
