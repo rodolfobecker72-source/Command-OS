@@ -24,6 +24,8 @@ import {
   DollarSign,
   Building2,
   ShieldCheck,
+  Home,
+  Sparkles,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +44,13 @@ interface NavGroup {
 }
 
 const navGroups: NavGroup[] = [
+  {
+    label: 'Início',
+    icon: Home,
+    items: [
+      { name: 'Boas-vindas', href: '/boas-vindas', icon: Sparkles, pageKey: 'boas-vindas' },
+    ],
+  },
   {
     label: 'Comercial',
     icon: Briefcase,
