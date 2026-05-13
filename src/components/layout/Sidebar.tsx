@@ -24,7 +24,6 @@ import {
   DollarSign,
   Building2,
   ShieldCheck,
-  Home,
   Sparkles,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
