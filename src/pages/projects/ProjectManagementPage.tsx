@@ -134,6 +134,14 @@ export function ProjectManagementPage() {
       </div>
 
       <ProjectStatusManagerDialog open={manageOpen} onOpenChange={setManageOpen} />
+      {activitiesFor && (
+        <ProjectActivitiesDialog
+          open={!!activitiesFor}
+          onOpenChange={(o) => !o && setActivitiesFor(null)}
+          projectCardId={activitiesFor.id}
+          projectName={activitiesFor.name}
+        />
+      )}
       </div>
     </div>
   );
