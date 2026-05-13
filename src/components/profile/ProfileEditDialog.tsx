@@ -138,6 +138,17 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
             />
           </div>
 
+          {/* Birth date */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-birthdate">Data de nascimento</Label>
+            <Input
+              id="profile-birthdate"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+            />
+          </div>
+
           {/* Email (read-only) */}
           <div className="space-y-2">
             <Label>E-mail</Label>
