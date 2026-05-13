@@ -53,6 +53,7 @@ interface Activity {
 interface MemberOption {
   id: string;
   name: string;
+  photoUrl: string | null;
 }
 
 interface Props {
