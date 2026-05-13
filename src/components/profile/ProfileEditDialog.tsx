@@ -72,7 +72,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
       // Update profile
       const { error } = await supabase
         .from('profiles')
-        .update({ name: name.trim(), photo_url: photoUrl })
+        .update({ name: name.trim(), photo_url: photoUrl, birth_date: birthDate || null })
         .eq('id', user.id);
 
       if (error) throw error;
