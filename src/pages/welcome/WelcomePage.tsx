@@ -78,7 +78,7 @@ export function WelcomePage() {
   // Vendedor: prospecção + CRM
   const salesStats = useMemo(() => {
     const activeLeads = leads.filter(
-      (l) => l.funnelStatus !== 'qualificado_crm' && l.funnelStatus !== 'descartado'
+      (l) => l.funnelStatus !== 'perdido'
     ).length;
     const qualified = leads.filter((l) => l.funnelStatus === 'qualificado_crm').length;
     const pendingBudgets = budgets.filter(
