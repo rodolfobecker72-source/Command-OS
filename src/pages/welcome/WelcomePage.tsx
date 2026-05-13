@@ -16,6 +16,28 @@ interface BirthdayMember {
   weekday: string;
 }
 
+interface ActivityItem {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  projectName: string;
+  isOverdue: boolean;
+}
+
+interface UserActivities {
+  userId: string;
+  name: string;
+  photoUrl: string | null;
+  overdue: ActivityItem[];
+  toStart: ActivityItem[];
+}
+
+function formatDateBR(iso: string | null) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
 function getGreeting(hour: number) {
   if (hour >= 5 && hour < 12) return 'Bom dia';
   if (hour >= 12 && hour < 18) return 'Boa tarde';
