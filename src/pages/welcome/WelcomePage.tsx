@@ -80,7 +80,7 @@ export function WelcomePage() {
     const activeLeads = leads.filter(
       (l) => l.funnelStatus !== 'perdido'
     ).length;
-    const qualified = leads.filter((l) => l.funnelStatus === 'qualificado_crm').length;
+    const qualified = leads.filter((l) => l.funnelStatus === 'reuniao_agendada').length;
     const pendingBudgets = budgets.filter(
       (b) => b.status !== 'aprovada' && b.status !== 'nao_aprovada'
     ).length;
