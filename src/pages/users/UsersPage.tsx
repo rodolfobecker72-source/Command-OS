@@ -267,6 +267,7 @@ export function UsersPage() {
           name: editForm.name.trim(),
           photoUrl,
           role: editForm.role,
+          birthDate: editForm.birthDate || null,
         },
       });
 
