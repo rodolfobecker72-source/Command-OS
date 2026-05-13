@@ -122,6 +122,75 @@ export function WelcomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspace?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadActivities = async () => {
+      if (!workspace) return;
+      const today = new Date().toISOString().slice(0, 10);
+
+      const { data: activities } = await supabase
+        .from('project_activities')
+        .select('id, title, status, due_date, assigned_to_user_id, project_card_id')
+        .eq('workspace_id', workspace.id)
+        .neq('status', 'concluido')
+        .not('assigned_to_user_id', 'is', null);
+
+      if (!activities || activities.length === 0) {
+        if (!cancelled) setUserActivities([]);
+        return;
+      }
+
+      const cardIds = Array.from(new Set(activities.map((a: any) => a.project_card_id).filter(Boolean)));
+      const userIds = Array.from(new Set(activities.map((a: any) => a.assigned_to_user_id).filter(Boolean)));
+
+      const [{ data: cards }, { data: profiles }] = await Promise.all([
+        cardIds.length
+          ? supabase.from('project_cards').select('id, project_name').in('id', cardIds)
+          : Promise.resolve({ data: [] as any[] }),
+        userIds.length
+          ? supabase.from('profiles').select('id, name, photo_url').in('id', userIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const cardMap = new Map((cards || []).map((c: any) => [c.id, c.project_name]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      const grouped = new Map<string, UserActivities>();
+      for (const a of activities as any[]) {
+        const uid = a.assigned_to_user_id;
+        const prof = profileMap.get(uid);
+        if (!prof) continue;
+        if (!grouped.has(uid)) {
+          grouped.set(uid, {
+            userId: uid,
+            name: prof.name || 'Sem nome',
+            photoUrl: prof.photo_url || null,
+            overdue: [],
+            toStart: [],
+          });
+        }
+        const item: ActivityItem = {
+          id: a.id,
+          title: a.title,
+          dueDate: a.due_date,
+          projectName: cardMap.get(a.project_card_id) || 'Projeto',
+          isOverdue: !!a.due_date && a.due_date < today,
+        };
+        const bucket = grouped.get(uid)!;
+        if (item.isOverdue) bucket.overdue.push(item);
+        else if (a.status === 'nao_iniciado') bucket.toStart.push(item);
+      }
+
+      const list = Array.from(grouped.values())
+        .filter(u => u.overdue.length > 0 || u.toStart.length > 0)
+        .sort((a, b) => b.overdue.length - a.overdue.length || a.name.localeCompare(b.name, 'pt-BR'));
+
+      if (!cancelled) setUserActivities(list);
+    };
+    loadActivities();
+    return () => { cancelled = true; };
+  }, [workspace?.id]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Boas-vindas" />
