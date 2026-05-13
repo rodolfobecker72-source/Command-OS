@@ -257,15 +257,34 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             className="h-9 flex-1"
           />
           {driveLinkSaved && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 shrink-0"
-              onClick={() => window.open(driveLinkSaved, '_blank')}
-            >
-              <ExternalLink className="w-4 h-4 mr-1" /> Abrir
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                title="Copiar link"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(driveLinkSaved);
+                    toast.success('Link copiado');
+                  } catch {
+                    toast.error('Não foi possível copiar');
+                  }
+                }}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 shrink-0"
+                onClick={() => window.open(driveLinkSaved, '_blank')}
+              >
+                <ExternalLink className="w-4 h-4 mr-1" /> Abrir
+              </Button>
+            </>
           )}
           {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </div>
