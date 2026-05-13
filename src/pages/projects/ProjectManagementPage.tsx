@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, Settings2 } from 'lucide-react';
+import { ChevronRight, Settings2, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCRM } from '@/contexts/CRMContext';
 import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusManagerDialog';
+import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
