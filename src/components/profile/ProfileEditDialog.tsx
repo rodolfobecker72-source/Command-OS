@@ -19,6 +19,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,6 +27,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   useEffect(() => {
     if (open && profile) {
       setName(profile.name || '');
+      setBirthDate(profile.birth_date || '');
       setPhotoPreview(profile.photo_url || null);
       setSelectedFile(null);
     }
@@ -70,7 +72,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
       // Update profile
       const { error } = await supabase
         .from('profiles')
-        .update({ name: name.trim(), photo_url: photoUrl })
+        .update({ name: name.trim(), photo_url: photoUrl, birth_date: birthDate || null })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -133,6 +135,17 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Seu nome"
+            />
+          </div>
+
+          {/* Birth date */}
+          <div className="space-y-2">
+            <Label htmlFor="profile-birthdate">Data de nascimento</Label>
+            <Input
+              id="profile-birthdate"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
             />
           </div>
 
