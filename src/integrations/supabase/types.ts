@@ -828,7 +828,9 @@ export type Database = {
       }
       project_activities: {
         Row: {
+          assigned_to_user_id: string | null
           created_at: string
+          due_date: string | null
           id: string
           order: number
           project_card_id: string
@@ -838,7 +840,9 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          assigned_to_user_id?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           order?: number
           project_card_id: string
@@ -848,7 +852,9 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          assigned_to_user_id?: string | null
           created_at?: string
+          due_date?: string | null
           id?: string
           order?: number
           project_card_id?: string
