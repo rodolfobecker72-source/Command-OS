@@ -247,7 +247,97 @@ export function WelcomePage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Atividades operacionais por usuário */}
+        {userActivities.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Atividades operacionais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {userActivities.map((u) => (
+                  <li key={u.userId} className="border border-border/60 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-9 h-9">
+                        <AvatarImage src={u.photoUrl || undefined} alt={u.name} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {getInitials(u.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold truncate">{u.name}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-0.5">
+                          {u.overdue.length > 0 && (
+                            <Badge variant="destructive" className="text-[10px] py-0 px-1.5">
+                              {u.overdue.length} em atraso
+                            </Badge>
+                          )}
+                          {u.toStart.length > 0 && (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {u.toStart.length} para iniciar
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {u.overdue.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5" /> Em atraso
+                        </p>
+                        <ul className="space-y-1">
+                          {u.overdue.map((a) => (
+                            <li key={a.id} className="flex items-start gap-2 text-xs bg-destructive/5 rounded px-2 py-1.5">
+                              <span className="flex-1 min-w-0">
+                                <span className="font-medium">{a.title}</span>
+                                <span className="text-muted-foreground"> · {a.projectName}</span>
+                              </span>
+                              <span className="text-destructive font-semibold tabular-nums shrink-0">
+                                {formatDateBR(a.dueDate)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {u.toStart.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Play className="w-3.5 h-3.5" /> Para iniciar
+                        </p>
+                        <ul className="space-y-1">
+                          {u.toStart.map((a) => (
+                            <li key={a.id} className="flex items-start gap-2 text-xs bg-muted/40 rounded px-2 py-1.5">
+                              <span className="flex-1 min-w-0">
+                                <span className="font-medium">{a.title}</span>
+                                <span className="text-muted-foreground"> · {a.projectName}</span>
+                              </span>
+                              {a.dueDate && (
+                                <span className="text-muted-foreground tabular-nums shrink-0">
+                                  {formatDateBR(a.dueDate)}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
+    </div>
+  );
+}
     </div>
   );
 }
