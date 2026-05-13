@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Briefcase, FileText, Cake, Sparkles, Target, LayoutGrid, CheckCircle2, Clock } from 'lucide-react';
+import { Cake, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCRM } from '@/contexts/CRMContext';
-import { useProspection } from '@/contexts/ProspectionContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BirthdayMember {
@@ -13,7 +11,8 @@ interface BirthdayMember {
   name: string;
   photo_url: string | null;
   day: number;
-  birth_date: string;
+  month: number;
+  weekday: string;
 }
 
 function getGreeting(hour: number) {
@@ -26,28 +25,19 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
-  return (
-    <Card>
-      <CardContent className="p-5 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          <Icon className="w-6 h-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-            {label}
-          </p>
-          <p className="text-2xl font-bold mt-0.5">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+// Returns Sunday (start) and Saturday (end) of current week
+function getWeekRange(ref: Date) {
+  const start = new Date(ref);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 }
 
 export function WelcomePage() {
-  const { profile, workspace, role } = useAuth();
-  const { projectCards, budgets } = useCRM();
-  const { leads } = useProspection();
+  const { profile, workspace } = useAuth();
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
 
   const now = new Date();
@@ -59,44 +49,6 @@ export function WelcomePage() {
     month: 'long',
     year: 'numeric',
   });
-
-  // Operacional (time_hero): projetos
-  const projectStats = useMemo(() => {
-    const total = projectCards.length;
-    const inProgress = projectCards.filter((p: any) =>
-      ['executando', 'em_andamento', 'execucao'].includes(String(p.status).toLowerCase())
-    ).length;
-    const planned = projectCards.filter((p: any) =>
-      ['planejado', 'planejamento'].includes(String(p.status).toLowerCase())
-    ).length;
-    const done = projectCards.filter((p: any) =>
-      ['concluido', 'concluido', 'finalizado', 'entregue'].includes(String(p.status).toLowerCase())
-    ).length;
-    return { total, inProgress, planned, done };
-  }, [projectCards]);
-
-  // Vendedor: prospecção + CRM
-  const salesStats = useMemo(() => {
-    const activeLeads = leads.filter(
-      (l) => l.funnelStatus !== 'perdido'
-    ).length;
-    const qualified = leads.filter((l) => l.funnelStatus === 'reuniao_agendada').length;
-    const pendingBudgets = budgets.filter(
-      (b) => b.status !== 'aprovada' && b.status !== 'nao_aprovada'
-    ).length;
-    const approved = budgets.filter((b) => b.status === 'aprovada').length;
-    return { activeLeads, qualified, pendingBudgets, approved };
-  }, [leads, budgets]);
-
-  // Default (owner/admin/visualizador)
-  const activeProjectsCount = projectCards.length;
-  const pendingBudgetsCount = useMemo(
-    () =>
-      budgets.filter(
-        (b) => b.status !== 'aprovada' && b.status !== 'nao_aprovada'
-      ).length,
-    [budgets]
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -117,18 +69,23 @@ export function WelcomePage() {
         .in('id', userIds)
         .not('birth_date', 'is', null);
 
-      const currentMonth = now.getMonth();
+      const { start, end } = getWeekRange(now);
+      const year = now.getFullYear();
+
       const list: BirthdayMember[] = (profiles || [])
         .map((p: any) => {
           if (!p.birth_date) return null;
           const dt = new Date(p.birth_date + 'T12:00:00');
-          if (dt.getMonth() !== currentMonth) return null;
+          // Build this year's birthday occurrence
+          const occ = new Date(year, dt.getMonth(), dt.getDate(), 12, 0, 0);
+          if (occ < start || occ > end) return null;
           return {
             id: p.id,
             name: p.name,
             photo_url: p.photo_url,
             day: dt.getDate(),
-            birth_date: p.birth_date,
+            month: dt.getMonth() + 1,
+            weekday: occ.toLocaleDateString('pt-BR', { weekday: 'long' }),
           } as BirthdayMember;
         })
         .filter(Boolean) as BirthdayMember[];
@@ -143,8 +100,8 @@ export function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="Boas-vindas" subtitle="Um resumo rápido para começar bem o dia" />
-      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+      <Header title="Boas-vindas" />
+      <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
         {/* Saudação */}
         <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
           <CardContent className="p-6 md:p-8">
@@ -162,52 +119,16 @@ export function WelcomePage() {
           </CardContent>
         </Card>
 
-        {/* Resumo por papel */}
-        {role === 'time_hero' ? (
-          <>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-1">
-              Gestão de Projetos
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={LayoutGrid} label="Total de projetos" value={projectStats.total} />
-              <StatCard icon={Clock} label="Em andamento" value={projectStats.inProgress} />
-              <StatCard icon={Briefcase} label="Planejados" value={projectStats.planned} />
-              <StatCard icon={CheckCircle2} label="Concluídos" value={projectStats.done} />
-            </div>
-          </>
-        ) : role === 'vendedor' ? (
-          <>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground px-1">
-              Prospecção & CRM
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={Target} label="Leads ativos" value={salesStats.activeLeads} />
-              <StatCard icon={CheckCircle2} label="Qualificados p/ CRM" value={salesStats.qualified} />
-              <StatCard icon={FileText} label="Propostas pendentes" value={salesStats.pendingBudgets} />
-              <StatCard icon={Briefcase} label="Propostas aprovadas" value={salesStats.approved} />
-            </div>
-          </>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <StatCard icon={Briefcase} label="Projetos ativos" value={activeProjectsCount} />
-            <StatCard icon={FileText} label="Propostas pendentes" value={pendingBudgetsCount} />
-          </div>
-        )}
-
-        {/* Aniversariantes */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Cake className="w-5 h-5 text-primary" />
-              Aniversariantes do mês
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {birthdays.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum aniversariante este mês.
-              </p>
-            ) : (
+        {/* Aniversariantes da semana */}
+        {birthdays.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Cake className="w-5 h-5 text-primary" />
+                Aniversariantes da semana
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <ul className="space-y-2">
                 {birthdays.map((b) => (
                   <li
@@ -222,16 +143,17 @@ export function WelcomePage() {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{b.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{b.weekday}</p>
                     </div>
                     <span className="text-sm font-semibold text-primary tabular-nums">
-                      Dia {b.day}
+                      {String(b.day).padStart(2, '0')}/{String(b.month).padStart(2, '0')}
                     </span>
                   </li>
                 ))}
               </ul>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
