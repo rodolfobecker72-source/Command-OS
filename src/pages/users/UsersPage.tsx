@@ -565,6 +565,17 @@ export function UsersPage() {
                 />
               </div>
 
+              {/* Birth date */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-birth">Data de nascimento</Label>
+                <Input
+                  id="edit-birth"
+                  type="date"
+                  value={editForm.birthDate}
+                  onChange={e => setEditForm({ ...editForm, birthDate: e.target.value })}
+                />
+              </div>
+
               {/* Role - hidden when editing owner */}
               {editingMember?.role !== 'owner' && (
                 <div className="space-y-2">
