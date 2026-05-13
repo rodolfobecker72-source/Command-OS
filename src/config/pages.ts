@@ -10,6 +10,9 @@ export interface AppPage {
 }
 
 export const APP_PAGES: AppPage[] = [
+  // Início
+  { key: 'boas-vindas', label: 'Boas-vindas', href: '/boas-vindas', group: 'Início' },
+
   // Comercial
   { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial', restrictedFrom: ['time_hero'] },
   { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial', restrictedFrom: ['time_hero'] },
