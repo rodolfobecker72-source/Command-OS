@@ -125,15 +125,15 @@ export function WelcomePage() {
   useEffect(() => {
     let cancelled = false;
     const loadActivities = async () => {
-      if (!workspace) return;
+      if (!workspace || !profile?.id) return;
       const today = new Date().toISOString().slice(0, 10);
 
       const { data: activities } = await supabase
         .from('project_activities')
         .select('id, title, status, due_date, assigned_to_user_id, project_card_id')
         .eq('workspace_id', workspace.id)
-        .neq('status', 'concluido')
-        .not('assigned_to_user_id', 'is', null);
+        .eq('assigned_to_user_id', profile.id)
+        .neq('status', 'concluido');
 
       if (!activities || activities.length === 0) {
         if (!cancelled) setUserActivities([]);
@@ -189,7 +189,7 @@ export function WelcomePage() {
     };
     loadActivities();
     return () => { cancelled = true; };
-  }, [workspace?.id]);
+  }, [workspace?.id, profile?.id]);
 
   return (
     <div className="min-h-screen bg-background">
