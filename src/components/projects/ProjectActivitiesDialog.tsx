@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2, ExternalLink, Copy } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -39,6 +46,13 @@ interface Activity {
   title: string;
   status: ActivityStatus;
   order: number;
+  assignedToUserId: string | null;
+  dueDate: string | null;
+}
+
+interface MemberOption {
+  id: string;
+  name: string;
 }
 
 interface Props {
@@ -54,13 +68,25 @@ const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass
   { key: 'concluido', label: 'Concluído', dotClass: 'bg-success', chipClass: 'bg-success/10 text-success' },
 ];
 
+const UNASSIGNED = '__unassigned__';
+
+function formatDateBR(iso: string | null): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y.slice(2)}`;
+}
+
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
   const { workspace } = useAuth();
   const workspaceId = workspace?.id;
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
+  const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
+  const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [driveLink, setDriveLink] = useState('');
@@ -73,7 +99,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (!open || !projectCardId) return;
     let cancelled = false;
     setLoading(true);
-    // Load drive link from project_cards.material_link
+
+    // Load drive link
     supabase
       .from('project_cards')
       .select('material_link')
@@ -84,6 +111,33 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         setDriveLink(link);
         setDriveLinkSaved(link);
       });
+
+    // Load workspace members (excluding vendedor)
+    if (workspaceId) {
+      (async () => {
+        const { data: memberData } = await supabase
+          .from('workspace_members')
+          .select('user_id, role')
+          .eq('workspace_id', workspaceId)
+          .neq('role', 'vendedor');
+        if (!memberData || memberData.length === 0) {
+          setMembers([]);
+          return;
+        }
+        const ids = memberData.map((m: any) => m.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', ids);
+        const list: MemberOption[] = (profiles || [])
+          .map((p: any) => ({ id: p.id, name: p.name || '' }))
+          .filter((p) => p.name)
+          .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+        if (!cancelled) setMembers(list);
+      })();
+    }
+
+    // Load activities
     supabase
       .from('project_activities')
       .select('*')
@@ -99,12 +153,14 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             title: d.title,
             status: d.status as ActivityStatus,
             order: d.order,
+            assignedToUserId: d.assigned_to_user_id ?? null,
+            dueDate: d.due_date ?? null,
           })));
         }
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [open, projectCardId]);
+  }, [open, projectCardId, workspaceId]);
 
   const handleSaveDrive = async () => {
     if (driveLink === driveLinkSaved) return;
@@ -136,17 +192,38 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const title = (newTitleByCol[status] || '').trim();
     if (!title || !workspaceId) return;
     const order = (grouped[status].at(-1)?.order ?? -1) + 1;
+    const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED
+      ? newAssigneeByCol[status]
+      : null;
+    const due = newDueByCol[status] || null;
     const { data, error } = await supabase
       .from('project_activities')
-      .insert({ workspace_id: workspaceId, project_card_id: projectCardId, title, status, order })
+      .insert({
+        workspace_id: workspaceId,
+        project_card_id: projectCardId,
+        title,
+        status,
+        order,
+        assigned_to_user_id: assignee,
+        due_date: due,
+      } as any)
       .select()
       .single();
     if (error || !data) {
       toast.error('Erro ao criar atividade');
       return;
     }
-    setActivities(prev => [...prev, { id: data.id, title: data.title, status: data.status as ActivityStatus, order: data.order }]);
+    setActivities(prev => [...prev, {
+      id: data.id,
+      title: data.title,
+      status: data.status as ActivityStatus,
+      order: data.order,
+      assignedToUserId: (data as any).assigned_to_user_id ?? null,
+      dueDate: (data as any).due_date ?? null,
+    }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
+    setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
+    setNewDueByCol(prev => ({ ...prev, [status]: '' }));
   };
 
   const handleDelete = async (id: string) => {
@@ -170,10 +247,27 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) toast.error('Erro ao atualizar atividade');
   };
 
+  const handleUpdateAssignee = async (id: string, userId: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, assignedToUserId: userId } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ assigned_to_user_id: userId } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar responsável');
+  };
+
+  const handleUpdateDue = async (id: string, due: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, dueDate: due } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ due_date: due } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar prazo');
+  };
+
   const persistOrder = async (next: Activity[]) => {
     const updates = next.map((a, idx) => ({ id: a.id, status: a.status, order: idx }));
     setActivities(next.map((a, idx) => ({ ...a, order: idx })));
-    // fire-and-forget per-row updates (small list)
     await Promise.all(
       updates.map(u =>
         supabase.from('project_activities').update({ status: u.status, order: u.order }).eq('id', u.id)
@@ -201,7 +295,6 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const toCol = findColumnOf(overIdStr);
     if (!fromCol || !toCol) return;
 
-    // Build new global ordered list (by column, in column order)
     const rebuild = (mutator: (g: Record<ActivityStatus, Activity[]>) => void) => {
       const g: Record<ActivityStatus, Activity[]> = {
         nao_iniciado: [...grouped.nao_iniciado],
@@ -241,7 +334,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Atividades do projeto</DialogTitle>
           <DialogDescription className="truncate">{projectName}</DialogDescription>
@@ -306,8 +399,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   key={col.key}
                   col={col}
                   activities={grouped[col.key]}
+                  members={members}
                   newTitle={newTitleByCol[col.key] || ''}
+                  newAssignee={newAssigneeByCol[col.key] || ''}
+                  newDue={newDueByCol[col.key] || ''}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
                   editingId={editingId}
@@ -315,11 +413,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onStartEdit={(id, title) => { setEditingId(id); setEditTitle(title); }}
                   onChangeEdit={setEditTitle}
                   onSaveEdit={handleSaveEdit}
+                  onUpdateAssignee={handleUpdateAssignee}
+                  onUpdateDue={handleUpdateDue}
                 />
               ))}
             </div>
             <DragOverlay>
-              {activeActivity && <ActivityCard activity={activeActivity} dragging />}
+              {activeActivity && <ActivityCard activity={activeActivity} members={members} dragging />}
             </DragOverlay>
           </DndContext>
         )}
@@ -331,8 +431,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
 function Column({
   col,
   activities,
+  members,
   newTitle,
+  newAssignee,
+  newDue,
   onNewTitle,
+  onNewAssignee,
+  onNewDue,
   onAdd,
   onDelete,
   editingId,
@@ -340,11 +445,18 @@ function Column({
   onStartEdit,
   onChangeEdit,
   onSaveEdit,
+  onUpdateAssignee,
+  onUpdateDue,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
   activities: Activity[];
+  members: MemberOption[];
   newTitle: string;
+  newAssignee: string;
+  newDue: string;
   onNewTitle: (v: string) => void;
+  onNewAssignee: (v: string) => void;
+  onNewDue: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
   editingId: string | null;
@@ -352,6 +464,8 @@ function Column({
   onStartEdit: (id: string, title: string) => void;
   onChangeEdit: (v: string) => void;
   onSaveEdit: (id: string) => void;
+  onUpdateAssignee: (id: string, userId: string | null) => void;
+  onUpdateDue: (id: string, due: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
   return (
@@ -374,28 +488,52 @@ function Column({
             <SortableCard
               key={a.id}
               activity={a}
+              members={members}
               isEditing={editingId === a.id}
               editTitle={editTitle}
               onChangeEdit={onChangeEdit}
               onStartEdit={onStartEdit}
               onSaveEdit={onSaveEdit}
               onDelete={onDelete}
+              onUpdateAssignee={onUpdateAssignee}
+              onUpdateDue={onUpdateDue}
             />
           ))}
         </div>
       </SortableContext>
 
-      <div className="flex items-center gap-2 pt-1">
-        <Input
-          value={newTitle}
-          onChange={e => onNewTitle(e.target.value)}
-          placeholder="+ Nova tarefa"
-          className="h-8 bg-background"
-          onKeyDown={e => { if (e.key === 'Enter') onAdd(); }}
-        />
-        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onAdd} disabled={!newTitle.trim()}>
-          <Plus className="w-4 h-4" />
-        </Button>
+      <div className="flex flex-col gap-1.5 pt-2 border-t border-border/50 mt-1">
+        <div className="flex items-center gap-1.5">
+          <Input
+            value={newTitle}
+            onChange={e => onNewTitle(e.target.value)}
+            placeholder="+ Nova tarefa"
+            className="h-8 bg-background"
+            onKeyDown={e => { if (e.key === 'Enter') onAdd(); }}
+          />
+          <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onAdd} disabled={!newTitle.trim()}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+            <SelectTrigger className="h-7 text-xs bg-background flex-1">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent className="z-[200]">
+              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+              {members.map(m => (
+                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="date"
+            value={newDue}
+            onChange={e => onNewDue(e.target.value)}
+            className="h-7 text-xs bg-background w-[130px]"
+          />
+        </div>
       </div>
     </div>
   );
@@ -403,20 +541,26 @@ function Column({
 
 function SortableCard({
   activity,
+  members,
   isEditing,
   editTitle,
   onChangeEdit,
   onStartEdit,
   onSaveEdit,
   onDelete,
+  onUpdateAssignee,
+  onUpdateDue,
 }: {
   activity: Activity;
+  members: MemberOption[];
   isEditing: boolean;
   editTitle: string;
   onChangeEdit: (v: string) => void;
   onStartEdit: (id: string, title: string) => void;
   onSaveEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onUpdateAssignee: (id: string, userId: string | null) => void;
+  onUpdateDue: (id: string, due: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: activity.id,
@@ -427,55 +571,99 @@ function SortableCard({
     transition,
     opacity: isDragging ? 0.4 : 1,
   };
+
+  const isOverdue = activity.dueDate && activity.status !== 'concluido' && activity.dueDate < new Date().toISOString().slice(0, 10);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group rounded-md border bg-card px-3 py-2 text-sm flex items-center gap-2 hover:border-primary/40"
+      className="group rounded-md border bg-card px-3 py-2 text-sm flex flex-col gap-1.5 hover:border-primary/40"
     >
-      <div className="flex-1 min-w-0" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
-        {isEditing ? (
-          <Input
-            autoFocus
-            value={editTitle}
-            onChange={e => onChangeEdit(e.target.value)}
-            onBlur={() => onSaveEdit(activity.id)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') onSaveEdit(activity.id);
-              if (e.key === 'Escape') onSaveEdit(activity.id);
-            }}
-            className="h-7"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => onStartEdit(activity.id, activity.title)}
-            className={cn(
-              'text-left w-full truncate cursor-text',
-              activity.status === 'concluido' && 'line-through text-muted-foreground'
-            )}
-            title={activity.title}
-          >
-            {activity.title}
-          </button>
-        )}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+          {isEditing ? (
+            <Input
+              autoFocus
+              value={editTitle}
+              onChange={e => onChangeEdit(e.target.value)}
+              onBlur={() => onSaveEdit(activity.id)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') onSaveEdit(activity.id);
+                if (e.key === 'Escape') onSaveEdit(activity.id);
+              }}
+              className="h-7"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => onStartEdit(activity.id, activity.title)}
+              className={cn(
+                'text-left w-full truncate cursor-text',
+                activity.status === 'concluido' && 'line-through text-muted-foreground'
+              )}
+              title={activity.title}
+            >
+              {activity.title}
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onDelete(activity.id)}
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          title="Remover"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={() => onDelete(activity.id)}
-        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-        title="Remover"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+
+      <div className="flex items-center gap-1.5">
+        <Select
+          value={activity.assignedToUserId || UNASSIGNED}
+          onValueChange={(v) => onUpdateAssignee(activity.id, v === UNASSIGNED ? null : v)}
+        >
+          <SelectTrigger className="h-6 text-[11px] flex-1 bg-transparent border-dashed px-1.5">
+            <span className="flex items-center gap-1 truncate">
+              <User className="w-3 h-3 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Responsável" />
+            </span>
+          </SelectTrigger>
+          <SelectContent className="z-[200]">
+            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+            {members.map(m => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className={cn(
+          'flex items-center gap-1 rounded-md border border-dashed px-1.5 h-6 bg-transparent',
+          isOverdue && 'border-destructive/60 text-destructive'
+        )}>
+          <Calendar className="w-3 h-3 shrink-0 text-muted-foreground" />
+          <input
+            type="date"
+            value={activity.dueDate || ''}
+            onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
+            className="text-[11px] bg-transparent outline-none w-[100px]"
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
-function ActivityCard({ activity, dragging }: { activity: Activity; dragging?: boolean }) {
+function ActivityCard({ activity, members, dragging }: { activity: Activity; members: MemberOption[]; dragging?: boolean }) {
+  const assignee = members.find(m => m.id === activity.assignedToUserId);
   return (
     <div className={cn('rounded-md border bg-card px-3 py-2 text-sm shadow-lg', dragging && 'rotate-2')}>
-      {activity.title}
+      <div>{activity.title}</div>
+      {(assignee || activity.dueDate) && (
+        <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+          {assignee && <span className="flex items-center gap-1"><User className="w-3 h-3" />{assignee.name}</span>}
+          {activity.dueDate && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDateBR(activity.dueDate)}</span>}
+        </div>
+      )}
     </div>
   );
 }
