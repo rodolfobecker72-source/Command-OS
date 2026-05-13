@@ -338,6 +338,3 @@ export function WelcomePage() {
     </div>
   );
 }
-    </div>
-  );
-}
