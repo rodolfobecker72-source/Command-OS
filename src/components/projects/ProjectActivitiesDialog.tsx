@@ -247,6 +247,29 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           <DialogDescription className="truncate">{projectName}</DialogDescription>
         </DialogHeader>
 
+        <div className="flex items-center gap-2">
+          <Input
+            value={driveLink}
+            onChange={e => setDriveLink(e.target.value)}
+            onBlur={handleSaveDrive}
+            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            placeholder="Link do Google Drive do projeto"
+            className="h-9 flex-1"
+          />
+          {driveLinkSaved && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0"
+              onClick={() => window.open(driveLinkSaved, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" /> Abrir
+            </Button>
+          )}
+          {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando...
