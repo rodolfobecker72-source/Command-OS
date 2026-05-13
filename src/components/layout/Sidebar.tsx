@@ -45,13 +45,6 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Início',
-    icon: Home,
-    items: [
-      { name: 'Boas-vindas', href: '/boas-vindas', icon: Sparkles, pageKey: 'boas-vindas' },
-    ],
-  },
-  {
     label: 'Comercial',
     icon: Briefcase,
     items: [
