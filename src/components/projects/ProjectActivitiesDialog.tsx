@@ -95,6 +95,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [driveLink, setDriveLink] = useState('');
   const [driveLinkSaved, setDriveLinkSaved] = useState('');
   const [savingDrive, setSavingDrive] = useState(false);
+  const [briefing, setBriefing] = useState<{
+    objective: string;
+    projectDescription: string;
+    description: string;
+    services: Array<{ serviceType: string; objective: string; description: string; items: Array<{ description: string; quantity: number }> }>;
+  } | null>(null);
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
