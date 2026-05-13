@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TeamMemberSelect } from '@/components/crm/TeamMemberSelect';
+import { SortableTableBody } from '@/components/crm/SortableTableBody';
 import {
   Select,
   SelectContent,

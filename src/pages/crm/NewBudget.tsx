@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceItemSelector } from '@/components/crm/ServiceItemSelector';
+import { SortableTableBody } from '@/components/crm/SortableTableBody';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import { Header } from '@/components/layout/Header';
@@ -1236,6 +1237,7 @@ export function NewBudget() {
                             <Table>
                               <TableHeader>
                                 <TableRow className="bg-muted/50">
+                                  <TableHead className="w-8"></TableHead>
                                   <TableHead className="w-[40%]">Descrição</TableHead>
                                   <TableHead className="w-[80px]">Qtd</TableHead>
                                   <TableHead>Valor Unit.</TableHead>
@@ -1243,9 +1245,16 @@ export function NewBudget() {
                                   <TableHead className="w-12"></TableHead>
                                 </TableRow>
                               </TableHeader>
-                              <TableBody>
-                                {service.costs.map((cost) => (
-                                  <TableRow key={cost.id}>
+                              <SortableTableBody
+                                items={service.costs}
+                                onReorder={(newCosts) =>
+                                  setServices(services.map(s =>
+                                    s.id === service.id ? { ...s, costs: newCosts } : s
+                                  ))
+                                }
+                                renderRow={(cost, handle) => (
+                                  <>
+                                    <TableCell className="w-8">{handle}</TableCell>
                                     <TableCell>
                                       <Input
                                         value={cost.description}
@@ -1296,9 +1305,10 @@ export function NewBudget() {
                                         <Trash2 className="w-4 h-4" />
                                       </Button>
                                     </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
+                                  </>
+                                )}
+                              />
+
                             </Table>
                           </div>
                         ) : (
@@ -1395,6 +1405,7 @@ export function NewBudget() {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/50">
+                          <TableHead className="w-8"></TableHead>
                           <TableHead className="w-[40%]">Descrição</TableHead>
                           <TableHead className="w-[80px]">Qtd</TableHead>
                           <TableHead>Valor Unit.</TableHead>
@@ -1402,9 +1413,12 @@ export function NewBudget() {
                           <TableHead className="w-12"></TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody>
-                        {operationalCosts.map((cost) => (
-                          <TableRow key={cost.id}>
+                      <SortableTableBody
+                        items={operationalCosts}
+                        onReorder={setOperationalCosts}
+                        renderRow={(cost, handle) => (
+                          <>
+                            <TableCell className="w-8">{handle}</TableCell>
                             <TableCell>
                               <Input
                                 value={cost.description}
@@ -1461,19 +1475,21 @@ export function NewBudget() {
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </TableCell>
+                          </>
+                        )}
+                        footer={
+                          <TableRow className="bg-muted/30">
+                            <TableCell colSpan={4} className="font-semibold">
+                              Total Despesas Operacionais
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              {formatCurrency(operationalCostsTotal)}
+                            </TableCell>
+                            <TableCell />
                           </TableRow>
-                        ))}
-                        {/* Total row */}
-                        <TableRow className="bg-muted/30">
-                          <TableCell colSpan={3} className="font-semibold">
-                            Total Despesas Operacionais
-                          </TableCell>
-                          <TableCell className="font-bold">
-                            {formatCurrency(operationalCostsTotal)}
-                          </TableCell>
-                          <TableCell />
-                        </TableRow>
-                      </TableBody>
+                        }
+                      />
+
                     </Table>
                   </div>
                 ) : (
