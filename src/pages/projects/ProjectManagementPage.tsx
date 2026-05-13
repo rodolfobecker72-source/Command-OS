@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, Settings2 } from 'lucide-react';
+import { ChevronRight, Settings2, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCRM } from '@/contexts/CRMContext';
 import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusManagerDialog';
+import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ export function ProjectManagementPage() {
   const { projectColumns, projectCards, updateProjectCard } = useCRM();
   const [manageOpen, setManageOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
 
   const sortedColumns = useMemo(
     () => [...projectColumns].sort((a, b) => a.order - b.order),
@@ -88,15 +90,23 @@ export function ProjectManagementPage() {
                           key={card.id}
                           className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3"
                         >
-                          <div className="min-w-0 flex-1">
-                            {card.proposalId && (
-                              <span className="font-medium">{card.proposalId} - </span>
-                            )}
-                            <span className="font-medium">{card.projectName}</span>
-                            {card.clientName && (
-                              <span className="text-muted-foreground"> · {card.clientName}</span>
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActivitiesFor({ id: card.id, name: `${card.proposalId ? card.proposalId + ' - ' : ''}${card.projectName}${card.clientName ? ' · ' + card.clientName : ''}` })}
+                            className="min-w-0 flex-1 text-left flex items-center gap-2 hover:text-primary"
+                            title="Ver atividades do projeto"
+                          >
+                            <ListChecks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                            <span className="truncate">
+                              {card.proposalId && (
+                                <span className="font-medium">{card.proposalId} - </span>
+                              )}
+                              <span className="font-medium">{card.projectName}</span>
+                              {card.clientName && (
+                                <span className="text-muted-foreground"> · {card.clientName}</span>
+                              )}
+                            </span>
+                          </button>
                           <Select
                             value={card.status}
                             onValueChange={(value) => updateProjectCard(card.id, { status: value })}
@@ -124,6 +134,14 @@ export function ProjectManagementPage() {
       </div>
 
       <ProjectStatusManagerDialog open={manageOpen} onOpenChange={setManageOpen} />
+      {activitiesFor && (
+        <ProjectActivitiesDialog
+          open={!!activitiesFor}
+          onOpenChange={(o) => !o && setActivitiesFor(null)}
+          projectCardId={activitiesFor.id}
+          projectName={activitiesFor.name}
+        />
+      )}
       </div>
     </div>
   );

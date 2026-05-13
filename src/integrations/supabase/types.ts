@@ -826,6 +826,39 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activities: {
+        Row: {
+          created_at: string
+          id: string
+          order: number
+          project_card_id: string
+          status: string
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order?: number
+          project_card_id: string
+          status?: string
+          title?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order?: number
+          project_card_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       project_cards: {
         Row: {
           budget_id: string
