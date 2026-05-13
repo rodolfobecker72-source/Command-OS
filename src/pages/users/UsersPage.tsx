@@ -468,6 +468,11 @@ export function UsersPage() {
                             </Avatar>
                             <div>
                               <p className="font-medium">{member.profile?.name || 'Sem nome'}</p>
+                              {member.profile?.birth_date && (
+                                <p className="text-xs text-muted-foreground">
+                                  Nasc.: {new Date(member.profile.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </TableCell>
