@@ -62,6 +62,7 @@ function getWeekRange(ref: Date) {
 export function WelcomePage() {
   const { profile, workspace } = useAuth();
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
+  const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
