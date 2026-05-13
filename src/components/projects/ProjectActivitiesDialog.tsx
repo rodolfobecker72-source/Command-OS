@@ -110,17 +110,61 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     let cancelled = false;
     setLoading(true);
 
-    // Load drive link
-    supabase
-      .from('project_cards')
-      .select('material_link')
-      .eq('id', projectCardId)
-      .maybeSingle()
-      .then(({ data }) => {
-        const link = (data as any)?.material_link || '';
+    // Load drive link + briefing from commercial budget
+    (async () => {
+      const { data: card } = await supabase
+        .from('project_cards')
+        .select('material_link, budget_id')
+        .eq('id', projectCardId)
+        .maybeSingle();
+      const link = (card as any)?.material_link || '';
+      if (!cancelled) {
         setDriveLink(link);
         setDriveLinkSaved(link);
-      });
+      }
+      const budgetId = (card as any)?.budget_id;
+      if (!budgetId) {
+        if (!cancelled) setBriefing(null);
+        return;
+      }
+      const { data: budget } = await supabase
+        .from('budgets')
+        .select('objective, project_description, description, approved_version, current_version')
+        .eq('id', budgetId)
+        .maybeSingle();
+      if (!budget) {
+        if (!cancelled) setBriefing(null);
+        return;
+      }
+      const versionNumber = (budget as any).approved_version ?? (budget as any).current_version;
+      let services: any[] = [];
+      if (versionNumber != null) {
+        const { data: ver } = await supabase
+          .from('budget_versions')
+          .select('services')
+          .eq('budget_id', budgetId)
+          .eq('version', versionNumber)
+          .maybeSingle();
+        services = ((ver as any)?.services || []) as any[];
+      }
+      const mappedServices = services.map((s: any) => ({
+        serviceType: s.serviceType || '',
+        objective: s.objective || '',
+        description: s.description || '',
+        items: (s.costs || []).map((c: any) => ({
+          description: c.description || '',
+          quantity: Number(c.quantity) || 0,
+        })).filter((c: any) => c.description),
+      }));
+      if (!cancelled) {
+        setBriefing({
+          objective: (budget as any).objective || '',
+          projectDescription: (budget as any).project_description || '',
+          description: (budget as any).description || '',
+          services: mappedServices,
+        });
+      }
+    })();
 
     // Load workspace members (excluding vendedor)
     if (workspaceId) {
