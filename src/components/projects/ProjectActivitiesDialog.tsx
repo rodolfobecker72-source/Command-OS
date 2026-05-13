@@ -461,12 +461,6 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     <p className="whitespace-pre-wrap">{briefing.projectDescription}</p>
                   </div>
                 )}
-                {briefing.description && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Descrição do serviço</p>
-                    <p className="whitespace-pre-wrap">{briefing.description}</p>
-                  </div>
-                )}
                 {briefing.services.length > 0 && (
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-muted-foreground uppercase">Entregas</p>
@@ -484,16 +478,6 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                         )}
                         {s.description && (
                           <p className="text-xs whitespace-pre-wrap text-muted-foreground">{s.description}</p>
-                        )}
-                        {s.items.length > 0 && (
-                          <ul className="space-y-1">
-                            {s.items.map((it, j) => (
-                              <li key={j} className="text-xs flex items-start gap-2">
-                                <span className="text-muted-foreground tabular-nums shrink-0">{it.quantity}x</span>
-                                <span className="flex-1 whitespace-pre-wrap">{it.description}</span>
-                              </li>
-                            ))}
-                          </ul>
                         )}
                       </div>
                     ))}
