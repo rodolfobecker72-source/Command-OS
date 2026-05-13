@@ -19,6 +19,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,6 +27,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
   useEffect(() => {
     if (open && profile) {
       setName(profile.name || '');
+      setBirthDate(profile.birth_date || '');
       setPhotoPreview(profile.photo_url || null);
       setSelectedFile(null);
     }
