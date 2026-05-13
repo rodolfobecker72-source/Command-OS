@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -63,6 +63,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [driveLink, setDriveLink] = useState('');
+  const [driveLinkSaved, setDriveLinkSaved] = useState('');
+  const [savingDrive, setSavingDrive] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -70,6 +73,17 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (!open || !projectCardId) return;
     let cancelled = false;
     setLoading(true);
+    // Load drive link from project_cards.material_link
+    supabase
+      .from('project_cards')
+      .select('material_link')
+      .eq('id', projectCardId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const link = (data as any)?.material_link || '';
+        setDriveLink(link);
+        setDriveLinkSaved(link);
+      });
     supabase
       .from('project_activities')
       .select('*')
@@ -91,6 +105,22 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       });
     return () => { cancelled = true; };
   }, [open, projectCardId]);
+
+  const handleSaveDrive = async () => {
+    if (driveLink === driveLinkSaved) return;
+    setSavingDrive(true);
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ material_link: driveLink })
+      .eq('id', projectCardId);
+    setSavingDrive(false);
+    if (error) {
+      toast.error('Erro ao salvar link');
+      return;
+    }
+    setDriveLinkSaved(driveLink);
+    toast.success('Link salvo');
+  };
 
   const grouped = useMemo(() => {
     const map: Record<ActivityStatus, Activity[]> = { nao_iniciado: [], em_andamento: [], concluido: [] };
@@ -216,6 +246,29 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           <DialogTitle>Atividades do projeto</DialogTitle>
           <DialogDescription className="truncate">{projectName}</DialogDescription>
         </DialogHeader>
+
+        <div className="flex items-center gap-2">
+          <Input
+            value={driveLink}
+            onChange={e => setDriveLink(e.target.value)}
+            onBlur={handleSaveDrive}
+            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            placeholder="Link do Google Drive do projeto"
+            className="h-9 flex-1"
+          />
+          {driveLinkSaved && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0"
+              onClick={() => window.open(driveLinkSaved, '_blank')}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" /> Abrir
+            </Button>
+          )}
+          {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
