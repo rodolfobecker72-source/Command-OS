@@ -147,6 +147,16 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 pt-6 space-y-4 overflow-y-auto scrollbar-thin">
+        {hasPageAccess('boas-vindas') && (
+          <NavLink
+            to="/boas-vindas"
+            onClick={handleNavClick}
+            className={`nav-link w-full ${location.pathname === '/boas-vindas' ? 'active' : ''}`}
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-sm font-medium">Boas-vindas</span>
+          </NavLink>
+        )}
         {filteredNavGroups.map((group) => (
           <div key={group.label}>
             <button
