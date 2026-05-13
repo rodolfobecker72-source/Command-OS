@@ -73,6 +73,17 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (!open || !projectCardId) return;
     let cancelled = false;
     setLoading(true);
+    // Load drive link from project_cards.material_link
+    supabase
+      .from('project_cards')
+      .select('material_link')
+      .eq('id', projectCardId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const link = (data as any)?.material_link || '';
+        setDriveLink(link);
+        setDriveLinkSaved(link);
+      });
     supabase
       .from('project_activities')
       .select('*')
@@ -94,6 +105,22 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       });
     return () => { cancelled = true; };
   }, [open, projectCardId]);
+
+  const handleSaveDrive = async () => {
+    if (driveLink === driveLinkSaved) return;
+    setSavingDrive(true);
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ material_link: driveLink })
+      .eq('id', projectCardId);
+    setSavingDrive(false);
+    if (error) {
+      toast.error('Erro ao salvar link');
+      return;
+    }
+    setDriveLinkSaved(driveLink);
+    toast.success('Link salvo');
+  };
 
   const grouped = useMemo(() => {
     const map: Record<ActivityStatus, Activity[]> = { nao_iniciado: [], em_andamento: [], concluido: [] };
