@@ -12,6 +12,7 @@ export function ProjectManagementPage() {
   const { projectColumns, projectCards, updateProjectCard } = useCRM();
   const [manageOpen, setManageOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
 
   const sortedColumns = useMemo(
     () => [...projectColumns].sort((a, b) => a.order - b.order),
