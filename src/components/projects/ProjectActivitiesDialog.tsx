@@ -83,8 +83,11 @@ function formatDateBR(iso: string | null): string {
 }
 
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
-  const { workspace } = useAuth();
+  const { workspace, profile } = useAuth();
   const workspaceId = workspace?.id;
+  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string }>>([]);
+  const [newComment, setNewComment] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,13 +119,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     (async () => {
       const { data: card } = await supabase
         .from('project_cards')
-        .select('material_link, budget_id')
+        .select('material_link, budget_id, comments')
         .eq('id', projectCardId)
         .maybeSingle();
       const link = (card as any)?.material_link || '';
+      const cardComments = Array.isArray((card as any)?.comments) ? (card as any).comments : [];
       if (!cancelled) {
         setDriveLink(link);
         setDriveLinkSaved(link);
+        setComments(cardComments);
       }
       const budgetId = (card as any)?.budget_id;
       if (!budgetId) {
