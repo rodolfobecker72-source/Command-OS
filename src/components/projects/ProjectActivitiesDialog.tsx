@@ -610,6 +610,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onSaveEdit={handleSaveEdit}
                   onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
+                  onUpdateFreela={handleUpdateFreela}
                 />
               ))}
             </div>
