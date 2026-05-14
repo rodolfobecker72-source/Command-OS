@@ -18,14 +18,12 @@ export function Login() {
   const { login, session, hasPageAccess } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect when session becomes available — to first accessible page
+  // Redirect when session becomes available — to boas-vindas
   useEffect(() => {
     if (session) {
-      const firstAccessible = APP_PAGES.find(p => hasPageAccess(p.key));
-      const target = firstAccessible?.href || '/calendario';
-      navigate(target, { replace: true });
+      navigate('/boas-vindas', { replace: true });
     }
-  }, [session, navigate, hasPageAccess]);
+  }, [session, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
