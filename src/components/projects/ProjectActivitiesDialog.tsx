@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight, MessageSquare, Send } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -83,8 +84,11 @@ function formatDateBR(iso: string | null): string {
 }
 
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
-  const { workspace } = useAuth();
+  const { workspace, profile } = useAuth();
   const workspaceId = workspace?.id;
+  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string }>>([]);
+  const [newComment, setNewComment] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,13 +120,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     (async () => {
       const { data: card } = await supabase
         .from('project_cards')
-        .select('material_link, budget_id')
+        .select('material_link, budget_id, comments')
         .eq('id', projectCardId)
         .maybeSingle();
       const link = (card as any)?.material_link || '';
+      const cardComments = Array.isArray((card as any)?.comments) ? (card as any).comments : [];
       if (!cancelled) {
         setDriveLink(link);
         setDriveLinkSaved(link);
+        setComments(cardComments);
       }
       const budgetId = (card as any)?.budget_id;
       if (!budgetId) {
@@ -219,6 +225,46 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       });
     return () => { cancelled = true; };
   }, [open, projectCardId, workspaceId]);
+
+  const handlePostComment = async () => {
+    const text = newComment.trim();
+    if (!text || !profile?.id) return;
+    setPostingComment(true);
+    const newEntry = {
+      id: crypto.randomUUID(),
+      userId: profile.id,
+      userName: profile.name || 'Usuário',
+      photoUrl: profile.photo_url || null,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [...comments, newEntry];
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', projectCardId);
+    setPostingComment(false);
+    if (error) {
+      toast.error('Erro ao publicar comentário');
+      return;
+    }
+    setComments(next);
+    setNewComment('');
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    const next = comments.filter(c => c.id !== id);
+    const prev = comments;
+    setComments(next);
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', projectCardId);
+    if (error) {
+      setComments(prev);
+      toast.error('Erro ao remover comentário');
+    }
+  };
 
   const handleSaveDrive = async () => {
     if (driveLink === driveLinkSaved) return;
@@ -554,6 +600,81 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             </DragOverlay>
           </DndContext>
         )}
+
+        {/* Comentários do projeto */}
+        <div className="border border-border rounded-lg p-4 space-y-3 bg-card">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">Comentários do projeto</span>
+            <span className="text-xs text-muted-foreground">({comments.length})</span>
+          </div>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {comments.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Nenhum comentário ainda. Seja o primeiro!</p>
+            ) : (
+              [...comments]
+                .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+                .map(c => {
+                  const initials = (c.userName || '?').split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+                  const isMine = c.userId === profile?.id;
+                  return (
+                    <div key={c.id} className="flex gap-2 group">
+                      <Avatar className="w-7 h-7 shrink-0">
+                        {c.photoUrl && <AvatarImage src={c.photoUrl} alt={c.userName} />}
+                        <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0 bg-muted/40 rounded-lg px-3 py-2">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <span className="text-xs font-semibold truncate">{c.userName}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {isMine && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"
+                                title="Remover"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap break-words">{c.text}</p>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+
+          <div className="flex gap-2 items-end pt-2 border-t border-border/50">
+            <Textarea
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  handlePostComment();
+                }
+              }}
+              placeholder="Escreva um comentário... (Ctrl+Enter para enviar)"
+              className="min-h-[60px] text-sm flex-1 resize-none"
+            />
+            <Button
+              type="button"
+              size="icon"
+              onClick={handlePostComment}
+              disabled={!newComment.trim() || postingComment}
+              className="h-9 w-9 shrink-0"
+            >
+              {postingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -646,25 +767,23 @@ function Column({
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
-            <SelectTrigger className="h-7 text-xs bg-background flex-1">
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-              {members.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="date"
-            value={newDue}
-            onChange={e => onNewDue(e.target.value)}
-            className="h-7 text-xs bg-background w-[130px]"
-          />
-        </div>
+        <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+          <SelectTrigger className="h-7 text-xs bg-background w-full">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent className="z-[200]">
+            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+            {members.map(m => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          type="date"
+          value={newDue}
+          onChange={e => onNewDue(e.target.value)}
+          className="h-7 text-xs bg-background w-full"
+        />
       </div>
     </div>
   );
