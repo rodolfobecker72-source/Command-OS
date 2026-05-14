@@ -133,7 +133,7 @@ export function WelcomePage() {
 
       const { data: activities } = await supabase
         .from('project_activities')
-        .select('id, title, status, due_date, assigned_to_user_id, assigned_to_user_ids, project_card_id')
+      .select('id, title, status, due_date, assigned_to_user_id, assigned_to_user_ids, project_card_id, freela_name')
         .eq('workspace_id', workspace.id)
         .or(`assigned_to_user_id.eq.${profile.id},assigned_to_user_ids.cs.{${profile.id}}`)
         .neq('status', 'concluido');
