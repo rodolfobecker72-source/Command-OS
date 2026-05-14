@@ -51,6 +51,7 @@ interface Activity {
   order: number;
   assignedToUserIds: string[];
   dueDate: string | null;
+  freelaName: string | null;
 }
 
 const MAX_ASSIGNEES = 2;
