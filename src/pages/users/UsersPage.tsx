@@ -447,6 +447,7 @@ export function UsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Membro</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Papel</TableHead>
                     {canManage && <TableHead className="text-right">Ações</TableHead>}
                   </TableRow>
