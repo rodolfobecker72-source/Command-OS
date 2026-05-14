@@ -130,9 +130,9 @@ export function WelcomePage() {
 
       const { data: activities } = await supabase
         .from('project_activities')
-        .select('id, title, status, due_date, assigned_to_user_id, project_card_id')
+        .select('id, title, status, due_date, assigned_to_user_id, assigned_to_user_ids, project_card_id')
         .eq('workspace_id', workspace.id)
-        .eq('assigned_to_user_id', profile.id)
+        .or(`assigned_to_user_id.eq.${profile.id},assigned_to_user_ids.cs.{${profile.id}}`)
         .neq('status', 'concluido');
 
       if (!activities || activities.length === 0) {
@@ -141,34 +141,34 @@ export function WelcomePage() {
       }
 
       const cardIds = Array.from(new Set(activities.map((a: any) => a.project_card_id).filter(Boolean)));
-      const userIds = Array.from(new Set(activities.map((a: any) => a.assigned_to_user_id).filter(Boolean)));
 
-      const [{ data: cards }, { data: profiles }] = await Promise.all([
+      const [{ data: cards }, { data: prof }] = await Promise.all([
         cardIds.length
           ? supabase.from('project_cards').select('id, project_name').in('id', cardIds)
           : Promise.resolve({ data: [] as any[] }),
-        userIds.length
-          ? supabase.from('profiles').select('id, name, photo_url').in('id', userIds)
-          : Promise.resolve({ data: [] as any[] }),
+        supabase.from('profiles').select('id, name, photo_url').eq('id', profile.id).maybeSingle(),
       ]);
 
       const cardMap = new Map((cards || []).map((c: any) => [c.id, c.project_name]));
-      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const me = prof as any;
+      if (!me) {
+        if (!cancelled) setUserActivities([]);
+        return;
+      }
 
-      const grouped = new Map<string, UserActivities>();
+      const bucket: UserActivities = {
+        userId: profile.id,
+        name: me.name || 'Sem nome',
+        photoUrl: me.photo_url || null,
+        overdue: [],
+        toStart: [],
+      };
+
       for (const a of activities as any[]) {
-        const uid = a.assigned_to_user_id;
-        const prof = profileMap.get(uid);
-        if (!prof) continue;
-        if (!grouped.has(uid)) {
-          grouped.set(uid, {
-            userId: uid,
-            name: prof.name || 'Sem nome',
-            photoUrl: prof.photo_url || null,
-            overdue: [],
-            toStart: [],
-          });
-        }
+        const ids: string[] = Array.isArray(a.assigned_to_user_ids) && a.assigned_to_user_ids.length > 0
+          ? a.assigned_to_user_ids
+          : (a.assigned_to_user_id ? [a.assigned_to_user_id] : []);
+        if (!ids.includes(profile.id)) continue;
         const item: ActivityItem = {
           id: a.id,
           title: a.title,
@@ -176,14 +176,11 @@ export function WelcomePage() {
           projectName: cardMap.get(a.project_card_id) || 'Projeto',
           isOverdue: !!a.due_date && a.due_date < today,
         };
-        const bucket = grouped.get(uid)!;
         if (item.isOverdue) bucket.overdue.push(item);
         else if (a.status === 'nao_iniciado') bucket.toStart.push(item);
       }
 
-      const list = Array.from(grouped.values())
-        .filter(u => u.overdue.length > 0 || u.toStart.length > 0)
-        .sort((a, b) => b.overdue.length - a.overdue.length || a.name.localeCompare(b.name, 'pt-BR'));
+      const list = (bucket.overdue.length > 0 || bucket.toStart.length > 0) ? [bucket] : [];
 
       if (!cancelled) setUserActivities(list);
     };
