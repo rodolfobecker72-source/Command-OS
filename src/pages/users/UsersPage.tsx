@@ -51,6 +51,7 @@ interface MemberWithProfile {
   user_id: string;
   role: AppRole;
   joined_at: string;
+  email: string;
   profile: Profile | null;
 }
 
