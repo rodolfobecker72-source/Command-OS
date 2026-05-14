@@ -190,6 +190,28 @@ export function WelcomePage() {
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
+  const handleCompleteActivity = async (activityId: string) => {
+    // Optimistic remove
+    setUserActivities((prev) =>
+      prev
+        .map((u) => ({
+          ...u,
+          overdue: u.overdue.filter((a) => a.id !== activityId),
+          toStart: u.toStart.filter((a) => a.id !== activityId),
+        }))
+        .filter((u) => u.overdue.length > 0 || u.toStart.length > 0)
+    );
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ status: 'concluido' })
+      .eq('id', activityId);
+    if (error) {
+      toast({ title: 'Erro', description: 'Não foi possível concluir a tarefa.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Tarefa concluída' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Boas-vindas" />
