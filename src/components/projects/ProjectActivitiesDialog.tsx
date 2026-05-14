@@ -576,7 +576,7 @@ function Column({
   onStartEdit,
   onChangeEdit,
   onSaveEdit,
-  onUpdateAssignee,
+  onToggleAssignee,
   onUpdateDue,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
@@ -595,7 +595,7 @@ function Column({
   onStartEdit: (id: string, title: string) => void;
   onChangeEdit: (v: string) => void;
   onSaveEdit: (id: string) => void;
-  onUpdateAssignee: (id: string, userId: string | null) => void;
+  onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
@@ -626,7 +626,7 @@ function Column({
               onStartEdit={onStartEdit}
               onSaveEdit={onSaveEdit}
               onDelete={onDelete}
-              onUpdateAssignee={onUpdateAssignee}
+              onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
             />
           ))}
