@@ -95,7 +95,7 @@ export function WelcomePage() {
         .in('id', userIds)
         .not('birth_date', 'is', null);
 
-      const { start, end } = getWeekRange(now);
+      const { start, end } = getUpcomingRange(now);
       const year = now.getFullYear();
 
       const list: BirthdayMember[] = (profiles || [])
