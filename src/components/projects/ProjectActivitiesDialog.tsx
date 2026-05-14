@@ -768,6 +768,7 @@ function Column({
               onDelete={onDelete}
               onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
+              onUpdateFreela={onUpdateFreela}
             />
           ))}
         </div>
@@ -795,8 +796,17 @@ function Column({
             {members.map(m => (
               <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
             ))}
+            <SelectItem value="__freela__">Freela</SelectItem>
           </SelectContent>
         </Select>
+        {newAssignee === '__freela__' && (
+          <Input
+            value={newFreela}
+            onChange={e => onNewFreela(e.target.value)}
+            placeholder="Nome do freela"
+            className="h-7 text-xs bg-background w-full"
+          />
+        )}
         <Input
           type="date"
           value={newDue}
@@ -847,6 +857,7 @@ function SortableCard({
     .map(uid => members.find(m => m.id === uid))
     .filter((m): m is MemberOption => !!m);
   const atMax = activity.assignedToUserIds.length >= MAX_ASSIGNEES;
+  const hasFreela = !!activity.freelaName;
 
   return (
     <div
@@ -899,7 +910,7 @@ function SortableCard({
             type="button"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
           >
-            {assignees.length > 0 ? (
+            {assignees.length > 0 || hasFreela ? (
               <>
                 <div className="flex -space-x-1.5">
                   {assignees.map(a => {
@@ -911,9 +922,15 @@ function SortableCard({
                       </Avatar>
                     );
                   })}
+                  {hasFreela && (
+                    <Avatar className="w-5 h-5 ring-1 ring-card bg-amber-100">
+                      <AvatarFallback className="text-[9px] text-amber-700 font-bold">F</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
                 <span className="truncate">
-                  {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+                  {hasFreela && assignees.length === 0 ? activity.freelaName : assignees.length === 1 ? assignees[0].name : assignees.length > 1 ? `${assignees.length} responsáveis` : ''}
+                  {hasFreela && assignees.length > 0 ? ` · ${activity.freelaName}` : ''}
                 </span>
               </>
             ) : (
@@ -966,6 +983,38 @@ function SortableCard({
                 </button>
               );
             })}
+            <div className="border-t border-border my-1" />
+            <div className="px-2 py-1 space-y-1">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Freela</div>
+              <div className="flex gap-1">
+                <Input
+                  value={editFreelaName}
+                  onChange={e => setEditFreelaName(e.target.value)}
+                  placeholder="Nome do freela"
+                  className="h-7 text-xs flex-1"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    onUpdateFreela(activity.id, editFreelaName.trim() || null);
+                    setEditFreelaName('');
+                  }}
+                >
+                  OK
+                </Button>
+              </div>
+              {activity.freelaName && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateFreela(activity.id, null)}
+                  className="text-[10px] text-muted-foreground hover:text-destructive underline"
+                >
+                  Remover freela
+                </button>
+              )}
+            </div>
           </div>
         </PopoverContent>
       </Popover>
@@ -989,10 +1038,11 @@ function ActivityCard({ activity, members, dragging }: { activity: Activity; mem
   const assignees = activity.assignedToUserIds
     .map(uid => members.find(m => m.id === uid))
     .filter((m): m is MemberOption => !!m);
+  const hasFreela = !!activity.freelaName;
   return (
     <div className={cn('rounded-lg border bg-card p-3 text-sm shadow-lg flex flex-col gap-2', dragging && 'rotate-2')}>
       <div className="font-semibold leading-tight">{activity.title}</div>
-      {assignees.length > 0 && (
+      {(assignees.length > 0 || hasFreela) && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="flex -space-x-1.5">
             {assignees.map(a => {
@@ -1004,9 +1054,15 @@ function ActivityCard({ activity, members, dragging }: { activity: Activity; mem
                 </Avatar>
               );
             })}
+            {hasFreela && (
+              <Avatar className="w-5 h-5 ring-1 ring-card bg-amber-100">
+                <AvatarFallback className="text-[9px] text-amber-700 font-bold">F</AvatarFallback>
+              </Avatar>
+            )}
           </div>
           <span className="truncate">
-            {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+            {hasFreela && assignees.length === 0 ? activity.freelaName : assignees.length === 1 ? assignees[0].name : assignees.length > 1 ? `${assignees.length} responsáveis` : ''}
+            {hasFreela && assignees.length > 0 ? ` · ${activity.freelaName}` : ''}
           </span>
         </div>
       )}
