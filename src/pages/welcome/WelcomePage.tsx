@@ -51,13 +51,12 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-// Returns Sunday (start) and Saturday (end) of current week
-function getWeekRange(ref: Date) {
+// Returns today (start) and today + 5 days (end)
+function getUpcomingRange(ref: Date) {
   const start = new Date(ref);
   start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - start.getDay());
   const end = new Date(start);
-  end.setDate(end.getDate() + 6);
+  end.setDate(end.getDate() + 5);
   end.setHours(23, 59, 59, 999);
   return { start, end };
 }
