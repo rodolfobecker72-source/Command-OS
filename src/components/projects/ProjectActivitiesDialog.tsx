@@ -97,8 +97,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
   const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
+  const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [editingFreelaId, setEditingFreelaId] = useState<string | null>(null);
+  const [editFreelaName, setEditFreelaName] = useState('');
   const [driveLink, setDriveLink] = useState('');
   const [driveLinkSaved, setDriveLinkSaved] = useState('');
   const [savingDrive, setSavingDrive] = useState(false);
@@ -220,6 +223,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
               ? d.assigned_to_user_ids
               : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
+            freelaName: d.freela_name ?? null,
           })));
         }
         setLoading(false);
@@ -297,11 +301,12 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const title = (newTitleByCol[status] || '').trim();
     if (!title || !workspaceId) return;
     const order = (grouped[status].at(-1)?.order ?? -1) + 1;
-    const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED
+    const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED && newAssigneeByCol[status] !== '__freela__'
       ? newAssigneeByCol[status]
       : null;
     const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
+    const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
       .insert({
@@ -313,6 +318,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         assigned_to_user_id: assignee,
         assigned_to_user_ids: ids,
         due_date: due,
+        freela_name: freelaName || null,
       } as any)
       .select()
       .single();
@@ -329,10 +335,12 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         ? (data as any).assigned_to_user_ids
         : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
+      freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
+    setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
   };
 
   const handleDelete = async (id: string) => {
@@ -389,6 +397,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       .update({ due_date: due } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
+  };
+
+  const handleUpdateFreela = async (id: string, name: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, freelaName: name } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ freela_name: name } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar freela');
   };
 
   const persistOrder = async (next: Activity[]) => {
