@@ -476,6 +476,9 @@ export function UsersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
+                          <p className="text-sm text-muted-foreground">{member.email || '—'}</p>
+                        </TableCell>
+                        <TableCell>
                           <Badge variant="secondary" className={ROLE_COLORS[member.role]}>
                             <RoleIcon className="w-3 h-3 mr-1" />
                             {ROLE_LABELS[member.role]}
