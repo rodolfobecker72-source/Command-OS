@@ -24,6 +24,7 @@ interface ActivityItem {
   dueDate: string | null;
   projectName: string;
   isOverdue: boolean;
+  freelaName: string | null;
 }
 
 interface UserActivities {
@@ -132,7 +133,7 @@ export function WelcomePage() {
 
       const { data: activities } = await supabase
         .from('project_activities')
-        .select('id, title, status, due_date, assigned_to_user_id, assigned_to_user_ids, project_card_id')
+      .select('id, title, status, due_date, assigned_to_user_id, assigned_to_user_ids, project_card_id, freela_name')
         .eq('workspace_id', workspace.id)
         .or(`assigned_to_user_id.eq.${profile.id},assigned_to_user_ids.cs.{${profile.id}}`)
         .neq('status', 'concluido');
@@ -177,6 +178,7 @@ export function WelcomePage() {
           dueDate: a.due_date,
           projectName: cardMap.get(a.project_card_id) || 'Projeto',
           isOverdue: !!a.due_date && a.due_date < today,
+          freelaName: a.freela_name || null,
         };
         if (item.isOverdue) bucket.overdue.push(item);
         else if (a.status === 'nao_iniciado') bucket.toStart.push(item);
@@ -325,6 +327,12 @@ export function WelcomePage() {
                               <div className="min-w-0 flex-1 space-y-1">
                                 <p className="text-sm font-medium leading-snug break-words">{a.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{a.projectName}</p>
+                                {a.freelaName && (
+                                  <p className="text-xs text-amber-600 font-medium tabular-nums flex items-center gap-1">
+                                    <span className="inline-block w-4 h-4 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold flex items-center justify-center">F</span>
+                                    {a.freelaName}
+                                  </p>
+                                )}
                                 <p className="text-xs text-destructive font-semibold tabular-nums">
                                   Vence em {formatDateBR(a.dueDate)}
                                 </p>
@@ -354,6 +362,12 @@ export function WelcomePage() {
                               <div className="min-w-0 flex-1 space-y-1">
                                 <p className="text-sm font-medium leading-snug break-words">{a.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{a.projectName}</p>
+                                {a.freelaName && (
+                                  <p className="text-xs text-amber-600 font-medium tabular-nums flex items-center gap-1">
+                                    <span className="inline-block w-4 h-4 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold flex items-center justify-center">F</span>
+                                    {a.freelaName}
+                                  </p>
+                                )}
                                 {a.dueDate && (
                                   <p className="text-xs text-muted-foreground tabular-nums">
                                     {formatDateBR(a.dueDate)}

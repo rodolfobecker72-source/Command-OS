@@ -51,6 +51,7 @@ interface Activity {
   order: number;
   assignedToUserIds: string[];
   dueDate: string | null;
+  freelaName: string | null;
 }
 
 const MAX_ASSIGNEES = 2;
@@ -96,8 +97,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
   const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
+  const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [editingFreelaId, setEditingFreelaId] = useState<string | null>(null);
+  const [editFreelaName, setEditFreelaName] = useState('');
   const [driveLink, setDriveLink] = useState('');
   const [driveLinkSaved, setDriveLinkSaved] = useState('');
   const [savingDrive, setSavingDrive] = useState(false);
@@ -219,6 +223,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
               ? d.assigned_to_user_ids
               : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
+            freelaName: d.freela_name ?? null,
           })));
         }
         setLoading(false);
@@ -296,11 +301,12 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const title = (newTitleByCol[status] || '').trim();
     if (!title || !workspaceId) return;
     const order = (grouped[status].at(-1)?.order ?? -1) + 1;
-    const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED
+    const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED && newAssigneeByCol[status] !== '__freela__'
       ? newAssigneeByCol[status]
       : null;
     const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
+    const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
       .insert({
@@ -312,6 +318,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         assigned_to_user_id: assignee,
         assigned_to_user_ids: ids,
         due_date: due,
+        freela_name: freelaName || null,
       } as any)
       .select()
       .single();
@@ -328,10 +335,12 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         ? (data as any).assigned_to_user_ids
         : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
+      freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
+    setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
   };
 
   const handleDelete = async (id: string) => {
@@ -388,6 +397,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       .update({ due_date: due } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
+  };
+
+  const handleUpdateFreela = async (id: string, name: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, freelaName: name } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ freela_name: name } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar freela');
   };
 
   const persistOrder = async (next: Activity[]) => {
@@ -580,9 +598,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newTitle={newTitleByCol[col.key] || ''}
                   newAssignee={newAssigneeByCol[col.key] || ''}
                   newDue={newDueByCol[col.key] || ''}
+                  newFreela={newFreelaByCol[col.key] || ''}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewFreela={(v) => setNewFreelaByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
                   editingId={editingId}
@@ -592,6 +612,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onSaveEdit={handleSaveEdit}
                   onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
+                  onUpdateFreela={handleUpdateFreela}
                 />
               ))}
             </div>
@@ -687,9 +708,11 @@ function Column({
   newTitle,
   newAssignee,
   newDue,
+  newFreela,
   onNewTitle,
   onNewAssignee,
   onNewDue,
+  onNewFreela,
   onAdd,
   onDelete,
   editingId,
@@ -699,6 +722,7 @@ function Column({
   onSaveEdit,
   onToggleAssignee,
   onUpdateDue,
+  onUpdateFreela,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
   activities: Activity[];
@@ -706,9 +730,11 @@ function Column({
   newTitle: string;
   newAssignee: string;
   newDue: string;
+  newFreela: string;
   onNewTitle: (v: string) => void;
   onNewAssignee: (v: string) => void;
   onNewDue: (v: string) => void;
+  onNewFreela: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
   editingId: string | null;
@@ -718,6 +744,7 @@ function Column({
   onSaveEdit: (id: string) => void;
   onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
+  onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
   return (
@@ -749,6 +776,7 @@ function Column({
               onDelete={onDelete}
               onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
+              onUpdateFreela={onUpdateFreela}
             />
           ))}
         </div>
@@ -776,8 +804,17 @@ function Column({
             {members.map(m => (
               <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
             ))}
+            <SelectItem value="__freela__">Freela</SelectItem>
           </SelectContent>
         </Select>
+        {newAssignee === '__freela__' && (
+          <Input
+            value={newFreela}
+            onChange={e => onNewFreela(e.target.value)}
+            placeholder="Nome do freela"
+            className="h-7 text-xs bg-background w-full"
+          />
+        )}
         <Input
           type="date"
           value={newDue}
@@ -800,6 +837,7 @@ function SortableCard({
   onDelete,
   onToggleAssignee,
   onUpdateDue,
+  onUpdateFreela,
 }: {
   activity: Activity;
   members: MemberOption[];
@@ -811,6 +849,7 @@ function SortableCard({
   onDelete: (id: string) => void;
   onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
+  onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: activity.id,
@@ -828,6 +867,10 @@ function SortableCard({
     .map(uid => members.find(m => m.id === uid))
     .filter((m): m is MemberOption => !!m);
   const atMax = activity.assignedToUserIds.length >= MAX_ASSIGNEES;
+  const hasFreela = !!activity.freelaName;
+
+  const [freelaInput, setFreelaInput] = useState(activity.freelaName || '');
+  useEffect(() => { setFreelaInput(activity.freelaName || ''); }, [activity.freelaName]);
 
   return (
     <div
@@ -880,7 +923,7 @@ function SortableCard({
             type="button"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
           >
-            {assignees.length > 0 ? (
+            {assignees.length > 0 || hasFreela ? (
               <>
                 <div className="flex -space-x-1.5">
                   {assignees.map(a => {
@@ -892,9 +935,15 @@ function SortableCard({
                       </Avatar>
                     );
                   })}
+                  {hasFreela && (
+                    <Avatar className="w-5 h-5 ring-1 ring-card bg-amber-100">
+                      <AvatarFallback className="text-[9px] text-amber-700 font-bold">F</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
                 <span className="truncate">
-                  {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+                  {hasFreela && assignees.length === 0 ? activity.freelaName : assignees.length === 1 ? assignees[0].name : assignees.length > 1 ? `${assignees.length} responsáveis` : ''}
+                  {hasFreela && assignees.length > 0 ? ` · ${activity.freelaName}` : ''}
                 </span>
               </>
             ) : (
@@ -947,6 +996,37 @@ function SortableCard({
                 </button>
               );
             })}
+            <div className="border-t border-border my-1" />
+            <div className="px-2 py-1 space-y-1">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Freela</div>
+              <div className="flex gap-1">
+                <Input
+                  value={freelaInput}
+                  onChange={e => setFreelaInput(e.target.value)}
+                  placeholder="Nome do freela"
+                  className="h-7 text-xs flex-1"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    onUpdateFreela(activity.id, freelaInput.trim() || null);
+                  }}
+                >
+                  OK
+                </Button>
+              </div>
+              {activity.freelaName && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateFreela(activity.id, null)}
+                  className="text-[10px] text-muted-foreground hover:text-destructive underline"
+                >
+                  Remover freela
+                </button>
+              )}
+            </div>
           </div>
         </PopoverContent>
       </Popover>
@@ -970,10 +1050,11 @@ function ActivityCard({ activity, members, dragging }: { activity: Activity; mem
   const assignees = activity.assignedToUserIds
     .map(uid => members.find(m => m.id === uid))
     .filter((m): m is MemberOption => !!m);
+  const hasFreela = !!activity.freelaName;
   return (
     <div className={cn('rounded-lg border bg-card p-3 text-sm shadow-lg flex flex-col gap-2', dragging && 'rotate-2')}>
       <div className="font-semibold leading-tight">{activity.title}</div>
-      {assignees.length > 0 && (
+      {(assignees.length > 0 || hasFreela) && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="flex -space-x-1.5">
             {assignees.map(a => {
@@ -985,9 +1066,15 @@ function ActivityCard({ activity, members, dragging }: { activity: Activity; mem
                 </Avatar>
               );
             })}
+            {hasFreela && (
+              <Avatar className="w-5 h-5 ring-1 ring-card bg-amber-100">
+                <AvatarFallback className="text-[9px] text-amber-700 font-bold">F</AvatarFallback>
+              </Avatar>
+            )}
           </div>
           <span className="truncate">
-            {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+            {hasFreela && assignees.length === 0 ? activity.freelaName : assignees.length === 1 ? assignees[0].name : assignees.length > 1 ? `${assignees.length} responsáveis` : ''}
+            {hasFreela && assignees.length > 0 ? ` · ${activity.freelaName}` : ''}
           </span>
         </div>
       )}
@@ -999,4 +1086,3 @@ function ActivityCard({ activity, members, dragging }: { activity: Activity; mem
     </div>
   );
 }
-
