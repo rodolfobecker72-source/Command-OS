@@ -225,6 +225,46 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     return () => { cancelled = true; };
   }, [open, projectCardId, workspaceId]);
 
+  const handlePostComment = async () => {
+    const text = newComment.trim();
+    if (!text || !profile?.id) return;
+    setPostingComment(true);
+    const newEntry = {
+      id: crypto.randomUUID(),
+      userId: profile.id,
+      userName: profile.name || 'Usuário',
+      photoUrl: profile.photo_url || null,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [...comments, newEntry];
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', projectCardId);
+    setPostingComment(false);
+    if (error) {
+      toast.error('Erro ao publicar comentário');
+      return;
+    }
+    setComments(next);
+    setNewComment('');
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    const next = comments.filter(c => c.id !== id);
+    const prev = comments;
+    setComments(next);
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', projectCardId);
+    if (error) {
+      setComments(prev);
+      toast.error('Erro ao remover comentário');
+    }
+  };
+
   const handleSaveDrive = async () => {
     if (driveLink === driveLinkSaved) return;
     setSavingDrive(true);
