@@ -646,25 +646,23 @@ function Column({
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
-            <SelectTrigger className="h-7 text-xs bg-background flex-1">
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-              {members.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            type="date"
-            value={newDue}
-            onChange={e => onNewDue(e.target.value)}
-            className="h-7 text-xs bg-background w-[130px]"
-          />
-        </div>
+        <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+          <SelectTrigger className="h-7 text-xs bg-background w-full">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent className="z-[200]">
+            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+            {members.map(m => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          type="date"
+          value={newDue}
+          onChange={e => onNewDue(e.target.value)}
+          className="h-7 text-xs bg-background w-full"
+        />
       </div>
     </div>
   );
