@@ -51,13 +51,12 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-// Returns Sunday (start) and Saturday (end) of current week
-function getWeekRange(ref: Date) {
+// Returns today (start) and today + 5 days (end)
+function getUpcomingRange(ref: Date) {
   const start = new Date(ref);
   start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - start.getDay());
   const end = new Date(start);
-  end.setDate(end.getDate() + 6);
+  end.setDate(end.getDate() + 5);
   end.setHours(23, 59, 59, 999);
   return { start, end };
 }
@@ -96,7 +95,7 @@ export function WelcomePage() {
         .in('id', userIds)
         .not('birth_date', 'is', null);
 
-      const { start, end } = getWeekRange(now);
+      const { start, end } = getUpcomingRange(now);
       const year = now.getFullYear();
 
       const list: BirthdayMember[] = (profiles || [])
@@ -241,7 +240,7 @@ export function WelcomePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Cake className="w-5 h-5 text-primary" />
-                Aniversariantes da semana
+                Aniversariantes
               </CardTitle>
             </CardHeader>
             <CardContent>
