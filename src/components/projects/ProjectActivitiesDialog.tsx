@@ -48,9 +48,11 @@ interface Activity {
   title: string;
   status: ActivityStatus;
   order: number;
-  assignedToUserId: string | null;
+  assignedToUserIds: string[];
   dueDate: string | null;
 }
+
+const MAX_ASSIGNEES = 2;
 
 interface MemberOption {
   id: string;
@@ -207,7 +209,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             title: d.title,
             status: d.status as ActivityStatus,
             order: d.order,
-            assignedToUserId: d.assigned_to_user_id ?? null,
+            assignedToUserIds: Array.isArray(d.assigned_to_user_ids) && d.assigned_to_user_ids.length > 0
+              ? d.assigned_to_user_ids
+              : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
           })));
         }
@@ -249,6 +253,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED
       ? newAssigneeByCol[status]
       : null;
+    const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -259,6 +264,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         status,
         order,
         assigned_to_user_id: assignee,
+        assigned_to_user_ids: ids,
         due_date: due,
       } as any)
       .select()
@@ -272,7 +278,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       title: data.title,
       status: data.status as ActivityStatus,
       order: data.order,
-      assignedToUserId: (data as any).assigned_to_user_id ?? null,
+      assignedToUserIds: Array.isArray((data as any).assigned_to_user_ids) && (data as any).assigned_to_user_ids.length > 0
+        ? (data as any).assigned_to_user_ids
+        : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
@@ -301,13 +309,30 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) toast.error('Erro ao atualizar atividade');
   };
 
-  const handleUpdateAssignee = async (id: string, userId: string | null) => {
-    setActivities(prev => prev.map(a => a.id === id ? { ...a, assignedToUserId: userId } : a));
+  const handleToggleAssignee = async (id: string, userId: string | null) => {
+    const current = activities.find(a => a.id === id);
+    if (!current) return;
+    let nextIds: string[];
+    if (userId === null) {
+      nextIds = [];
+    } else if (current.assignedToUserIds.includes(userId)) {
+      nextIds = current.assignedToUserIds.filter(u => u !== userId);
+    } else {
+      if (current.assignedToUserIds.length >= MAX_ASSIGNEES) {
+        toast.error(`Máximo de ${MAX_ASSIGNEES} responsáveis por tarefa`);
+        return;
+      }
+      nextIds = [...current.assignedToUserIds, userId];
+    }
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, assignedToUserIds: nextIds } : a));
     const { error } = await supabase
       .from('project_activities')
-      .update({ assigned_to_user_id: userId } as any)
+      .update({
+        assigned_to_user_ids: nextIds,
+        assigned_to_user_id: nextIds[0] ?? null,
+      } as any)
       .eq('id', id);
-    if (error) toast.error('Erro ao atualizar responsável');
+    if (error) toast.error('Erro ao atualizar responsáveis');
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
@@ -519,7 +544,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onStartEdit={(id, title) => { setEditingId(id); setEditTitle(title); }}
                   onChangeEdit={setEditTitle}
                   onSaveEdit={handleSaveEdit}
-                  onUpdateAssignee={handleUpdateAssignee}
+                  onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
                 />
               ))}
@@ -551,7 +576,7 @@ function Column({
   onStartEdit,
   onChangeEdit,
   onSaveEdit,
-  onUpdateAssignee,
+  onToggleAssignee,
   onUpdateDue,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
@@ -570,7 +595,7 @@ function Column({
   onStartEdit: (id: string, title: string) => void;
   onChangeEdit: (v: string) => void;
   onSaveEdit: (id: string) => void;
-  onUpdateAssignee: (id: string, userId: string | null) => void;
+  onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
@@ -601,7 +626,7 @@ function Column({
               onStartEdit={onStartEdit}
               onSaveEdit={onSaveEdit}
               onDelete={onDelete}
-              onUpdateAssignee={onUpdateAssignee}
+              onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
             />
           ))}
@@ -654,7 +679,7 @@ function SortableCard({
   onStartEdit,
   onSaveEdit,
   onDelete,
-  onUpdateAssignee,
+  onToggleAssignee,
   onUpdateDue,
 }: {
   activity: Activity;
@@ -665,7 +690,7 @@ function SortableCard({
   onStartEdit: (id: string, title: string) => void;
   onSaveEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onUpdateAssignee: (id: string, userId: string | null) => void;
+  onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -680,10 +705,10 @@ function SortableCard({
 
   const isOverdue = activity.dueDate && activity.status !== 'concluido' && activity.dueDate < new Date().toISOString().slice(0, 10);
 
-  const assignee = members.find(m => m.id === activity.assignedToUserId);
-  const initials = assignee?.name
-    ? assignee.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
-    : '?';
+  const assignees = activity.assignedToUserIds
+    .map(uid => members.find(m => m.id === uid))
+    .filter((m): m is MemberOption => !!m);
+  const atMax = activity.assignedToUserIds.length >= MAX_ASSIGNEES;
 
   return (
     <div
@@ -729,53 +754,77 @@ function SortableCard({
         )}
       </div>
 
-      {/* Responsável */}
+      {/* Responsáveis */}
       <Popover>
         <PopoverTrigger asChild>
           <button
             type="button"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
           >
-            <Avatar className="w-5 h-5">
-              {assignee?.photoUrl && <AvatarImage src={assignee.photoUrl} alt={assignee.name} />}
-              <AvatarFallback className="text-[9px] bg-muted">
-                {assignee ? initials : <User className="w-3 h-3" />}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate">
-              {assignee ? assignee.name : 'Sem responsável'}
-            </span>
+            {assignees.length > 0 ? (
+              <>
+                <div className="flex -space-x-1.5">
+                  {assignees.map(a => {
+                    const aInit = a.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+                    return (
+                      <Avatar key={a.id} className="w-5 h-5 ring-1 ring-card">
+                        {a.photoUrl && <AvatarImage src={a.photoUrl} alt={a.name} />}
+                        <AvatarFallback className="text-[9px] bg-muted">{aInit}</AvatarFallback>
+                      </Avatar>
+                    );
+                  })}
+                </div>
+                <span className="truncate">
+                  {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+                </span>
+              </>
+            ) : (
+              <>
+                <Avatar className="w-5 h-5">
+                  <AvatarFallback className="text-[9px] bg-muted"><User className="w-3 h-3" /></AvatarFallback>
+                </Avatar>
+                <span className="truncate">Sem responsável</span>
+              </>
+            )}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-56 p-1 z-[200]" align="start">
+        <PopoverContent className="w-60 p-1 z-[200]" align="start">
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Até {MAX_ASSIGNEES} responsáveis
+          </div>
           <div className="max-h-60 overflow-y-auto">
             <button
               type="button"
-              onClick={() => onUpdateAssignee(activity.id, null)}
+              onClick={() => onToggleAssignee(activity.id, null)}
               className={cn(
                 'w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted',
-                !activity.assignedToUserId && 'bg-muted'
+                activity.assignedToUserIds.length === 0 && 'bg-muted'
               )}
             >
               Sem responsável
             </button>
             {members.map(m => {
               const mInitials = m.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+              const selected = activity.assignedToUserIds.includes(m.id);
+              const disabled = !selected && atMax;
               return (
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => onUpdateAssignee(activity.id, m.id)}
+                  disabled={disabled}
+                  onClick={() => onToggleAssignee(activity.id, m.id)}
                   className={cn(
                     'w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted flex items-center gap-2',
-                    activity.assignedToUserId === m.id && 'bg-muted'
+                    selected && 'bg-muted',
+                    disabled && 'opacity-40 cursor-not-allowed'
                   )}
                 >
                   <Avatar className="w-5 h-5">
                     {m.photoUrl && <AvatarImage src={m.photoUrl} alt={m.name} />}
                     <AvatarFallback className="text-[9px] bg-muted-foreground/20">{mInitials}</AvatarFallback>
                   </Avatar>
-                  <span className="truncate">{m.name}</span>
+                  <span className="truncate flex-1">{m.name}</span>
+                  {selected && <span className="text-[10px] text-primary">✓</span>}
                 </button>
               );
             })}
@@ -799,20 +848,28 @@ function SortableCard({
 }
 
 function ActivityCard({ activity, members, dragging }: { activity: Activity; members: MemberOption[]; dragging?: boolean }) {
-  const assignee = members.find(m => m.id === activity.assignedToUserId);
-  const initials = assignee?.name
-    ? assignee.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
-    : '?';
+  const assignees = activity.assignedToUserIds
+    .map(uid => members.find(m => m.id === uid))
+    .filter((m): m is MemberOption => !!m);
   return (
     <div className={cn('rounded-lg border bg-card p-3 text-sm shadow-lg flex flex-col gap-2', dragging && 'rotate-2')}>
       <div className="font-semibold leading-tight">{activity.title}</div>
-      {assignee && (
+      {assignees.length > 0 && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Avatar className="w-5 h-5">
-            {assignee.photoUrl && <AvatarImage src={assignee.photoUrl} alt={assignee.name} />}
-            <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
-          </Avatar>
-          <span className="truncate">{assignee.name}</span>
+          <div className="flex -space-x-1.5">
+            {assignees.map(a => {
+              const init = a.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+              return (
+                <Avatar key={a.id} className="w-5 h-5 ring-1 ring-card">
+                  {a.photoUrl && <AvatarImage src={a.photoUrl} alt={a.name} />}
+                  <AvatarFallback className="text-[9px] bg-muted">{init}</AvatarFallback>
+                </Avatar>
+              );
+            })}
+          </div>
+          <span className="truncate">
+            {assignees.length === 1 ? assignees[0].name : `${assignees.length} responsáveis`}
+          </span>
         </div>
       )}
       {activity.dueDate && (
