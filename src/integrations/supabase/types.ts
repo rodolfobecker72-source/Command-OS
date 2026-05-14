@@ -829,6 +829,7 @@ export type Database = {
       project_activities: {
         Row: {
           assigned_to_user_id: string | null
+          assigned_to_user_ids: string[]
           created_at: string
           due_date: string | null
           id: string
@@ -841,6 +842,7 @@ export type Database = {
         }
         Insert: {
           assigned_to_user_id?: string | null
+          assigned_to_user_ids?: string[]
           created_at?: string
           due_date?: string | null
           id?: string
@@ -853,6 +855,7 @@ export type Database = {
         }
         Update: {
           assigned_to_user_id?: string | null
+          assigned_to_user_ids?: string[]
           created_at?: string
           due_date?: string | null
           id?: string
