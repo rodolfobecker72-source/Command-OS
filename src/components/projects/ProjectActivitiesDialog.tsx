@@ -544,7 +544,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onStartEdit={(id, title) => { setEditingId(id); setEditTitle(title); }}
                   onChangeEdit={setEditTitle}
                   onSaveEdit={handleSaveEdit}
-                  onUpdateAssignee={handleUpdateAssignee}
+                  onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
                 />
               ))}
