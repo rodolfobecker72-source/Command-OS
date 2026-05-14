@@ -48,9 +48,11 @@ interface Activity {
   title: string;
   status: ActivityStatus;
   order: number;
-  assignedToUserId: string | null;
+  assignedToUserIds: string[];
   dueDate: string | null;
 }
+
+const MAX_ASSIGNEES = 2;
 
 interface MemberOption {
   id: string;
@@ -207,7 +209,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             title: d.title,
             status: d.status as ActivityStatus,
             order: d.order,
-            assignedToUserId: d.assigned_to_user_id ?? null,
+            assignedToUserIds: Array.isArray(d.assigned_to_user_ids) && d.assigned_to_user_ids.length > 0
+              ? d.assigned_to_user_ids
+              : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
           })));
         }
@@ -249,6 +253,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const assignee = newAssigneeByCol[status] && newAssigneeByCol[status] !== UNASSIGNED
       ? newAssigneeByCol[status]
       : null;
+    const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -259,6 +264,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         status,
         order,
         assigned_to_user_id: assignee,
+        assigned_to_user_ids: ids,
         due_date: due,
       } as any)
       .select()
@@ -272,7 +278,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       title: data.title,
       status: data.status as ActivityStatus,
       order: data.order,
-      assignedToUserId: (data as any).assigned_to_user_id ?? null,
+      assignedToUserIds: Array.isArray((data as any).assigned_to_user_ids) && (data as any).assigned_to_user_ids.length > 0
+        ? (data as any).assigned_to_user_ids
+        : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
@@ -301,13 +309,30 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) toast.error('Erro ao atualizar atividade');
   };
 
-  const handleUpdateAssignee = async (id: string, userId: string | null) => {
-    setActivities(prev => prev.map(a => a.id === id ? { ...a, assignedToUserId: userId } : a));
+  const handleToggleAssignee = async (id: string, userId: string | null) => {
+    const current = activities.find(a => a.id === id);
+    if (!current) return;
+    let nextIds: string[];
+    if (userId === null) {
+      nextIds = [];
+    } else if (current.assignedToUserIds.includes(userId)) {
+      nextIds = current.assignedToUserIds.filter(u => u !== userId);
+    } else {
+      if (current.assignedToUserIds.length >= MAX_ASSIGNEES) {
+        toast.error(`Máximo de ${MAX_ASSIGNEES} responsáveis por tarefa`);
+        return;
+      }
+      nextIds = [...current.assignedToUserIds, userId];
+    }
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, assignedToUserIds: nextIds } : a));
     const { error } = await supabase
       .from('project_activities')
-      .update({ assigned_to_user_id: userId } as any)
+      .update({
+        assigned_to_user_ids: nextIds,
+        assigned_to_user_id: nextIds[0] ?? null,
+      } as any)
       .eq('id', id);
-    if (error) toast.error('Erro ao atualizar responsável');
+    if (error) toast.error('Erro ao atualizar responsáveis');
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
