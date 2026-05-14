@@ -51,6 +51,7 @@ interface MemberWithProfile {
   user_id: string;
   role: AppRole;
   joined_at: string;
+  email: string;
   profile: Profile | null;
 }
 
@@ -118,36 +119,33 @@ export function UsersPage() {
     if (!workspace) return;
     setIsLoading(true);
 
-    const { data: memberData } = await supabase
-      .from('workspace_members')
-      .select('*')
-      .eq('workspace_id', workspace.id);
-
-    if (memberData && memberData.length > 0) {
-      const userIds = memberData.map(m => m.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', userIds);
-
-      const profilesMap = new Map<string, Profile>();
-      if (profilesData) {
-        for (const p of profilesData) {
-          profilesMap.set(p.id, p as Profile);
-        }
+    try {
+      const response = await supabase.functions.invoke('list-workspace-members');
+      if (response.error) {
+        toast.error('Erro ao carregar membros: ' + (response.error.message || 'Erro desconhecido'));
+        setIsLoading(false);
+        return;
       }
 
-      const membersWithProfiles: MemberWithProfile[] = memberData.map(m => ({
+      const result = response.data;
+      if (result?.error) {
+        toast.error('Erro ao carregar membros: ' + result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      const membersWithProfiles: MemberWithProfile[] = (result?.members || []).map((m: any) => ({
         id: m.id,
         user_id: m.user_id,
         role: m.role as AppRole,
         joined_at: m.joined_at,
-        profile: profilesMap.get(m.user_id) || null,
+        email: m.email || '',
+        profile: m.profile as Profile | null,
       }));
 
       setMembers(membersWithProfiles);
-    } else {
-      setMembers([]);
+    } catch (err: any) {
+      toast.error('Erro ao carregar membros: ' + err.message);
     }
 
     setIsLoading(false);
@@ -449,6 +447,7 @@ export function UsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Membro</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Papel</TableHead>
                     {canManage && <TableHead className="text-right">Ações</TableHead>}
                   </TableRow>
@@ -475,6 +474,9 @@ export function UsersPage() {
                               )}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground">{member.email || '—'}</p>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className={ROLE_COLORS[member.role]}>
