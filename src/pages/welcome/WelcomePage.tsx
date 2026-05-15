@@ -201,6 +201,49 @@ export function WelcomePage() {
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadLeadAlerts = async () => {
+      if (!workspace || !profile?.id) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().slice(0, 10);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+      const { data: leads } = await supabase
+        .from('prospection_leads')
+        .select('id, company_name, next_action, next_action_date, funnel_status, responsible_user_id')
+        .eq('workspace_id', workspace.id)
+        .eq('responsible_user_id', profile.id);
+
+      const items: LeadAlertItem[] = [];
+      for (const l of (leads || []) as any[]) {
+        if (['perdido', 'qualificado_crm'].includes(l.funnel_status)) continue;
+        const d = (l.next_action_date || '').slice(0, 10);
+        if (!d) continue;
+        let status: LeadAlertStatus | null = null;
+        if (d < todayStr) status = 'overdue';
+        else if (d === todayStr) status = 'today';
+        else if (d === tomorrowStr) status = 'tomorrow';
+        if (!status) continue;
+        items.push({
+          id: l.id,
+          companyName: l.company_name,
+          nextAction: l.next_action || '',
+          nextActionDate: d,
+          status,
+        });
+      }
+      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1, tomorrow: 2 };
+      items.sort((a, b) => order[a.status] - order[b.status] || a.nextActionDate.localeCompare(b.nextActionDate));
+      if (!cancelled) setLeadAlerts(items);
+    };
+    loadLeadAlerts();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
   const handleCompleteActivity = async (activityId: string) => {
     // Optimistic remove
     setUserActivities((prev) =>
