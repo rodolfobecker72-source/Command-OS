@@ -437,6 +437,55 @@ export function WelcomePage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Próximas ações de leads (prospecção) */}
+        {leadAlerts.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
+                Leads — próxima ação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {leadAlerts.map((l) => {
+                  const styles =
+                    l.status === 'overdue'
+                      ? 'border-destructive/30 bg-destructive/5'
+                      : l.status === 'today'
+                      ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
+                      : 'border-primary/30 bg-primary/5';
+                  const label =
+                    l.status === 'overdue' ? 'Em atraso' : l.status === 'today' ? 'Hoje' : 'Amanhã';
+                  const badgeVariant: 'destructive' | 'secondary' | 'default' =
+                    l.status === 'overdue' ? 'destructive' : l.status === 'today' ? 'default' : 'secondary';
+                  return (
+                    <li
+                      key={l.id}
+                      className={`border ${styles} rounded-lg p-3 flex items-start gap-2.5 shadow-sm`}
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold truncate">{l.companyName}</p>
+                          <Badge variant={badgeVariant} className="text-[10px] py-0 px-1.5">
+                            {label}
+                          </Badge>
+                        </div>
+                        {l.nextAction && (
+                          <p className="text-xs text-muted-foreground break-words">{l.nextAction}</p>
+                        )}
+                        <p className="text-xs font-medium tabular-nums">
+                          Próxima ação em {formatDateBR(l.nextActionDate)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
