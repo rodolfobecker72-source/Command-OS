@@ -128,6 +128,29 @@ export function ProspectionPage() {
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  // Workspace members eligible to be lead responsible (vendedor/admin/owner)
+  const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+  useEffect(() => {
+    const workspaceId = auth.workspace?.id;
+    if (!workspaceId) return;
+    (async () => {
+      const { data: wm } = await supabase
+        .from('workspace_members')
+        .select('user_id, role')
+        .eq('workspace_id', workspaceId)
+        .in('role', ['owner', 'admin', 'vendedor']);
+      const ids = (wm || []).map((m: any) => m.user_id);
+      if (ids.length === 0) { setMembers([]); return; }
+      const { data: profs } = await supabase.from('profiles').select('id, name').in('id', ids);
+      const roleById = new Map((wm || []).map((m: any) => [m.user_id, m.role]));
+      const list = (profs || [])
+        .map((p: any) => ({ id: p.id, name: p.name || 'Sem nome', role: roleById.get(p.id) || '' }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      setMembers(list);
+    })();
+  }, [auth.workspace?.id]);
+  const memberName = (id?: string | null) => members.find(m => m.id === id)?.name || '';
+
   // Available years
   const years = useMemo(() => {
     const y = new Set(leads.map(l => new Date(l.createdAt).getFullYear()));
