@@ -1,34 +1,42 @@
-## Kanban de Atividades por Projeto
+## Objetivo
 
-Hoje, em **Gestão de Projetos**, cada status mostra uma lista simples de projetos. Vou tornar cada projeto **clicável** para abrir um diálogo "Atividades do projeto" com um **kanban próprio** (similar ao exemplo enviado), com 3 colunas fixas:
+Adicionar um campo "Responsável pelo Lead" na prospecção (vinculado a um usuário do workspace com role `vendedor` ou `admin`/`owner`) e mostrar avisos sobre a próxima ação do lead na tela de Boas-vindas para o usuário responsável (1 dia antes, no dia, ou em atraso).
 
-- **Não iniciado**
-- **Em andamento**
-- **Concluído**
+## O que vai mudar
 
-Cada coluna terá um botão "+ Nova tarefa" e os cartões podem ser arrastados entre colunas.
+### 1. Banco de dados
+- Adicionar coluna `responsible_user_id UUID NULL` em `prospection_leads` (referência lógica ao `auth.users` / `profiles.id`).
 
-### Banco de dados
+### 2. Tipos e contexto
+- `src/types/prospection.ts`: adicionar campo `responsibleUserId?: string` na interface `ProspectionLead`.
+- `src/contexts/ProspectionContext.tsx`: mapear `responsible_user_id` ↔ `responsibleUserId` no `leadFromDb` e `leadToDb`.
 
-Nova tabela `project_activities`:
-- `project_card_id` (referência ao projeto)
-- `workspace_id` (isolamento por workspace, com RLS)
-- `title`
-- `status` (`nao_iniciado` | `em_andamento` | `concluido`)
-- `order` (posição na coluna)
+### 3. Formulário de Lead (ProspectionPage)
+- Adicionar um `Select` "Responsável pelo Lead" no formulário de criação/edição.
+- O Select carrega membros do workspace (via `workspace_members` + `profiles`) cuja `role` seja `vendedor`, `admin` ou `owner` (cobre vendedor e administrativo). Mostra nome + foto.
+- Salvar o `user_id` selecionado no novo campo.
+- Exibir o nome do responsável na visualização do card/tabela do lead.
 
-RLS por `workspace_id` (mesmo padrão das demais tabelas).
+### 4. Tela de Boas-vindas (WelcomePage)
+- Novo bloco "Leads — próxima ação" abaixo das atividades operacionais.
+- Buscar leads do workspace onde `responsible_user_id = profile.id`, `funnel_status NOT IN ('perdido', 'qualificado_crm')`, e `next_action_date` corresponde a:
+  - **Em atraso**: data < hoje (badge vermelho)
+  - **Hoje**: data = hoje (badge âmbar)
+  - **Amanhã**: data = hoje + 1 (badge azul)
+- Cada item mostra: empresa, ação prevista, data, badge de status. Click pode levar à página `/prospeccao` (opcional, simples link).
+- Se não houver itens, o bloco não é renderizado.
 
-### Frontend
+## Detalhes técnicos
 
-1. **`src/components/projects/ProjectActivitiesDialog.tsx`** (novo): dialog grande mostrando o kanban. Usa `@dnd-kit` (já instalado) para drag-and-drop entre colunas e reordenação dentro da coluna.
-2. **`src/contexts/CRMContext.tsx`**: novos métodos `loadProjectActivities(projectCardId)`, `addProjectActivity`, `updateProjectActivity`, `deleteProjectActivity`, `reorderProjectActivities`.
-3. **`src/pages/projects/ProjectManagementPage.tsx`**: cada linha de projeto ganha um clique que abre o `ProjectActivitiesDialog` daquele projeto, mantendo o `Select` de status do projeto à direita.
+- O campo `next_action_date` em `prospection_leads` é `text` no formato `YYYY-MM-DD` (consistente com o resto do app). Comparação é feita com `today.toISOString().slice(0,10)` para evitar timezone (segue o padrão já usado em WelcomePage).
+- O Select de responsável usa o componente `TeamMemberSelect` existente se aplicável, ou nova query inline (mesma lógica de carregar `workspace_members` + `profiles`).
+- Não há mudança em RLS — o filtro por `workspace_id` já é coberto pelas policies existentes.
+- O `prospectionResponsible` (texto livre) existente fica intacto para retrocompatibilidade.
 
-### Comportamento
-- Tarefas concluídas mostram o título com leve fade.
-- Edição inline do título ao clicar no card.
-- Ícone de lixeira no hover para remover.
-- Ordem persistida no banco.
+## Arquivos afetados
 
-Aprovar para eu seguir com a migração e implementação.
+- Migração SQL (nova coluna)
+- `src/types/prospection.ts`
+- `src/contexts/ProspectionContext.tsx`
+- `src/pages/prospection/ProspectionPage.tsx`
+- `src/pages/welcome/WelcomePage.tsx`

@@ -31,6 +31,7 @@ function leadFromDb(row: any): ProspectionLead {
     nextActionDate: row.next_action_date,
     priority: row.priority,
     strategicNotes: row.strategic_notes,
+    responsibleUserId: row.responsible_user_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -58,6 +59,7 @@ function leadToDb(l: Partial<ProspectionLead>, workspaceId?: string): any {
   if (l.nextActionDate !== undefined) row.next_action_date = l.nextActionDate;
   if (l.priority !== undefined) row.priority = l.priority;
   if (l.strategicNotes !== undefined) row.strategic_notes = l.strategicNotes;
+  if (l.responsibleUserId !== undefined) row.responsible_user_id = l.responsibleUserId || null;
   return row;
 }
 

@@ -1006,6 +1006,7 @@ export type Database = {
           phone: string
           priority: string
           prospection_responsible: string
+          responsible_user_id: string | null
           segment: string
           strategic_notes: string
           temperature: string
@@ -1031,6 +1032,7 @@ export type Database = {
           phone?: string
           priority?: string
           prospection_responsible?: string
+          responsible_user_id?: string | null
           segment?: string
           strategic_notes?: string
           temperature?: string
@@ -1056,6 +1058,7 @@ export type Database = {
           phone?: string
           priority?: string
           prospection_responsible?: string
+          responsible_user_id?: string | null
           segment?: string
           strategic_notes?: string
           temperature?: string

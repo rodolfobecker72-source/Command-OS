@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -104,6 +105,7 @@ const emptyLead: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'> = {
   nextActionDate: '',
   priority: 'media',
   strategicNotes: '',
+  responsibleUserId: null,
 };
 
 export function ProspectionPage() {
@@ -125,6 +127,29 @@ export function ProspectionPage() {
   const [formData, setFormData] = useState(emptyLead);
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Workspace members eligible to be lead responsible (vendedor/admin/owner)
+  const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+  useEffect(() => {
+    const workspaceId = auth.workspace?.id;
+    if (!workspaceId) return;
+    (async () => {
+      const { data: wm } = await supabase
+        .from('workspace_members')
+        .select('user_id, role')
+        .eq('workspace_id', workspaceId)
+        .in('role', ['owner', 'admin', 'vendedor']);
+      const ids = (wm || []).map((m: any) => m.user_id);
+      if (ids.length === 0) { setMembers([]); return; }
+      const { data: profs } = await supabase.from('profiles').select('id, name').in('id', ids);
+      const roleById = new Map((wm || []).map((m: any) => [m.user_id, m.role]));
+      const list = (profs || [])
+        .map((p: any) => ({ id: p.id, name: p.name || 'Sem nome', role: roleById.get(p.id) || '' }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      setMembers(list);
+    })();
+  }, [auth.workspace?.id]);
+  const memberName = (id?: string | null) => members.find(m => m.id === id)?.name || '';
 
   // Available years
   const years = useMemo(() => {
@@ -208,6 +233,7 @@ export function ProspectionPage() {
       nextActionDate: lead.nextActionDate,
       priority: lead.priority,
       strategicNotes: lead.strategicNotes,
+      responsibleUserId: lead.responsibleUserId ?? null,
     });
     setDialogOpen(true);
   };
@@ -999,6 +1025,21 @@ export function ProspectionPage() {
               <Label className="text-xs">Próxima Ação</Label>
               <Input value={formData.nextAction} onChange={e => setFormData(p => ({ ...p, nextAction: e.target.value }))} />
             </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs">Responsável pelo Lead</Label>
+              <Select
+                value={formData.responsibleUserId || 'none'}
+                onValueChange={(v) => setFormData(p => ({ ...p, responsibleUserId: v === 'none' ? null : v }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione um responsável" /></SelectTrigger>
+                <SelectContent className="z-[200]">
+                  <SelectItem value="none">Sem responsável</SelectItem>
+                  {members.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Notes */}
             <div className="space-y-3 md:col-span-2 pt-2">
@@ -1049,6 +1090,7 @@ export function ProspectionPage() {
                   <div><span className="text-muted-foreground text-xs">Potencial:</span><p className="font-semibold">R$ {detailLead.estimatedPotential.toLocaleString('pt-BR')}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Prospecção:</span><p>{detailLead.prospectionResponsible || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Fechamento:</span><p>{detailLead.closingResponsible || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Responsável pelo Lead:</span><p>{memberName(detailLead.responsibleUserId) || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Último Contato:</span><p>{detailLead.lastContactDate ? format(new Date(detailLead.lastContactDate), 'dd/MM/yyyy') : '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Próxima Ação:</span><p>{detailLead.nextAction || '-'}</p></div>
                 </div>

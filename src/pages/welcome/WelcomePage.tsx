@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles, AlertTriangle, Play, Calendar } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +35,15 @@ interface UserActivities {
   toStart: ActivityItem[];
 }
 
+type LeadAlertStatus = 'overdue' | 'today' | 'tomorrow';
+interface LeadAlertItem {
+  id: string;
+  companyName: string;
+  nextAction: string;
+  nextActionDate: string;
+  status: LeadAlertStatus;
+}
+
 function formatDateBR(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso + 'T12:00:00');
@@ -65,6 +74,7 @@ export function WelcomePage() {
   const { profile, workspace } = useAuth();
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
+  const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
@@ -188,6 +198,49 @@ export function WelcomePage() {
       if (!cancelled) setUserActivities(list);
     };
     loadActivities();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadLeadAlerts = async () => {
+      if (!workspace || !profile?.id) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().slice(0, 10);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+      const { data: leads } = await supabase
+        .from('prospection_leads')
+        .select('id, company_name, next_action, next_action_date, funnel_status, responsible_user_id')
+        .eq('workspace_id', workspace.id)
+        .eq('responsible_user_id', profile.id);
+
+      const items: LeadAlertItem[] = [];
+      for (const l of (leads || []) as any[]) {
+        if (['perdido', 'qualificado_crm'].includes(l.funnel_status)) continue;
+        const d = (l.next_action_date || '').slice(0, 10);
+        if (!d) continue;
+        let status: LeadAlertStatus | null = null;
+        if (d < todayStr) status = 'overdue';
+        else if (d === todayStr) status = 'today';
+        else if (d === tomorrowStr) status = 'tomorrow';
+        if (!status) continue;
+        items.push({
+          id: l.id,
+          companyName: l.company_name,
+          nextAction: l.next_action || '',
+          nextActionDate: d,
+          status,
+        });
+      }
+      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1, tomorrow: 2 };
+      items.sort((a, b) => order[a.status] - order[b.status] || a.nextActionDate.localeCompare(b.nextActionDate));
+      if (!cancelled) setLeadAlerts(items);
+    };
+    loadLeadAlerts();
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
@@ -380,6 +433,55 @@ export function WelcomePage() {
                     )}
                   </li>
                 ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Próximas ações de leads (prospecção) */}
+        {leadAlerts.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
+                Leads — próxima ação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {leadAlerts.map((l) => {
+                  const styles =
+                    l.status === 'overdue'
+                      ? 'border-destructive/30 bg-destructive/5'
+                      : l.status === 'today'
+                      ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
+                      : 'border-primary/30 bg-primary/5';
+                  const label =
+                    l.status === 'overdue' ? 'Em atraso' : l.status === 'today' ? 'Hoje' : 'Amanhã';
+                  const badgeVariant: 'destructive' | 'secondary' | 'default' =
+                    l.status === 'overdue' ? 'destructive' : l.status === 'today' ? 'default' : 'secondary';
+                  return (
+                    <li
+                      key={l.id}
+                      className={`border ${styles} rounded-lg p-3 flex items-start gap-2.5 shadow-sm`}
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold truncate">{l.companyName}</p>
+                          <Badge variant={badgeVariant} className="text-[10px] py-0 px-1.5">
+                            {label}
+                          </Badge>
+                        </div>
+                        {l.nextAction && (
+                          <p className="text-xs text-muted-foreground break-words">{l.nextAction}</p>
+                        )}
+                        <p className="text-xs font-medium tabular-nums">
+                          Próxima ação em {formatDateBR(l.nextActionDate)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>

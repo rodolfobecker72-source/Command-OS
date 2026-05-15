@@ -62,6 +62,8 @@ export interface ProspectionLead {
   nextAction: string;
   nextActionDate: string;
   priority: LeadPriority;
+  // Responsible user (workspace member)
+  responsibleUserId?: string | null;
   // Notes
   strategicNotes: string;
   // Meta
