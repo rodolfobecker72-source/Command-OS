@@ -1090,6 +1090,7 @@ export function ProspectionPage() {
                   <div><span className="text-muted-foreground text-xs">Potencial:</span><p className="font-semibold">R$ {detailLead.estimatedPotential.toLocaleString('pt-BR')}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Prospecção:</span><p>{detailLead.prospectionResponsible || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Fechamento:</span><p>{detailLead.closingResponsible || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Responsável pelo Lead:</span><p>{memberName(detailLead.responsibleUserId) || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Último Contato:</span><p>{detailLead.lastContactDate ? format(new Date(detailLead.lastContactDate), 'dd/MM/yyyy') : '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Próxima Ação:</span><p>{detailLead.nextAction || '-'}</p></div>
                 </div>
