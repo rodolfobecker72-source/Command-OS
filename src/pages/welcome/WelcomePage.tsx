@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles, AlertTriangle, Play, Calendar } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +33,15 @@ interface UserActivities {
   photoUrl: string | null;
   overdue: ActivityItem[];
   toStart: ActivityItem[];
+}
+
+type LeadAlertStatus = 'overdue' | 'today' | 'tomorrow';
+interface LeadAlertItem {
+  id: string;
+  companyName: string;
+  nextAction: string;
+  nextActionDate: string;
+  status: LeadAlertStatus;
 }
 
 function formatDateBR(iso: string | null) {
