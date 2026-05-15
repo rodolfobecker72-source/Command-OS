@@ -1025,6 +1025,21 @@ export function ProspectionPage() {
               <Label className="text-xs">Próxima Ação</Label>
               <Input value={formData.nextAction} onChange={e => setFormData(p => ({ ...p, nextAction: e.target.value }))} />
             </div>
+            <div className="space-y-1.5 md:col-span-2">
+              <Label className="text-xs">Responsável pelo Lead</Label>
+              <Select
+                value={formData.responsibleUserId || 'none'}
+                onValueChange={(v) => setFormData(p => ({ ...p, responsibleUserId: v === 'none' ? null : v }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione um responsável" /></SelectTrigger>
+                <SelectContent className="z-[200]">
+                  <SelectItem value="none">Sem responsável</SelectItem>
+                  {members.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Notes */}
             <div className="space-y-3 md:col-span-2 pt-2">
