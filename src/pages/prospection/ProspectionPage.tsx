@@ -104,6 +104,7 @@ const emptyLead: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'> = {
   nextActionDate: '',
   priority: 'media',
   strategicNotes: '',
+  responsibleUserId: null,
 };
 
 export function ProspectionPage() {
@@ -208,6 +209,7 @@ export function ProspectionPage() {
       nextActionDate: lead.nextActionDate,
       priority: lead.priority,
       strategicNotes: lead.strategicNotes,
+      responsibleUserId: lead.responsibleUserId ?? null,
     });
     setDialogOpen(true);
   };
