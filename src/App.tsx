@@ -38,6 +38,7 @@ import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 import MyFinancePage from "@/pages/MyFinancePage";
 import { WelcomePage } from "@/pages/welcome/WelcomePage";
+import HomePage from "@/pages/home/HomePage";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
             <Routes>
               {/* Auth */}
               <Route path="/" element={<Login />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
