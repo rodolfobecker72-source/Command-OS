@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import heroLogo from '@/assets/hero-logo.png';
+import heroLogo from '@/assets/command-logo.png';
 
 const features = [
   { icon: Target, title: 'Prospecção', desc: 'Funil de leads com próximas ações e responsáveis.' },
@@ -84,10 +84,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <img src={heroLogo} alt="Command OS" className="h-8 w-auto" />
-          <Link to="/login">
-            <Button variant="ghost" size="sm">Entrar</Button>
-          </Link>
+          <img src={heroLogo} alt="Command OS" className="h-10 w-auto" />
         </div>
       </header>
 
@@ -338,7 +335,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t bg-card">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <img src={heroLogo} alt="Command OS" className="h-7 w-auto" />
+          <img src={heroLogo} alt="Command OS" className="h-8 w-auto" />
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Command OS — Hero Audiovisual</p>
         </div>
       </footer>
