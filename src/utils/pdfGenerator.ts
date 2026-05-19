@@ -463,7 +463,7 @@ export async function generateProposalPDF({
   let operationalTotal = 0;
   operationalCostItems.forEach(c => { operationalTotal += c.value; });
   
-  if (operationalCostItems.length > 0) {
+  if (operationalCostItems.length > 0 && !hideOp) {
     const opBlockHeight = 10 + 10 + operationalCostItems.length * 8 + 16;
     if (opBlockHeight < footerTopY - contentStartY) {
       ensureSpace(opBlockHeight);
