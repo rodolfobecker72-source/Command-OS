@@ -560,7 +560,7 @@ export async function generateProposalPDF({
     y += 7;
   });
 
-  if (operationalTotal > 0) {
+  if (operationalTotal > 0 && !hideOp) {
     doc.text('Despesas Operacionais', margin, y);
     doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
     y += 7;
