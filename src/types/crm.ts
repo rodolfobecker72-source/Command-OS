@@ -323,6 +323,7 @@ export interface Budget {
   rejectionObservation: string;
   pdfReleased: boolean;
   hideNfInPdf: boolean;
+  hideOperationalInPdf: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

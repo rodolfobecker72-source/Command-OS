@@ -123,6 +123,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     rejectionObservation: row.rejection_observation || '',
     pdfReleased: row.pdf_released ?? false,
     hideNfInPdf: row.hide_nf_in_pdf ?? false,
+    hideOperationalInPdf: row.hide_operational_in_pdf ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -954,6 +955,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.rejectionObservation !== undefined) dbUpdates.rejection_observation = updates.rejectionObservation;
       if (updates.pdfReleased !== undefined) dbUpdates.pdf_released = updates.pdfReleased;
       if (updates.hideNfInPdf !== undefined) dbUpdates.hide_nf_in_pdf = updates.hideNfInPdf;
+      if (updates.hideOperationalInPdf !== undefined) dbUpdates.hide_operational_in_pdf = updates.hideOperationalInPdf;
 
       if (Object.keys(dbUpdates).length > 0) {
         const { error } = await supabase.from('budgets').update(dbUpdates).eq('id', id);

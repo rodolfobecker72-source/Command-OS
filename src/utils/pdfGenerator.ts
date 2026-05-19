@@ -332,6 +332,7 @@ export async function generateProposalPDF({
   version.services.forEach(s => { totalProductionCost += s.costs.reduce((sum, c) => sum + c.value, 0); });
 
   const hideNf = !!budget.hideNfInPdf;
+  const hideOp = !!budget.hideOperationalInPdf;
   const preNfPct = version.nfCostPercentage || 13;
   const preMarginPct = version.margin || 0;
   const preOpTotal = (version.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
@@ -340,8 +341,8 @@ export async function generateProposalPDF({
   const preTotalProject = preDivisor > 0 ? preTotalCosts / preDivisor : preTotalCosts;
   const preNfValue = preTotalProject * (preNfPct / 100);
   const preMarginValue = preTotalProject - preTotalCosts - preNfValue;
-  // When hiding NF in the PDF, distribute its value proportionally into services
-  const preToDistribute = totalProductionCost + preMarginValue + (hideNf ? preNfValue : 0);
+  // When hiding NF/Operacional in the PDF, distribute its value proportionally into services
+  const preToDistribute = totalProductionCost + preMarginValue + (hideNf ? preNfValue : 0) + (hideOp ? preOpTotal : 0);
 
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
@@ -462,7 +463,7 @@ export async function generateProposalPDF({
   let operationalTotal = 0;
   operationalCostItems.forEach(c => { operationalTotal += c.value; });
   
-  if (operationalCostItems.length > 0) {
+  if (operationalCostItems.length > 0 && !hideOp) {
     const opBlockHeight = 10 + 10 + operationalCostItems.length * 8 + 16;
     if (opBlockHeight < footerTopY - contentStartY) {
       ensureSpace(opBlockHeight);
@@ -540,7 +541,7 @@ export async function generateProposalPDF({
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-  const totalToDistribute = totalProductionCost + marginValue + (hideNf ? nfValue : 0);
+  const totalToDistribute = totalProductionCost + marginValue + (hideNf ? nfValue : 0) + (hideOp ? operationalTotal : 0);
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
@@ -559,7 +560,7 @@ export async function generateProposalPDF({
     y += 7;
   });
 
-  if (operationalTotal > 0) {
+  if (operationalTotal > 0 && !hideOp) {
     doc.text('Despesas Operacionais', margin, y);
     doc.text(formatCurrency(operationalTotal), pageWidth - margin, y, { align: 'right' });
     y += 7;
