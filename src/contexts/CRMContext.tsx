@@ -123,6 +123,7 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     rejectionObservation: row.rejection_observation || '',
     pdfReleased: row.pdf_released ?? false,
     hideNfInPdf: row.hide_nf_in_pdf ?? false,
+    hideOperationalInPdf: row.hide_operational_in_pdf ?? false,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
