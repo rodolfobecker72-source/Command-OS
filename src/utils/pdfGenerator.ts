@@ -541,7 +541,7 @@ export async function generateProposalPDF({
   const totalProjectValue = divisor > 0 ? totalCosts / divisor : totalCosts;
   const nfValue = totalProjectValue * (versionNfPercentage / 100);
   const marginValue = totalProjectValue - totalCosts - nfValue;
-  const totalToDistribute = totalProductionCost + marginValue + (hideNf ? nfValue : 0);
+  const totalToDistribute = totalProductionCost + marginValue + (hideNf ? nfValue : 0) + (hideOp ? operationalTotal : 0);
 
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
