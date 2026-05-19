@@ -404,6 +404,7 @@ export function NewBudget() {
         rejectionObservation: '',
         pdfReleased: false,
         hideNfInPdf: false,
+        hideOperationalInPdf: false,
       });
 
       if (!newBudget) {
