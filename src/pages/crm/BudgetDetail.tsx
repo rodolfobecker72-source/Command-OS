@@ -2547,7 +2547,7 @@ export function BudgetDetail() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="mt-4"
+                    className="mt-4 flex flex-col gap-2"
                   >
                     <button
                       type="button"
@@ -2563,6 +2563,22 @@ export function BudgetDetail() {
                         {budget.hideNfInPdf && <CheckCircle className="w-3 h-3" />}
                       </span>
                       Ocultar Nota Fiscal no PDF (diluir valor nos serviços)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const newValue = !budget.hideOperationalInPdf;
+                        await updateBudget(budget.id, { hideOperationalInPdf: newValue });
+                        toast.success(newValue ? 'Despesas Operacionais serão ocultadas no PDF (diluídas nos serviços)' : 'Despesas Operacionais voltarão a aparecer no PDF');
+                      }}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Quando ativo, o valor das despesas operacionais é diluído proporcionalmente nos serviços e não aparece como bloco separado no PDF"
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideOperationalInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                        {budget.hideOperationalInPdf && <CheckCircle className="w-3 h-3" />}
+                      </span>
+                      Ocultar Despesas Operacionais no PDF (diluir valor nos serviços)
                     </button>
                   </motion.div>
                 )}
