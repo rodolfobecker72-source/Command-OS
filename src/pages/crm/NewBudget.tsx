@@ -1106,15 +1106,37 @@ export function NewBudget() {
                             </CardDescription>
                           </div>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeService(service.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveService(service.id, 'up')}
+                            disabled={index === 0}
+                            title="Mover para cima"
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveService(service.id, 'down')}
+                            disabled={index === services.length - 1}
+                            title="Mover para baixo"
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeService(service.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
