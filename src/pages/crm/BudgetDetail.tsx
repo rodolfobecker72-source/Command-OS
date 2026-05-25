@@ -76,6 +76,8 @@ import {
 } from '@/components/ui/tabs';
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   FileText,
   Plus,
   Trash2,
