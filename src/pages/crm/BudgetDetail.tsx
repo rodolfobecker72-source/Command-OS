@@ -1569,14 +1569,34 @@ export function BudgetDetail() {
                                   </div>
                                 </div>
                                 {isEditingVersion && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeEditService(service.id)}
-                                    title="Remover serviço"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                  </Button>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => moveEditService(service.id, 'up')}
+                                      disabled={index === 0}
+                                      title="Mover para cima"
+                                    >
+                                      <ArrowUp className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => moveEditService(service.id, 'down')}
+                                      disabled={index === displayServices.length - 1}
+                                      title="Mover para baixo"
+                                    >
+                                      <ArrowDown className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeEditService(service.id)}
+                                      title="Remover serviço"
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                               {isEditingVersion && (
