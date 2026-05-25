@@ -64,6 +64,8 @@ import {
 } from '@/components/ui/popover';
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   Save,
   FileText,
   Plus,
