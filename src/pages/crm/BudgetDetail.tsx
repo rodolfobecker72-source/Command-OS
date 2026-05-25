@@ -626,6 +626,18 @@ export function BudgetDetail() {
     setEditVersionServices(prev => prev.filter(s => s.id !== serviceId));
   };
 
+  const moveEditService = (serviceId: string, direction: 'up' | 'down') => {
+    setEditVersionServices(prev => {
+      const idx = prev.findIndex(s => s.id === serviceId);
+      if (idx < 0) return prev;
+      const target = direction === 'up' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
+
   const removeEditCost = (serviceId: string, costId: string) => {
     setEditVersionServices(prev => prev.map(s =>
       s.id === serviceId ? { ...s, costs: s.costs.filter(c => c.id !== costId) } : s
