@@ -262,6 +262,19 @@ export function NewBudget() {
     setServices(services.filter(s => s.id !== id));
   };
 
+  // Reordenar serviço (mover para cima ou para baixo)
+  const moveService = (id: string, direction: 'up' | 'down') => {
+    setServices(prev => {
+      const idx = prev.findIndex(s => s.id === id);
+      if (idx < 0) return prev;
+      const target = direction === 'up' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
+
   // Atualizar serviço
   const updateService = (id: string, updates: Partial<ServiceItem>) => {
     setServices(services.map(s => 
