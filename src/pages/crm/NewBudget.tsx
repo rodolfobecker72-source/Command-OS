@@ -64,6 +64,8 @@ import {
 } from '@/components/ui/popover';
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   Save,
   FileText,
   Plus,
@@ -258,6 +260,19 @@ export function NewBudget() {
   // Remover serviço
   const removeService = (id: string) => {
     setServices(services.filter(s => s.id !== id));
+  };
+
+  // Reordenar serviço (mover para cima ou para baixo)
+  const moveService = (id: string, direction: 'up' | 'down') => {
+    setServices(prev => {
+      const idx = prev.findIndex(s => s.id === id);
+      if (idx < 0) return prev;
+      const target = direction === 'up' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
   };
 
   // Atualizar serviço
@@ -1091,15 +1106,37 @@ export function NewBudget() {
                             </CardDescription>
                           </div>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeService(service.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveService(service.id, 'up')}
+                            disabled={index === 0}
+                            title="Mover para cima"
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveService(service.id, 'down')}
+                            disabled={index === services.length - 1}
+                            title="Mover para baixo"
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeService(service.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
