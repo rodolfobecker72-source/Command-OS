@@ -434,6 +434,19 @@ export function BudgetDetail() {
     setNewVersionServices((prev) => prev.filter((s) => s.id !== serviceId));
   };
 
+  // Reorder service in new version
+  const moveNewVersionService = (serviceId: string, direction: 'up' | 'down') => {
+    setNewVersionServices((prev) => {
+      const idx = prev.findIndex((s) => s.id === serviceId);
+      if (idx < 0) return prev;
+      const target = direction === 'up' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  };
+
   const handleCreateNewVersion = async () => {
     if (!newVersionReason.trim()) {
       toast.error('Informe o motivo da nova versão');
