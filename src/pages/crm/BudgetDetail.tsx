@@ -2040,14 +2040,36 @@ export function BudgetDetail() {
                                                   <Icon className="w-5 h-5" />
                                                   <span className="font-bold">{service.serviceType}</span>
                                                 </div>
-                                                <Button
-                                                  type="button"
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => removeServiceFromNewVersion(service.id)}
-                                                >
-                                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                  <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => moveNewVersionService(service.id, 'up')}
+                                                    disabled={serviceIndex === 0}
+                                                    title="Mover para cima"
+                                                  >
+                                                    <ArrowUp className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => moveNewVersionService(service.id, 'down')}
+                                                    disabled={serviceIndex === newVersionServices.length - 1}
+                                                    title="Mover para baixo"
+                                                  >
+                                                    <ArrowDown className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => removeServiceFromNewVersion(service.id)}
+                                                  >
+                                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                                  </Button>
+                                                </div>
                                               </div>
                                             </CardHeader>
                                             <CardContent className="space-y-4">
