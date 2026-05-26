@@ -114,7 +114,7 @@ export function ProspectionPage() {
   const auth = useAuth();
 
   const [activeTab, setActiveTab] = useState<'leads' | 'painel'>('leads');
-  const [view, setView] = useState<'table' | 'kanban'>('table');
+  const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>(String(new Date().getFullYear()));
