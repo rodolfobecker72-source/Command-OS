@@ -1615,6 +1615,7 @@ export function BudgetDetail() {
                                 <Table>
                                   <TableHeader>
                                     <TableRow className="bg-muted/50">
+                                      {isEditingVersion && <TableHead className="w-8"></TableHead>}
                                       <TableHead>Descrição</TableHead>
                                       <TableHead className="text-right w-[70px]">Qtd</TableHead>
                                       <TableHead className="text-right">V. Unit.</TableHead>
@@ -1622,21 +1623,22 @@ export function BudgetDetail() {
                                       {isEditingVersion && <TableHead className="w-10"></TableHead>}
                                     </TableRow>
                                   </TableHeader>
-                                  <TableBody>
-                                    {service.costs.map((cost) => (
-                                      <TableRow key={cost.id}>
-                                        <TableCell>
-                                          {isEditingVersion ? (
+                                  {isEditingVersion ? (
+                                    <SortableTableBody
+                                      items={service.costs}
+                                      onReorder={(newCosts) => setEditVersionServices(prev => prev.map(s => s.id === service.id ? { ...s, costs: newCosts } : s))}
+                                      renderRow={(cost, handle) => (
+                                        <>
+                                          <TableCell className="w-8">{handle}</TableCell>
+                                          <TableCell>
                                             <Input
                                               value={cost.description}
                                               onChange={(e) => updateEditCost(service.id, cost.id, { description: e.target.value })}
                                               placeholder="Descrição do custo"
                                               className="h-8"
                                             />
-                                          ) : cost.description}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                          {isEditingVersion ? (
+                                          </TableCell>
+                                          <TableCell className="text-right">
                                             <Input
                                               type="number"
                                               min={1}
@@ -1647,10 +1649,8 @@ export function BudgetDetail() {
                                               }}
                                               className="h-8 w-16"
                                             />
-                                          ) : (cost.quantity || 1)}
-                                        </TableCell>
-                                        <TableCell className="text-right text-muted-foreground">
-                                          {isEditingVersion ? (
+                                          </TableCell>
+                                          <TableCell className="text-right text-muted-foreground">
                                             <Input
                                               type="number"
                                               min={0}
@@ -1661,21 +1661,34 @@ export function BudgetDetail() {
                                               }}
                                               className="h-8 w-28"
                                             />
-                                          ) : formatCurrency(cost.unitValue || cost.value)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                          {formatCurrency(cost.value)}
-                                        </TableCell>
-                                        {isEditingVersion && (
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {formatCurrency(cost.value)}
+                                          </TableCell>
                                           <TableCell>
                                             <Button variant="ghost" size="sm" onClick={() => removeEditCost(service.id, cost.id)}>
                                               <Trash2 className="w-4 h-4 text-destructive" />
                                             </Button>
                                           </TableCell>
-                                        )}
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
+                                        </>
+                                      )}
+                                    />
+                                  ) : (
+                                    <TableBody>
+                                      {service.costs.map((cost) => (
+                                        <TableRow key={cost.id}>
+                                          <TableCell>{cost.description}</TableCell>
+                                          <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                          <TableCell className="text-right text-muted-foreground">
+                                            {formatCurrency(cost.unitValue || cost.value)}
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {formatCurrency(cost.value)}
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  )}
                                 </Table>
                               </div>
                               {isEditingVersion && (
@@ -1744,6 +1757,7 @@ export function BudgetDetail() {
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-muted/50">
+                                {isEditingVersion && <TableHead className="w-8"></TableHead>}
                                 <TableHead>Descrição</TableHead>
                                 <TableHead className="text-right w-[70px]">Qtd</TableHead>
                                 <TableHead className="text-right">V. Unit.</TableHead>
@@ -1751,21 +1765,22 @@ export function BudgetDetail() {
                                 {isEditingVersion && <TableHead className="w-10"></TableHead>}
                               </TableRow>
                             </TableHeader>
-                            <TableBody>
-                              {displayOpCosts.map((cost) => (
-                                <TableRow key={cost.id}>
-                                  <TableCell>
-                                    {isEditingVersion ? (
+                            {isEditingVersion ? (
+                              <SortableTableBody
+                                items={displayOpCosts}
+                                onReorder={(items) => setEditVersionOperationalCosts(items)}
+                                renderRow={(cost, handle) => (
+                                  <>
+                                    <TableCell className="w-8">{handle}</TableCell>
+                                    <TableCell>
                                       <Input
                                         value={cost.description}
                                         onChange={(e) => updateEditOperationalCost(cost.id, { description: e.target.value })}
                                         placeholder="Ex: Passagens, Hotel..."
                                         className="h-8"
                                       />
-                                    ) : cost.description}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {isEditingVersion ? (
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                       <Input
                                         type="number"
                                         min={1}
@@ -1776,10 +1791,8 @@ export function BudgetDetail() {
                                         }}
                                         className="h-8 w-16"
                                       />
-                                    ) : (cost.quantity || 1)}
-                                  </TableCell>
-                                  <TableCell className="text-right text-muted-foreground">
-                                    {isEditingVersion ? (
+                                    </TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
                                       <Input
                                         type="number"
                                         min={0}
@@ -1790,30 +1803,53 @@ export function BudgetDetail() {
                                         }}
                                         className="h-8 w-28"
                                       />
-                                    ) : formatCurrency(cost.unitValue || cost.value)}
-                                  </TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    {formatCurrency(cost.value)}
-                                  </TableCell>
-                                  {isEditingVersion && (
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {formatCurrency(cost.value)}
+                                    </TableCell>
                                     <TableCell>
                                       <Button variant="ghost" size="sm" onClick={() => removeEditOperationalCost(cost.id)}>
                                         <Trash2 className="w-4 h-4 text-destructive" />
                                       </Button>
                                     </TableCell>
-                                  )}
+                                  </>
+                                )}
+                                footer={
+                                  <TableRow className="bg-muted/30">
+                                    <TableCell colSpan={5} className="font-semibold">
+                                      Total Despesas Operacionais
+                                    </TableCell>
+                                    <TableCell className="text-right font-bold">
+                                      {formatCurrency(displayOpCosts.reduce((sum, c) => sum + c.value, 0))}
+                                    </TableCell>
+                                    <TableCell></TableCell>
+                                  </TableRow>
+                                }
+                              />
+                            ) : (
+                              <TableBody>
+                                {displayOpCosts.map((cost) => (
+                                  <TableRow key={cost.id}>
+                                    <TableCell>{cost.description}</TableCell>
+                                    <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                      {formatCurrency(cost.unitValue || cost.value)}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium">
+                                      {formatCurrency(cost.value)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                                <TableRow className="bg-muted/30">
+                                  <TableCell colSpan={3} className="font-semibold">
+                                    Total Despesas Operacionais
+                                  </TableCell>
+                                  <TableCell className="text-right font-bold">
+                                    {formatCurrency(displayOpCosts.reduce((sum, c) => sum + c.value, 0))}
+                                  </TableCell>
                                 </TableRow>
-                              ))}
-                              <TableRow className="bg-muted/30">
-                                <TableCell colSpan={isEditingVersion ? 4 : 3} className="font-semibold">
-                                  Total Despesas Operacionais
-                                </TableCell>
-                                <TableCell className="text-right font-bold">
-                                  {formatCurrency(displayOpCosts.reduce((sum, c) => sum + c.value, 0))}
-                                </TableCell>
-                                {isEditingVersion && <TableCell></TableCell>}
-                              </TableRow>
-                            </TableBody>
+                              </TableBody>
+                            )}
                           </Table>
                         </div>
                       </CardContent>
@@ -2193,6 +2229,7 @@ export function BudgetDetail() {
                                                   <Table>
                                                     <TableHeader>
                                                       <TableRow>
+                                                        <TableHead className="w-8"></TableHead>
                                                         <TableHead>Descrição</TableHead>
                                                         <TableHead className="w-16">Qtd</TableHead>
                                                         <TableHead className="w-28">V. Unit.</TableHead>
@@ -2200,9 +2237,12 @@ export function BudgetDetail() {
                                                         <TableHead className="w-12"></TableHead>
                                                       </TableRow>
                                                     </TableHeader>
-                                                    <TableBody>
-                                                      {service.costs.map((cost) => (
-                                                        <TableRow key={cost.id}>
+                                                    <SortableTableBody
+                                                      items={service.costs}
+                                                      onReorder={(newCosts) => setNewVersionServices(prev => prev.map(s => s.id === service.id ? { ...s, costs: newCosts } : s))}
+                                                      renderRow={(cost, handle) => (
+                                                        <>
+                                                          <TableCell className="w-8">{handle}</TableCell>
                                                           <TableCell>
                                                             <Input
                                                               value={cost.description}
@@ -2257,9 +2297,9 @@ export function BudgetDetail() {
                                                               <Trash2 className="w-4 h-4 text-destructive" />
                                                             </Button>
                                                           </TableCell>
-                                                        </TableRow>
-                                                      ))}
-                                                    </TableBody>
+                                                        </>
+                                                      )}
+                                                    />
                                                   </Table>
                                                 )}
                                               </div>
@@ -2308,6 +2348,7 @@ export function BudgetDetail() {
                                             <Table>
                                               <TableHeader>
                                                 <TableRow className="bg-muted/50">
+                                                  <TableHead className="w-8"></TableHead>
                                                   <TableHead>Descrição</TableHead>
                                                   <TableHead className="w-[70px]">Qtd</TableHead>
                                                   <TableHead>V. Unit.</TableHead>
@@ -2315,9 +2356,12 @@ export function BudgetDetail() {
                                                   <TableHead className="w-10"></TableHead>
                                                 </TableRow>
                                               </TableHeader>
-                                              <TableBody>
-                                                {newVersionOperationalCosts.map((cost) => (
-                                                  <TableRow key={cost.id}>
+                                              <SortableTableBody
+                                                items={newVersionOperationalCosts}
+                                                onReorder={(items) => setNewVersionOperationalCosts(items)}
+                                                renderRow={(cost, handle) => (
+                                                  <>
+                                                    <TableCell className="w-8">{handle}</TableCell>
                                                     <TableCell>
                                                       <Input
                                                         value={cost.description}
@@ -2373,14 +2417,16 @@ export function BudgetDetail() {
                                                         <Trash2 className="w-4 h-4 text-destructive" />
                                                       </Button>
                                                     </TableCell>
+                                                  </>
+                                                )}
+                                                footer={
+                                                  <TableRow className="bg-muted/30">
+                                                    <TableCell colSpan={4} className="font-semibold">Total</TableCell>
+                                                    <TableCell className="font-bold">{formatCurrency(newVersionOperationalTotal)}</TableCell>
+                                                    <TableCell />
                                                   </TableRow>
-                                                ))}
-                                                <TableRow className="bg-muted/30">
-                                                  <TableCell colSpan={3} className="font-semibold">Total</TableCell>
-                                                  <TableCell className="font-bold">{formatCurrency(newVersionOperationalTotal)}</TableCell>
-                                                  <TableCell />
-                                                </TableRow>
-                                              </TableBody>
+                                                }
+                                              />
                                             </Table>
                                           ) : (
                                             <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa operacional</p>
