@@ -2229,6 +2229,7 @@ export function BudgetDetail() {
                                                   <Table>
                                                     <TableHeader>
                                                       <TableRow>
+                                                        <TableHead className="w-8"></TableHead>
                                                         <TableHead>Descrição</TableHead>
                                                         <TableHead className="w-16">Qtd</TableHead>
                                                         <TableHead className="w-28">V. Unit.</TableHead>
@@ -2236,9 +2237,12 @@ export function BudgetDetail() {
                                                         <TableHead className="w-12"></TableHead>
                                                       </TableRow>
                                                     </TableHeader>
-                                                    <TableBody>
-                                                      {service.costs.map((cost) => (
-                                                        <TableRow key={cost.id}>
+                                                    <SortableTableBody
+                                                      items={service.costs}
+                                                      onReorder={(newCosts) => setNewVersionServices(prev => prev.map(s => s.id === service.id ? { ...s, costs: newCosts } : s))}
+                                                      renderRow={(cost, handle) => (
+                                                        <>
+                                                          <TableCell className="w-8">{handle}</TableCell>
                                                           <TableCell>
                                                             <Input
                                                               value={cost.description}
@@ -2293,9 +2297,9 @@ export function BudgetDetail() {
                                                               <Trash2 className="w-4 h-4 text-destructive" />
                                                             </Button>
                                                           </TableCell>
-                                                        </TableRow>
-                                                      ))}
-                                                    </TableBody>
+                                                        </>
+                                                      )}
+                                                    />
                                                   </Table>
                                                 )}
                                               </div>
