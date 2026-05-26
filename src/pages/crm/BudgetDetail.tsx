@@ -2348,6 +2348,7 @@ export function BudgetDetail() {
                                             <Table>
                                               <TableHeader>
                                                 <TableRow className="bg-muted/50">
+                                                  <TableHead className="w-8"></TableHead>
                                                   <TableHead>Descrição</TableHead>
                                                   <TableHead className="w-[70px]">Qtd</TableHead>
                                                   <TableHead>V. Unit.</TableHead>
@@ -2355,9 +2356,12 @@ export function BudgetDetail() {
                                                   <TableHead className="w-10"></TableHead>
                                                 </TableRow>
                                               </TableHeader>
-                                              <TableBody>
-                                                {newVersionOperationalCosts.map((cost) => (
-                                                  <TableRow key={cost.id}>
+                                              <SortableTableBody
+                                                items={newVersionOperationalCosts}
+                                                onReorder={(items) => setNewVersionOperationalCosts(items)}
+                                                renderRow={(cost, handle) => (
+                                                  <>
+                                                    <TableCell className="w-8">{handle}</TableCell>
                                                     <TableCell>
                                                       <Input
                                                         value={cost.description}
@@ -2413,14 +2417,16 @@ export function BudgetDetail() {
                                                         <Trash2 className="w-4 h-4 text-destructive" />
                                                       </Button>
                                                     </TableCell>
+                                                  </>
+                                                )}
+                                                footer={
+                                                  <TableRow className="bg-muted/30">
+                                                    <TableCell colSpan={4} className="font-semibold">Total</TableCell>
+                                                    <TableCell className="font-bold">{formatCurrency(newVersionOperationalTotal)}</TableCell>
+                                                    <TableCell />
                                                   </TableRow>
-                                                ))}
-                                                <TableRow className="bg-muted/30">
-                                                  <TableCell colSpan={3} className="font-semibold">Total</TableCell>
-                                                  <TableCell className="font-bold">{formatCurrency(newVersionOperationalTotal)}</TableCell>
-                                                  <TableCell />
-                                                </TableRow>
-                                              </TableBody>
+                                                }
+                                              />
                                             </Table>
                                           ) : (
                                             <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa operacional</p>
