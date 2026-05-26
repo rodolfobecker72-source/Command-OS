@@ -504,8 +504,13 @@ export function ProspectionPage() {
                     ) : filteredLeads.map(lead => (
                       <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setDetailLead(lead)}>
                         <TableCell>
-                          <div className="font-medium">{lead.companyName}</div>
-                          <div className="text-xs text-muted-foreground">{lead.city}</div>
+                          <div className="flex items-center gap-2">
+                            <ResponsibleAvatar userId={lead.responsibleUserId} />
+                            <div>
+                              <div className="font-medium">{lead.companyName}</div>
+                              <div className="text-xs text-muted-foreground">{lead.city}</div>
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">{lead.contactName}</div>
