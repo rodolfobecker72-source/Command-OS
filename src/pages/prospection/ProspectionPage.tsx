@@ -129,7 +129,7 @@ export function ProspectionPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // Workspace members eligible to be lead responsible (vendedor/admin/owner)
-  const [members, setMembers] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [members, setMembers] = useState<{ id: string; name: string; role: string; photoUrl: string | null }[]>([]);
   useEffect(() => {
     const workspaceId = auth.workspace?.id;
     if (!workspaceId) return;
@@ -141,15 +141,35 @@ export function ProspectionPage() {
         .in('role', ['owner', 'admin', 'vendedor']);
       const ids = (wm || []).map((m: any) => m.user_id);
       if (ids.length === 0) { setMembers([]); return; }
-      const { data: profs } = await supabase.from('profiles').select('id, name').in('id', ids);
+      const { data: profs } = await supabase.from('profiles').select('id, name, photo_url').in('id', ids);
       const roleById = new Map((wm || []).map((m: any) => [m.user_id, m.role]));
       const list = (profs || [])
-        .map((p: any) => ({ id: p.id, name: p.name || 'Sem nome', role: roleById.get(p.id) || '' }))
+        .map((p: any) => ({ id: p.id, name: p.name || 'Sem nome', role: roleById.get(p.id) || '', photoUrl: p.photo_url ?? null }))
         .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
       setMembers(list);
     })();
   }, [auth.workspace?.id]);
   const memberName = (id?: string | null) => members.find(m => m.id === id)?.name || '';
+  const memberPhoto = (id?: string | null) => members.find(m => m.id === id)?.photoUrl || null;
+
+  const ResponsibleAvatar = ({ userId, size = 'sm' }: { userId?: string | null; size?: 'sm' | 'md' }) => {
+    const sizeCls = size === 'md' ? 'h-8 w-8 text-xs' : 'h-6 w-6 text-[10px]';
+    if (!userId) {
+      return (
+        <div title="Sem responsável" className={`${sizeCls} shrink-0 rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-dashed`}>
+          ?
+        </div>
+      );
+    }
+    const name = memberName(userId);
+    const photo = memberPhoto(userId);
+    const initials = name.split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+    return (
+      <div title={name || 'Responsável'} className={`${sizeCls} shrink-0 rounded-full overflow-hidden bg-primary/10 text-primary flex items-center justify-center font-medium`}>
+        {photo ? <img src={photo} alt={name} className="w-full h-full object-cover" /> : initials}
+      </div>
+    );
+  };
 
   // Available years
   const years = useMemo(() => {
