@@ -1615,6 +1615,7 @@ export function BudgetDetail() {
                                 <Table>
                                   <TableHeader>
                                     <TableRow className="bg-muted/50">
+                                      {isEditingVersion && <TableHead className="w-8"></TableHead>}
                                       <TableHead>Descrição</TableHead>
                                       <TableHead className="text-right w-[70px]">Qtd</TableHead>
                                       <TableHead className="text-right">V. Unit.</TableHead>
@@ -1622,21 +1623,22 @@ export function BudgetDetail() {
                                       {isEditingVersion && <TableHead className="w-10"></TableHead>}
                                     </TableRow>
                                   </TableHeader>
-                                  <TableBody>
-                                    {service.costs.map((cost) => (
-                                      <TableRow key={cost.id}>
-                                        <TableCell>
-                                          {isEditingVersion ? (
+                                  {isEditingVersion ? (
+                                    <SortableTableBody
+                                      items={service.costs}
+                                      onReorder={(newCosts) => setEditVersionServices(prev => prev.map(s => s.id === service.id ? { ...s, costs: newCosts } : s))}
+                                      renderRow={(cost, handle) => (
+                                        <>
+                                          <TableCell className="w-8">{handle}</TableCell>
+                                          <TableCell>
                                             <Input
                                               value={cost.description}
                                               onChange={(e) => updateEditCost(service.id, cost.id, { description: e.target.value })}
                                               placeholder="Descrição do custo"
                                               className="h-8"
                                             />
-                                          ) : cost.description}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                          {isEditingVersion ? (
+                                          </TableCell>
+                                          <TableCell className="text-right">
                                             <Input
                                               type="number"
                                               min={1}
@@ -1647,10 +1649,8 @@ export function BudgetDetail() {
                                               }}
                                               className="h-8 w-16"
                                             />
-                                          ) : (cost.quantity || 1)}
-                                        </TableCell>
-                                        <TableCell className="text-right text-muted-foreground">
-                                          {isEditingVersion ? (
+                                          </TableCell>
+                                          <TableCell className="text-right text-muted-foreground">
                                             <Input
                                               type="number"
                                               min={0}
@@ -1661,21 +1661,34 @@ export function BudgetDetail() {
                                               }}
                                               className="h-8 w-28"
                                             />
-                                          ) : formatCurrency(cost.unitValue || cost.value)}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                          {formatCurrency(cost.value)}
-                                        </TableCell>
-                                        {isEditingVersion && (
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {formatCurrency(cost.value)}
+                                          </TableCell>
                                           <TableCell>
                                             <Button variant="ghost" size="sm" onClick={() => removeEditCost(service.id, cost.id)}>
                                               <Trash2 className="w-4 h-4 text-destructive" />
                                             </Button>
                                           </TableCell>
-                                        )}
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
+                                        </>
+                                      )}
+                                    />
+                                  ) : (
+                                    <TableBody>
+                                      {service.costs.map((cost) => (
+                                        <TableRow key={cost.id}>
+                                          <TableCell>{cost.description}</TableCell>
+                                          <TableCell className="text-right">{cost.quantity || 1}</TableCell>
+                                          <TableCell className="text-right text-muted-foreground">
+                                            {formatCurrency(cost.unitValue || cost.value)}
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {formatCurrency(cost.value)}
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  )}
                                 </Table>
                               </div>
                               {isEditingVersion && (
