@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target, AtSign, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +44,16 @@ interface LeadAlertItem {
   status: LeadAlertStatus;
 }
 
+interface MentionItem {
+  cardId: string;
+  commentId: string;
+  projectName: string;
+  authorName: string;
+  authorPhoto: string | null;
+  text: string;
+  createdAt: string;
+}
+
 function formatDateBR(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso + 'T12:00:00');
@@ -75,6 +85,7 @@ export function WelcomePage() {
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
+  const [mentions, setMentions] = useState<MentionItem[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
@@ -241,6 +252,66 @@ export function WelcomePage() {
     loadLeadAlerts();
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMentions = async () => {
+      if (!workspace || !profile?.id) return;
+      const { data: cards } = await supabase
+        .from('project_cards')
+        .select('id, project_name, comments')
+        .eq('workspace_id', workspace.id);
+      const items: MentionItem[] = [];
+      for (const c of (cards || []) as any[]) {
+        const arr = Array.isArray(c.comments) ? c.comments : [];
+        for (const cm of arr) {
+          const ments: string[] = Array.isArray(cm?.mentions) ? cm.mentions : [];
+          const readBy: string[] = Array.isArray(cm?.readBy) ? cm.readBy : [];
+          if (ments.includes(profile.id) && !readBy.includes(profile.id)) {
+            items.push({
+              cardId: c.id,
+              commentId: cm.id,
+              projectName: c.project_name || 'Projeto',
+              authorName: cm.userName || 'Usuário',
+              authorPhoto: cm.photoUrl || null,
+              text: cm.text || '',
+              createdAt: cm.createdAt || '',
+            });
+          }
+        }
+      }
+      items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      if (!cancelled) setMentions(items);
+    };
+    loadMentions();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
+  const handleMarkMentionRead = async (cardId: string, commentId: string) => {
+    if (!profile?.id) return;
+    const prev = mentions;
+    setMentions(p => p.filter(m => !(m.cardId === cardId && m.commentId === commentId)));
+    const { data: card } = await supabase
+      .from('project_cards')
+      .select('comments')
+      .eq('id', cardId)
+      .maybeSingle();
+    const arr = Array.isArray((card as any)?.comments) ? (card as any).comments : [];
+    const next = arr.map((cm: any) => {
+      if (cm.id !== commentId) return cm;
+      const readBy: string[] = Array.isArray(cm.readBy) ? cm.readBy : [];
+      if (readBy.includes(profile.id)) return cm;
+      return { ...cm, readBy: [...readBy, profile.id] };
+    });
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', cardId);
+    if (error) {
+      setMentions(prev);
+      toast({ title: 'Erro', description: 'Não foi possível marcar como lido.', variant: 'destructive' });
+    }
+  };
 
   const handleCompleteActivity = async (activityId: string) => {
     // Optimistic remove
@@ -431,6 +502,59 @@ export function WelcomePage() {
                     )}
                   </li>
                 ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Menções em comentários */}
+        {mentions.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AtSign className="w-5 h-5 text-primary" />
+                Você foi mencionado ({mentions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {mentions.map((m) => {
+                  const initials = (m.authorName || '?').split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+                  const when = m.createdAt
+                    ? new Date(m.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                    : '';
+                  return (
+                    <li key={`${m.cardId}-${m.commentId}`} className="border border-primary/30 bg-primary/5 rounded-lg p-3 flex items-start gap-2.5 shadow-sm">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={m.authorPhoto || undefined} alt={m.authorName} />
+                        <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold truncate">{m.authorName}</p>
+                          <span className="text-[10px] text-muted-foreground">em {m.projectName}</span>
+                          {when && <span className="text-[10px] text-muted-foreground ml-auto">{when}</span>}
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {m.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleMarkMentionRead(m.cardId, m.commentId)}
+                        className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-background hover:bg-success hover:text-success-foreground hover:border-success transition"
+                        title="Marcar como lido"
+                        aria-label="Marcar como lido"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>

@@ -87,9 +87,11 @@ function formatDateBR(iso: string | null): string {
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
   const { workspace, profile } = useAuth();
   const workspaceId = workspace?.id;
-  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string }>>([]);
+  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string; mentions?: string[]; readBy?: string[] }>>([]);
   const [newComment, setNewComment] = useState('');
   const [postingComment, setPostingComment] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [pendingMentions, setPendingMentions] = useState<string[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -235,6 +237,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const text = newComment.trim();
     if (!text || !profile?.id) return;
     setPostingComment(true);
+    // Keep only mentions that actually still appear in the text by name token
+    const validMentions = pendingMentions.filter(id => {
+      const m = members.find(x => x.id === id);
+      if (!m) return false;
+      const first = (m.name.split(' ')[0] || '').toLowerCase();
+      return first && text.toLowerCase().includes('@' + first);
+    });
     const newEntry = {
       id: crypto.randomUUID(),
       userId: profile.id,
@@ -242,6 +251,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       photoUrl: profile.photo_url || null,
       text,
       createdAt: new Date().toISOString(),
+      mentions: validMentions,
+      readBy: [] as string[],
     };
     const next = [...comments, newEntry];
     const { error } = await supabase
@@ -255,6 +266,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     }
     setComments(next);
     setNewComment('');
+    setPendingMentions([]);
+    setMentionQuery(null);
+    if (validMentions.length > 0) {
+      toast.success(`${validMentions.length} pessoa(s) marcada(s)`);
+    }
   };
 
   const handleDeleteComment = async (id: string) => {
@@ -664,7 +680,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                             )}
                           </div>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap break-words">{c.text}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {c.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   );
@@ -672,28 +694,80 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             )}
           </div>
 
-          <div className="flex gap-2 items-end pt-2 border-t border-border/50">
-            <Textarea
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  handlePostComment();
-                }
-              }}
-              placeholder="Escreva um comentário... (Ctrl+Enter para enviar)"
-              className="min-h-[60px] text-sm flex-1 resize-none"
-            />
-            <Button
-              type="button"
-              size="icon"
-              onClick={handlePostComment}
-              disabled={!newComment.trim() || postingComment}
-              className="h-9 w-9 shrink-0"
-            >
-              {postingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
+          <div className="pt-2 border-t border-border/50 space-y-2">
+            <p className="text-[10px] text-muted-foreground">Use <span className="font-mono bg-muted px-1 rounded">@</span> para marcar alguém do time.</p>
+            <div className="flex gap-2 items-end relative">
+              <div className="flex-1 relative">
+                <Textarea
+                  value={newComment}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewComment(val);
+                    const caret = e.target.selectionStart ?? val.length;
+                    const before = val.slice(0, caret);
+                    const m = before.match(/@([\p{L}\d_]*)$/u);
+                    setMentionQuery(m ? m[1] : null);
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape' && mentionQuery !== null) {
+                      e.preventDefault();
+                      setMentionQuery(null);
+                      return;
+                    }
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handlePostComment();
+                    }
+                  }}
+                  placeholder="Escreva um comentário... (Ctrl+Enter para enviar)"
+                  className="min-h-[60px] text-sm w-full resize-none"
+                />
+                {mentionQuery !== null && (() => {
+                  const q = mentionQuery.toLowerCase();
+                  const filtered = members.filter(m => m.name.toLowerCase().includes(q)).slice(0, 6);
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div className="absolute bottom-full left-0 mb-1 z-50 w-64 rounded-md border border-border bg-popover shadow-lg overflow-hidden">
+                      <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border/50">Marcar pessoa</div>
+                      <ul className="max-h-56 overflow-y-auto">
+                        {filtered.map(m => {
+                          const initials = (m.name || '?').split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+                          return (
+                            <li key={m.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const first = (m.name.split(' ')[0] || '').replace(/\s+/g, '');
+                                  setNewComment(prev => prev.replace(/@([\p{L}\d_]*)$/u, `@${first} `));
+                                  setPendingMentions(prev => prev.includes(m.id) ? prev : [...prev, m.id]);
+                                  setMentionQuery(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-accent text-left"
+                              >
+                                <Avatar className="w-6 h-6">
+                                  {m.photoUrl && <AvatarImage src={m.photoUrl} alt={m.name} />}
+                                  <AvatarFallback className="text-[9px] bg-muted">{initials}</AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs truncate">{m.name}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })()}
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                onClick={handlePostComment}
+                disabled={!newComment.trim() || postingComment}
+                className="h-9 w-9 shrink-0"
+              >
+                {postingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
