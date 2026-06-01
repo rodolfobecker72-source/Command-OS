@@ -237,6 +237,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const text = newComment.trim();
     if (!text || !profile?.id) return;
     setPostingComment(true);
+    // Keep only mentions that actually still appear in the text by name token
+    const validMentions = pendingMentions.filter(id => {
+      const m = members.find(x => x.id === id);
+      if (!m) return false;
+      const first = (m.name.split(' ')[0] || '').toLowerCase();
+      return first && text.toLowerCase().includes('@' + first);
+    });
     const newEntry = {
       id: crypto.randomUUID(),
       userId: profile.id,
@@ -244,6 +251,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       photoUrl: profile.photo_url || null,
       text,
       createdAt: new Date().toISOString(),
+      mentions: validMentions,
+      readBy: [] as string[],
     };
     const next = [...comments, newEntry];
     const { error } = await supabase
@@ -257,6 +266,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     }
     setComments(next);
     setNewComment('');
+    setPendingMentions([]);
+    setMentionQuery(null);
+    if (validMentions.length > 0) {
+      toast.success(`${validMentions.length} pessoa(s) marcada(s)`);
+    }
   };
 
   const handleDeleteComment = async (id: string) => {
