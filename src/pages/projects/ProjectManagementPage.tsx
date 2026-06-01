@@ -115,6 +115,19 @@ export function ProjectManagementPage() {
     updateBudget(budgetId, { executionMonth: value || null });
   };
 
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const overId = String(over.id);
+    if (!overId.startsWith('status-')) return;
+    const newStatus = overId.slice('status-'.length);
+    const card = projectCards.find(c => c.id === active.id);
+    if (!card || card.status === newStatus) return;
+    updateProjectCard(card.id, { status: newStatus });
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       <Header
