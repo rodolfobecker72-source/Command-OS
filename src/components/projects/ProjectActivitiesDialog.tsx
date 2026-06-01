@@ -69,10 +69,10 @@ interface Props {
   projectName: string;
 }
 
-const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass: string }[] = [
-  { key: 'nao_iniciado', label: 'Não iniciado', dotClass: 'bg-muted-foreground', chipClass: 'bg-muted text-muted-foreground' },
-  { key: 'em_andamento', label: 'Em andamento', dotClass: 'bg-info', chipClass: 'bg-info/10 text-info' },
-  { key: 'concluido', label: 'Concluído', dotClass: 'bg-success', chipClass: 'bg-success/10 text-success' },
+const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string }[] = [
+  { key: 'nao_iniciado', label: 'Não iniciado', dotClass: 'bg-muted-foreground', chipClass: 'bg-muted text-muted-foreground', colBg: 'bg-muted/40', cardBg: 'bg-background/60', cardBorder: 'border-border/60', addText: 'text-muted-foreground' },
+  { key: 'em_andamento', label: 'Em andamento', dotClass: 'bg-info', chipClass: 'bg-info/15 text-info', colBg: 'bg-info/[0.06]', cardBg: 'bg-info/[0.08]', cardBorder: 'border-info/25', addText: 'text-info' },
+  { key: 'concluido', label: 'Concluído', dotClass: 'bg-success', chipClass: 'bg-success/15 text-success', colBg: 'bg-success/[0.06]', cardBg: 'bg-success/[0.08]', cardBorder: 'border-success/25', addText: 'text-success' },
 ];
 
 const UNASSIGNED = '__unassigned__';
@@ -724,7 +724,7 @@ function Column({
   onUpdateDue,
   onUpdateFreela,
 }: {
-  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
+  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
   activities: Activity[];
   members: MemberOption[];
   newTitle: string;
@@ -751,8 +751,9 @@ function Column({
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-lg border bg-muted/30 p-3 flex flex-col gap-2 min-h-[260px] transition-colors',
-        isOver && 'bg-muted/60 border-primary/40'
+        'rounded-xl p-3 flex flex-col gap-3 min-h-[260px] transition-colors',
+        col.colBg,
+        isOver && 'ring-2 ring-primary/40'
       )}
     >
       <div className={cn('inline-flex items-center gap-2 self-start px-2.5 py-0.5 rounded-full text-xs font-medium', col.chipClass)}>
@@ -768,6 +769,7 @@ function Column({
               key={a.id}
               activity={a}
               members={members}
+              col={col}
               isEditing={editingId === a.id}
               editTitle={editTitle}
               onChangeEdit={onChangeEdit}
@@ -782,45 +784,56 @@ function Column({
         </div>
       </SortableContext>
 
-      <div className="flex flex-col gap-1.5 pt-2 border-t border-border/50 mt-1">
-        <div className="flex items-center gap-1.5">
+      {/* Inline new-task card matching task style */}
+      <div className={cn('rounded-lg border border-dashed p-3 flex flex-col gap-2', col.cardBorder, col.cardBg)}>
+        <div className="flex items-center gap-2">
+          <Plus className={cn('w-4 h-4 shrink-0', col.addText)} />
           <Input
             value={newTitle}
             onChange={e => onNewTitle(e.target.value)}
-            placeholder="+ Nova tarefa"
-            className="h-8 bg-background"
+            placeholder="Nova tarefa"
+            className={cn('h-7 border-0 bg-transparent px-0 text-sm font-semibold placeholder:font-normal focus-visible:ring-0 focus-visible:ring-offset-0', col.addText, 'placeholder:' + col.addText)}
             onKeyDown={e => { if (e.key === 'Enter') onAdd(); }}
           />
-          <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onAdd} disabled={!newTitle.trim()}>
-            <Plus className="w-4 h-4" />
-          </Button>
         </div>
-        <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
-          <SelectTrigger className="h-7 text-xs bg-background w-full">
-            <SelectValue placeholder="Responsável" />
-          </SelectTrigger>
-          <SelectContent className="z-[200]">
-            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-            {members.map(m => (
-              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-            ))}
-            <SelectItem value="__freela__">Freela</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <User className="w-3.5 h-3.5 shrink-0" />
+          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+            <SelectTrigger className="h-6 border-0 bg-transparent px-0 text-xs text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+              <SelectValue placeholder="Add Responsável" />
+            </SelectTrigger>
+            <SelectContent className="z-[200]">
+              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+              {members.map(m => (
+                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+              ))}
+              <SelectItem value="__freela__">Freela</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {newAssignee === '__freela__' && (
           <Input
             value={newFreela}
             onChange={e => onNewFreela(e.target.value)}
             placeholder="Nome do freela"
-            className="h-7 text-xs bg-background w-full"
+            className="h-7 text-xs bg-background/70 w-full"
           />
         )}
-        <Input
-          type="date"
-          value={newDue}
-          onChange={e => onNewDue(e.target.value)}
-          className="h-7 text-xs bg-background w-full"
-        />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5 shrink-0" />
+          <input
+            type="date"
+            value={newDue}
+            onChange={e => onNewDue(e.target.value)}
+            className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
+            placeholder="Add Prazo"
+          />
+        </div>
+        {newTitle.trim() && (
+          <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
+            Adicionar tarefa
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -829,6 +842,7 @@ function Column({
 function SortableCard({
   activity,
   members,
+  col,
   isEditing,
   editTitle,
   onChangeEdit,
@@ -841,6 +855,7 @@ function SortableCard({
 }: {
   activity: Activity;
   members: MemberOption[];
+  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
   isEditing: boolean;
   editTitle: string;
   onChangeEdit: (v: string) => void;
@@ -876,7 +891,12 @@ function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative rounded-lg border bg-card p-3 text-sm flex flex-col gap-2 hover:border-primary/40 shadow-sm"
+      className={cn(
+        'group relative rounded-lg border p-3 text-sm flex flex-col gap-1.5 transition-colors',
+        col.cardBg,
+        col.cardBorder,
+        'hover:border-primary/40'
+      )}
     >
       <button
         type="button"
@@ -888,7 +908,8 @@ function SortableCard({
       </button>
 
       {/* Title */}
-      <div className="pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+      <div className="flex items-start gap-2 pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+        <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         {isEditing ? (
           <Input
             autoFocus
@@ -899,14 +920,14 @@ function SortableCard({
               if (e.key === 'Enter') onSaveEdit(activity.id);
               if (e.key === 'Escape') onSaveEdit(activity.id);
             }}
-            className="h-7"
+            className="h-7 flex-1"
           />
         ) : (
           <button
             type="button"
             onClick={() => onStartEdit(activity.id, activity.title)}
             className={cn(
-              'text-left w-full font-semibold leading-tight cursor-text break-words',
+              'text-left flex-1 font-semibold leading-tight cursor-text break-words',
               activity.status === 'concluido' && 'line-through text-muted-foreground'
             )}
             title={activity.title}
@@ -921,7 +942,7 @@ function SortableCard({
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors px-0.5 py-0.5 rounded hover:bg-foreground/5"
           >
             {assignees.length > 0 || hasFreela ? (
               <>
@@ -948,10 +969,8 @@ function SortableCard({
               </>
             ) : (
               <>
-                <Avatar className="w-5 h-5">
-                  <AvatarFallback className="text-[9px] bg-muted"><User className="w-3 h-3" /></AvatarFallback>
-                </Avatar>
-                <span className="truncate">Sem responsável</span>
+                <User className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Add Responsável</span>
               </>
             )}
           </button>
@@ -1039,7 +1058,7 @@ function SortableCard({
           value={activity.dueDate || ''}
           onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
           className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1"
-          placeholder="Sem prazo"
+          placeholder="Add Prazo"
         />
       </div>
     </div>
