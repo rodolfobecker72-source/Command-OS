@@ -180,7 +180,7 @@ export function ProjectManagementPage() {
       </div>
 
       <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="mt-8 space-y-1">
+      <div className="mt-8 space-y-2">
 
         {sortedColumns.map((col) => {
           const buckets = cardsByStatusAndMonth[col.key] || [];
