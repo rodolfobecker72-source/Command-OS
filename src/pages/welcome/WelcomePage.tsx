@@ -35,7 +35,7 @@ interface UserActivities {
   toStart: ActivityItem[];
 }
 
-type LeadAlertStatus = 'overdue' | 'today' | 'tomorrow';
+type LeadAlertStatus = 'overdue' | 'today';
 interface LeadAlertItem {
   id: string;
   companyName: string;
@@ -210,7 +210,6 @@ export function WelcomePage() {
       const todayStr = today.toISOString().slice(0, 10);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
 
       const { data: leads } = await supabase
         .from('prospection_leads')
@@ -226,7 +225,6 @@ export function WelcomePage() {
         let status: LeadAlertStatus | null = null;
         if (d < todayStr) status = 'overdue';
         else if (d === todayStr) status = 'today';
-        else if (d === tomorrowStr) status = 'tomorrow';
         if (!status) continue;
         items.push({
           id: l.id,
@@ -236,7 +234,7 @@ export function WelcomePage() {
           status,
         });
       }
-      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1, tomorrow: 2 };
+      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1 };
       items.sort((a, b) => order[a.status] - order[b.status] || a.nextActionDate.localeCompare(b.nextActionDate));
       if (!cancelled) setLeadAlerts(items);
     };
@@ -453,13 +451,10 @@ export function WelcomePage() {
                   const styles =
                     l.status === 'overdue'
                       ? 'border-destructive/30 bg-destructive/5'
-                      : l.status === 'today'
-                      ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
-                      : 'border-primary/30 bg-primary/5';
-                  const label =
-                    l.status === 'overdue' ? 'Em atraso' : l.status === 'today' ? 'Hoje' : 'Amanhã';
-                  const badgeVariant: 'destructive' | 'secondary' | 'default' =
-                    l.status === 'overdue' ? 'destructive' : l.status === 'today' ? 'default' : 'secondary';
+                      : 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20';
+                  const label = l.status === 'overdue' ? 'Em atraso' : 'Hoje';
+                  const badgeVariant: 'destructive' | 'default' =
+                    l.status === 'overdue' ? 'destructive' : 'default';
                   return (
                     <li
                       key={l.id}
