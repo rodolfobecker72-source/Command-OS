@@ -1,5 +1,5 @@
-import { useState, useMemo, ReactNode } from 'react';
-import { ChevronRight, Settings2, ListChecks, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
+import { useState, useMemo, ReactNode, useEffect } from 'react';
+import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink } from 'lucide-react';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCenter,
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCRM } from '@/contexts/CRMContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusManagerDialog';
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
