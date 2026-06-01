@@ -942,7 +942,7 @@ function SortableCard({
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors -ml-0.5 px-0.5 py-0.5 rounded hover:bg-muted/60"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors px-0.5 py-0.5 rounded hover:bg-foreground/5"
           >
             {assignees.length > 0 || hasFreela ? (
               <>
@@ -969,10 +969,8 @@ function SortableCard({
               </>
             ) : (
               <>
-                <Avatar className="w-5 h-5">
-                  <AvatarFallback className="text-[9px] bg-muted"><User className="w-3 h-3" /></AvatarFallback>
-                </Avatar>
-                <span className="truncate">Sem responsável</span>
+                <User className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Add Responsável</span>
               </>
             )}
           </button>
