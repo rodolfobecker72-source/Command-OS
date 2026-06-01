@@ -281,6 +281,8 @@ export function ProjectManagementPage() {
           );
         })}
       </div>
+      </DndContext>
+
 
       <ProjectStatusManagerDialog open={manageOpen} onOpenChange={setManageOpen} />
       {activitiesFor && (
