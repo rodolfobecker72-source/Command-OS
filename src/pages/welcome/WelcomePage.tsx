@@ -44,6 +44,16 @@ interface LeadAlertItem {
   status: LeadAlertStatus;
 }
 
+interface MentionItem {
+  cardId: string;
+  commentId: string;
+  projectName: string;
+  authorName: string;
+  authorPhoto: string | null;
+  text: string;
+  createdAt: string;
+}
+
 function formatDateBR(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso + 'T12:00:00');
