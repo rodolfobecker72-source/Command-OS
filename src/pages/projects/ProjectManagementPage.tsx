@@ -42,6 +42,18 @@ function DraggableRow({ id, children }: { id: string; children: (handleProps: { 
 }
 
 
+// Map status color tokens (bg-*) to subtle background tints for the status block
+// and a slightly stronger tint for each month group inside.
+const STATUS_TINT: Record<string, { block: string; month: string; border: string }> = {
+  'bg-info': { block: 'bg-info/[0.04]', month: 'bg-info/[0.09]', border: 'border-info/20' },
+  'bg-warning': { block: 'bg-warning/[0.04]', month: 'bg-warning/[0.09]', border: 'border-warning/20' },
+  'bg-success': { block: 'bg-success/[0.04]', month: 'bg-success/[0.09]', border: 'border-success/20' },
+  'bg-destructive': { block: 'bg-destructive/[0.04]', month: 'bg-destructive/[0.09]', border: 'border-destructive/20' },
+  'bg-accent': { block: 'bg-accent/[0.04]', month: 'bg-accent/[0.09]', border: 'border-accent/30' },
+  'bg-muted-foreground': { block: 'bg-muted-foreground/[0.04]', month: 'bg-muted-foreground/[0.09]', border: 'border-muted-foreground/20' },
+};
+const DEFAULT_TINT = { block: 'bg-muted/30', month: 'bg-muted/50', border: 'border-border/50' };
+
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
