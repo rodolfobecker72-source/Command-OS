@@ -142,6 +142,19 @@ export function ProspectionPage() {
   const { addClient } = useCRM();
   const auth = useAuth();
 
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const handleKanbanDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const overId = String(over.id);
+    if (!overId.startsWith('col-')) return;
+    const newStatus = overId.slice(4) as LeadFunnelStatus;
+    const lead = leads.find(l => l.id === active.id);
+    if (!lead || lead.funnelStatus === newStatus) return;
+    updateLead(lead.id, { funnelStatus: newStatus });
+  };
+
+
   const [activeTab, setActiveTab] = useState<'leads' | 'painel'>('leads');
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
