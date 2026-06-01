@@ -881,6 +881,7 @@ export type Database = {
           client_name: string
           comments: Json
           created_at: string
+          drive_url: string | null
           end_date: string | null
           id: string
           links: Json
@@ -903,6 +904,7 @@ export type Database = {
           client_name?: string
           comments?: Json
           created_at?: string
+          drive_url?: string | null
           end_date?: string | null
           id?: string
           links?: Json
@@ -925,6 +927,7 @@ export type Database = {
           client_name?: string
           comments?: Json
           created_at?: string
+          drive_url?: string | null
           end_date?: string | null
           id?: string
           links?: Json
