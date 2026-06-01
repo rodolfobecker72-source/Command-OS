@@ -101,6 +101,32 @@ export function ProjectManagementPage() {
     return () => { cancelled = true; };
   }, [workspace?.id, projectCards.length]);
 
+  useEffect(() => {
+    if (!highlightBudgetId || projectCards.length === 0) return;
+    const card = projectCards.find((c) => c.budgetId === highlightBudgetId);
+    if (!card) return;
+    setCollapsed((prev) => ({ ...prev, [card.status]: false }));
+    setHighlightCardId(card.id);
+    const tryScroll = (attempt = 0) => {
+      const el = cardRefs.current[card.id];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (attempt < 10) {
+        setTimeout(() => tryScroll(attempt + 1), 100);
+      }
+    };
+    setTimeout(() => tryScroll(), 50);
+    const t = setTimeout(() => {
+      setHighlightCardId(null);
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('budget');
+        return sp;
+      }, { replace: true });
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [highlightBudgetId, projectCards, setSearchParams]);
+
   const sortedColumns = useMemo(
     () => [...projectColumns].sort((a, b) => a.order - b.order),
     [projectColumns]
