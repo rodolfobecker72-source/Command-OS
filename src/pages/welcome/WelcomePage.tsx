@@ -35,7 +35,7 @@ interface UserActivities {
   toStart: ActivityItem[];
 }
 
-type LeadAlertStatus = 'overdue' | 'today';
+type LeadAlertStatus = 'overdue' | 'today' | 'upcoming';
 interface LeadAlertItem {
   id: string;
   companyName: string;
