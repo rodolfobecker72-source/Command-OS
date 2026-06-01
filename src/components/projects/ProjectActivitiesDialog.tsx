@@ -69,10 +69,10 @@ interface Props {
   projectName: string;
 }
 
-const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass: string }[] = [
-  { key: 'nao_iniciado', label: 'Não iniciado', dotClass: 'bg-muted-foreground', chipClass: 'bg-muted text-muted-foreground' },
-  { key: 'em_andamento', label: 'Em andamento', dotClass: 'bg-info', chipClass: 'bg-info/10 text-info' },
-  { key: 'concluido', label: 'Concluído', dotClass: 'bg-success', chipClass: 'bg-success/10 text-success' },
+const COLUMNS: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string }[] = [
+  { key: 'nao_iniciado', label: 'Não iniciado', dotClass: 'bg-muted-foreground', chipClass: 'bg-muted text-muted-foreground', colBg: 'bg-muted/40', cardBg: 'bg-background/60', cardBorder: 'border-border/60', addText: 'text-muted-foreground' },
+  { key: 'em_andamento', label: 'Em andamento', dotClass: 'bg-info', chipClass: 'bg-info/15 text-info', colBg: 'bg-info/[0.06]', cardBg: 'bg-info/[0.08]', cardBorder: 'border-info/25', addText: 'text-info' },
+  { key: 'concluido', label: 'Concluído', dotClass: 'bg-success', chipClass: 'bg-success/15 text-success', colBg: 'bg-success/[0.06]', cardBg: 'bg-success/[0.08]', cardBorder: 'border-success/25', addText: 'text-success' },
 ];
 
 const UNASSIGNED = '__unassigned__';
