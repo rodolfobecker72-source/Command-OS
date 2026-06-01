@@ -841,8 +841,6 @@ function Column({
 
 function SortableCard({
   activity,
-function SortableCard({
-  activity,
   members,
   col,
   isEditing,
