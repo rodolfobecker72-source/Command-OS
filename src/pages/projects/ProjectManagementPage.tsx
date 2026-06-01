@@ -1,5 +1,9 @@
-import { useState, useMemo } from 'react';
-import { ChevronRight, Settings2, ListChecks, Calendar as CalendarIcon } from 'lucide-react';
+import { useState, useMemo, ReactNode } from 'react';
+import { ChevronRight, Settings2, ListChecks, Calendar as CalendarIcon, GripVertical } from 'lucide-react';
+import {
+  DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
+  useDraggable, useDroppable, closestCenter,
+} from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,6 +13,32 @@ import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusM
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
+
+function DroppableStatus({ statusKey, children, isOver: _ignored, className }: { statusKey: string; children: ReactNode; isOver?: boolean; className?: string }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `status-${statusKey}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(className, isOver && 'bg-accent/10 ring-2 ring-accent/40 rounded-md')}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableRow({ id, children }: { id: string; children: (handleProps: { listeners: any; attributes: any }) => ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <li ref={setNodeRef} style={style} className="list-none">
+      {children({ listeners, attributes })}
+    </li>
+  );
+}
+
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
