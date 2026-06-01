@@ -169,9 +169,9 @@ export function ProjectManagementPage() {
               </button>
 
               {!isCollapsed && (
-                <div className="pl-9 pb-3 pr-2 space-y-3">
+                <DroppableStatus statusKey={col.key} className="pl-9 pb-3 pr-2 space-y-3 min-h-[40px]">
                   {totalCards === 0 ? (
-                    <p className="text-xs text-muted-foreground py-2">Nenhum projeto neste status</p>
+                    <p className="text-xs text-muted-foreground py-2">Nenhum projeto neste status (solte aqui)</p>
                   ) : (
                     buckets.map((bucket) => (
                       <div key={bucket.month || '__none__'} className="space-y-1">
@@ -186,85 +186,97 @@ export function ProjectManagementPage() {
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
                             return (
-                              <li
-                                key={card.id}
-                                className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => setActivitiesFor({ id: card.id, name: `${card.proposalId ? card.proposalId + ' - ' : ''}${card.projectName}${card.clientName ? ' · ' + card.clientName : ''}` })}
-                                  className="min-w-0 flex-1 text-left flex items-center gap-2 hover:text-primary"
-                                  title="Ver atividades do projeto"
-                                >
-                                  <ListChecks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                  <span className="truncate">
-                                    {card.proposalId && (
-                                      <span className="font-medium">{card.proposalId} - </span>
-                                    )}
-                                    <span className="font-medium">{card.projectName}</span>
-                                    {card.clientName && (
-                                      <span className="text-muted-foreground"> · {card.clientName}</span>
-                                    )}
-                                  </span>
-                                </button>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 px-2 text-xs shrink-0 gap-1"
-                                      title="Alterar mês de execução"
+                              <DraggableRow key={card.id} id={card.id}>
+                                {({ listeners, attributes }) => (
+                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3 bg-background">
+                                    <button
+                                      type="button"
+                                      {...listeners}
+                                      {...attributes}
+                                      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none shrink-0"
+                                      title="Arraste para mudar de status"
+                                      aria-label="Arrastar"
                                     >
-                                      <CalendarIcon className="w-3 h-3" />
-                                      {budget?.executionMonth ? formatMonthLabel(budget.executionMonth) : 'Definir mês'}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-3 z-[200]" align="end">
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-medium text-muted-foreground">Mês de execução</label>
-                                      <Input
-                                        type="month"
-                                        value={budget?.executionMonth ?? ''}
-                                        onChange={(e) => handleMonthChange(card.budgetId, e.target.value)}
-                                        className="h-8 text-xs"
-                                      />
-                                      {budget?.executionMonth && (
+                                      <GripVertical className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setActivitiesFor({ id: card.id, name: `${card.proposalId ? card.proposalId + ' - ' : ''}${card.projectName}${card.clientName ? ' · ' + card.clientName : ''}` })}
+                                      className="min-w-0 flex-1 text-left flex items-center gap-2 hover:text-primary"
+                                      title="Ver atividades do projeto"
+                                    >
+                                      <ListChecks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                                      <span className="truncate">
+                                        {card.proposalId && (
+                                          <span className="font-medium">{card.proposalId} - </span>
+                                        )}
+                                        <span className="font-medium">{card.projectName}</span>
+                                        {card.clientName && (
+                                          <span className="text-muted-foreground"> · {card.clientName}</span>
+                                        )}
+                                      </span>
+                                    </button>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
                                         <Button
-                                          variant="ghost"
+                                          variant="outline"
                                           size="sm"
-                                          className="h-7 text-xs w-full"
-                                          onClick={() => handleMonthChange(card.budgetId, '')}
+                                          className="h-7 px-2 text-xs shrink-0 gap-1"
+                                          title="Alterar mês de execução"
                                         >
-                                          Remover mês
+                                          <CalendarIcon className="w-3 h-3" />
+                                          {budget?.executionMonth ? formatMonthLabel(budget.executionMonth) : 'Definir mês'}
                                         </Button>
-                                      )}
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                                <Select
-                                  value={card.status}
-                                  onValueChange={(value) => updateProjectCard(card.id, { status: value })}
-                                >
-                                  <SelectTrigger className="h-7 w-[170px] text-xs shrink-0">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent className="z-[200]">
-                                    {sortedColumns.map((c) => (
-                                      <SelectItem key={c.key} value={c.key} className="text-xs">
-                                        {c.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </li>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-3 z-[200]" align="end">
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-medium text-muted-foreground">Mês de execução</label>
+                                          <Input
+                                            type="month"
+                                            value={budget?.executionMonth ?? ''}
+                                            onChange={(e) => handleMonthChange(card.budgetId, e.target.value)}
+                                            className="h-8 text-xs"
+                                          />
+                                          {budget?.executionMonth && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-7 text-xs w-full"
+                                              onClick={() => handleMonthChange(card.budgetId, '')}
+                                            >
+                                              Remover mês
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
+                                    <Select
+                                      value={card.status}
+                                      onValueChange={(value) => updateProjectCard(card.id, { status: value })}
+                                    >
+                                      <SelectTrigger className="h-7 w-[170px] text-xs shrink-0">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="z-[200]">
+                                        {sortedColumns.map((c) => (
+                                          <SelectItem key={c.key} value={c.key} className="text-xs">
+                                            {c.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                              </DraggableRow>
                             );
                           })}
                         </ul>
                       </div>
                     ))
                   )}
-                </div>
+                </DroppableStatus>
               )}
+
             </div>
           );
         })}
