@@ -360,8 +360,9 @@ export function ProspectionPage() {
 
   // Kanban columns (filter out perdido and nutricao — they show separately)
   const kanbanStatuses: LeadFunnelStatus[] = [
-    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm',
+    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao', 'perdido',
   ];
+
 
   const uniqueResponsibles = useMemo(() => {
     const names = new Set(leads.map(l => l.prospectionResponsible).filter(Boolean));
@@ -740,41 +741,7 @@ export function ProspectionPage() {
             </DndContext>
 
 
-            {/* Perdidos & Nutrição */}
-            {filteredLeads.some(l => l.funnelStatus === 'perdido' || l.funnelStatus === 'nutricao') && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
-                {['perdido', 'nutricao'].map(status => {
-                  const items = filteredLeads.filter(l => l.funnelStatus === status);
-                  if (items.length === 0) return null;
-                  return (
-                    <Card key={status} className="border-0 shadow-sm rounded-2xl">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <FunnelStatusBadge status={status as LeadFunnelStatus} />
-                          <span className="text-muted-foreground">({items.length})</span>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {items.map(lead => (
-                          <div key={lead.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                            <div>
-                              <p className="text-sm font-medium">{lead.companyName}</p>
-                              <p className="text-xs text-muted-foreground">{lead.contactName}</p>
-                            </div>
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="outline" className="text-xs h-7 gap-1"
-                                onClick={() => handleReactivate(lead)}>
-                                <RotateCcw className="w-3 h-3" /> Reativar
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+
           </motion.div>
         )}
       </AnimatePresence>
