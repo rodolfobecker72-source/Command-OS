@@ -360,8 +360,9 @@ export function ProspectionPage() {
 
   // Kanban columns (filter out perdido and nutricao — they show separately)
   const kanbanStatuses: LeadFunnelStatus[] = [
-    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm',
+    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao', 'perdido',
   ];
+
 
   const uniqueResponsibles = useMemo(() => {
     const names = new Set(leads.map(l => l.prospectionResponsible).filter(Boolean));
