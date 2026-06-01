@@ -187,6 +187,11 @@ export function WelcomePage() {
         toStart: [],
       };
 
+      const horizon = new Date();
+      horizon.setHours(0, 0, 0, 0);
+      horizon.setDate(horizon.getDate() + 5);
+      const horizonStr = horizon.toISOString().slice(0, 10);
+
       for (const a of activities as any[]) {
         const ids: string[] = Array.isArray(a.assigned_to_user_ids) && a.assigned_to_user_ids.length > 0
           ? a.assigned_to_user_ids
@@ -201,7 +206,7 @@ export function WelcomePage() {
           freelaName: a.freela_name || null,
         };
         if (item.isOverdue) bucket.overdue.push(item);
-        else if (a.status === 'nao_iniciado') bucket.toStart.push(item);
+        else if (a.due_date && a.due_date >= today && a.due_date <= horizonStr) bucket.toStart.push(item);
       }
 
       const list = (bucket.overdue.length > 0 || bucket.toStart.length > 0) ? [bucket] : [];
