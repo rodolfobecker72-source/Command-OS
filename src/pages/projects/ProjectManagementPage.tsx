@@ -1,4 +1,5 @@
-import { useState, useMemo, ReactNode, useEffect } from 'react';
+import { useState, useMemo, ReactNode, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink } from 'lucide-react';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
@@ -74,6 +75,10 @@ export function ProjectManagementPage() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
   const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightBudgetId = searchParams.get('budget');
+  const [highlightCardId, setHighlightCardId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!workspace?.id) return;
@@ -95,6 +100,32 @@ export function ProjectManagementPage() {
     })();
     return () => { cancelled = true; };
   }, [workspace?.id, projectCards.length]);
+
+  useEffect(() => {
+    if (!highlightBudgetId || projectCards.length === 0) return;
+    const card = projectCards.find((c) => c.budgetId === highlightBudgetId);
+    if (!card) return;
+    setCollapsed((prev) => ({ ...prev, [card.status]: false }));
+    setHighlightCardId(card.id);
+    const tryScroll = (attempt = 0) => {
+      const el = cardRefs.current[card.id];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (attempt < 10) {
+        setTimeout(() => tryScroll(attempt + 1), 100);
+      }
+    };
+    setTimeout(() => tryScroll(), 50);
+    const t = setTimeout(() => {
+      setHighlightCardId(null);
+      setSearchParams((prev) => {
+        const sp = new URLSearchParams(prev);
+        sp.delete('budget');
+        return sp;
+      }, { replace: true });
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [highlightBudgetId, projectCards, setSearchParams]);
 
   const sortedColumns = useMemo(
     () => [...projectColumns].sort((a, b) => a.order - b.order),
@@ -237,7 +268,13 @@ export function ProjectManagementPage() {
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0">
+                                  <div
+                                    ref={(el) => { cardRefs.current[card.id] = el; }}
+                                    className={cn(
+                                      'text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0 transition-all',
+                                      highlightCardId === card.id && 'ring-2 ring-primary bg-primary/10'
+                                    )}
+                                  >
                                     <button
                                       type="button"
                                       {...listeners}

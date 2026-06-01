@@ -863,18 +863,10 @@ export function BudgetDetail() {
           </Button>
 
           <div className="flex items-center gap-2">
-            {budget.status === 'aprovada' && budget.execution && activeTab !== 'execution' && (
+            {budget.status === 'aprovada' && (
               <Button
                 size="sm"
-                onClick={() => {
-                  setActiveTab('execution');
-                  setSearchParams((prev) => {
-                    const sp = new URLSearchParams(prev);
-                    sp.set('tab', 'execution');
-                    return sp;
-                  });
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+                onClick={() => navigate(`/gestao-projetos?budget=${budget.id}`)}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Ir para Execução
