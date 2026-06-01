@@ -169,7 +169,7 @@ export function BudgetDetail() {
   const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
   const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
   const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fromParam = searchParams.get('from');
   const initialTab = searchParams.get('tab') === 'execution' ? 'execution' : 'budget';
   const [activeTab, setActiveTab] = useState(initialTab);
