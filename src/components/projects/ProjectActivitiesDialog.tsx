@@ -891,7 +891,12 @@ function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative rounded-lg border bg-card p-3 text-sm flex flex-col gap-2 hover:border-primary/40 shadow-sm"
+      className={cn(
+        'group relative rounded-lg border p-3 text-sm flex flex-col gap-1.5 transition-colors',
+        col.cardBg,
+        col.cardBorder,
+        'hover:border-primary/40'
+      )}
     >
       <button
         type="button"
@@ -903,7 +908,8 @@ function SortableCard({
       </button>
 
       {/* Title */}
-      <div className="pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+      <div className="flex items-start gap-2 pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+        <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         {isEditing ? (
           <Input
             autoFocus
@@ -914,14 +920,14 @@ function SortableCard({
               if (e.key === 'Enter') onSaveEdit(activity.id);
               if (e.key === 'Escape') onSaveEdit(activity.id);
             }}
-            className="h-7"
+            className="h-7 flex-1"
           />
         ) : (
           <button
             type="button"
             onClick={() => onStartEdit(activity.id, activity.title)}
             className={cn(
-              'text-left w-full font-semibold leading-tight cursor-text break-words',
+              'text-left flex-1 font-semibold leading-tight cursor-text break-words',
               activity.status === 'concluido' && 'line-through text-muted-foreground'
             )}
             title={activity.title}
