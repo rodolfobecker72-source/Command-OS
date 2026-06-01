@@ -443,71 +443,127 @@ export function UsersPage() {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Membro</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Papel</TableHead>
-                    {canManage && <TableHead className="text-right">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Membro</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Papel</TableHead>
+                        {canManage && <TableHead className="text-right">Ações</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {members.map(member => {
+                        const RoleIcon = ROLE_ICONS[member.role];
+                        return (
+                          <TableRow key={member.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={member.profile?.photo_url || undefined} />
+                                  <AvatarFallback>
+                                    {member.profile ? getInitials(member.profile.name) : '?'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">{member.profile?.name || 'Sem nome'}</p>
+                                  {member.profile?.birth_date && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Nasc.: {new Date(member.profile.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm text-muted-foreground">{member.email || '—'}</p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className={ROLE_COLORS[member.role]}>
+                                <RoleIcon className="w-3 h-3 mr-1" />
+                                {ROLE_LABELS[member.role]}
+                              </Badge>
+                            </TableCell>
+                            {canManage && (
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  {member.role !== 'owner' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-destructive hover:text-destructive"
+                                      onClick={() => setDeletingMember(member)}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile card list */}
+                <div className="md:hidden space-y-3">
                   {members.map(member => {
                     const RoleIcon = ROLE_ICONS[member.role];
                     return (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={member.profile?.photo_url || undefined} />
-                              <AvatarFallback>
-                                {member.profile ? getInitials(member.profile.name) : '?'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{member.profile?.name || 'Sem nome'}</p>
-                              {member.profile?.birth_date && (
-                                <p className="text-xs text-muted-foreground">
-                                  Nasc.: {new Date(member.profile.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                                </p>
-                              )}
-                            </div>
+                      <div key={member.id} className="border border-border/60 rounded-lg p-3 space-y-2.5">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={member.profile?.photo_url || undefined} />
+                            <AvatarFallback>
+                              {member.profile ? getInitials(member.profile.name) : '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{member.profile?.name || 'Sem nome'}</p>
+                            <p className="text-xs text-muted-foreground truncate">{member.email || '—'}</p>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm text-muted-foreground">{member.email || '—'}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={ROLE_COLORS[member.role]}>
-                            <RoleIcon className="w-3 h-3 mr-1" />
-                            {ROLE_LABELS[member.role]}
-                          </Badge>
-                        </TableCell>
-                        {canManage && (
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
+                          {canManage && (
+                            <div className="flex gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditMember(member)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
                               {member.role !== 'owner' && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-destructive hover:text-destructive"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={() => setDeletingMember(member)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               )}
                             </div>
-                          </TableCell>
-                        )}
-                      </TableRow>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <Badge variant="secondary" className={ROLE_COLORS[member.role]}>
+                            <RoleIcon className="w-3 h-3 mr-1" />
+                            {ROLE_LABELS[member.role]}
+                          </Badge>
+                          {member.profile?.birth_date && (
+                            <span className="text-xs text-muted-foreground">
+                              Nasc.: {new Date(member.profile.birth_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
