@@ -1,4 +1,5 @@
-import { useState, useMemo, ReactNode, useEffect } from 'react';
+import { useState, useMemo, ReactNode, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink } from 'lucide-react';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
