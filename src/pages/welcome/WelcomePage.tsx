@@ -507,6 +507,59 @@ export function WelcomePage() {
           </Card>
         )}
 
+        {/* Menções em comentários */}
+        {mentions.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AtSign className="w-5 h-5 text-primary" />
+                Você foi mencionado ({mentions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {mentions.map((m) => {
+                  const initials = (m.authorName || '?').split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+                  const when = m.createdAt
+                    ? new Date(m.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                    : '';
+                  return (
+                    <li key={`${m.cardId}-${m.commentId}`} className="border border-primary/30 bg-primary/5 rounded-lg p-3 flex items-start gap-2.5 shadow-sm">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={m.authorPhoto || undefined} alt={m.authorName} />
+                        <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold truncate">{m.authorName}</p>
+                          <span className="text-[10px] text-muted-foreground">em {m.projectName}</span>
+                          {when && <span className="text-[10px] text-muted-foreground ml-auto">{when}</span>}
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {m.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleMarkMentionRead(m.cardId, m.commentId)}
+                        className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-background hover:bg-success hover:text-success-foreground hover:border-success transition"
+                        title="Marcar como lido"
+                        aria-label="Marcar como lido"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Próximas ações de leads (prospecção) */}
         {leadAlerts.length > 0 && (
           <Card>
