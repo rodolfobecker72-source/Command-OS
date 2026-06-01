@@ -253,6 +253,66 @@ export function WelcomePage() {
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadMentions = async () => {
+      if (!workspace || !profile?.id) return;
+      const { data: cards } = await supabase
+        .from('project_cards')
+        .select('id, project_name, comments')
+        .eq('workspace_id', workspace.id);
+      const items: MentionItem[] = [];
+      for (const c of (cards || []) as any[]) {
+        const arr = Array.isArray(c.comments) ? c.comments : [];
+        for (const cm of arr) {
+          const ments: string[] = Array.isArray(cm?.mentions) ? cm.mentions : [];
+          const readBy: string[] = Array.isArray(cm?.readBy) ? cm.readBy : [];
+          if (ments.includes(profile.id) && !readBy.includes(profile.id)) {
+            items.push({
+              cardId: c.id,
+              commentId: cm.id,
+              projectName: c.project_name || 'Projeto',
+              authorName: cm.userName || 'Usuário',
+              authorPhoto: cm.photoUrl || null,
+              text: cm.text || '',
+              createdAt: cm.createdAt || '',
+            });
+          }
+        }
+      }
+      items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      if (!cancelled) setMentions(items);
+    };
+    loadMentions();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
+  const handleMarkMentionRead = async (cardId: string, commentId: string) => {
+    if (!profile?.id) return;
+    const prev = mentions;
+    setMentions(p => p.filter(m => !(m.cardId === cardId && m.commentId === commentId)));
+    const { data: card } = await supabase
+      .from('project_cards')
+      .select('comments')
+      .eq('id', cardId)
+      .maybeSingle();
+    const arr = Array.isArray((card as any)?.comments) ? (card as any).comments : [];
+    const next = arr.map((cm: any) => {
+      if (cm.id !== commentId) return cm;
+      const readBy: string[] = Array.isArray(cm.readBy) ? cm.readBy : [];
+      if (readBy.includes(profile.id)) return cm;
+      return { ...cm, readBy: [...readBy, profile.id] };
+    });
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', cardId);
+    if (error) {
+      setMentions(prev);
+      toast({ title: 'Erro', description: 'Não foi possível marcar como lido.', variant: 'destructive' });
+    }
+  };
+
   const handleCompleteActivity = async (activityId: string) => {
     // Optimistic remove
     setUserActivities((prev) =>
