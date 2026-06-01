@@ -519,7 +519,9 @@ export function ProspectionPage() {
           <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <Card className="border-0 shadow-sm rounded-2xl overflow-hidden">
               <CardContent className="p-0">
-                <Table>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Empresa</TableHead>
@@ -601,7 +603,72 @@ export function ProspectionPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="md:hidden p-3 space-y-3">
+                  {filteredLeads.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Target className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">Nenhum lead encontrado</p>
+                      <p className="text-sm">Crie seu primeiro lead para começar</p>
+                    </div>
+                  ) : filteredLeads.map(lead => (
+                    <div
+                      key={lead.id}
+                      className="border border-border/60 rounded-lg p-3 space-y-2 bg-card active:bg-muted/50 transition-colors"
+                      onClick={() => setDetailLead(lead)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <ResponsibleAvatar userId={lead.responsibleUserId} />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{lead.companyName}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {lead.contactName}{lead.city ? ` · ${lead.city}` : ''}
+                          </p>
+                        </div>
+                        <FunnelStatusBadge status={lead.funnelStatus} />
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <TemperatureBadge temp={lead.temperature} />
+                        <PriorityBadge priority={lead.priority} />
+                        <Badge variant="outline" className="text-xs">{ACQUISITION_TYPE_LABELS[lead.acquisitionType]}</Badge>
+                      </div>
+                      {(lead.nextAction || lead.estimatedPotential > 0) && (
+                        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2">
+                          <span className="truncate">
+                            {lead.nextAction || ''}
+                            {lead.nextActionDate ? ` · ${format(new Date(lead.nextActionDate), 'dd/MM/yyyy')}` : ''}
+                          </span>
+                          {lead.estimatedPotential > 0 && (
+                            <span className="font-medium text-foreground shrink-0">
+                              R$ {lead.estimatedPotential.toLocaleString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={e => e.stopPropagation()}>
+                        {lead.funnelStatus === 'qualificado_crm' && (
+                          <Button size="sm" variant="default" className="gap-1 text-xs h-7" onClick={() => handleMigrateToCRM(lead)}>
+                            <ArrowUpRight className="w-3 h-3" /> CRM
+                          </Button>
+                        )}
+                        {lead.funnelStatus === 'perdido' && (
+                          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => handleReactivate(lead)}>
+                            <RotateCcw className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(lead)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteConfirm(lead.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </motion.div>

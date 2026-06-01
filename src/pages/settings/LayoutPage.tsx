@@ -209,7 +209,7 @@ export function LayoutPage() {
     <div className="flex-1">
       <Header title="Layout do PDF" subtitle="Configurações de identidade visual para documentos" />
 
-      <div className="p-6 max-w-2xl space-y-6">
+      <div className="p-4 md:p-6 max-w-2xl space-y-4 md:space-y-6">
         {/* Logo Upload */}
         <Card>
           <CardHeader>
