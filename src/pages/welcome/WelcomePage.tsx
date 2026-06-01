@@ -224,8 +224,9 @@ export function WelcomePage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString().slice(0, 10);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const horizon = new Date(today);
+      horizon.setDate(horizon.getDate() + 5);
+      const horizonStr = horizon.toISOString().slice(0, 10);
 
       const { data: leads } = await supabase
         .from('prospection_leads')
@@ -241,6 +242,7 @@ export function WelcomePage() {
         let status: LeadAlertStatus | null = null;
         if (d < todayStr) status = 'overdue';
         else if (d === todayStr) status = 'today';
+        else if (d <= horizonStr) status = 'upcoming';
         if (!status) continue;
         items.push({
           id: l.id,
@@ -250,7 +252,7 @@ export function WelcomePage() {
           status,
         });
       }
-      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1 };
+      const order: Record<LeadAlertStatus, number> = { overdue: 0, today: 1, upcoming: 2 };
       items.sort((a, b) => order[a.status] - order[b.status] || a.nextActionDate.localeCompare(b.nextActionDate));
       if (!cancelled) setLeadAlerts(items);
     };
