@@ -186,11 +186,12 @@ export function ProjectManagementPage() {
           const buckets = cardsByStatusAndMonth[col.key] || [];
           const totalCards = buckets.reduce((acc, b) => acc + b.cards.length, 0);
           const isCollapsed = collapsed[col.key];
+          const tint = STATUS_TINT[col.color] || DEFAULT_TINT;
           return (
-            <div key={col.id} className="border-b border-border/50">
+            <div key={col.id} className={cn('rounded-lg border', tint.border, tint.block)}>
               <button
                 onClick={() => toggle(col.key)}
-                className="w-full flex items-center gap-2 py-3 hover:bg-muted/30 transition-colors px-2 rounded-md text-left"
+                className="w-full flex items-center gap-2 py-3 hover:bg-foreground/[0.03] transition-colors px-3 rounded-md text-left"
               >
                 <ChevronRight
                   className={cn(
@@ -198,7 +199,7 @@ export function ProjectManagementPage() {
                     !isCollapsed && 'rotate-90'
                   )}
                 />
-                <span className={cn('inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-sm font-medium bg-muted/50')}>
+                <span className={cn('inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-sm font-medium bg-background/60')}>
                   <span className={cn('w-2 h-2 rounded-full', col.color)} />
                   {col.label}
                 </span>
@@ -206,13 +207,13 @@ export function ProjectManagementPage() {
               </button>
 
               {!isCollapsed && (
-                <DroppableStatus statusKey={col.key} className="pl-9 pb-3 pr-2 space-y-3 min-h-[40px]">
+                <DroppableStatus statusKey={col.key} className="pl-9 pb-3 pr-3 space-y-3 min-h-[40px]">
                   {totalCards === 0 ? (
                     <p className="text-xs text-muted-foreground py-2">Nenhum projeto neste status (solte aqui)</p>
                   ) : (
                     buckets.map((bucket) => (
-                      <div key={bucket.month || '__none__'} className="space-y-1">
-                        <div className="flex items-center gap-2 mt-1 mb-1">
+                      <div key={bucket.month || '__none__'} className={cn('space-y-1 rounded-md border px-2 py-2', tint.border, tint.month)}>
+                        <div className="flex items-center gap-2 mb-1">
                           <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             {formatMonthLabel(bucket.month)}
