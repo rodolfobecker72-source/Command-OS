@@ -1,4 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, ReactNode } from 'react';
+import {
+  DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
+  useDraggable, useDroppable, closestCenter,
+} from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { motion, AnimatePresence } from 'framer-motion';
