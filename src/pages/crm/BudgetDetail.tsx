@@ -169,7 +169,7 @@ export function BudgetDetail() {
   const [editedHasExecutionDate, setEditedHasExecutionDate] = useState(false);
   const [editedExecutionStartDate, setEditedExecutionStartDate] = useState<Date | null>(null);
   const [editedExecutionEndDate, setEditedExecutionEndDate] = useState<Date | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fromParam = searchParams.get('from');
   const initialTab = searchParams.get('tab') === 'execution' ? 'execution' : 'budget';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -863,6 +863,23 @@ export function BudgetDetail() {
           </Button>
 
           <div className="flex items-center gap-2">
+            {budget.status === 'aprovada' && budget.execution && activeTab !== 'execution' && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setActiveTab('execution');
+                  setSearchParams((prev) => {
+                    const sp = new URLSearchParams(prev);
+                    sp.set('tab', 'execution');
+                    return sp;
+                  });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Ir para Execução
+              </Button>
+            )}
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
