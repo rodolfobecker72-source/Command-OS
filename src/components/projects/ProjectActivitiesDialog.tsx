@@ -1058,7 +1058,7 @@ function SortableCard({
           value={activity.dueDate || ''}
           onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
           className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1"
-          placeholder="Sem prazo"
+          placeholder="Add Prazo"
         />
       </div>
     </div>
