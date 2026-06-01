@@ -1,4 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, ReactNode } from 'react';
+import {
+  DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
+  useDraggable, useDroppable, closestCenter,
+} from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/layout/Header';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -108,10 +112,48 @@ const emptyLead: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'> = {
   responsibleUserId: null,
 };
 
+function DroppableColumn({ status, children }: { status: LeadFunnelStatus; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col-${status}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-w-[280px] flex-shrink-0 rounded-2xl p-1 transition-colors ${isOver ? 'bg-accent/10 ring-2 ring-accent/40' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children: ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      {children}
+    </div>
+  );
+}
+
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
   const { addClient } = useCRM();
   const auth = useAuth();
+
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const handleKanbanDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const overId = String(over.id);
+    if (!overId.startsWith('col-')) return;
+    const newStatus = overId.slice(4) as LeadFunnelStatus;
+    const lead = leads.find(l => l.id === active.id);
+    if (!lead || lead.funnelStatus === newStatus) return;
+    updateLead(lead.id, { funnelStatus: newStatus });
+  };
+
 
   const [activeTab, setActiveTab] = useState<'leads' | 'painel'>('leads');
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
@@ -565,51 +607,58 @@ export function ProspectionPage() {
           </motion.div>
         ) : (
           <motion.div key="kanban" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <DndContext
+              sensors={dndSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleKanbanDragEnd}
+            >
             <div className="flex gap-5 overflow-x-auto pb-4">
               {kanbanStatuses.map(status => {
                 const statusLeads = filteredLeads.filter(l => l.funnelStatus === status);
                 return (
-                  <div key={status} className="min-w-[280px] flex-shrink-0">
+                  <DroppableColumn key={status} status={status}>
                     <div className="flex items-center justify-between mb-3 px-1">
                       <div className="flex items-center gap-2">
                         <FunnelStatusBadge status={status} />
                         <span className="text-xs font-medium text-muted-foreground">{statusLeads.length}</span>
                       </div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 min-h-[40px]">
                       {statusLeads.map(lead => (
-                        <Card key={lead.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all"
-                          onClick={() => setDetailLead(lead)}>
-                          <CardContent className="p-4 space-y-2.5">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <ResponsibleAvatar userId={lead.responsibleUserId} />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-sm truncate">{lead.companyName}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{lead.contactName}</p>
+                        <DraggableLeadCard key={lead.id} lead={lead}>
+                          <Card className="border-0 shadow-sm rounded-2xl cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                            onClick={() => setDetailLead(lead)}>
+                            <CardContent className="p-4 space-y-2.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <ResponsibleAvatar userId={lead.responsibleUserId} />
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate">{lead.companyName}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{lead.contactName}</p>
+                                  </div>
                                 </div>
+                                <TemperatureBadge temp={lead.temperature} />
                               </div>
-                              <TemperatureBadge temp={lead.temperature} />
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">{LEAD_ORIGIN_LABELS[lead.origin]}</Badge>
-                              <PriorityBadge priority={lead.priority} />
-                            </div>
-                            {lead.estimatedPotential > 0 && (
-                              <p className="text-xs font-semibold">R$ {lead.estimatedPotential.toLocaleString('pt-BR')}</p>
-                            )}
-                            {lead.nextAction && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                <Clock className="w-3 h-3 inline mr-1" />{lead.nextAction}
-                              </p>
-                            )}
-                            {status === 'qualificado_crm' && (
-                              <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
-                                <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">{LEAD_ORIGIN_LABELS[lead.origin]}</Badge>
+                                <PriorityBadge priority={lead.priority} />
+                              </div>
+                              {lead.estimatedPotential > 0 && (
+                                <p className="text-xs font-semibold">R$ {lead.estimatedPotential.toLocaleString('pt-BR')}</p>
+                              )}
+                              {lead.nextAction && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  <Clock className="w-3 h-3 inline mr-1" />{lead.nextAction}
+                                </p>
+                              )}
+                              {status === 'qualificado_crm' && (
+                                <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
+                                  <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
+                                </Button>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </DraggableLeadCard>
                       ))}
                       {statusLeads.length === 0 && (
                         <div className="border border-dashed rounded-2xl p-6 text-center text-xs text-muted-foreground">
@@ -617,10 +666,12 @@ export function ProspectionPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </DroppableColumn>
                 );
               })}
             </div>
+            </DndContext>
+
 
             {/* Perdidos & Nutrição */}
             {filteredLeads.some(l => l.funnelStatus === 'perdido' || l.funnelStatus === 'nutricao') && (
