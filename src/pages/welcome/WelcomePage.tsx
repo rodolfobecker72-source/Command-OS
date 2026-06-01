@@ -85,6 +85,7 @@ export function WelcomePage() {
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
+  const [mentions, setMentions] = useState<MentionItem[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
