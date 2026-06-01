@@ -242,7 +242,7 @@ export function ProjectManagementPage() {
                                       type="button"
                                       {...listeners}
                                       {...attributes}
-                                      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none shrink-0"
+                                      className="hidden md:inline-flex cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none shrink-0"
                                       title="Arraste para mudar de status"
                                       aria-label="Arrastar"
                                     >
