@@ -751,8 +751,9 @@ function Column({
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-lg border bg-muted/30 p-3 flex flex-col gap-2 min-h-[260px] transition-colors',
-        isOver && 'bg-muted/60 border-primary/40'
+        'rounded-xl p-3 flex flex-col gap-3 min-h-[260px] transition-colors',
+        col.colBg,
+        isOver && 'ring-2 ring-primary/40'
       )}
     >
       <div className={cn('inline-flex items-center gap-2 self-start px-2.5 py-0.5 rounded-full text-xs font-medium', col.chipClass)}>
@@ -768,6 +769,7 @@ function Column({
               key={a.id}
               activity={a}
               members={members}
+              col={col}
               isEditing={editingId === a.id}
               editTitle={editTitle}
               onChangeEdit={onChangeEdit}
@@ -782,45 +784,56 @@ function Column({
         </div>
       </SortableContext>
 
-      <div className="flex flex-col gap-1.5 pt-2 border-t border-border/50 mt-1">
-        <div className="flex items-center gap-1.5">
+      {/* Inline new-task card matching task style */}
+      <div className={cn('rounded-lg border border-dashed p-3 flex flex-col gap-2', col.cardBorder, col.cardBg)}>
+        <div className="flex items-center gap-2">
+          <Plus className={cn('w-4 h-4 shrink-0', col.addText)} />
           <Input
             value={newTitle}
             onChange={e => onNewTitle(e.target.value)}
-            placeholder="+ Nova tarefa"
-            className="h-8 bg-background"
+            placeholder="Nova tarefa"
+            className={cn('h-7 border-0 bg-transparent px-0 text-sm font-semibold placeholder:font-normal focus-visible:ring-0 focus-visible:ring-offset-0', col.addText, 'placeholder:' + col.addText)}
             onKeyDown={e => { if (e.key === 'Enter') onAdd(); }}
           />
-          <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={onAdd} disabled={!newTitle.trim()}>
-            <Plus className="w-4 h-4" />
-          </Button>
         </div>
-        <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
-          <SelectTrigger className="h-7 text-xs bg-background w-full">
-            <SelectValue placeholder="Responsável" />
-          </SelectTrigger>
-          <SelectContent className="z-[200]">
-            <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-            {members.map(m => (
-              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-            ))}
-            <SelectItem value="__freela__">Freela</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <User className="w-3.5 h-3.5 shrink-0" />
+          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+            <SelectTrigger className="h-6 border-0 bg-transparent px-0 text-xs text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+              <SelectValue placeholder="Add Responsável" />
+            </SelectTrigger>
+            <SelectContent className="z-[200]">
+              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+              {members.map(m => (
+                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+              ))}
+              <SelectItem value="__freela__">Freela</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {newAssignee === '__freela__' && (
           <Input
             value={newFreela}
             onChange={e => onNewFreela(e.target.value)}
             placeholder="Nome do freela"
-            className="h-7 text-xs bg-background w-full"
+            className="h-7 text-xs bg-background/70 w-full"
           />
         )}
-        <Input
-          type="date"
-          value={newDue}
-          onChange={e => onNewDue(e.target.value)}
-          className="h-7 text-xs bg-background w-full"
-        />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5 shrink-0" />
+          <input
+            type="date"
+            value={newDue}
+            onChange={e => onNewDue(e.target.value)}
+            className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
+            placeholder="Add Prazo"
+          />
+        </div>
+        {newTitle.trim() && (
+          <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
+            Adicionar tarefa
+          </Button>
+        )}
       </div>
     </div>
   );
