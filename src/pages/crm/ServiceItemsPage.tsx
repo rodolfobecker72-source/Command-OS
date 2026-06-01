@@ -193,7 +193,7 @@ export function ServiceItemsPage() {
     <div className="min-h-screen bg-background">
       <Header title="Itens de Serviço" subtitle="Catálogo de itens reutilizáveis para orçamentos" />
 
-      <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">

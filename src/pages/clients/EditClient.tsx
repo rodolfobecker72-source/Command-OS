@@ -198,7 +198,7 @@ export function EditClient() {
     <div className="min-h-screen bg-background">
       <Header title="Editar Cliente" subtitle="Atualize as informações do cliente" />
 
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-4 md:p-6 max-w-2xl mx-auto">
         <Button
           variant="ghost"
           className="mb-6"

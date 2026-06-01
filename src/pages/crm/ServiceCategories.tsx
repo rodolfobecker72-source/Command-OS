@@ -401,7 +401,7 @@ export function ServiceCategories() {
     <div className="min-h-screen bg-background">
       <Header title="Categorias de Serviço" subtitle="Gerencie as categorias e objetivos dos serviços" />
 
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4 md:space-y-6">
         <DndContext sensors={catSensors} collisionDetection={closestCenter} onDragEnd={handleCatDragEnd}>
           <SortableContext items={sortedCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
             <AnimatePresence mode="popLayout">

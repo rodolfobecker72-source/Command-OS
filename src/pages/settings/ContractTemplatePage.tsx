@@ -172,7 +172,7 @@ export function ContractTemplatePage() {
     <div className="min-h-screen bg-background">
       <Header title="Minuta de Contrato" subtitle="Configure o modelo de contrato para seus projetos" />
 
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4 md:space-y-6">
         {/* Variables reference */}
         <Card>
           <CardHeader className="pb-3">

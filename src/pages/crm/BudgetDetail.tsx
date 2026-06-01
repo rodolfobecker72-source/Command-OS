@@ -855,7 +855,7 @@ export function BudgetDetail() {
         subtitle="Detalhes do projeto"
       />
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={() => navigate(backTo)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
