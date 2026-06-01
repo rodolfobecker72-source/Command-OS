@@ -193,7 +193,7 @@ function projectCardFromDb(row: any): ProjectCard {
     comments: (row.comments || []) as any[], materialLink: row.material_link,
     startDate: row.start_date ? new Date(row.start_date) : null,
     endDate: row.end_date ? new Date(row.end_date) : null,
-    notes: row.notes, createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at),
+    notes: row.notes, driveUrl: row.drive_url || '', createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -1521,6 +1521,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.projectName !== undefined) dbUpdates.project_name = updates.projectName;
       if (updates.objective !== undefined) dbUpdates.objective = updates.objective;
       if (updates.serviceTypes !== undefined) dbUpdates.service_types = updates.serviceTypes as any;
+      if (updates.driveUrl !== undefined) dbUpdates.drive_url = updates.driveUrl;
 
       const { error } = await supabase.from('project_cards').update(dbUpdates).eq('id', id);
       if (error) throw error;

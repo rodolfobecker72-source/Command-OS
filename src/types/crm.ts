@@ -511,6 +511,7 @@ export interface ProjectCard {
   startDate: Date | null;
   endDate: Date | null;
   notes: string;
+  driveUrl: string;
   createdAt: Date;
   updatedAt: Date;
 }
