@@ -75,6 +75,10 @@ export function ProjectManagementPage() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
   const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightBudgetId = searchParams.get('budget');
+  const [highlightCardId, setHighlightCardId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!workspace?.id) return;
