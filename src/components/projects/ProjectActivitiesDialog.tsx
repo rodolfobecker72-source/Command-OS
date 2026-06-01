@@ -724,7 +724,7 @@ function Column({
   onUpdateDue,
   onUpdateFreela,
 }: {
-  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string };
+  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
   activities: Activity[];
   members: MemberOption[];
   newTitle: string;
