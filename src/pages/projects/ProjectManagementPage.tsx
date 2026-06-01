@@ -220,7 +220,7 @@ export function ProjectManagementPage() {
                           </span>
                           <span className="text-xs text-muted-foreground">· {bucket.cards.length}</span>
                         </div>
-                        <ul className="space-y-1 overflow-x-auto -mx-2 px-2">
+                        <ul className="space-y-1 md:overflow-x-auto -mx-2 px-2">
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
@@ -237,12 +237,12 @@ export function ProjectManagementPage() {
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background min-w-[720px] md:min-w-0">
+                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0">
                                     <button
                                       type="button"
                                       {...listeners}
                                       {...attributes}
-                                      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none shrink-0"
+                                      className="hidden md:inline-flex cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none shrink-0"
                                       title="Arraste para mudar de status"
                                       aria-label="Arrastar"
                                     >
@@ -252,7 +252,7 @@ export function ProjectManagementPage() {
                                       value={card.status}
                                       onValueChange={(value) => updateProjectCard(card.id, { status: value })}
                                     >
-                                      <SelectTrigger className="h-7 w-[150px] text-xs shrink-0">
+                                      <SelectTrigger className="hidden md:flex h-7 w-[150px] text-xs shrink-0">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent className="z-[200]">
@@ -281,7 +281,7 @@ export function ProjectManagementPage() {
                                     </button>
                                     <span
                                       className={cn(
-                                        'text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
+                                        'hidden md:inline-flex text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
                                         pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                                       )}
                                       title={`${counts.done}/${counts.total} atividades concluídas`}
@@ -315,7 +315,7 @@ export function ProjectManagementPage() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="h-7 px-2 text-xs shrink-0 gap-1"
+                                          className="hidden md:inline-flex h-7 px-2 text-xs shrink-0 gap-1"
                                           title="Alterar mês de execução"
                                         >
                                           <CalendarIcon className="w-3 h-3" />
