@@ -210,10 +210,13 @@ export function ProjectManagementPage() {
                         <ul className="space-y-1">
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
+                            const counts = activityCounts[card.id] || { total: 0, done: 0 };
+                            const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
+                            const driveUrl = budget?.driveUrl?.trim();
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center justify-between gap-3 bg-background">
+                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background">
                                     <button
                                       type="button"
                                       {...listeners}
@@ -224,23 +227,66 @@ export function ProjectManagementPage() {
                                     >
                                       <GripVertical className="w-4 h-4" />
                                     </button>
+                                    <Select
+                                      value={card.status}
+                                      onValueChange={(value) => updateProjectCard(card.id, { status: value })}
+                                    >
+                                      <SelectTrigger className="h-7 w-[150px] text-xs shrink-0">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="z-[200]">
+                                        {sortedColumns.map((c) => (
+                                          <SelectItem key={c.key} value={c.key} className="text-xs">
+                                            {c.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                     <button
                                       type="button"
                                       onClick={() => setActivitiesFor({ id: card.id, name: `${card.proposalId ? card.proposalId + ' - ' : ''}${card.projectName}${card.clientName ? ' · ' + card.clientName : ''}` })}
-                                      className="min-w-0 flex-1 text-left flex items-center gap-2 hover:text-primary"
+                                      className="min-w-0 flex-1 text-left hover:text-primary"
                                       title="Ver atividades do projeto"
                                     >
-                                      <ListChecks className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                                      <span className="truncate">
+                                      <div className="truncate">
                                         {card.proposalId && (
                                           <span className="font-medium">{card.proposalId} - </span>
                                         )}
                                         <span className="font-medium">{card.projectName}</span>
-                                        {card.clientName && (
-                                          <span className="text-muted-foreground"> · {card.clientName}</span>
-                                        )}
-                                      </span>
+                                      </div>
+                                      {card.clientName && (
+                                        <div className="text-xs text-muted-foreground truncate">{card.clientName}</div>
+                                      )}
                                     </button>
+                                    <span
+                                      className={cn(
+                                        'text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
+                                        pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                      )}
+                                      title={`${counts.done}/${counts.total} atividades concluídas`}
+                                    >
+                                      {pct}%
+                                    </span>
+                                    {driveUrl ? (
+                                      <a
+                                        href={driveUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary shrink-0"
+                                        title="Abrir Google Drive do projeto"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </a>
+                                    ) : (
+                                      <span
+                                        className="inline-flex items-center justify-center h-7 w-7 rounded border border-border/50 text-muted-foreground/40 shrink-0 cursor-not-allowed"
+                                        title="Sem link do Drive cadastrado"
+                                        aria-disabled="true"
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </span>
+                                    )}
                                     <Popover>
                                       <PopoverTrigger asChild>
                                         <Button
@@ -275,21 +321,6 @@ export function ProjectManagementPage() {
                                         </div>
                                       </PopoverContent>
                                     </Popover>
-                                    <Select
-                                      value={card.status}
-                                      onValueChange={(value) => updateProjectCard(card.id, { status: value })}
-                                    >
-                                      <SelectTrigger className="h-7 w-[170px] text-xs shrink-0">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="z-[200]">
-                                        {sortedColumns.map((c) => (
-                                          <SelectItem key={c.key} value={c.key} className="text-xs">
-                                            {c.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
                                   </div>
                                 )}
                               </DraggableRow>
