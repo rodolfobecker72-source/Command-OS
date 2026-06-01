@@ -252,7 +252,7 @@ export function ProjectManagementPage() {
                                       value={card.status}
                                       onValueChange={(value) => updateProjectCard(card.id, { status: value })}
                                     >
-                                      <SelectTrigger className="h-7 w-[150px] text-xs shrink-0">
+                                      <SelectTrigger className="hidden md:flex h-7 w-[150px] text-xs shrink-0">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent className="z-[200]">
