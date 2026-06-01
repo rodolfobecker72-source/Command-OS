@@ -57,9 +57,32 @@ function formatMonthLabel(ym: string | null): string {
 
 export function ProjectManagementPage() {
   const { projectColumns, projectCards, updateProjectCard, budgets, updateBudget } = useCRM();
+  const { workspace } = useAuth();
   const [manageOpen, setManageOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
+  const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
+
+  useEffect(() => {
+    if (!workspace?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('project_activities')
+        .select('project_card_id,status')
+        .eq('workspace_id', workspace.id);
+      if (cancelled || !data) return;
+      const counts: Record<string, { total: number; done: number }> = {};
+      for (const a of data as any[]) {
+        const id = a.project_card_id as string;
+        if (!counts[id]) counts[id] = { total: 0, done: 0 };
+        counts[id].total += 1;
+        if (a.status === 'concluido') counts[id].done += 1;
+      }
+      setActivityCounts(counts);
+    })();
+    return () => { cancelled = true; };
+  }, [workspace?.id, projectCards.length]);
 
   const sortedColumns = useMemo(
     () => [...projectColumns].sort((a, b) => a.order - b.order),
