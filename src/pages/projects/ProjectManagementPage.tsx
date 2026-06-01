@@ -220,7 +220,7 @@ export function ProjectManagementPage() {
                           </span>
                           <span className="text-xs text-muted-foreground">· {bucket.cards.length}</span>
                         </div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-1 overflow-x-auto -mx-2 px-2">
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
