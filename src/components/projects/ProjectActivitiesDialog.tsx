@@ -841,7 +841,10 @@ function Column({
 
 function SortableCard({
   activity,
+function SortableCard({
+  activity,
   members,
+  col,
   isEditing,
   editTitle,
   onChangeEdit,
@@ -854,6 +857,7 @@ function SortableCard({
 }: {
   activity: Activity;
   members: MemberOption[];
+  col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
   isEditing: boolean;
   editTitle: string;
   onChangeEdit: (v: string) => void;
