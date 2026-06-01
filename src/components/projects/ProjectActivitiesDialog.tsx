@@ -680,7 +680,13 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                             )}
                           </div>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap break-words">{c.text}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {c.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   );
