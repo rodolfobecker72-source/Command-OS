@@ -569,51 +569,58 @@ export function ProspectionPage() {
           </motion.div>
         ) : (
           <motion.div key="kanban" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <DndContext
+              sensors={dndSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleKanbanDragEnd}
+            >
             <div className="flex gap-5 overflow-x-auto pb-4">
               {kanbanStatuses.map(status => {
                 const statusLeads = filteredLeads.filter(l => l.funnelStatus === status);
                 return (
-                  <div key={status} className="min-w-[280px] flex-shrink-0">
+                  <DroppableColumn key={status} status={status}>
                     <div className="flex items-center justify-between mb-3 px-1">
                       <div className="flex items-center gap-2">
                         <FunnelStatusBadge status={status} />
                         <span className="text-xs font-medium text-muted-foreground">{statusLeads.length}</span>
                       </div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 min-h-[40px]">
                       {statusLeads.map(lead => (
-                        <Card key={lead.id} className="border-0 shadow-sm rounded-2xl cursor-pointer hover:shadow-md transition-all"
-                          onClick={() => setDetailLead(lead)}>
-                          <CardContent className="p-4 space-y-2.5">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <ResponsibleAvatar userId={lead.responsibleUserId} />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-sm truncate">{lead.companyName}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{lead.contactName}</p>
+                        <DraggableLeadCard key={lead.id} lead={lead}>
+                          <Card className="border-0 shadow-sm rounded-2xl cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+                            onClick={() => setDetailLead(lead)}>
+                            <CardContent className="p-4 space-y-2.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-start gap-2 min-w-0">
+                                  <ResponsibleAvatar userId={lead.responsibleUserId} />
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate">{lead.companyName}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{lead.contactName}</p>
+                                  </div>
                                 </div>
+                                <TemperatureBadge temp={lead.temperature} />
                               </div>
-                              <TemperatureBadge temp={lead.temperature} />
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">{LEAD_ORIGIN_LABELS[lead.origin]}</Badge>
-                              <PriorityBadge priority={lead.priority} />
-                            </div>
-                            {lead.estimatedPotential > 0 && (
-                              <p className="text-xs font-semibold">R$ {lead.estimatedPotential.toLocaleString('pt-BR')}</p>
-                            )}
-                            {lead.nextAction && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                <Clock className="w-3 h-3 inline mr-1" />{lead.nextAction}
-                              </p>
-                            )}
-                            {status === 'qualificado_crm' && (
-                              <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
-                                <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">{LEAD_ORIGIN_LABELS[lead.origin]}</Badge>
+                                <PriorityBadge priority={lead.priority} />
+                              </div>
+                              {lead.estimatedPotential > 0 && (
+                                <p className="text-xs font-semibold">R$ {lead.estimatedPotential.toLocaleString('pt-BR')}</p>
+                              )}
+                              {lead.nextAction && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  <Clock className="w-3 h-3 inline mr-1" />{lead.nextAction}
+                                </p>
+                              )}
+                              {status === 'qualificado_crm' && (
+                                <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
+                                  <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
+                                </Button>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </DraggableLeadCard>
                       ))}
                       {statusLeads.length === 0 && (
                         <div className="border border-dashed rounded-2xl p-6 text-center text-xs text-muted-foreground">
@@ -621,10 +628,12 @@ export function ProspectionPage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </DroppableColumn>
                 );
               })}
             </div>
+            </DndContext>
+
 
             {/* Perdidos & Nutrição */}
             {filteredLeads.some(l => l.funnelStatus === 'perdido' || l.funnelStatus === 'nutricao') && (
