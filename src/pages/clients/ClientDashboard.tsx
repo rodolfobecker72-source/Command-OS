@@ -205,8 +205,8 @@ export function ClientDashboard() {
               </Select>
             </div>
 
-            {/* Table */}
-            <div className="rounded-lg border overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block rounded-lg border overflow-x-auto">
               <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -299,6 +299,60 @@ export function ClientDashboard() {
 
               {filteredClients.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
+                  Nenhum cliente encontrado com os filtros aplicados.
+                </div>
+              )}
+            </div>
+
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-3">
+              {filteredClients.map((client) => {
+                const projectCount = getClientProjects(client.id).length + getClientLegacyProjects(client.id).length;
+                return (
+                  <div key={client.id} className="border border-border/60 rounded-lg p-3 space-y-2.5 bg-card">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{client.companyName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{formatCNPJ(client.cnpj)}</p>
+                      </div>
+                      <ScoreBadge score={client.score} />
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <p className="truncate"><span className="text-muted-foreground">Resp.:</span> {client.responsiblePerson}</p>
+                      <a
+                        href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-success hover:underline text-xs"
+                      >
+                        <Phone className="w-3 h-3" />
+                        {formatPhone(client.phone)}
+                      </a>
+                      <p className="text-xs text-muted-foreground">
+                        {LEAD_ORIGIN_LABELS[client.leadOrigin]} · {projectCount} projeto(s)
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/clientes/${client.id}`)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/clientes/${client.id}/editar`)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => setClientToDelete({ id: client.id, name: client.companyName })}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredClients.length === 0 && (
+                <div className="p-8 text-center text-muted-foreground text-sm">
                   Nenhum cliente encontrado com os filtros aplicados.
                 </div>
               )}
