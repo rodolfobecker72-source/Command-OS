@@ -451,13 +451,10 @@ export function WelcomePage() {
                   const styles =
                     l.status === 'overdue'
                       ? 'border-destructive/30 bg-destructive/5'
-                      : l.status === 'today'
-                      ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
-                      : 'border-primary/30 bg-primary/5';
-                  const label =
-                    l.status === 'overdue' ? 'Em atraso' : l.status === 'today' ? 'Hoje' : 'Amanhã';
-                  const badgeVariant: 'destructive' | 'secondary' | 'default' =
-                    l.status === 'overdue' ? 'destructive' : l.status === 'today' ? 'default' : 'secondary';
+                      : 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20';
+                  const label = l.status === 'overdue' ? 'Em atraso' : 'Hoje';
+                  const badgeVariant: 'destructive' | 'default' =
+                    l.status === 'overdue' ? 'destructive' : 'default';
                   return (
                     <li
                       key={l.id}
