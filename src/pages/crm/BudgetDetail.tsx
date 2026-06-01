@@ -863,6 +863,23 @@ export function BudgetDetail() {
           </Button>
 
           <div className="flex items-center gap-2">
+            {budget.status === 'aprovada' && budget.execution && activeTab !== 'execution' && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setActiveTab('execution');
+                  setSearchParams((prev) => {
+                    const sp = new URLSearchParams(prev);
+                    sp.set('tab', 'execution');
+                    return sp;
+                  });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Ir para Execução
+              </Button>
+            )}
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
