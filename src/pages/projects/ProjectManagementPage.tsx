@@ -142,7 +142,9 @@ export function ProjectManagementPage() {
         </Button>
       </div>
 
+      <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="mt-8 space-y-1">
+
         {sortedColumns.map((col) => {
           const buckets = cardsByStatusAndMonth[col.key] || [];
           const totalCards = buckets.reduce((acc, b) => acc + b.cards.length, 0);
