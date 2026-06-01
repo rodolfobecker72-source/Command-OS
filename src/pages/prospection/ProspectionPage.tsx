@@ -112,6 +112,31 @@ const emptyLead: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'> = {
   responsibleUserId: null,
 };
 
+function DroppableColumn({ status, children }: { status: LeadFunnelStatus; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col-${status}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-w-[280px] flex-shrink-0 rounded-2xl p-1 transition-colors ${isOver ? 'bg-accent/10 ring-2 ring-accent/40' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children: ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      {children}
+    </div>
+  );
+}
+
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
   const { addClient } = useCRM();
