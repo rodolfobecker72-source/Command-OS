@@ -237,7 +237,7 @@ export function ProjectManagementPage() {
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background min-w-[720px] md:min-w-0">
+                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0">
                                     <button
                                       type="button"
                                       {...listeners}
