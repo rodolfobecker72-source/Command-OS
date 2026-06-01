@@ -220,7 +220,7 @@ export function ProjectManagementPage() {
                           </span>
                           <span className="text-xs text-muted-foreground">· {bucket.cards.length}</span>
                         </div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-1 overflow-x-auto -mx-2 px-2">
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
@@ -237,7 +237,7 @@ export function ProjectManagementPage() {
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background">
+                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background min-w-[720px] md:min-w-0">
                                     <button
                                       type="button"
                                       {...listeners}
