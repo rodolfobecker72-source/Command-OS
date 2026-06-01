@@ -582,10 +582,12 @@ export function WelcomePage() {
                   const styles =
                     l.status === 'overdue'
                       ? 'border-destructive/30 bg-destructive/5'
-                      : 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20';
-                  const label = l.status === 'overdue' ? 'Em atraso' : 'Hoje';
-                  const badgeVariant: 'destructive' | 'default' =
-                    l.status === 'overdue' ? 'destructive' : 'default';
+                      : l.status === 'today'
+                        ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
+                        : 'border-border bg-muted/30';
+                  const label = l.status === 'overdue' ? 'Em atraso' : l.status === 'today' ? 'Hoje' : 'Em breve';
+                  const badgeVariant: 'destructive' | 'default' | 'secondary' =
+                    l.status === 'overdue' ? 'destructive' : l.status === 'today' ? 'default' : 'secondary';
                   return (
                     <li
                       key={l.id}
