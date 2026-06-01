@@ -268,7 +268,13 @@ export function ProjectManagementPage() {
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
-                                  <div className="text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0">
+                                  <div
+                                    ref={(el) => { cardRefs.current[card.id] = el; }}
+                                    className={cn(
+                                      'text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0 transition-all',
+                                      highlightCardId === card.id && 'ring-2 ring-primary bg-primary/10'
+                                    )}
+                                  >
                                     <button
                                       type="button"
                                       {...listeners}
