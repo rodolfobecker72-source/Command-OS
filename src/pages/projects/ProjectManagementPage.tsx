@@ -315,7 +315,7 @@ export function ProjectManagementPage() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="h-7 px-2 text-xs shrink-0 gap-1"
+                                          className="hidden md:inline-flex h-7 px-2 text-xs shrink-0 gap-1"
                                           title="Alterar mês de execução"
                                         >
                                           <CalendarIcon className="w-3 h-3" />
