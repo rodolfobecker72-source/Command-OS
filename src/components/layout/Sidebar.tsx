@@ -156,6 +156,16 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             <span className="text-sm font-medium">Boas-vindas</span>
           </NavLink>
         )}
+        {hasPageAccess('meu-calendario') && (
+          <NavLink
+            to="/meu-calendario"
+            onClick={handleNavClick}
+            className={`nav-link w-full ${location.pathname === '/meu-calendario' ? 'active' : ''}`}
+          >
+            <CalendarDays className="w-5 h-5" />
+            <span className="text-sm font-medium">Meu Calendário</span>
+          </NavLink>
+        )}
         {filteredNavGroups.map((group) => (
           <div key={group.label}>
             <button
