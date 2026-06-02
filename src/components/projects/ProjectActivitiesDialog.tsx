@@ -410,6 +410,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar responsáveis');
+    else syncActivityToGoogle(id, 'upsert');
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
@@ -419,6 +420,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       .update({ due_date: due } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
+    else syncActivityToGoogle(id, 'upsert');
   };
 
   const handleUpdateFreela = async (id: string, name: string | null) => {
