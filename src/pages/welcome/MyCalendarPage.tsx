@@ -6,12 +6,15 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Briefcase, Phone, ExternalLink, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, Phone, ExternalLink, CalendarDays, StickyNote, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -30,6 +33,12 @@ interface PersonalEvent {
   leadId?: string;
 }
 
+interface PersonalNote {
+  id: string;
+  date: string; // yyyy-MM-dd
+  content: string;
+}
+
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciado: 'Não iniciado',
   em_andamento: 'Em andamento',
@@ -38,7 +47,6 @@ const STATUS_LABEL: Record<string, string> = {
 
 function parseDate(s: string | null | undefined): Date | null {
   if (!s) return null;
-  // Date columns and ISO strings — anchor at noon to avoid TZ shifts
   const base = s.length <= 10 ? `${s}T12:00:00` : s;
   const d = new Date(base);
   return isNaN(d.getTime()) ? null : d;
@@ -52,9 +60,18 @@ export function MyCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showProjects, setShowProjects] = useState(true);
   const [showProspection, setShowProspection] = useState(true);
+  const [showNotes, setShowNotes] = useState(true);
   const [events, setEvents] = useState<PersonalEvent[]>([]);
+  const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<PersonalEvent | null>(null);
+
+  // Note editor state
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<PersonalNote | null>(null);
+  const [noteDate, setNoteDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [noteContent, setNoteContent] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     if (!user?.id || !workspace?.id) return;
@@ -63,7 +80,7 @@ export function MyCalendarPage() {
     (async () => {
       setLoading(true);
       try {
-        const [activitiesRes, leadsRes] = await Promise.all([
+        const [activitiesRes, leadsRes, notesRes] = await Promise.all([
           supabase
             .from('project_activities')
             .select('id, title, status, due_date, project_card_id, assigned_to_user_ids')
@@ -77,12 +94,17 @@ export function MyCalendarPage() {
             .eq('responsible_user_id', user.id)
             .not('next_action_date', 'is', null)
             .neq('next_action_date', ''),
+          supabase
+            .from('calendar_notes' as any)
+            .select('id, date, content')
+            .eq('user_id', user.id)
+            .eq('workspace_id', workspace.id),
         ]);
 
         if (activitiesRes.error) throw activitiesRes.error;
         if (leadsRes.error) throw leadsRes.error;
+        if (notesRes.error) throw notesRes.error;
 
-        // Fetch related project cards in one round-trip
         const cardIds = Array.from(new Set((activitiesRes.data || []).map((a: any) => a.project_card_id).filter(Boolean)));
         const cardsMap = new Map<string, { proposalId: string; projectName: string; budgetId: string }>();
         if (cardIds.length) {
@@ -125,7 +147,10 @@ export function MyCalendarPage() {
           });
         }
 
-        if (active) setEvents(list);
+        if (active) {
+          setEvents(list);
+          setNotes(((notesRes.data || []) as any[]).map(n => ({ id: n.id, date: n.date, content: n.content })));
+        }
       } catch (e: any) {
         console.error(e);
         toast.error('Erro ao carregar calendário pessoal');
@@ -167,6 +192,15 @@ export function MyCalendarPage() {
     return m;
   }, [visibleEvents]);
 
+  const notesByDay = useMemo(() => {
+    const m = new Map<string, PersonalNote[]>();
+    for (const n of notes) {
+      if (!m.has(n.date)) m.set(n.date, []);
+      m.get(n.date)!.push(n);
+    }
+    return m;
+  }, [notes]);
+
   const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
   const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
   const goToday = () => setCurrentDate(new Date());
@@ -186,6 +220,80 @@ export function MyCalendarPage() {
       navigate('/prospeccao');
     }
     setSelected(null);
+  };
+
+  // ---- Notes CRUD ----
+  const openNewNote = (date?: string) => {
+    setEditingNote(null);
+    setNoteDate(date || format(new Date(), 'yyyy-MM-dd'));
+    setNoteContent('');
+    setNoteDialogOpen(true);
+  };
+
+  const openEditNote = (n: PersonalNote) => {
+    setEditingNote(n);
+    setNoteDate(n.date);
+    setNoteContent(n.content);
+    setNoteDialogOpen(true);
+  };
+
+  const handleSaveNote = async () => {
+    if (!user?.id || !workspace?.id) return;
+    const content = noteContent.trim();
+    if (!content) {
+      toast.error('Escreva o conteúdo da nota');
+      return;
+    }
+    if (!noteDate) {
+      toast.error('Informe a data');
+      return;
+    }
+    setSavingNote(true);
+    try {
+      if (editingNote) {
+        const { error } = await supabase
+          .from('calendar_notes' as any)
+          .update({ content, date: noteDate })
+          .eq('id', editingNote.id);
+        if (error) throw error;
+        setNotes(prev => prev.map(n => n.id === editingNote.id ? { ...n, content, date: noteDate } : n));
+        toast.success('Nota atualizada');
+      } else {
+        const { data, error } = await supabase
+          .from('calendar_notes' as any)
+          .insert({ user_id: user.id, workspace_id: workspace.id, date: noteDate, content } as any)
+          .select('id, date, content')
+          .single();
+        if (error) throw error;
+        const row = data as any;
+        setNotes(prev => [...prev, { id: row.id, date: row.date, content: row.content }]);
+        toast.success('Nota adicionada');
+      }
+      setNoteDialogOpen(false);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao salvar nota');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (!editingNote) return;
+    if (!confirm('Excluir esta nota?')) return;
+    setSavingNote(true);
+    try {
+      const { error } = await supabase.from('calendar_notes' as any).delete().eq('id', editingNote.id);
+      if (error) throw error;
+      setNotes(prev => prev.filter(n => n.id !== editingNote.id));
+      setNoteDialogOpen(false);
+      toast.success('Nota excluída');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao excluir nota');
+    } finally {
+      setSavingNote(false);
+    }
   };
 
   const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -228,8 +336,18 @@ export function MyCalendarPage() {
             Prospecção
           </label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={showNotes} onCheckedChange={setShowNotes} className="scale-90" />
+          <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowNotes(v => !v)}>
+            <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+            Notas
+          </label>
+        </div>
 
         <Button variant="outline" size="sm" className="text-xs h-8" onClick={goToday}>Hoje</Button>
+        <Button size="sm" className="text-xs h-8 gap-1" onClick={() => openNewNote()}>
+          <Plus className="w-3.5 h-3.5" /> Nota
+        </Button>
       </div>
 
       {/* Grid */}
@@ -248,12 +366,13 @@ export function MyCalendarPage() {
             const today = isToday(day);
             const key = format(day, 'yyyy-MM-dd');
             const dayEvents = eventsByDay.get(key) || [];
+            const dayNotes = showNotes ? (notesByDay.get(key) || []) : [];
 
             return (
               <div
                 key={i}
                 className={cn(
-                  'border-b border-r border-border p-1',
+                  'group border-b border-r border-border p-1 relative',
                   view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
                   !inMonth && 'bg-muted/30',
                   today && 'bg-primary/5',
@@ -267,6 +386,15 @@ export function MyCalendarPage() {
                   )}>
                     {format(day, 'd')}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => openNewNote(key)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                    title="Adicionar nota"
+                    aria-label="Adicionar nota"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
                   {dayEvents.map(ev => (
@@ -288,20 +416,33 @@ export function MyCalendarPage() {
                       <div className="truncate opacity-80">{ev.subtitle}</div>
                     </button>
                   ))}
+                  {dayNotes.map(n => (
+                    <button
+                      key={n.id}
+                      onClick={() => openEditNote(n)}
+                      className="w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight border bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                      title={n.content}
+                    >
+                      <div className="flex items-center gap-1">
+                        <StickyNote className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{n.content}</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {!loading && events.length === 0 && (
+        {!loading && events.length === 0 && notes.length === 0 && (
           <div className="px-6 py-8 text-center text-sm text-muted-foreground">
-            Nenhuma atividade ou ação atribuída a você com data definida.
+            Nenhuma atividade, ação ou nota cadastrada.
           </div>
         )}
       </div>
 
-      {/* Detail dialog */}
+      {/* Event detail dialog */}
       <Dialog open={!!selected} onOpenChange={open => !open && setSelected(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -340,6 +481,63 @@ export function MyCalendarPage() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Note editor dialog */}
+      <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <StickyNote className="w-5 h-5 text-amber-500" />
+              {editingNote ? 'Editar nota' : 'Nova nota'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="note-date" className="text-xs">Data</Label>
+              <Input
+                id="note-date"
+                type="date"
+                value={noteDate}
+                onChange={e => setNoteDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="note-content" className="text-xs">Nota</Label>
+              <Textarea
+                id="note-content"
+                value={noteContent}
+                onChange={e => setNoteContent(e.target.value)}
+                placeholder="Escreva sua nota..."
+                rows={5}
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            {editingNote && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteNote}
+                disabled={savingNote}
+                className="gap-1 mr-auto"
+              >
+                <Trash2 className="w-4 h-4" /> Excluir
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={() => setNoteDialogOpen(false)} disabled={savingNote}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleSaveNote} disabled={savingNote} className="gap-1">
+              <Pencil className="w-4 h-4" />
+              {editingNote ? 'Salvar' : 'Adicionar'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

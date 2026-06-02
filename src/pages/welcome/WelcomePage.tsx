@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target, AtSign, Check } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target, AtSign, Check, StickyNote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,6 +54,13 @@ interface MentionItem {
   createdAt: string;
 }
 
+interface PersonalNoteItem {
+  id: string;
+  date: string; // yyyy-MM-dd
+  content: string;
+  isToday: boolean;
+}
+
 function formatDateBR(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso + 'T12:00:00');
@@ -86,6 +93,7 @@ export function WelcomePage() {
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
+  const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
@@ -294,6 +302,32 @@ export function WelcomePage() {
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadNotes = async () => {
+      if (!workspace || !profile?.id) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().slice(0, 10);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from('calendar_notes' as any)
+        .select('id, date, content')
+        .eq('user_id', profile.id)
+        .eq('workspace_id', workspace.id)
+        .in('date', [todayStr, tomorrowStr]);
+      const items: PersonalNoteItem[] = ((data || []) as any[])
+        .map(n => ({ id: n.id, date: n.date, content: n.content, isToday: n.date === todayStr }))
+        .sort((a, b) => (a.isToday === b.isToday ? 0 : a.isToday ? -1 : 1));
+      if (!cancelled) setPersonalNotes(items);
+    };
+    loadNotes();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
+
   const handleMarkMentionRead = async (cardId: string, commentId: string) => {
     if (!profile?.id) return;
     const prev = mentions;
@@ -362,6 +396,47 @@ export function WelcomePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Notas pessoais (hoje e amanhã) */}
+        {personalNotes.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <StickyNote className="w-5 h-5 text-amber-500" />
+                Minhas notas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {personalNotes.map((n) => (
+                  <li
+                    key={n.id}
+                    className={`border rounded-lg p-3 flex items-start gap-2.5 shadow-sm ${
+                      n.isToday
+                        ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
+                        : 'border-border bg-muted/30'
+                    }`}
+                  >
+                    <StickyNote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={n.isToday ? 'default' : 'secondary'} className="text-[10px] py-0 px-1.5">
+                          {n.isToday ? 'Hoje' : 'Amanhã'}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                          {formatDateBR(n.date)}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">{n.content}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+
 
         {/* Aniversariantes da semana */}
         {birthdays.length > 0 && (
