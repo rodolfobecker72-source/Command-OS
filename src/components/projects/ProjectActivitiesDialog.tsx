@@ -794,6 +794,9 @@ function Column({
   newAssignee,
   newDue,
   newFreela,
+  expanded,
+  onExpand,
+  onCancelExpand,
   onNewTitle,
   onNewAssignee,
   onNewDue,
@@ -816,6 +819,9 @@ function Column({
   newAssignee: string;
   newDue: string;
   newFreela: string;
+  expanded: boolean;
+  onExpand: () => void;
+  onCancelExpand: () => void;
   onNewTitle: (v: string) => void;
   onNewAssignee: (v: string) => void;
   onNewDue: (v: string) => void;
