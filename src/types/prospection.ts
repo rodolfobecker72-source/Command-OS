@@ -64,6 +64,7 @@ export interface ProspectionLead {
   priority: LeadPriority;
   // Responsible user (workspace member)
   responsibleUserId?: string | null;
+  temperatureManual?: boolean;
   // Notes
   strategicNotes: string;
   // Meta

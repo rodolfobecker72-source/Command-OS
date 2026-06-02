@@ -1,0 +1,1 @@
+ALTER TABLE public.prospection_leads ADD COLUMN IF NOT EXISTS temperature_manual boolean NOT NULL DEFAULT false;

@@ -6,6 +6,7 @@ import {
   ProspectionLead,
   LeadFunnelStatus,
 } from '@/types/prospection';
+import { computeLeadTemperature } from '@/utils/leadTemperature';
 
 // ============= DB mapping helpers =============
 
@@ -32,6 +33,7 @@ function leadFromDb(row: any): ProspectionLead {
     priority: row.priority,
     strategicNotes: row.strategic_notes,
     responsibleUserId: row.responsible_user_id ?? null,
+    temperatureManual: row.temperature_manual ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -60,6 +62,7 @@ function leadToDb(l: Partial<ProspectionLead>, workspaceId?: string): any {
   if (l.priority !== undefined) row.priority = l.priority;
   if (l.strategicNotes !== undefined) row.strategic_notes = l.strategicNotes;
   if (l.responsibleUserId !== undefined) row.responsible_user_id = l.responsibleUserId || null;
+  if (l.temperatureManual !== undefined) row.temperature_manual = l.temperatureManual;
   return row;
 }
 
@@ -111,7 +114,11 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
       return null;
     }
     try {
-      const { data: row, error } = await supabase.from('prospection_leads').insert(leadToDb(data, workspaceId)).select().single();
+      const payload = { ...data };
+      if (!payload.temperatureManual) {
+        payload.temperature = computeLeadTemperature(payload).temperature;
+      }
+      const { data: row, error } = await supabase.from('prospection_leads').insert(leadToDb(payload, workspaceId)).select().single();
       if (error) throw error;
       const lead = leadFromDb(row);
       setLeads(prev => [...prev, lead]);
@@ -121,11 +128,18 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
 
   const updateLead = useCallback(async (id: string, updates: Partial<ProspectionLead>) => {
     try {
-      const { error } = await supabase.from('prospection_leads').update(leadToDb(updates)).eq('id', id);
+      const current = leads.find(l => l.id === id);
+      const merged: Partial<ProspectionLead> = { ...updates };
+      const manual = merged.temperatureManual ?? current?.temperatureManual ?? false;
+      if (!manual && current) {
+        const full = { ...current, ...updates };
+        merged.temperature = computeLeadTemperature(full).temperature;
+      }
+      const { error } = await supabase.from('prospection_leads').update(leadToDb(merged)).eq('id', id);
       if (error) throw error;
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l));
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, ...merged, updatedAt: new Date().toISOString() } : l));
     } catch (e: any) { toast.error('Erro ao atualizar lead: ' + e.message); }
-  }, []);
+  }, [leads]);
 
   const deleteLead = useCallback(async (id: string) => {
     try {

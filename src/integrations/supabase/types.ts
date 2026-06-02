@@ -1016,6 +1016,7 @@ export type Database = {
           segment: string
           strategic_notes: string
           temperature: string
+          temperature_manual: boolean
           updated_at: string
           workspace_id: string
         }
@@ -1042,6 +1043,7 @@ export type Database = {
           segment?: string
           strategic_notes?: string
           temperature?: string
+          temperature_manual?: boolean
           updated_at?: string
           workspace_id: string
         }
@@ -1068,6 +1070,7 @@ export type Database = {
           segment?: string
           strategic_notes?: string
           temperature?: string
+          temperature_manual?: boolean
           updated_at?: string
           workspace_id?: string
         }
