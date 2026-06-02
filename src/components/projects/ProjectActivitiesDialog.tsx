@@ -38,6 +38,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { syncActivityToGoogle } from '@/utils/googleCalendarSync';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -359,6 +360,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
+    syncActivityToGoogle(data.id, 'upsert');
   };
 
   const handleDelete = async (id: string) => {
@@ -368,7 +370,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) {
       setActivities(prev);
       toast.error('Erro ao remover atividade');
+      return;
     }
+    syncActivityToGoogle(id, 'delete');
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -406,6 +410,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar responsáveis');
+    else syncActivityToGoogle(id, 'upsert');
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
@@ -415,6 +420,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       .update({ due_date: due } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
+    else syncActivityToGoogle(id, 'upsert');
   };
 
   const handleUpdateFreela = async (id: string, name: string | null) => {

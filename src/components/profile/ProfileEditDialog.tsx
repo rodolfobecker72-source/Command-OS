@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { GoogleCalendarConnect } from './GoogleCalendarConnect';
 
 interface ProfileEditDialogProps {
   open: boolean;
@@ -154,6 +155,9 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
             <Label>E-mail</Label>
             <Input value={user?.email || ''} disabled className="bg-muted" />
           </div>
+
+          {/* Google Calendar */}
+          <GoogleCalendarConnect />
         </div>
 
         <div className="flex justify-end gap-2">
