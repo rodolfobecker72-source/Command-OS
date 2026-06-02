@@ -617,6 +617,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newAssignee={newAssigneeByCol[col.key] || ''}
                   newDue={newDueByCol[col.key] || ''}
                   newFreela={newFreelaByCol[col.key] || ''}
+                  expanded={!!expandedNewByCol[col.key]}
+                  onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
+                  onCancelExpand={() => {
+                    setExpandedNewByCol(prev => ({ ...prev, [col.key]: false }));
+                    setNewTitleByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewAssigneeByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
+                  }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
