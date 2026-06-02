@@ -158,7 +158,7 @@ export function CalendarPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Calendário" />
+      <Header title="Calendário de Projetos" />
 
       {/* Toolbar */}
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
