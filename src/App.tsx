@@ -38,6 +38,7 @@ import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 import MyFinancePage from "@/pages/MyFinancePage";
 import { WelcomePage } from "@/pages/welcome/WelcomePage";
+import { MyCalendarPage } from "@/pages/welcome/MyCalendarPage";
 import HomePage from "@/pages/home/HomePage";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
@@ -71,6 +72,7 @@ const App = () => (
                 <Route element={<AppLayout />}>
                   {/* Início */}
                   <Route path="/boas-vindas" element={<PageGuard pageKey="boas-vindas"><WelcomePage /></PageGuard>} />
+                  <Route path="/meu-calendario" element={<PageGuard pageKey="meu-calendario"><MyCalendarPage /></PageGuard>} />
 
                   {/* Prospecção */}
                   <Route path="/prospeccao" element={<PageGuard pageKey="prospeccao"><ProspectionPage /></PageGuard>} />
