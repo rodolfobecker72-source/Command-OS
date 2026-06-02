@@ -100,6 +100,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
   const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
+  const [expandedNewByCol, setExpandedNewByCol] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editingFreelaId, setEditingFreelaId] = useState<string | null>(null);
