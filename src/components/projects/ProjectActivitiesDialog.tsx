@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight, MessageSquare, Send } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight, MessageSquare, Send, GripVertical, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
