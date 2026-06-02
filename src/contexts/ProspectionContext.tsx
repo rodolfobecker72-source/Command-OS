@@ -33,6 +33,7 @@ function leadFromDb(row: any): ProspectionLead {
     priority: row.priority,
     strategicNotes: row.strategic_notes,
     responsibleUserId: row.responsible_user_id ?? null,
+    temperatureManual: row.temperature_manual ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
