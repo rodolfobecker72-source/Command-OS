@@ -1104,13 +1104,46 @@ export function ProspectionPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Temperatura</Label>
-              <Select value={formData.temperature} onValueChange={(v: LeadTemperature) => setFormData(p => ({ ...p, temperature: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(LEAD_TEMPERATURE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Temperatura</Label>
+                <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                  <Switch
+                    checked={!!formData.temperatureManual}
+                    onCheckedChange={(v) => setFormData(p => ({ ...p, temperatureManual: v }))}
+                  />
+                  Manual
+                </label>
+              </div>
+              {formData.temperatureManual ? (
+                <Select value={formData.temperature} onValueChange={(v: LeadTemperature) => setFormData(p => ({ ...p, temperature: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(LEAD_TEMPERATURE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              ) : (
+                (() => {
+                  const r = computeLeadTemperature(formData as any);
+                  return (
+                    <div className="rounded-md border border-input bg-muted/30 px-3 py-2 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <TemperatureBadge temp={r.temperature} />
+                        <span className="text-[11px] text-muted-foreground font-medium">Score: {r.score}/100</span>
+                      </div>
+                      <ul className="text-[10px] text-muted-foreground space-y-0.5">
+                        {r.breakdown.map((b, i) => (
+                          <li key={i} className="flex justify-between gap-2">
+                            <span className="truncate">{b.label}</span>
+                            <span className={b.points > 0 ? 'text-emerald-600' : b.points < 0 ? 'text-red-600' : ''}>
+                              {b.points > 0 ? '+' : ''}{b.points}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()
+              )}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status do Funil</Label>
