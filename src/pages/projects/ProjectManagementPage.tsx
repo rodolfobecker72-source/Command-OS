@@ -405,7 +405,7 @@ export function ProjectManagementPage() {
       {activitiesFor && (
         <ProjectActivitiesDialog
           open={!!activitiesFor}
-          onOpenChange={(o) => !o && setActivitiesFor(null)}
+          onOpenChange={(o) => { if (!o) { setActivitiesFor(null); setActivityRefreshKey(k => k + 1); } }}
           projectCardId={activitiesFor.id}
           projectName={activitiesFor.name}
         />
