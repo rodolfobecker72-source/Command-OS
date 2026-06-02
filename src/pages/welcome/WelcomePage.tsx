@@ -302,6 +302,32 @@ export function WelcomePage() {
     return () => { cancelled = true; };
   }, [workspace?.id, profile?.id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadNotes = async () => {
+      if (!workspace || !profile?.id) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().slice(0, 10);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from('calendar_notes' as any)
+        .select('id, date, content')
+        .eq('user_id', profile.id)
+        .eq('workspace_id', workspace.id)
+        .in('date', [todayStr, tomorrowStr]);
+      const items: PersonalNoteItem[] = ((data || []) as any[])
+        .map(n => ({ id: n.id, date: n.date, content: n.content, isToday: n.date === todayStr }))
+        .sort((a, b) => (a.isToday === b.isToday ? 0 : a.isToday ? -1 : 1));
+      if (!cancelled) setPersonalNotes(items);
+    };
+    loadNotes();
+    return () => { cancelled = true; };
+  }, [workspace?.id, profile?.id]);
+
+
   const handleMarkMentionRead = async (cardId: string, commentId: string) => {
     if (!profile?.id) return;
     const prev = mentions;
