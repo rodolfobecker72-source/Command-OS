@@ -93,6 +93,7 @@ export function WelcomePage() {
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
+  const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
