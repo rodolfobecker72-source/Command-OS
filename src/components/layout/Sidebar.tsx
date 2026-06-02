@@ -63,6 +63,14 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'Administrativo',
+    icon: ShieldCheck,
+    items: [
+      { name: 'Financeiro', href: '/financeiro', icon: DollarSign, pageKey: 'financeiro' },
+      { name: 'Patrimônio', href: '/patrimonio', icon: Building2, pageKey: 'patrimonio' },
+    ],
+  },
+  {
     label: 'Configurações',
     icon: Settings,
     items: [
@@ -73,14 +81,6 @@ const navGroups: NavGroup[] = [
       { name: 'Metas', href: '/configuracoes/metas', icon: Target, pageKey: 'metas' },
       { name: 'Score', href: '/configuracoes/score', icon: Award, pageKey: 'score' },
       { name: 'Minuta de Contrato', href: '/configuracoes/contrato', icon: FileImage, pageKey: 'contrato' },
-    ],
-  },
-  {
-    label: 'Administrativo',
-    icon: ShieldCheck,
-    items: [
-      { name: 'Financeiro', href: '/financeiro', icon: DollarSign, pageKey: 'financeiro' },
-      { name: 'Patrimônio', href: '/patrimonio', icon: Building2, pageKey: 'patrimonio' },
     ],
   },
 ];
