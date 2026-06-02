@@ -110,6 +110,7 @@ const emptyLead: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'> = {
   priority: 'media',
   strategicNotes: '',
   responsibleUserId: null,
+  temperatureManual: false,
 };
 
 function DroppableColumn({ status, children }: { status: LeadFunnelStatus; children: ReactNode }) {
