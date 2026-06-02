@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
-import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight, MessageSquare, Send } from 'lucide-react';
+import { Plus, Trash2, Loader2, ExternalLink, Copy, User, Calendar, FileText, ChevronDown, ChevronRight, MessageSquare, Send, GripVertical, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -100,6 +100,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
   const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
+  const [expandedNewByCol, setExpandedNewByCol] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editingFreelaId, setEditingFreelaId] = useState<string | null>(null);
@@ -357,6 +358,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
+    setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
   };
 
   const handleDelete = async (id: string) => {
@@ -615,6 +617,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newAssignee={newAssigneeByCol[col.key] || ''}
                   newDue={newDueByCol[col.key] || ''}
                   newFreela={newFreelaByCol[col.key] || ''}
+                  expanded={!!expandedNewByCol[col.key]}
+                  onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
+                  onCancelExpand={() => {
+                    setExpandedNewByCol(prev => ({ ...prev, [col.key]: false }));
+                    setNewTitleByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewAssigneeByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
+                  }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
@@ -783,6 +794,9 @@ function Column({
   newAssignee,
   newDue,
   newFreela,
+  expanded,
+  onExpand,
+  onCancelExpand,
   onNewTitle,
   onNewAssignee,
   onNewDue,
@@ -805,6 +819,9 @@ function Column({
   newAssignee: string;
   newDue: string;
   newFreela: string;
+  expanded: boolean;
+  onExpand: () => void;
+  onCancelExpand: () => void;
   onNewTitle: (v: string) => void;
   onNewAssignee: (v: string) => void;
   onNewDue: (v: string) => void;
@@ -859,56 +876,81 @@ function Column({
       </SortableContext>
 
       {/* Inline new-task card matching task style */}
-      <div className={cn('rounded-lg border border-dashed p-3 flex flex-col gap-2', col.cardBorder, col.cardBg)}>
-        <div className="flex items-center gap-2">
-          <Plus className={cn('w-4 h-4 shrink-0', col.addText)} />
-          <Input
-            value={newTitle}
-            onChange={e => onNewTitle(e.target.value)}
-            placeholder="Nova tarefa"
-            className={cn('h-7 border-0 bg-transparent px-0 text-sm font-semibold placeholder:font-normal focus-visible:ring-0 focus-visible:ring-offset-0', col.addText, 'placeholder:' + col.addText)}
-            onKeyDown={e => { if (e.key === 'Enter') onAdd(); }}
-          />
+      {!expanded ? (
+        <button
+          type="button"
+          onClick={onExpand}
+          className={cn(
+            'rounded-lg border border-dashed p-3 flex items-center gap-2 text-sm font-semibold transition-colors hover:bg-foreground/[0.03]',
+            col.cardBorder,
+            col.cardBg,
+            col.addText
+          )}
+        >
+          <Plus className="w-4 h-4 shrink-0" />
+          Nova tarefa
+        </button>
+      ) : (
+        <div className={cn('rounded-lg border border-dashed p-3 flex flex-col gap-2', col.cardBorder, col.cardBg)}>
+          <div className="flex items-center gap-2">
+            <Plus className={cn('w-4 h-4 shrink-0', col.addText)} />
+            <Input
+              autoFocus
+              value={newTitle}
+              onChange={e => onNewTitle(e.target.value)}
+              placeholder="Nova tarefa"
+              className={cn('h-7 border-0 bg-transparent px-0 text-sm font-semibold placeholder:font-normal focus-visible:ring-0 focus-visible:ring-offset-0', col.addText, 'placeholder:' + col.addText)}
+              onKeyDown={e => { if (e.key === 'Enter') onAdd(); if (e.key === 'Escape') onCancelExpand(); }}
+            />
+            <button
+              type="button"
+              onClick={onCancelExpand}
+              className="text-muted-foreground hover:text-foreground"
+              title="Cancelar"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <User className="w-3.5 h-3.5 shrink-0" />
+            <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
+              <SelectTrigger className="h-6 border-0 bg-transparent px-0 text-xs text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+                <SelectValue placeholder="Add Responsável" />
+              </SelectTrigger>
+              <SelectContent className="z-[200]">
+                <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
+                {members.map(m => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+                <SelectItem value="__freela__">Freela</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {newAssignee === '__freela__' && (
+            <Input
+              value={newFreela}
+              onChange={e => onNewFreela(e.target.value)}
+              placeholder="Nome do freela"
+              className="h-7 text-xs bg-background/70 w-full"
+            />
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <input
+              type="date"
+              value={newDue}
+              onChange={e => onNewDue(e.target.value)}
+              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
+              placeholder="Add Prazo"
+            />
+          </div>
+          {newTitle.trim() && (
+            <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
+              Adicionar tarefa
+            </Button>
+          )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <User className="w-3.5 h-3.5 shrink-0" />
-          <Select value={newAssignee || UNASSIGNED} onValueChange={onNewAssignee}>
-            <SelectTrigger className="h-6 border-0 bg-transparent px-0 text-xs text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
-              <SelectValue placeholder="Add Responsável" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              <SelectItem value={UNASSIGNED}>Sem responsável</SelectItem>
-              {members.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-              <SelectItem value="__freela__">Freela</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {newAssignee === '__freela__' && (
-          <Input
-            value={newFreela}
-            onChange={e => onNewFreela(e.target.value)}
-            placeholder="Nome do freela"
-            className="h-7 text-xs bg-background/70 w-full"
-          />
-        )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Calendar className="w-3.5 h-3.5 shrink-0" />
-          <input
-            type="date"
-            value={newDue}
-            onChange={e => onNewDue(e.target.value)}
-            className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
-            placeholder="Add Prazo"
-          />
-        </div>
-        {newTitle.trim() && (
-          <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
-            Adicionar tarefa
-          </Button>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -972,17 +1014,29 @@ function SortableCard({
         'hover:border-primary/40'
       )}
     >
-      <button
-        type="button"
-        onClick={() => onDelete(activity.id)}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-        title="Remover"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+          title="Arrastar para outra coluna"
+          aria-label="Arrastar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(activity.id)}
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          title="Remover"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
       {/* Title */}
-      <div className="flex items-start gap-2 pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+      <div className="flex items-start gap-2 pr-14">
         <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         {isEditing ? (
           <Input

@@ -75,6 +75,7 @@ export function ProjectManagementPage() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
   const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightBudgetId = searchParams.get('budget');
   const [highlightCardId, setHighlightCardId] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export function ProjectManagementPage() {
       setActivityCounts(counts);
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, projectCards.length]);
+  }, [workspace?.id, projectCards.length, activityRefreshKey]);
 
   useEffect(() => {
     if (!highlightBudgetId || projectCards.length === 0) return;
@@ -404,7 +405,7 @@ export function ProjectManagementPage() {
       {activitiesFor && (
         <ProjectActivitiesDialog
           open={!!activitiesFor}
-          onOpenChange={(o) => !o && setActivitiesFor(null)}
+          onOpenChange={(o) => { if (!o) { setActivitiesFor(null); setActivityRefreshKey(k => k + 1); } }}
           projectCardId={activitiesFor.id}
           projectName={activitiesFor.name}
         />
