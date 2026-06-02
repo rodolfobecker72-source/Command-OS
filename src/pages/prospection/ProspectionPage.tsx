@@ -297,6 +297,7 @@ export function ProspectionPage() {
       priority: lead.priority,
       strategicNotes: lead.strategicNotes,
       responsibleUserId: lead.responsibleUserId ?? null,
+      temperatureManual: lead.temperatureManual ?? false,
     });
     setDialogOpen(true);
   };
