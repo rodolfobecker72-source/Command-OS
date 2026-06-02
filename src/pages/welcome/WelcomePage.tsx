@@ -397,6 +397,47 @@ export function WelcomePage() {
           </CardContent>
         </Card>
 
+        {/* Notas pessoais (hoje e amanhã) */}
+        {personalNotes.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <StickyNote className="w-5 h-5 text-amber-500" />
+                Minhas notas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {personalNotes.map((n) => (
+                  <li
+                    key={n.id}
+                    className={`border rounded-lg p-3 flex items-start gap-2.5 shadow-sm ${
+                      n.isToday
+                        ? 'border-amber-500/40 bg-amber-50 dark:bg-amber-950/20'
+                        : 'border-border bg-muted/30'
+                    }`}
+                  >
+                    <StickyNote className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={n.isToday ? 'default' : 'secondary'} className="text-[10px] py-0 px-1.5">
+                          {n.isToday ? 'Hoje' : 'Amanhã'}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                          {formatDateBR(n.date)}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">{n.content}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+
+
         {/* Aniversariantes da semana */}
         {birthdays.length > 0 && (
           <Card>
