@@ -1014,17 +1014,29 @@ function SortableCard({
         'hover:border-primary/40'
       )}
     >
-      <button
-        type="button"
-        onClick={() => onDelete(activity.id)}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-        title="Remover"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+          title="Arrastar para outra coluna"
+          aria-label="Arrastar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(activity.id)}
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          title="Remover"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
       {/* Title */}
-      <div className="flex items-start gap-2 pr-5" {...(!isEditing ? { ...attributes, ...listeners } : {})}>
+      <div className="flex items-start gap-2 pr-14">
         <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
         {isEditing ? (
           <Input
