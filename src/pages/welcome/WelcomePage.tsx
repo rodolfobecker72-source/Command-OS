@@ -54,6 +54,13 @@ interface MentionItem {
   createdAt: string;
 }
 
+interface PersonalNoteItem {
+  id: string;
+  date: string; // yyyy-MM-dd
+  content: string;
+  isToday: boolean;
+}
+
 function formatDateBR(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso + 'T12:00:00');
