@@ -358,6 +358,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
+    setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
   };
 
   const handleDelete = async (id: string) => {
