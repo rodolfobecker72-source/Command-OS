@@ -360,6 +360,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
+    syncActivityToGoogle(data.id, 'upsert');
   };
 
   const handleDelete = async (id: string) => {
