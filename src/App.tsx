@@ -38,6 +38,7 @@ import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
 import MyFinancePage from "@/pages/MyFinancePage";
 import { WelcomePage } from "@/pages/welcome/WelcomePage";
+import { MyCalendarPage } from "@/pages/welcome/MyCalendarPage";
 import HomePage from "@/pages/home/HomePage";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
