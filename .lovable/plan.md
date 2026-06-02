@@ -1,58 +1,97 @@
-# Meu Calendário
+## Régua de temperatura automática
 
-Nova página pessoal que mostra, em um calendário, tudo que está atribuído ao usuário logado nas áreas de **Gestão de Projetos** e **Prospecção**.
+A temperatura (Frio / Morno / Quente) passa a ser calculada automaticamente a cada criação/edição do lead, com base em **origem do lead** e **histórico de relacionamento** (status no funil + recência do último contato + próxima ação agendada).
+
+O usuário ainda pode travar manualmente quando quiser sobrescrever a régua.
+
+## Régua de pontuação (0–100)
+
+### Origem do lead
+
+| Origem | Pontos |
+|---|---|
+| Indicação | +20 |
+| Site / Inbound / Networking | +15 |
+| Evento | +12 |
+| Instagram / Meta Ads / Google Ads | +8 |
+| Prospecção ativa / Outbound / Outro | +0 |
+
+### Status no funil
+
+| Status | Pontos |
+|---|---|
+| Reunião agendada | +35 |
+| Qualificado para CRM | +45 |
+| Contato realizado | +18 |
+| Mapeado | +0 |
+| Nutrição | −5 |
+| Perdido | força **Frio** (override) |
+
+### Recência do último contato
+
+| Tempo desde o último contato | Pontos |
+|---|---|
+| Nunca contatado | −10 |
+| ≤ 7 dias | +20 |
+| 8–14 dias | +10 |
+| 15–30 dias | +0 |
+| 31–60 dias | −10 |
+| > 60 dias | −20 |
+
+### Próxima ação agendada
+
+| Situação | Pontos |
+|---|---|
+| Marcada nos próximos 7 dias | +15 |
+| Marcada entre 8–30 dias | +5 |
+| Sem próxima ação | −5 |
+| Atrasada (data já passou) | −15 |
+
+### Faixas
+
+- `0–39` → **Frio**
+- `40–69` → **Morno**
+- `≥ 70` → **Quente**
 
 ## Arquivos
 
 **Criar**
-- `src/pages/welcome/MyCalendarPage.tsx` — página com Header, toolbar (Mês/Semana, navegação, Hoje), legenda e Dialog de detalhes.
+- `src/utils/leadTemperature.ts` — função pura `computeLeadTemperature(lead): { temperature, score, breakdown }`. Aplica os pesos acima, trata override de `perdido` e retorna o detalhamento para tooltip.
 
 **Editar**
-- `src/config/pages.ts` — adicionar entrada `meu-calendario` no grupo "Início", logo abaixo de `boas-vindas`. Sem `restrictedFrom` (todos os papéis veem).
-- `src/App.tsx` — registrar rota `/meu-calendario` protegida por `PageGuard pageKey="meu-calendario"`.
-- `mem://index.md` — referenciar a nova memória.
+- `src/types/prospection.ts` — adicionar campo `temperatureManual?: boolean` (default `false`). Quando `true`, a régua não sobrescreve.
+- `src/contexts/ProspectionContext.tsx` — em `addLead` e `updateLead`, antes de salvar, se `temperatureManual !== true` recalcular `temperature` via `computeLeadTemperature`. Atualizar mappers `leadFromDb` / `leadToDb` para o novo campo (`temperature_manual`).
+- `src/pages/prospection/ProspectionPage.tsx` — no formulário de lead:
+  - Substituir o select "Temperatura" por um bloco com:
+    - Badge da temperatura calculada (somente leitura por padrão) + score e tooltip com o breakdown
+    - Toggle "Definir manualmente" → quando ligado, libera o select e marca `temperatureManual=true`
+  - No Dialog de detalhes, mostrar pequena legenda "Calculada automaticamente" ou "Definida manualmente"
 
-**Criar memória**
-- `mem://features/my-calendar` — descrição da página pessoal.
+**Banco**
+- Migração `ALTER TABLE prospection_leads ADD COLUMN temperature_manual boolean NOT NULL DEFAULT false;`
+- Sem recálculo retroativo — leads existentes ficam como estão até a próxima edição (conforme escolhido).
 
-## Fontes de dados (filtradas pelo `user.id` do AuthContext)
+## Comportamento da UI
 
-1. **Atividades de projeto** — `project_activities` onde `assigned_to_user_ids` contém o usuário e `due_date` existe. Join leve com `project_cards` para obter `proposal_id` + `project_name`.
-2. **Ações de prospecção** — `prospection_leads` onde `responsible_user_id = user.id` e `next_action_date` está preenchida. Mostra empresa + próxima ação.
+```text
+┌─ Temperatura ───────────────────────────────────┐
+│ [🌡️ Quente]  Score: 78/100   ⓘ ver detalhes    │
+│ ☐ Definir manualmente                            │
+└──────────────────────────────────────────────────┘
+```
 
-Carregamento via duas queries paralelas no `useEffect`, filtradas por `workspace_id` (RLS já garante isolamento).
+Tooltip ⓘ mostra: "Origem: Indicação (+20) · Status: Reunião agendada (+35) · Último contato 5 dias (+20) · Próxima ação em 3 dias (+15) = 78".
 
-## UI
+Com o toggle ligado, o badge vira o select original e o sistema para de recalcular naquele lead.
 
-- **Header**: "Meu Calendário"
-- **Toolbar**: toggle Mês/Semana, navegação ←/→, label do período em pt-BR, botão "Hoje", switches para alternar visibilidade de cada tipo (Projetos / Prospecção)
-- **Legenda**: 🟣 roxo = atividade de projeto · 🟠 laranja = ação de prospecção · destaque "Hoje" em azul `primary`
-- **Grid** (mês): 7 colunas, células com data + chips compactos de eventos do dia
-- **Semana**: 7 colunas com cards maiores
-- **Mobile-first**: chips truncados com `text-[10px]`, scroll vertical dentro da célula
-- **Dialog ao clicar**:
-  - Atividade de projeto → título, projeto, data, status, botão "Abrir em Gestão de Projetos" (navega para `/gestao-projetos?budget=<budget_id>`)
-  - Ação de prospecção → empresa, próxima ação, data, botão "Abrir em Prospecção" (navega para `/prospeccao`)
+## Memória
+
+- Atualizar `mem://features/prospection/leads` com a régua de temperatura e o campo `temperatureManual`.
 
 ## Detalhes técnicos
 
-```text
-type PersonalEvent = {
-  id: string;
-  date: Date;
-  kind: 'project' | 'prospection';
-  title: string;       // ex: "ATV-123 - Editar vídeo"
-  subtitle: string;    // ex: "P-0042 — Campanha XPTO"
-  raw: any;            // dados originais para o Dialog
-};
-```
-
-- Datas em string recebem `T12:00:00` antes de virar `Date` (regra do projeto).
-- Estado: `currentDate`, `view: 'month'|'week'`, `showProjects`, `showProspection`, `selectedEvent`.
-- Sem mudanças de schema/RLS (já temos `has_workspace_access`).
-- Reaproveita ícones do `lucide-react` e componentes shadcn já existentes (`Dialog`, `Switch`, `Tabs`, `Button`).
-- Sem dependência da página existente `/calendario` — código próprio, mais leve.
-
-## Permissões
-
-Sem restrições por papel — cada usuário vê apenas os próprios itens. A sidebar mostra automaticamente via `APP_PAGES`.
+- Função pura, sem efeitos colaterais — fácil de testar.
+- Datas continuam usando o padrão `T12:00:00` ao virar `Date`.
+- Mappers snake_case ↔ camelCase mantidos.
+- Sem mudança nas RLS.
+- Reaproveita `TemperatureBadge` já existente; nenhum componente novo de UI complexo.
