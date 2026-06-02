@@ -155,6 +155,9 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
             <Label>E-mail</Label>
             <Input value={user?.email || ''} disabled className="bg-muted" />
           </div>
+
+          {/* Google Calendar */}
+          <GoogleCalendarConnect />
         </div>
 
         <div className="flex justify-end gap-2">
