@@ -370,7 +370,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) {
       setActivities(prev);
       toast.error('Erro ao remover atividade');
+      return;
     }
+    syncActivityToGoogle(id, 'delete');
   };
 
   const handleSaveEdit = async (id: string) => {
