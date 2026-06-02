@@ -1,97 +1,65 @@
-## Régua de temperatura automática
 
-A temperatura (Frio / Morno / Quente) passa a ser calculada automaticamente a cada criação/edição do lead, com base em **origem do lead** e **histórico de relacionamento** (status no funil + recência do último contato + próxima ação agendada).
+# Sincronização com Google Calendar (per-user)
 
-O usuário ainda pode travar manualmente quando quiser sobrescrever a régua.
+Cada usuário conecta sua própria conta Google. O sistema envia automaticamente as **atividades de projeto atribuídas a ele** (com `due_date`) para o Google Calendar pessoal. Sentido único: **Sistema → Google**.
 
-## Régua de pontuação (0–100)
+## Etapa 1 — Você cria as credenciais no Google Cloud Console
 
-### Origem do lead
+Te guio passo a passo (faça antes da implementação):
 
-| Origem | Pontos |
-|---|---|
-| Indicação | +20 |
-| Site / Inbound / Networking | +15 |
-| Evento | +12 |
-| Instagram / Meta Ads / Google Ads | +8 |
-| Prospecção ativa / Outbound / Outro | +0 |
+1. Acesse https://console.cloud.google.com → crie um projeto (ex: "Hero Command").
+2. Menu **APIs e Serviços → Biblioteca** → busque **Google Calendar API** → **Ativar**.
+3. **APIs e Serviços → Tela de consentimento OAuth**:
+   - Tipo: **Externo**
+   - Nome do app, e-mail de suporte, e-mail do desenvolvedor
+   - Domínios autorizados: `lovable.app` e `hero.rec.br`
+   - Escopos: adicione `.../auth/calendar.events` (só eventos, não lê calendários inteiros)
+   - Usuários de teste: adicione e-mails dos primeiros usuários (enquanto estiver em modo de teste)
+4. **APIs e Serviços → Credenciais → Criar credenciais → ID do cliente OAuth**:
+   - Tipo: **Aplicativo da Web**
+   - **URIs de redirecionamento autorizados**: vou te dar a URL exata depois de criar a Edge Function (será algo como `https://itglphakocafsmzsdyfo.supabase.co/functions/v1/google-calendar-oauth-callback`)
+5. Copie **Client ID** e **Client Secret** — você adiciona como secrets quando eu pedir.
 
-### Status no funil
+## Etapa 2 — Banco
 
-| Status | Pontos |
-|---|---|
-| Reunião agendada | +35 |
-| Qualificado para CRM | +45 |
-| Contato realizado | +18 |
-| Mapeado | +0 |
-| Nutrição | −5 |
-| Perdido | força **Frio** (override) |
+Nova tabela `user_google_tokens`:
+- `user_id`, `workspace_id`
+- `access_token`, `refresh_token`, `expires_at`
+- `google_email`, `connected_at`
+- RLS: cada usuário só vê/edita o próprio registro
 
-### Recência do último contato
+Nova tabela `google_calendar_sync_map` (rastreia o que já foi enviado):
+- `activity_id` (do sistema) → `google_event_id`
+- `user_id`, `last_synced_at`
 
-| Tempo desde o último contato | Pontos |
-|---|---|
-| Nunca contatado | −10 |
-| ≤ 7 dias | +20 |
-| 8–14 dias | +10 |
-| 15–30 dias | +0 |
-| 31–60 dias | −10 |
-| > 60 dias | −20 |
+## Etapa 3 — Edge Functions
 
-### Próxima ação agendada
+1. **`google-calendar-oauth-start`**: gera URL de autorização do Google e redireciona o usuário.
+2. **`google-calendar-oauth-callback`**: recebe o `code`, troca por tokens, salva em `user_google_tokens`.
+3. **`google-calendar-sync-activity`**: dado um `activity_id`, faz upsert do evento no Google Calendar do responsável (cria se não existir, atualiza se já existir, deleta se a atividade for removida). Renova `access_token` via `refresh_token` quando expirado.
 
-| Situação | Pontos |
-|---|---|
-| Marcada nos próximos 7 dias | +15 |
-| Marcada entre 8–30 dias | +5 |
-| Sem próxima ação | −5 |
-| Atrasada (data já passou) | −15 |
+## Etapa 4 — UI
 
-### Faixas
+- **Perfil do usuário** (ProfileEditDialog): seção "Google Calendar" com:
+  - Botão **"Conectar Google Calendar"** (se não conectado)
+  - E-mail conectado + botão **"Desconectar"** (se conectado)
+- **ProjectActivitiesDialog**: ao criar/editar/excluir uma atividade com `due_date` e `assignee`, chama `google-calendar-sync-activity` em background (silencioso, com toast só em erro).
 
-- `0–39` → **Frio**
-- `40–69` → **Morno**
-- `≥ 70` → **Quente**
+## Etapa 5 — O que vai pro Google
 
-## Arquivos
+Por atividade enviada:
+- **Título**: `[Projeto X] Nome da atividade`
+- **Data**: `due_date` (evento de dia inteiro)
+- **Descrição**: link de volta para o projeto no sistema + descrição da tarefa
+- **Calendário**: `primary` do usuário
 
-**Criar**
-- `src/utils/leadTemperature.ts` — função pura `computeLeadTemperature(lead): { temperature, score, breakdown }`. Aplica os pesos acima, trata override de `perdido` e retorna o detalhamento para tooltip.
+## Decisões técnicas
 
-**Editar**
-- `src/types/prospection.ts` — adicionar campo `temperatureManual?: boolean` (default `false`). Quando `true`, a régua não sobrescreve.
-- `src/contexts/ProspectionContext.tsx` — em `addLead` e `updateLead`, antes de salvar, se `temperatureManual !== true` recalcular `temperature` via `computeLeadTemperature`. Atualizar mappers `leadFromDb` / `leadToDb` para o novo campo (`temperature_manual`).
-- `src/pages/prospection/ProspectionPage.tsx` — no formulário de lead:
-  - Substituir o select "Temperatura" por um bloco com:
-    - Badge da temperatura calculada (somente leitura por padrão) + score e tooltip com o breakdown
-    - Toggle "Definir manualmente" → quando ligado, libera o select e marca `temperatureManual=true`
-  - No Dialog de detalhes, mostrar pequena legenda "Calculada automaticamente" ou "Definida manualmente"
+- Sentido único Sistema→Google (sem polling, sem webhooks, simples e seguro).
+- Sem sync de execução de orçamentos, leads ou notas (apenas atividades, conforme pedido).
+- Atividades **existentes** não são enviadas em massa — só novas/editadas a partir da conexão. (Posso adicionar botão "Sincronizar tudo agora" depois, se quiser.)
+- Em modo de teste do Google Cloud, só funciona para e-mails na lista de teste. Para liberar para qualquer usuário, precisa enviar o app para verificação do Google (processo separado, pode levar dias). Recomendo começar em teste com sua equipe.
 
-**Banco**
-- Migração `ALTER TABLE prospection_leads ADD COLUMN temperature_manual boolean NOT NULL DEFAULT false;`
-- Sem recálculo retroativo — leads existentes ficam como estão até a próxima edição (conforme escolhido).
+## Próximos passos
 
-## Comportamento da UI
-
-```text
-┌─ Temperatura ───────────────────────────────────┐
-│ [🌡️ Quente]  Score: 78/100   ⓘ ver detalhes    │
-│ ☐ Definir manualmente                            │
-└──────────────────────────────────────────────────┘
-```
-
-Tooltip ⓘ mostra: "Origem: Indicação (+20) · Status: Reunião agendada (+35) · Último contato 5 dias (+20) · Próxima ação em 3 dias (+15) = 78".
-
-Com o toggle ligado, o badge vira o select original e o sistema para de recalcular naquele lead.
-
-## Memória
-
-- Atualizar `mem://features/prospection/leads` com a régua de temperatura e o campo `temperatureManual`.
-
-## Detalhes técnicos
-
-- Função pura, sem efeitos colaterais — fácil de testar.
-- Datas continuam usando o padrão `T12:00:00` ao virar `Date`.
-- Mappers snake_case ↔ camelCase mantidos.
-- Sem mudança nas RLS.
-- Reaproveita `TemperatureBadge` já existente; nenhum componente novo de UI complexo.
+Quando você terminar a Etapa 1, me avise que parto para banco + edge functions, te passo a **URI de redirecionamento exata** para colar no Google Console, e depois te peço os secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`.

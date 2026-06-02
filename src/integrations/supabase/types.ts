@@ -621,6 +621,33 @@ export type Database = {
           },
         ]
       }
+      google_calendar_sync_map: {
+        Row: {
+          activity_id: string
+          google_event_id: string
+          id: string
+          last_synced_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          activity_id: string
+          google_event_id: string
+          id?: string
+          last_synced_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          activity_id?: string
+          google_event_id?: string
+          id?: string
+          last_synced_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       hard_drives: {
         Row: {
           capacity_gb: number
@@ -1294,6 +1321,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_google_tokens: {
+        Row: {
+          access_token: string
+          connected_at: string
+          expires_at: string
+          google_email: string
+          id: string
+          refresh_token: string
+          scope: string
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          expires_at: string
+          google_email?: string
+          id?: string
+          refresh_token: string
+          scope?: string
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          expires_at?: string
+          google_email?: string
+          id?: string
+          refresh_token?: string
+          scope?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
       }
       workspace_contract_template: {
         Row: {
