@@ -1,42 +1,58 @@
-## Objetivo
+# Meu Calendário
 
-Adicionar um campo "Responsável pelo Lead" na prospecção (vinculado a um usuário do workspace com role `vendedor` ou `admin`/`owner`) e mostrar avisos sobre a próxima ação do lead na tela de Boas-vindas para o usuário responsável (1 dia antes, no dia, ou em atraso).
+Nova página pessoal que mostra, em um calendário, tudo que está atribuído ao usuário logado nas áreas de **Gestão de Projetos** e **Prospecção**.
 
-## O que vai mudar
+## Arquivos
 
-### 1. Banco de dados
-- Adicionar coluna `responsible_user_id UUID NULL` em `prospection_leads` (referência lógica ao `auth.users` / `profiles.id`).
+**Criar**
+- `src/pages/welcome/MyCalendarPage.tsx` — página com Header, toolbar (Mês/Semana, navegação, Hoje), legenda e Dialog de detalhes.
 
-### 2. Tipos e contexto
-- `src/types/prospection.ts`: adicionar campo `responsibleUserId?: string` na interface `ProspectionLead`.
-- `src/contexts/ProspectionContext.tsx`: mapear `responsible_user_id` ↔ `responsibleUserId` no `leadFromDb` e `leadToDb`.
+**Editar**
+- `src/config/pages.ts` — adicionar entrada `meu-calendario` no grupo "Início", logo abaixo de `boas-vindas`. Sem `restrictedFrom` (todos os papéis veem).
+- `src/App.tsx` — registrar rota `/meu-calendario` protegida por `PageGuard pageKey="meu-calendario"`.
+- `mem://index.md` — referenciar a nova memória.
 
-### 3. Formulário de Lead (ProspectionPage)
-- Adicionar um `Select` "Responsável pelo Lead" no formulário de criação/edição.
-- O Select carrega membros do workspace (via `workspace_members` + `profiles`) cuja `role` seja `vendedor`, `admin` ou `owner` (cobre vendedor e administrativo). Mostra nome + foto.
-- Salvar o `user_id` selecionado no novo campo.
-- Exibir o nome do responsável na visualização do card/tabela do lead.
+**Criar memória**
+- `mem://features/my-calendar` — descrição da página pessoal.
 
-### 4. Tela de Boas-vindas (WelcomePage)
-- Novo bloco "Leads — próxima ação" abaixo das atividades operacionais.
-- Buscar leads do workspace onde `responsible_user_id = profile.id`, `funnel_status NOT IN ('perdido', 'qualificado_crm')`, e `next_action_date` corresponde a:
-  - **Em atraso**: data < hoje (badge vermelho)
-  - **Hoje**: data = hoje (badge âmbar)
-  - **Amanhã**: data = hoje + 1 (badge azul)
-- Cada item mostra: empresa, ação prevista, data, badge de status. Click pode levar à página `/prospeccao` (opcional, simples link).
-- Se não houver itens, o bloco não é renderizado.
+## Fontes de dados (filtradas pelo `user.id` do AuthContext)
+
+1. **Atividades de projeto** — `project_activities` onde `assigned_to_user_ids` contém o usuário e `due_date` existe. Join leve com `project_cards` para obter `proposal_id` + `project_name`.
+2. **Ações de prospecção** — `prospection_leads` onde `responsible_user_id = user.id` e `next_action_date` está preenchida. Mostra empresa + próxima ação.
+
+Carregamento via duas queries paralelas no `useEffect`, filtradas por `workspace_id` (RLS já garante isolamento).
+
+## UI
+
+- **Header**: "Meu Calendário"
+- **Toolbar**: toggle Mês/Semana, navegação ←/→, label do período em pt-BR, botão "Hoje", switches para alternar visibilidade de cada tipo (Projetos / Prospecção)
+- **Legenda**: 🟣 roxo = atividade de projeto · 🟠 laranja = ação de prospecção · destaque "Hoje" em azul `primary`
+- **Grid** (mês): 7 colunas, células com data + chips compactos de eventos do dia
+- **Semana**: 7 colunas com cards maiores
+- **Mobile-first**: chips truncados com `text-[10px]`, scroll vertical dentro da célula
+- **Dialog ao clicar**:
+  - Atividade de projeto → título, projeto, data, status, botão "Abrir em Gestão de Projetos" (navega para `/gestao-projetos?budget=<budget_id>`)
+  - Ação de prospecção → empresa, próxima ação, data, botão "Abrir em Prospecção" (navega para `/prospeccao`)
 
 ## Detalhes técnicos
 
-- O campo `next_action_date` em `prospection_leads` é `text` no formato `YYYY-MM-DD` (consistente com o resto do app). Comparação é feita com `today.toISOString().slice(0,10)` para evitar timezone (segue o padrão já usado em WelcomePage).
-- O Select de responsável usa o componente `TeamMemberSelect` existente se aplicável, ou nova query inline (mesma lógica de carregar `workspace_members` + `profiles`).
-- Não há mudança em RLS — o filtro por `workspace_id` já é coberto pelas policies existentes.
-- O `prospectionResponsible` (texto livre) existente fica intacto para retrocompatibilidade.
+```text
+type PersonalEvent = {
+  id: string;
+  date: Date;
+  kind: 'project' | 'prospection';
+  title: string;       // ex: "ATV-123 - Editar vídeo"
+  subtitle: string;    // ex: "P-0042 — Campanha XPTO"
+  raw: any;            // dados originais para o Dialog
+};
+```
 
-## Arquivos afetados
+- Datas em string recebem `T12:00:00` antes de virar `Date` (regra do projeto).
+- Estado: `currentDate`, `view: 'month'|'week'`, `showProjects`, `showProspection`, `selectedEvent`.
+- Sem mudanças de schema/RLS (já temos `has_workspace_access`).
+- Reaproveita ícones do `lucide-react` e componentes shadcn já existentes (`Dialog`, `Switch`, `Tabs`, `Button`).
+- Sem dependência da página existente `/calendario` — código próprio, mais leve.
 
-- Migração SQL (nova coluna)
-- `src/types/prospection.ts`
-- `src/contexts/ProspectionContext.tsx`
-- `src/pages/prospection/ProspectionPage.tsx`
-- `src/pages/welcome/WelcomePage.tsx`
+## Permissões
+
+Sem restrições por papel — cada usuário vê apenas os próprios itens. A sidebar mostra automaticamente via `APP_PAGES`.
