@@ -72,6 +72,7 @@ const App = () => (
                 <Route element={<AppLayout />}>
                   {/* Início */}
                   <Route path="/boas-vindas" element={<PageGuard pageKey="boas-vindas"><WelcomePage /></PageGuard>} />
+                  <Route path="/meu-calendario" element={<PageGuard pageKey="meu-calendario"><MyCalendarPage /></PageGuard>} />
 
                   {/* Prospecção */}
                   <Route path="/prospeccao" element={<PageGuard pageKey="prospeccao"><ProspectionPage /></PageGuard>} />
