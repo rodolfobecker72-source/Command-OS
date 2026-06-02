@@ -6,6 +6,7 @@ import {
   ProspectionLead,
   LeadFunnelStatus,
 } from '@/types/prospection';
+import { computeLeadTemperature } from '@/utils/leadTemperature';
 
 // ============= DB mapping helpers =============
 
