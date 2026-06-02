@@ -1195,17 +1195,40 @@ export function ProspectionPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="text-muted-foreground text-xs">Contato:</span><p>{detailLead.contactName} — {detailLead.contactRole}</p></div>
-                  <div><span className="text-muted-foreground text-xs">Telefone:</span><p>{detailLead.phone || '-'}</p></div>
-                  <div><span className="text-muted-foreground text-xs">E-mail:</span><p>{detailLead.email || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Empresa:</span><p>{detailLead.companyName}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Cidade:</span><p>{detailLead.city || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Contato:</span><p>{detailLead.contactName || '-'}{detailLead.contactRole ? ` — ${detailLead.contactRole}` : ''}</p></div>
+                  <div>
+                    <span className="text-muted-foreground text-xs">Telefone / WhatsApp:</span>
+                    {detailLead.phone ? (
+                      <p>
+                        <a
+                          href={`https://wa.me/${(detailLead.phone.startsWith('+') ? detailLead.phone.slice(1) : `55${detailLead.phone}`).replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium"
+                        >
+                          {detailLead.phone}
+                        </a>
+                      </p>
+                    ) : <p>-</p>}
+                  </div>
+                  <div><span className="text-muted-foreground text-xs">E-mail:</span><p>{detailLead.email ? <a href={`mailto:${detailLead.email}`} className="text-primary hover:underline">{detailLead.email}</a> : '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Origem:</span><p>{LEAD_ORIGIN_LABELS[detailLead.origin]}</p></div>
                   <div><span className="text-muted-foreground text-xs">Setor:</span><p>{LEAD_SEGMENT_LABELS[detailLead.segment]}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Tipo de Aquisição:</span><p>{ACQUISITION_TYPE_LABELS[detailLead.acquisitionType]}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Temperatura:</span><p>{LEAD_TEMPERATURE_LABELS[detailLead.temperature]}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Status do Funil:</span><p>{LEAD_FUNNEL_STATUS_LABELS[detailLead.funnelStatus]}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Prioridade:</span><p>{LEAD_PRIORITY_LABELS[detailLead.priority]}</p></div>
                   <div><span className="text-muted-foreground text-xs">Potencial:</span><p className="font-semibold">R$ {detailLead.estimatedPotential.toLocaleString('pt-BR')}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Prospecção:</span><p>{detailLead.prospectionResponsible || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Resp. Fechamento:</span><p>{detailLead.closingResponsible || '-'}</p></div>
                   <div><span className="text-muted-foreground text-xs">Responsável pelo Lead:</span><p>{memberName(detailLead.responsibleUserId) || '-'}</p></div>
-                  <div><span className="text-muted-foreground text-xs">Último Contato:</span><p>{detailLead.lastContactDate ? format(new Date(detailLead.lastContactDate), 'dd/MM/yyyy') : '-'}</p></div>
-                  <div><span className="text-muted-foreground text-xs">Próxima Ação:</span><p>{detailLead.nextAction || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Último Contato:</span><p>{detailLead.lastContactDate ? format(new Date(detailLead.lastContactDate + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Data da Próxima Ação:</span><p>{detailLead.nextActionDate ? format(new Date(detailLead.nextActionDate + 'T12:00:00'), 'dd/MM/yyyy') : '-'}</p></div>
+                  <div className="col-span-2"><span className="text-muted-foreground text-xs">Próxima Ação:</span><p>{detailLead.nextAction || '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Criado em:</span><p>{detailLead.createdAt ? format(new Date(detailLead.createdAt), 'dd/MM/yyyy HH:mm') : '-'}</p></div>
+                  <div><span className="text-muted-foreground text-xs">Atualizado em:</span><p>{detailLead.updatedAt ? format(new Date(detailLead.updatedAt), 'dd/MM/yyyy HH:mm') : '-'}</p></div>
                 </div>
 
                 {detailLead.strategicNotes && (
