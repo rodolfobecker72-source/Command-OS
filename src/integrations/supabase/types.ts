@@ -183,6 +183,7 @@ export type Database = {
           final_value: number | null
           has_execution_date: boolean
           hide_nf_in_pdf: boolean
+          hide_nf_observation_in_pdf: boolean
           hide_operational_in_pdf: boolean
           id: string
           includes_accommodation: boolean
@@ -222,6 +223,7 @@ export type Database = {
           final_value?: number | null
           has_execution_date?: boolean
           hide_nf_in_pdf?: boolean
+          hide_nf_observation_in_pdf?: boolean
           hide_operational_in_pdf?: boolean
           id?: string
           includes_accommodation?: boolean
@@ -261,6 +263,7 @@ export type Database = {
           final_value?: number | null
           has_execution_date?: boolean
           hide_nf_in_pdf?: boolean
+          hide_nf_observation_in_pdf?: boolean
           hide_operational_in_pdf?: boolean
           id?: string
           includes_accommodation?: boolean
