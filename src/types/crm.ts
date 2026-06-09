@@ -324,6 +324,7 @@ export interface Budget {
   pdfReleased: boolean;
   hideNfInPdf: boolean;
   hideOperationalInPdf: boolean;
+  hideNfObservationInPdf: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
