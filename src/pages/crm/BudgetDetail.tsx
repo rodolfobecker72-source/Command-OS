@@ -2704,6 +2704,22 @@ export function BudgetDetail() {
                       </span>
                       Ocultar Despesas Operacionais no PDF (diluir valor nos serviços)
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const newValue = !budget.hideNfObservationInPdf;
+                        await updateBudget(budget.id, { hideNfObservationInPdf: newValue });
+                        toast.success(newValue ? 'Observação sobre NF será ocultada no PDF' : 'Observação sobre NF voltará a aparecer no PDF');
+                      }}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Quando ativo, o quadro de observação sobre emissão de Nota Fiscal não aparece no PDF"
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideNfObservationInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                        {budget.hideNfObservationInPdf && <CheckCircle className="w-3 h-3" />}
+                      </span>
+                      Ocultar observação sobre faturamento (Nota Fiscal) no PDF
+                    </button>
                   </motion.div>
                 )}
               </>
