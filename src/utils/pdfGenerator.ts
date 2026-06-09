@@ -333,6 +333,7 @@ export async function generateProposalPDF({
 
   const hideNf = !!budget.hideNfInPdf;
   const hideOp = !!budget.hideOperationalInPdf;
+  const hideNfObs = !!budget.hideNfObservationInPdf;
   const preNfPct = version.nfCostPercentage || 13;
   const preMarginPct = version.margin || 0;
   const preOpTotal = (version.operationalCosts || []).reduce((sum, c) => sum + c.value, 0);
@@ -582,7 +583,46 @@ export async function generateProposalPDF({
   
   doc.setFontSize(titleSize);
   doc.text(formatCurrency(totalProjectValue), pageWidth - margin, y, { align: 'right' });
-  
+
+  // Observação sobre faturamento / Nota Fiscal
+  if (!hideNfObs) {
+    y += 14;
+    const obsTitle = 'Observação sobre faturamento — Emissão de Nota Fiscal';
+    const companyName = (layoutSettings?.companyName || 'HERO').toUpperCase();
+    const obsBody = `A emissão de Nota Fiscal é obrigatória para esta proposta. Os valores apresentados já consideram a tributação incidente sobre o serviço prestado, de acordo com a alíquota vigente da ${companyName}.`;
+
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'normal');
+    const bodyLines = doc.splitTextToSize(obsBody, contentWidth - 10) as string[];
+    const boxPadding = 5;
+    const titleLineH = 6;
+    const bodyLineH = 5.5;
+    const boxHeight = boxPadding * 2 + titleLineH + 3 + bodyLines.length * bodyLineH;
+
+    ensureSpace(boxHeight + 4);
+
+    doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.setFillColor(248, 248, 248);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, contentWidth, boxHeight, 2, 2, 'FD');
+
+    let ty = y + boxPadding + 4;
+    doc.setFontSize(normalSize);
+    doc.setFont('helvetica', 'bold');
+    setColor(black);
+    doc.text(obsTitle, margin + boxPadding, ty);
+    ty += titleLineH + 3;
+
+    doc.setFont('helvetica', 'normal');
+    setColor(darkGray);
+    bodyLines.forEach((line) => {
+      doc.text(line, margin + boxPadding, ty);
+      ty += bodyLineH;
+    });
+
+    y += boxHeight;
+  }
+
   addHeader();
   addFooter();
 
