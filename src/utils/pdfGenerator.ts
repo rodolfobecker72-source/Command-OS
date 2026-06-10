@@ -167,9 +167,13 @@ export async function generateProposalPDF({
       const logoHeight = 20;
       const aspectRatio = logoData.width / logoData.height;
       const logoWidth = logoHeight * aspectRatio;
-      doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, headerY - 2, logoWidth, logoHeight);
+      // Header area spans from top (0) to divider line at headerY + 18
+      const headerBottom = headerY + 18;
+      const logoTop = (headerBottom - logoHeight) / 2;
+      doc.addImage(logoData.base64, 'PNG', pageWidth - margin - logoWidth, logoTop, logoWidth, logoHeight);
     }
   };
+
 
   const addFooter = () => {
     if (footerLogoData) {
