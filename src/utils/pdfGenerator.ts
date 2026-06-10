@@ -212,14 +212,26 @@ export async function generateProposalPDF({
   // PAGE 1
   // ============================================
   addHeader();
-  
+
+  // Company info top-left (first page only)
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  setColor(darkGray);
+  doc.text('HERO AUDIOVISUAL LTDA', margin, headerY - 2);
+  doc.setFont('helvetica', 'normal');
+  setColor(gray);
+  doc.text('CNPJ: 38.204.599/0001-58', margin, headerY + 2);
+  doc.text('Rua Ver. Célso Henrique Borsato, 426', margin, headerY + 6);
+  doc.text('Santa Rita do Sapucaí, MG - CEP 37538-736', margin, headerY + 10);
+
+  y = headerY + 20;
+
   doc.setFontSize(titleSize);
   doc.setFont('helvetica', 'bold');
   setColor(black);
-  doc.text(t.pdfTitle, margin, headerY + 4);
-  
-  y = contentStartY;
-  
+  doc.text(t.pdfTitle, margin, y);
+  y += 8;
+
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(darkGray);
