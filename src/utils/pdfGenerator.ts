@@ -224,7 +224,9 @@ export async function generateProposalPDF({
   doc.text('Rua Ver. Célso Henrique Borsato, 426', margin, headerY + 6);
   doc.text('Santa Rita do Sapucaí, MG - CEP 37538-736', margin, headerY + 10);
 
-  y = headerY + 20;
+  y = headerY + 18;
+  drawLine(y);
+  y += 8;
 
   doc.setFontSize(titleSize);
   doc.setFont('helvetica', 'bold');
@@ -235,42 +237,34 @@ export async function generateProposalPDF({
   doc.setFontSize(subtitleSize);
   doc.setFont('helvetica', 'bold');
   setColor(darkGray);
-  const identifierLines = doc.splitTextToSize(projectIdentifier, contentWidth - 50);
+  const identifierLines = doc.splitTextToSize(projectIdentifier, contentWidth) as string[];
   doc.text(identifierLines, margin, y);
-  y += identifierLines.length * 6 + 8;
-  
-  drawLine(y);
-  y += 10;
+  y += identifierLines.length * 6 + 6;
 
-  // CLIENT BLOCK
-  const clientBlockHeight = 8 + 6 * 3 + (responsibleUser ? 6 : 0) + 20;
+  // CLIENT INFO (inline, no section title)
+  const clientBlockHeight = 6 * 3 + (responsibleUser ? 6 : 0) + 16;
   ensureSpace(clientBlockHeight);
 
-  doc.setFontSize(subtitleSize);
-  doc.setFont('helvetica', 'bold');
-  setColor(black);
-  doc.text(t.client, margin, y);
-  y += 8;
-  
   doc.setFontSize(normalSize);
   doc.setFont('helvetica', 'normal');
   setColor(darkGray);
-  
+
   doc.text(`Empresa: ${client.companyName}`, margin, y);
   y += 6;
   doc.text(`Responsável: ${client.responsiblePerson}`, margin, y);
   y += 6;
   doc.text(`Data da Proposta: ${generatedDate}`, margin, y);
   y += 6;
-  
+
   if (responsibleUser) {
     doc.text(`Responsável pelo atendimento: ${responsibleUser.name}`, margin, y);
     y += 6;
   }
-  
-  y += 12;
+
+  y += 6;
   drawLine(y);
   y += 10;
+
 
   // PROJECT BLOCK
   const projectDescForHeight = budget.projectDescription ? doc.splitTextToSize(budget.projectDescription, contentWidth) as string[] : [];
