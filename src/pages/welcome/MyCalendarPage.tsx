@@ -453,61 +453,39 @@ export function MyCalendarPage() {
           ))}
         </div>
 
-        <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
-          {days.map((day, i) => {
-            const inMonth = view === 'week' || isSameMonth(day, currentDate);
-            const today = isToday(day);
-            const key = format(day, 'yyyy-MM-dd');
-            const dayEvents = eventsByDay.get(key) || [];
-            const dayNotes = showNotes ? (notesByDay.get(key) || []) : [];
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
+            {days.map((day, i) => {
+              const inMonth = view === 'week' || isSameMonth(day, currentDate);
+              const today = isToday(day);
+              const key = format(day, 'yyyy-MM-dd');
+              const dayEvents = eventsByDay.get(key) || [];
+              const dayNotes = showNotes ? (notesByDay.get(key) || []) : [];
+              const dayAppts = apptsByDay.get(key) || [];
 
-            return (
-              <div
-                key={i}
-                className={cn(
-                  'group border-b border-r border-border p-1 relative',
-                  view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
-                  !inMonth && 'bg-muted/30',
-                  today && 'bg-primary/5',
-                )}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={cn(
-                    'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
-                    today && 'bg-primary text-primary-foreground',
-                    !inMonth && 'text-muted-foreground/50',
-                  )}>
-                    {format(day, 'd')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => openNewNote(key)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-                    title="Adicionar nota"
-                    aria-label="Adicionar nota"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+              return (
+                <DayCell
+                  key={i}
+                  day={day}
+                  inMonth={inMonth}
+                  today={today}
+                  view={view}
+                  onAddNote={() => openNewNote(key)}
+                  onCreateAppt={() => { setEditingAppt(null); setCreateApptAt(day); setApptDialogOpen(true); }}
+                >
                   {dayEvents.map(ev => (
-                    <button
+                    <DraggableEvent
                       key={ev.id}
-                      onClick={() => handleOpen(ev)}
-                      className={cn(
-                        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors',
-                        ev.kind === 'project'
-                          ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
-                          : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
-                      )}
-                      title={`${ev.title} — ${ev.subtitle}`}
-                    >
-                      <div className="font-semibold truncate flex items-center gap-1">
-                        {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
-                        <span className="truncate">{ev.title}</span>
-                      </div>
-                      <div className="truncate opacity-80">{ev.subtitle}</div>
-                    </button>
+                      ev={ev}
+                      onOpen={() => handleOpen(ev)}
+                    />
+                  ))}
+                  {dayAppts.map(ap => (
+                    <DraggableAppointment
+                      key={ap.id}
+                      appt={ap}
+                      onOpen={() => { setEditingAppt(ap); setApptDialogOpen(true); }}
+                    />
                   ))}
                   {dayNotes.map(n => (
                     <button
@@ -522,18 +500,19 @@ export function MyCalendarPage() {
                       </div>
                     </button>
                   ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </DayCell>
+              );
+            })}
+          </div>
+        </DndContext>
 
-        {!loading && events.length === 0 && notes.length === 0 && (
+        {!loading && events.length === 0 && notes.length === 0 && myAppointments.length === 0 && (
           <div className="px-6 py-8 text-center text-sm text-muted-foreground">
-            Nenhuma atividade, ação ou nota cadastrada.
+            Nenhuma atividade, ação, nota ou compromisso cadastrado.
           </div>
         )}
       </div>
+
 
       {/* Event detail dialog */}
       <Dialog open={!!selected} onOpenChange={open => !open && setSelected(null)}>
