@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  addMonths, subMonths, addWeeks, subWeeks, format,
+  addMonths, subMonths, addWeeks, subWeeks, format, addDays, differenceInCalendarDays,
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
@@ -19,6 +19,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DndContext, DragEndEvent, useDroppable, useDraggable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useAppointments } from '@/hooks/useAppointments';
+import { AppointmentDialog } from '@/components/operation/AppointmentDialog';
+import { Appointment, APPOINTMENT_KIND_COLORS } from '@/types/appointment';
+
 
 type EventKind = 'project' | 'prospection';
 
