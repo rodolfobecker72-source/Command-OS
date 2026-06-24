@@ -1,0 +1,1 @@
+DELETE FROM public.project_cards WHERE budget_id IN (SELECT id FROM public.budgets WHERE status != 'aprovada');
