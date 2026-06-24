@@ -244,8 +244,8 @@ export function ProjectManagementPage() {
                     <p className="text-xs text-muted-foreground py-2">Nenhum projeto neste status (solte aqui)</p>
                   ) : (
                     buckets.map((bucket) => (
-                      <div key={bucket.month || '__none__'} className={cn('space-y-1 rounded-md border px-2 py-2', tint.border, tint.month)}>
-                        <div className="flex items-center gap-2 mb-1">
+                      <div key={bucket.month || '__none__'} className="space-y-1">
+                        <div className="flex items-center gap-2 mb-1 mt-1">
                           <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             {formatMonthLabel(bucket.month)}
