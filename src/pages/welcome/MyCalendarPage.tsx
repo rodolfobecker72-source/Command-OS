@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  addMonths, subMonths, addWeeks, subWeeks, format,
+  addMonths, subMonths, addWeeks, subWeeks, format, addDays, differenceInCalendarDays,
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
@@ -19,6 +19,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DndContext, DragEndEvent, useDroppable, useDraggable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useAppointments } from '@/hooks/useAppointments';
+import { AppointmentDialog } from '@/components/operation/AppointmentDialog';
+import { Appointment, APPOINTMENT_KIND_COLORS } from '@/types/appointment';
+
 
 type EventKind = 'project' | 'prospection';
 
@@ -31,6 +36,8 @@ interface PersonalEvent {
   status?: string;
   budgetId?: string;
   leadId?: string;
+  /** Raw id used to persist date updates when dragging. */
+  sourceId: string;
 }
 
 interface PersonalNote {
@@ -38,6 +45,7 @@ interface PersonalNote {
   date: string; // yyyy-MM-dd
   content: string;
 }
+
 
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciado: 'Não iniciado',
@@ -65,9 +73,17 @@ export function MyCalendarPage() {
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<PersonalEvent | null>(null);
+  const [showAppointments, setShowAppointments] = useState(true);
+
+  // Appointments
+  const { appointments, create: createAppt, update: updateAppt, remove: removeAppt } = useAppointments();
+  const [apptDialogOpen, setApptDialogOpen] = useState(false);
+  const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
+  const [createApptAt, setCreateApptAt] = useState<Date | null>(null);
 
   // Note editor state
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+
   const [editingNote, setEditingNote] = useState<PersonalNote | null>(null);
   const [noteDate, setNoteDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [noteContent, setNoteContent] = useState('');
@@ -125,6 +141,7 @@ export function MyCalendarPage() {
           const card = cardsMap.get(a.project_card_id);
           list.push({
             id: `proj-${a.id}`,
+            sourceId: a.id,
             date: d,
             kind: 'project',
             title: a.title || '(sem título)',
@@ -139,6 +156,7 @@ export function MyCalendarPage() {
           if (!d) continue;
           list.push({
             id: `prosp-${l.id}`,
+            sourceId: l.id,
             date: d,
             kind: 'prospection',
             title: l.next_action || 'Próxima ação',
@@ -146,6 +164,7 @@ export function MyCalendarPage() {
             leadId: l.id,
           });
         }
+
 
         if (active) {
           setEvents(list);
@@ -200,6 +219,65 @@ export function MyCalendarPage() {
     }
     return m;
   }, [notes]);
+
+  // Appointments filtered to the user (assigned or created)
+  const myAppointments = useMemo(() => {
+    if (!user?.id) return [];
+    return appointments.filter(a => a.createdBy === user.id || (a.assignedTo || []).includes(user.id));
+  }, [appointments, user?.id]);
+
+  const apptsByDay = useMemo(() => {
+    const m = new Map<string, Appointment[]>();
+    if (!showAppointments) return m;
+    for (const a of myAppointments) {
+      const key = format(a.startAt, 'yyyy-MM-dd');
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(a);
+    }
+    return m;
+  }, [myAppointments, showAppointments]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragEnd = useCallback(async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const dropDate: Date | undefined = (over.data?.current as any)?.date;
+    if (!dropDate) return;
+    const data = active.data?.current as any;
+    if (!data) return;
+
+    const dropIso = format(dropDate, 'yyyy-MM-dd');
+
+    if (data.type === 'activity') {
+      const ev = events.find(x => x.id === data.eventId);
+      if (!ev) return;
+      const prev = events;
+      setEvents(es => es.map(x => x.id === ev.id ? { ...x, date: dropDate } : x));
+      const { error } = await supabase.from('project_activities').update({ due_date: dropIso }).eq('id', ev.sourceId);
+      if (error) { toast.error('Erro ao mover atividade'); setEvents(prev); }
+      else toast.success('Atividade movida');
+    } else if (data.type === 'lead') {
+      const ev = events.find(x => x.id === data.eventId);
+      if (!ev) return;
+      const prev = events;
+      setEvents(es => es.map(x => x.id === ev.id ? { ...x, date: dropDate } : x));
+      const { error } = await supabase.from('prospection_leads').update({ next_action_date: dropIso }).eq('id', ev.sourceId);
+      if (error) { toast.error('Erro ao mover ação'); setEvents(prev); }
+      else toast.success('Ação movida');
+    } else if (data.type === 'appointment') {
+      const a = myAppointments.find(x => x.id === data.appointmentId);
+      if (!a) return;
+      const oldDay = new Date(a.startAt); oldDay.setHours(0,0,0,0);
+      const newDay = new Date(dropDate); newDay.setHours(0,0,0,0);
+      const delta = differenceInCalendarDays(newDay, oldDay);
+      if (delta === 0) return;
+      const newStart = addDays(new Date(a.startAt), delta);
+      const newEnd = a.endAt ? addDays(new Date(a.endAt), delta) : null;
+      await updateAppt(a.id, { startAt: newStart, endAt: newEnd });
+    }
+  }, [events, myAppointments, updateAppt]);
+
 
   const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
   const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
@@ -343,12 +421,27 @@ export function MyCalendarPage() {
             Notas
           </label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={showAppointments} onCheckedChange={setShowAppointments} className="scale-90" />
+          <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowAppointments(v => !v)}>
+            <CalendarDays className="w-3.5 h-3.5 text-indigo-500" />
+            Compromissos
+          </label>
+        </div>
 
         <Button variant="outline" size="sm" className="text-xs h-8" onClick={goToday}>Hoje</Button>
-        <Button size="sm" className="text-xs h-8 gap-1" onClick={() => openNewNote()}>
+        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => openNewNote()}>
           <Plus className="w-3.5 h-3.5" /> Nota
         </Button>
+        <Button size="sm" className="text-xs h-8 gap-1" onClick={() => { setEditingAppt(null); setCreateApptAt(null); setApptDialogOpen(true); }}>
+          <Plus className="w-3.5 h-3.5" /> Compromisso
+        </Button>
       </div>
+
+      <div className="px-4 md:px-6 py-1.5 text-[11px] text-muted-foreground bg-muted/40 border-b border-border">
+        Arraste itens para outro dia para reagendar.
+      </div>
+
 
       {/* Grid */}
       <div className="flex-1 overflow-auto bg-card">
@@ -360,61 +453,39 @@ export function MyCalendarPage() {
           ))}
         </div>
 
-        <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
-          {days.map((day, i) => {
-            const inMonth = view === 'week' || isSameMonth(day, currentDate);
-            const today = isToday(day);
-            const key = format(day, 'yyyy-MM-dd');
-            const dayEvents = eventsByDay.get(key) || [];
-            const dayNotes = showNotes ? (notesByDay.get(key) || []) : [];
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
+            {days.map((day, i) => {
+              const inMonth = view === 'week' || isSameMonth(day, currentDate);
+              const today = isToday(day);
+              const key = format(day, 'yyyy-MM-dd');
+              const dayEvents = eventsByDay.get(key) || [];
+              const dayNotes = showNotes ? (notesByDay.get(key) || []) : [];
+              const dayAppts = apptsByDay.get(key) || [];
 
-            return (
-              <div
-                key={i}
-                className={cn(
-                  'group border-b border-r border-border p-1 relative',
-                  view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
-                  !inMonth && 'bg-muted/30',
-                  today && 'bg-primary/5',
-                )}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={cn(
-                    'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
-                    today && 'bg-primary text-primary-foreground',
-                    !inMonth && 'text-muted-foreground/50',
-                  )}>
-                    {format(day, 'd')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => openNewNote(key)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-                    title="Adicionar nota"
-                    aria-label="Adicionar nota"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+              return (
+                <DayCell
+                  key={i}
+                  day={day}
+                  inMonth={inMonth}
+                  today={today}
+                  view={view}
+                  onAddNote={() => openNewNote(key)}
+                  onCreateAppt={() => { setEditingAppt(null); setCreateApptAt(day); setApptDialogOpen(true); }}
+                >
                   {dayEvents.map(ev => (
-                    <button
+                    <DraggableEvent
                       key={ev.id}
-                      onClick={() => handleOpen(ev)}
-                      className={cn(
-                        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors',
-                        ev.kind === 'project'
-                          ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
-                          : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
-                      )}
-                      title={`${ev.title} — ${ev.subtitle}`}
-                    >
-                      <div className="font-semibold truncate flex items-center gap-1">
-                        {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
-                        <span className="truncate">{ev.title}</span>
-                      </div>
-                      <div className="truncate opacity-80">{ev.subtitle}</div>
-                    </button>
+                      ev={ev}
+                      onOpen={() => handleOpen(ev)}
+                    />
+                  ))}
+                  {dayAppts.map(ap => (
+                    <DraggableAppointment
+                      key={ap.id}
+                      appt={ap}
+                      onOpen={() => { setEditingAppt(ap); setApptDialogOpen(true); }}
+                    />
                   ))}
                   {dayNotes.map(n => (
                     <button
@@ -429,18 +500,19 @@ export function MyCalendarPage() {
                       </div>
                     </button>
                   ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </DayCell>
+              );
+            })}
+          </div>
+        </DndContext>
 
-        {!loading && events.length === 0 && notes.length === 0 && (
+        {!loading && events.length === 0 && notes.length === 0 && myAppointments.length === 0 && (
           <div className="px-6 py-8 text-center text-sm text-muted-foreground">
-            Nenhuma atividade, ação ou nota cadastrada.
+            Nenhuma atividade, ação, nota ou compromisso cadastrado.
           </div>
         )}
       </div>
+
 
       {/* Event detail dialog */}
       <Dialog open={!!selected} onOpenChange={open => !open && setSelected(null)}>
@@ -540,6 +612,133 @@ export function MyCalendarPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AppointmentDialog
+        open={apptDialogOpen}
+        onOpenChange={setApptDialogOpen}
+        initial={editingAppt}
+        defaultDate={createApptAt}
+        onCreate={createAppt}
+        onUpdate={updateAppt}
+        onDelete={removeAppt}
+      />
     </div>
   );
 }
+
+// ============= Inline helpers =============
+
+function DayCell({
+  day, inMonth, today, view, onAddNote, onCreateAppt, children,
+}: {
+  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week';
+  onAddNote: () => void; onCreateAppt: () => void;
+  children: React.ReactNode;
+}) {
+  const id = `day-${format(day, 'yyyy-MM-dd')}`;
+  const { setNodeRef, isOver } = useDroppable({ id, data: { date: day } });
+  return (
+    <div
+      ref={setNodeRef}
+      onDoubleClick={onCreateAppt}
+      className={cn(
+        'group border-b border-r border-border p-1 relative transition-colors',
+        view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
+        !inMonth && 'bg-muted/30',
+        today && 'bg-primary/5',
+        isOver && 'ring-2 ring-primary/40 bg-primary/10',
+      )}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className={cn(
+          'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
+          today && 'bg-primary text-primary-foreground',
+          !inMonth && 'text-muted-foreground/50',
+        )}>
+          {format(day, 'd')}
+        </span>
+        <button
+          type="button"
+          onClick={onAddNote}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+          title="Adicionar nota"
+          aria-label="Adicionar nota"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void }) {
+  const dragId = `ev-${ev.id}`;
+  const dragData = ev.kind === 'project'
+    ? { type: 'activity', eventId: ev.id }
+    : { type: 'lead', eventId: ev.id };
+  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({ id: dragId, data: dragData });
+  const style: React.CSSProperties | undefined = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, opacity: 0.85 }
+    : undefined;
+  return (
+    <button
+      ref={setNodeRef as any}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
+      className={cn(
+        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
+        ev.kind === 'project'
+          ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
+          : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
+        isDragging && 'opacity-50',
+      )}
+      title={`${ev.title} — ${ev.subtitle}`}
+    >
+      <div className="font-semibold truncate flex items-center gap-1">
+        {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
+        <span className="truncate">{ev.title}</span>
+      </div>
+      <div className="truncate opacity-80">{ev.subtitle}</div>
+    </button>
+  );
+}
+
+function DraggableAppointment({ appt, onOpen }: { appt: Appointment; onOpen: () => void }) {
+  const dragId = `ap-${appt.id}`;
+  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { type: 'appointment', appointmentId: appt.id },
+  });
+  const style: React.CSSProperties | undefined = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, opacity: 0.85 }
+    : undefined;
+  const c = APPOINTMENT_KIND_COLORS[appt.kind];
+  const timeLabel = appt.allDay ? '' : format(appt.startAt, 'HH:mm');
+  return (
+    <button
+      ref={setNodeRef as any}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
+      className={cn(
+        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
+        c.bg, c.border, c.text,
+        isDragging && 'opacity-50',
+      )}
+      title={appt.title}
+    >
+      <div className="font-semibold truncate flex items-center gap-1">
+        <CalendarDays className="w-3 h-3 shrink-0" />
+        {timeLabel && <span className="shrink-0">{timeLabel}</span>}
+        <span className="truncate">{appt.title}</span>
+      </div>
+    </button>
+  );
+}
+

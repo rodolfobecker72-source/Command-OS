@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          all_day: boolean
+          assigned_to: string[]
+          budget_id: string | null
+          client_id: string | null
+          color: string | null
+          created_at: string
+          created_by: string
+          description: string
+          end_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["appointment_kind"]
+          lead_id: string | null
+          location: string
+          start_at: string
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          assigned_to?: string[]
+          budget_id?: string | null
+          client_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by: string
+          description?: string
+          end_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["appointment_kind"]
+          lead_id?: string | null
+          location?: string
+          start_at: string
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          all_day?: boolean
+          assigned_to?: string[]
+          budget_id?: string | null
+          client_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["appointment_kind"]
+          lead_id?: string | null
+          location?: string
+          start_at?: string
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospection_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           assigned_to: string
@@ -178,8 +267,10 @@ export type Database = {
           drive_url: string | null
           execution: Json | null
           execution_end_date: string | null
+          execution_end_time: string | null
           execution_month: string | null
           execution_start_date: string | null
+          execution_start_time: string | null
           final_value: number | null
           has_execution_date: boolean
           hide_nf_in_pdf: boolean
@@ -218,8 +309,10 @@ export type Database = {
           drive_url?: string | null
           execution?: Json | null
           execution_end_date?: string | null
+          execution_end_time?: string | null
           execution_month?: string | null
           execution_start_date?: string | null
+          execution_start_time?: string | null
           final_value?: number | null
           has_execution_date?: boolean
           hide_nf_in_pdf?: boolean
@@ -258,8 +351,10 @@ export type Database = {
           drive_url?: string | null
           execution?: Json | null
           execution_end_date?: string | null
+          execution_end_time?: string | null
           execution_month?: string | null
           execution_start_date?: string | null
+          execution_start_time?: string | null
           final_value?: number | null
           has_execution_date?: boolean
           hide_nf_in_pdf?: boolean
@@ -1652,6 +1747,7 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "vendedor" | "visualizador" | "time_hero"
+      appointment_kind: "reuniao" | "gravacao" | "entrega" | "visita" | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1780,6 +1876,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "vendedor", "visualizador", "time_hero"],
+      appointment_kind: ["reuniao", "gravacao", "entrega", "visita", "outro"],
     },
   },
 } as const

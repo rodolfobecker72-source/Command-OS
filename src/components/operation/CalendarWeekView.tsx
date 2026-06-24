@@ -9,16 +9,22 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Budget } from '@/types/crm';
+import { Appointment } from '@/types/appointment';
 import { CalendarEventCard, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
+import { DndContext, DragEndEvent, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 interface CalendarWeekViewProps {
   currentDate: Date;
   events: Budget[];
   pendingEvents?: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
+  appointments?: Appointment[];
   onEventClick: (budget: Budget) => void;
   onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
+  onAppointmentClick?: (appointment: Appointment) => void;
+  onDragEndDay?: (event: DragEndEvent) => void;
+  onCreateAppointmentAt?: (date: Date) => void;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
@@ -38,7 +44,26 @@ function getDeliveryEventsForDay(day: Date, deliveryEvents: CalendarDeliveryEven
   return deliveryEvents.filter(ev => isSameDay(ev.date, day));
 }
 
-export function CalendarWeekView({ currentDate, events, pendingEvents = [], deliveryEvents, onEventClick, onDeliveryClick }: CalendarWeekViewProps) {
+function getAppointmentsForDay(day: Date, appts: Appointment[]): Appointment[] {
+  return appts.filter(a => isSameDay(a.startAt, day));
+}
+
+function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; children: React.ReactNode; onCreate?: () => void } & React.HTMLAttributes<HTMLDivElement>) {
+  const id = `day-${format(day, 'yyyy-MM-dd')}`;
+  const { setNodeRef, isOver } = useDroppable({ id, data: { date: day } });
+  return (
+    <div ref={setNodeRef} {...rest} className={cn(rest.className, isOver && 'ring-2 ring-primary/40 bg-primary/10')} onDoubleClick={onCreate}>
+      {children}
+    </div>
+  );
+}
+
+export function CalendarWeekView({
+  currentDate, events, pendingEvents = [], deliveryEvents, appointments = [],
+  onEventClick, onDeliveryClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
+}: CalendarWeekViewProps) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { locale: ptBR });
     const weekEnd = endOfWeek(currentDate, { locale: ptBR });
@@ -46,80 +71,101 @@ export function CalendarWeekView({ currentDate, events, pendingEvents = [], deli
   }, [currentDate]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="grid grid-cols-7 border-b border-border">
-        {days.map((day, i) => {
-          const today = isToday(day);
-          return (
-            <div
-              key={i}
-              className={cn(
-                'py-3 text-center border-r border-border last:border-r-0',
-                today && 'bg-primary/5',
-              )}
-            >
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                {format(day, 'EEE', { locale: ptBR })}
-              </div>
+    <DndContext sensors={sensors} onDragEnd={onDragEndDay}>
+      <div className="flex flex-col h-full">
+        <div className="grid grid-cols-7 border-b border-border">
+          {days.map((day, i) => {
+            const today = isToday(day);
+            return (
               <div
+                key={i}
                 className={cn(
-                  'text-lg font-bold mt-0.5 w-9 h-9 flex items-center justify-center rounded-full mx-auto',
-                  today && 'bg-primary text-primary-foreground',
+                  'py-3 text-center border-r border-border last:border-r-0',
+                  today && 'bg-primary/5',
                 )}
               >
-                {format(day, 'd')}
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  {format(day, 'EEE', { locale: ptBR })}
+                </div>
+                <div
+                  className={cn(
+                    'text-lg font-bold mt-0.5 w-9 h-9 flex items-center justify-center rounded-full mx-auto',
+                    today && 'bg-primary text-primary-foreground',
+                  )}
+                >
+                  {format(day, 'd')}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      <div className="grid grid-cols-7 flex-1">
-        {days.map((day, i) => {
-          const today = isToday(day);
-          const dayEvents = getEventsForDay(day, events);
-          const dayPending = getEventsForDay(day, pendingEvents);
-          const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
+        <div className="grid grid-cols-7 flex-1">
+          {days.map((day, i) => {
+            const today = isToday(day);
+            const dayEvents = getEventsForDay(day, events);
+            const dayPending = getEventsForDay(day, pendingEvents);
+            const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
+            const dayAppts = getAppointmentsForDay(day, appointments);
 
-          return (
-            <div
-              key={i}
-              className={cn(
-                'border-r border-border last:border-r-0 p-1.5 space-y-1.5 overflow-y-auto',
-                today && 'bg-primary/5',
-              )}
-            >
-              {dayEvents.length === 0 && dayPending.length === 0 && dayDeliveries.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/40 text-center pt-4">—</p>
-              )}
-              {dayEvents.map(ev => (
-                <CalendarEventCard
-                  key={ev.id}
-                  budget={ev}
-                  onClick={() => onEventClick(ev)}
-                />
-              ))}
-              {dayPending.map(ev => (
-                <CalendarEventCard
-                  key={`pending-${ev.id}`}
-                  budget={ev}
-                  eventType="pending"
-                  onClick={() => onEventClick(ev)}
-                />
-              ))}
-              {dayDeliveries.map(ev => (
-                <CalendarEventCard
-                  key={ev.id}
-                  budget={ev.budget}
-                  eventType="delivery"
-                  deliveryLabel={ev.label}
-                  onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
-                />
-              ))}
-            </div>
-          );
-        })}
+            return (
+              <DroppableDay
+                key={i}
+                day={day}
+                onCreate={onCreateAppointmentAt ? () => onCreateAppointmentAt(day) : undefined}
+                className={cn(
+                  'border-r border-border last:border-r-0 p-1.5 space-y-1.5 overflow-y-auto',
+                  today && 'bg-primary/5',
+                )}
+              >
+                {dayEvents.length === 0 && dayPending.length === 0 && dayDeliveries.length === 0 && dayAppts.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground/40 text-center pt-4">—</p>
+                )}
+                {dayEvents.map(ev => (
+                  <CalendarEventCard
+                    key={ev.id}
+                    dragId={`bg-${ev.id}`}
+                    dragData={{ type: 'budget', budgetId: ev.id }}
+                    budget={ev}
+                    onClick={() => onEventClick(ev)}
+                  />
+                ))}
+                {dayPending.map(ev => (
+                  <CalendarEventCard
+                    key={`pending-${ev.id}`}
+                    dragId={`bg-${ev.id}`}
+                    dragData={{ type: 'budget', budgetId: ev.id }}
+                    budget={ev}
+                    eventType="pending"
+                    onClick={() => onEventClick(ev)}
+                  />
+                ))}
+                {dayDeliveries.map(ev => (
+                  <CalendarEventCard
+                    key={ev.id}
+                    dragId={`del-${ev.id}`}
+                    dragData={{ type: 'delivery', budgetId: ev.budget.id, serviceId: ev.serviceId }}
+                    budget={ev.budget}
+                    eventType="delivery"
+                    deliveryLabel={ev.label}
+                    onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
+                  />
+                ))}
+                {dayAppts.map(ap => (
+                  <CalendarEventCard
+                    key={ap.id}
+                    dragId={`ap-${ap.id}`}
+                    dragData={{ type: 'appointment', appointmentId: ap.id }}
+                    appointment={ap}
+                    eventType="appointment"
+                    onClick={() => onAppointmentClick?.(ap)}
+                  />
+                ))}
+              </DroppableDay>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }

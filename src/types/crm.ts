@@ -218,6 +218,7 @@ export interface ServiceItem {
   deliveryType?: DeliveryType;
   deliveryDays?: number;
   deliveryDate?: string; // ISO date for 'data_especifica'
+  deliveryTime?: string; // HH:mm opcional
 }
 
 // Budget Version Interface
@@ -307,6 +308,8 @@ export interface Budget {
   hasExecutionDate: boolean; // Se tem data para execução definida
   executionStartDate: Date | null; // Data início da execução
   executionEndDate: Date | null; // Data fim da execução (opcional, para período)
+  executionStartTime?: string | null; // HH:mm
+  executionEndTime?: string | null; // HH:mm
   location: string; // Local do projeto
   status: CRMStatus;
   versions: BudgetVersion[];

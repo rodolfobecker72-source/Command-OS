@@ -107,6 +107,8 @@ function budgetFromDb(row: any, versions: BudgetVersion[]): Budget {
     hasExecutionDate: row.has_execution_date,
     executionStartDate: row.execution_start_date ? new Date(row.execution_start_date) : null,
     executionEndDate: row.execution_end_date ? new Date(row.execution_end_date) : null,
+    executionStartTime: row.execution_start_time ?? null,
+    executionEndTime: row.execution_end_time ?? null,
     location: row.location,
     status: row.status,
     versions,
@@ -942,6 +944,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.hasExecutionDate !== undefined) dbUpdates.has_execution_date = updates.hasExecutionDate;
       if (updates.executionStartDate !== undefined) dbUpdates.execution_start_date = updates.executionStartDate?.toISOString() || null;
       if (updates.executionEndDate !== undefined) dbUpdates.execution_end_date = updates.executionEndDate?.toISOString() || null;
+      if (updates.executionStartTime !== undefined) dbUpdates.execution_start_time = updates.executionStartTime || null;
+      if (updates.executionEndTime !== undefined) dbUpdates.execution_end_time = updates.executionEndTime || null;
       if (updates.location !== undefined) dbUpdates.location = updates.location;
       if (updates.executionMonth !== undefined) dbUpdates.execution_month = updates.executionMonth;
       if (updates.contractUrl !== undefined) dbUpdates.contract_url = updates.contractUrl;
