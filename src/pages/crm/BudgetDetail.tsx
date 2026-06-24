@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -183,6 +183,33 @@ export function BudgetDetail() {
   const [editVersionOperationalCosts, setEditVersionOperationalCosts] = useState<CostItem[]>([]);
   const [editVersionNfPct, setEditVersionNfPct] = useState(13);
   const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
+
+  // Commercial rules (loaded for draft editing)
+  const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
+  const [defaultTargetMargin, setDefaultTargetMargin] = useState<number>(20);
+
+  useEffect(() => {
+    if (!workspace?.id) return;
+    supabase
+      .from('payment_terms')
+      .select('id, name')
+      .eq('workspace_id', workspace.id)
+      .eq('active', true)
+      .order('created_at')
+      .then(({ data }) => {
+        if (data) setAvailablePaymentTerms(data);
+      });
+    supabase
+      .from('workspace_settings')
+      .select('default_target_margin_percentage')
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.default_target_margin_percentage != null) {
+          setDefaultTargetMargin(Number(data.default_target_margin_percentage));
+        }
+      });
+  }, [workspace?.id]);
   
   // Rejection dialog states
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -563,16 +590,25 @@ export function BudgetDetail() {
 
   // ===== Inline version editing handlers =====
   const startEditingVersion = () => {
+    const fallbackMargin = defaultTargetMargin || 20;
     if (currentVersionData) {
-      setEditVersionServices(currentVersionData.services.map(s => ({ ...s, costs: s.costs.map(c => ({ ...c })) })));
+      setEditVersionServices(currentVersionData.services.map(s => ({
+        ...s,
+        targetMargin: s.targetMargin && s.targetMargin > 0 ? s.targetMargin : fallbackMargin,
+        costs: s.costs.map(c => ({ ...c })),
+      })));
       setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
       setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
-      setEditVersionTargetMargin(currentVersionData.margin ?? 0);
+      setEditVersionTargetMargin(
+        currentVersionData.margin && currentVersionData.margin > 0
+          ? currentVersionData.margin
+          : fallbackMargin
+      );
     } else {
       setEditVersionServices([]);
       setEditVersionOperationalCosts([]);
       setEditVersionNfPct(13);
-      setEditVersionTargetMargin(0);
+      setEditVersionTargetMargin(fallbackMargin);
     }
     setIsEditingVersion(true);
   };
@@ -617,7 +653,7 @@ export function BudgetDetail() {
         costs: [],
         fixedCostPercentage: 0,
         nfCostPercentage: 0,
-        targetMargin: 0,
+        targetMargin: defaultTargetMargin || 20,
       },
     ]);
   };
@@ -1181,11 +1217,29 @@ export function BudgetDetail() {
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Condição de Pagamento</p>
                       {isEditing ? (
-                        <Input
-                          value={editedPaymentTerms}
-                          onChange={(e) => setEditedPaymentTerms(e.target.value)}
-                          placeholder="Ex: 50% entrada + 50% na entrega"
-                        />
+                        availablePaymentTerms.length > 0 ? (
+                          <Select
+                            value={editedPaymentTerms}
+                            onValueChange={(value) => setEditedPaymentTerms(value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma condição" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availablePaymentTerms.map((term) => (
+                                <SelectItem key={term.id} value={term.name}>
+                                  {term.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={editedPaymentTerms}
+                            onChange={(e) => setEditedPaymentTerms(e.target.value)}
+                            placeholder="Ex: 50% entrada + 50% na entrega"
+                          />
+                        )
                       ) : (
                         <p className="font-medium">{budget.paymentTerms || 'Não definido'}</p>
                       )}
