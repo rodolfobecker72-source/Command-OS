@@ -1,8 +1,11 @@
 import { Budget } from '@/types/crm';
+import { Appointment, APPOINTMENT_KIND_COLORS, APPOINTMENT_KIND_LABELS } from '@/types/appointment';
 import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
+import { useDraggable } from '@dnd-kit/core';
+import { format } from 'date-fns';
 
-export type CalendarEventType = 'execution' | 'delivery' | 'pending';
+export type CalendarEventType = 'execution' | 'delivery' | 'pending' | 'appointment';
 
 export interface CalendarDeliveryEvent {
   id: string;
@@ -14,61 +17,124 @@ export interface CalendarDeliveryEvent {
 }
 
 interface CalendarEventCardProps {
-  budget: Budget;
+  /** Stable id used for drag identification */
+  dragId?: string;
+  /** Drag payload that the page-level handler will use to persist changes. */
+  dragData?: Record<string, any>;
+  budget?: Budget;
+  appointment?: Appointment;
   compact?: boolean;
   onClick?: () => void;
   eventType?: CalendarEventType;
   deliveryLabel?: string;
+  disableDrag?: boolean;
 }
 
-export function CalendarEventCard({ budget, compact = false, onClick, eventType = 'execution', deliveryLabel }: CalendarEventCardProps) {
+export function CalendarEventCard({
+  dragId,
+  dragData,
+  budget,
+  appointment,
+  compact = false,
+  onClick,
+  eventType = 'execution',
+  deliveryLabel,
+  disableDrag,
+}: CalendarEventCardProps) {
   const { clients } = useCRM();
-  const client = clients.find(c => c.id === budget.clientId);
+  const client = budget ? clients.find(c => c.id === budget.clientId) : null;
+
+  const draggable = useDraggable({
+    id: dragId || `static-${Math.random()}`,
+    data: dragData,
+    disabled: disableDrag || !dragId,
+  });
 
   const isDelivery = eventType === 'delivery';
   const isPending = eventType === 'pending';
-  const statusStyle = isDelivery
-    ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
-    : isPending
-      ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
-      : 'bg-success/15 border-success/30 text-success';
-  const dotColor = isDelivery ? 'bg-blue-500' : isPending ? 'bg-yellow-500' : 'bg-success';
+  const isAppointment = eventType === 'appointment';
+
+  const apptColors = appointment ? APPOINTMENT_KIND_COLORS[appointment.kind] : null;
+
+  const statusStyle = isAppointment && apptColors
+    ? cn(apptColors.bg, apptColors.border, apptColors.text)
+    : isDelivery
+      ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
+      : isPending
+        ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
+        : 'bg-success/15 border-success/30 text-success';
+
+  const dotColor = isAppointment && apptColors
+    ? apptColors.dot
+    : isDelivery ? 'bg-blue-500'
+    : isPending ? 'bg-yellow-500'
+    : 'bg-success';
+
+  // Build label
+  let mainLabel = '';
+  let timeLabel = '';
+  if (isAppointment && appointment) {
+    if (!appointment.allDay) timeLabel = format(appointment.startAt, 'HH:mm');
+    mainLabel = appointment.title;
+  } else if (isDelivery) {
+    mainLabel = deliveryLabel || '';
+  } else if (budget) {
+    if (budget.executionStartTime) timeLabel = budget.executionStartTime;
+    mainLabel = `${budget.proposalId} - ${budget.projectName}`;
+  }
+
+  const dragStyle = draggable.transform
+    ? {
+        transform: `translate3d(${draggable.transform.x}px, ${draggable.transform.y}px, 0)`,
+        opacity: 0.85,
+        zIndex: 50,
+      }
+    : undefined;
+
+  const baseClasses = cn(
+    'w-full text-left border transition-opacity active:scale-[0.97]',
+    statusStyle,
+    !disableDrag && dragId && 'cursor-grab active:cursor-grabbing',
+    draggable.isDragging && 'opacity-50',
+  );
 
   if (compact) {
     return (
       <button
-        onClick={onClick}
-        className={cn(
-          'w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate flex items-center gap-1 hover:opacity-80 transition-opacity active:scale-[0.97] border',
-          statusStyle,
-        )}
+        ref={draggable.setNodeRef as any}
+        style={dragStyle}
+        {...draggable.listeners}
+        {...draggable.attributes}
+        onClick={(e) => { if (!draggable.isDragging) onClick?.(); e.stopPropagation(); }}
+        className={cn(baseClasses, 'px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate flex items-center gap-1 hover:opacity-80')}
       >
         <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
-        <span className="truncate text-foreground">
-          {isDelivery ? deliveryLabel : `${budget.proposalId} - ${budget.projectName}`}
-        </span>
+        {timeLabel && <span className="text-foreground/70 font-semibold shrink-0">{timeLabel}</span>}
+        <span className="truncate text-foreground">{mainLabel}</span>
       </button>
     );
   }
 
   return (
     <button
-      onClick={onClick}
-      className={cn(
-        'w-full text-left px-2 py-1.5 rounded-md border shadow-sm hover:shadow-md transition-shadow active:scale-[0.97] space-y-0.5',
-        statusStyle,
-      )}
+      ref={draggable.setNodeRef as any}
+      style={dragStyle}
+      {...draggable.listeners}
+      {...draggable.attributes}
+      onClick={(e) => { if (!draggable.isDragging) onClick?.(); e.stopPropagation(); }}
+      className={cn(baseClasses, 'px-2 py-1.5 rounded-md shadow-sm hover:shadow-md space-y-0.5')}
+      title={isAppointment && appointment ? APPOINTMENT_KIND_LABELS[appointment.kind] : undefined}
     >
       <div className="flex items-center gap-1.5">
         <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />
-        <span className="text-xs font-semibold truncate text-foreground">
-          {isDelivery ? deliveryLabel : `${budget.proposalId} - ${budget.projectName}`}
-        </span>
+        {timeLabel && <span className="text-foreground/70 text-[11px] font-semibold shrink-0">{timeLabel}</span>}
+        <span className="text-xs font-semibold truncate text-foreground">{mainLabel}</span>
       </div>
-      {client && (
-        <p className="text-[10px] text-muted-foreground truncate pl-3.5">
-          {client.companyName}
-        </p>
+      {isAppointment && appointment?.location && (
+        <p className="text-[10px] text-muted-foreground truncate pl-3.5">{appointment.location}</p>
+      )}
+      {!isAppointment && client && (
+        <p className="text-[10px] text-muted-foreground truncate pl-3.5">{client.companyName}</p>
       )}
     </button>
   );
