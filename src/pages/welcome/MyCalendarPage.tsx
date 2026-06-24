@@ -612,6 +612,133 @@ export function MyCalendarPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AppointmentDialog
+        open={apptDialogOpen}
+        onOpenChange={setApptDialogOpen}
+        initial={editingAppt}
+        defaultDate={createApptAt}
+        onCreate={createAppt}
+        onUpdate={updateAppt}
+        onDelete={removeAppt}
+      />
     </div>
   );
 }
+
+// ============= Inline helpers =============
+
+function DayCell({
+  day, inMonth, today, view, onAddNote, onCreateAppt, children,
+}: {
+  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week';
+  onAddNote: () => void; onCreateAppt: () => void;
+  children: React.ReactNode;
+}) {
+  const id = `day-${format(day, 'yyyy-MM-dd')}`;
+  const { setNodeRef, isOver } = useDroppable({ id, data: { date: day } });
+  return (
+    <div
+      ref={setNodeRef}
+      onDoubleClick={onCreateAppt}
+      className={cn(
+        'group border-b border-r border-border p-1 relative transition-colors',
+        view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
+        !inMonth && 'bg-muted/30',
+        today && 'bg-primary/5',
+        isOver && 'ring-2 ring-primary/40 bg-primary/10',
+      )}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className={cn(
+          'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
+          today && 'bg-primary text-primary-foreground',
+          !inMonth && 'text-muted-foreground/50',
+        )}>
+          {format(day, 'd')}
+        </span>
+        <button
+          type="button"
+          onClick={onAddNote}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+          title="Adicionar nota"
+          aria-label="Adicionar nota"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void }) {
+  const dragId = `ev-${ev.id}`;
+  const dragData = ev.kind === 'project'
+    ? { type: 'activity', eventId: ev.id }
+    : { type: 'lead', eventId: ev.id };
+  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({ id: dragId, data: dragData });
+  const style: React.CSSProperties | undefined = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, opacity: 0.85 }
+    : undefined;
+  return (
+    <button
+      ref={setNodeRef as any}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
+      className={cn(
+        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
+        ev.kind === 'project'
+          ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
+          : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
+        isDragging && 'opacity-50',
+      )}
+      title={`${ev.title} — ${ev.subtitle}`}
+    >
+      <div className="font-semibold truncate flex items-center gap-1">
+        {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
+        <span className="truncate">{ev.title}</span>
+      </div>
+      <div className="truncate opacity-80">{ev.subtitle}</div>
+    </button>
+  );
+}
+
+function DraggableAppointment({ appt, onOpen }: { appt: Appointment; onOpen: () => void }) {
+  const dragId = `ap-${appt.id}`;
+  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { type: 'appointment', appointmentId: appt.id },
+  });
+  const style: React.CSSProperties | undefined = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, opacity: 0.85 }
+    : undefined;
+  const c = APPOINTMENT_KIND_COLORS[appt.kind];
+  const timeLabel = appt.allDay ? '' : format(appt.startAt, 'HH:mm');
+  return (
+    <button
+      ref={setNodeRef as any}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
+      className={cn(
+        'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
+        c.bg, c.border, c.text,
+        isDragging && 'opacity-50',
+      )}
+      title={appt.title}
+    >
+      <div className="font-semibold truncate flex items-center gap-1">
+        <CalendarDays className="w-3 h-3 shrink-0" />
+        {timeLabel && <span className="shrink-0">{timeLabel}</span>}
+        <span className="truncate">{appt.title}</span>
+      </div>
+    </button>
+  );
+}
+
