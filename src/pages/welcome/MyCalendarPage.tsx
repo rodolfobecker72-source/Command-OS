@@ -73,9 +73,17 @@ export function MyCalendarPage() {
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<PersonalEvent | null>(null);
+  const [showAppointments, setShowAppointments] = useState(true);
+
+  // Appointments
+  const { appointments, create: createAppt, update: updateAppt, remove: removeAppt } = useAppointments();
+  const [apptDialogOpen, setApptDialogOpen] = useState(false);
+  const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
+  const [createApptAt, setCreateApptAt] = useState<Date | null>(null);
 
   // Note editor state
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+
   const [editingNote, setEditingNote] = useState<PersonalNote | null>(null);
   const [noteDate, setNoteDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [noteContent, setNoteContent] = useState('');
