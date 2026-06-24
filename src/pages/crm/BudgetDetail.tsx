@@ -183,6 +183,33 @@ export function BudgetDetail() {
   const [editVersionOperationalCosts, setEditVersionOperationalCosts] = useState<CostItem[]>([]);
   const [editVersionNfPct, setEditVersionNfPct] = useState(13);
   const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
+
+  // Commercial rules (loaded for draft editing)
+  const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
+  const [defaultTargetMargin, setDefaultTargetMargin] = useState<number>(20);
+
+  useEffect(() => {
+    if (!workspace?.id) return;
+    supabase
+      .from('payment_terms')
+      .select('id, name')
+      .eq('workspace_id', workspace.id)
+      .eq('active', true)
+      .order('created_at')
+      .then(({ data }) => {
+        if (data) setAvailablePaymentTerms(data);
+      });
+    supabase
+      .from('workspace_settings')
+      .select('default_target_margin_percentage')
+      .eq('workspace_id', workspace.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.default_target_margin_percentage != null) {
+          setDefaultTargetMargin(Number(data.default_target_margin_percentage));
+        }
+      });
+  }, [workspace?.id]);
   
   // Rejection dialog states
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
