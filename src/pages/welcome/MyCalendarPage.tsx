@@ -36,6 +36,8 @@ interface PersonalEvent {
   status?: string;
   budgetId?: string;
   leadId?: string;
+  /** Raw id used to persist date updates when dragging. */
+  sourceId: string;
 }
 
 interface PersonalNote {
@@ -43,6 +45,7 @@ interface PersonalNote {
   date: string; // yyyy-MM-dd
   content: string;
 }
+
 
 const STATUS_LABEL: Record<string, string> = {
   nao_iniciado: 'Não iniciado',
