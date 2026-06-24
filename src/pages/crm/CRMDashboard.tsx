@@ -131,16 +131,25 @@ export function CRMDashboard() {
       <Header title="Dashboard Comercial" subtitle="Visão geral do desempenho comercial" />
       <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
 
-      <Tabs defaultValue="visao-geral" className="space-y-5">
+      <Tabs defaultValue="previsao-execucao" className="space-y-5">
         <TabsList>
-          <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
           <TabsTrigger value="previsao-execucao" className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5" />
             Previsão de Execução
           </TabsTrigger>
+          <TabsTrigger value="visao-geral">Visão de Vendas</TabsTrigger>
         </TabsList>
 
-        {/* Tab: Visão Geral */}
+        {/* Tab: Previsão de Execução */}
+        <TabsContent value="previsao-execucao" className="space-y-5 mt-0">
+          <ExecutionForecast
+            executionForecast={executionForecast}
+            executionTotalValue={executionTotalValue}
+            getGoalForMonth={getGoalForMonth}
+          />
+        </TabsContent>
+
+        {/* Tab: Visão de Vendas */}
         <TabsContent value="visao-geral" className="space-y-5 mt-0">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
@@ -265,15 +274,6 @@ export function CRMDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        {/* Tab: Previsão de Execução */}
-        <TabsContent value="previsao-execucao" className="space-y-5 mt-0">
-          <ExecutionForecast
-            executionForecast={executionForecast}
-            executionTotalValue={executionTotalValue}
-            getGoalForMonth={getGoalForMonth}
-          />
         </TabsContent>
       </Tabs>
       </div>
