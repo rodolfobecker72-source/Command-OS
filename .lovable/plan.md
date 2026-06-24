@@ -1,65 +1,122 @@
+## Resumo
 
-# Sincronização com Google Calendar (per-user)
+Adicionar 3 capacidades aos calendários:
 
-Cada usuário conecta sua própria conta Google. O sistema envia automaticamente as **atividades de projeto atribuídas a ele** (com `due_date`) para o Google Calendar pessoal. Sentido único: **Sistema → Google**.
+1. **Arrastar cards entre dias** no Calendário de Projetos e no Meu Calendário
+2. **Redimensionar** o período de execução (arrastar borda esquerda = início, borda direita = fim)
+3. **Compromissos com horário** (nova tabela), independentes de orçamento — para reuniões, gravações avulsas, entregas pontuais, etc.
 
-## Etapa 1 — Você cria as credenciais no Google Cloud Console
+---
 
-Te guio passo a passo (faça antes da implementação):
+## 1. Drag-and-drop nos calendários
 
-1. Acesse https://console.cloud.google.com → crie um projeto (ex: "Hero Command").
-2. Menu **APIs e Serviços → Biblioteca** → busque **Google Calendar API** → **Ativar**.
-3. **APIs e Serviços → Tela de consentimento OAuth**:
-   - Tipo: **Externo**
-   - Nome do app, e-mail de suporte, e-mail do desenvolvedor
-   - Domínios autorizados: `lovable.app` e `hero.rec.br`
-   - Escopos: adicione `.../auth/calendar.events` (só eventos, não lê calendários inteiros)
-   - Usuários de teste: adicione e-mails dos primeiros usuários (enquanto estiver em modo de teste)
-4. **APIs e Serviços → Credenciais → Criar credenciais → ID do cliente OAuth**:
-   - Tipo: **Aplicativo da Web**
-   - **URIs de redirecionamento autorizados**: vou te dar a URL exata depois de criar a Edge Function (será algo como `https://itglphakocafsmzsdyfo.supabase.co/functions/v1/google-calendar-oauth-callback`)
-5. Copie **Client ID** e **Client Secret** — você adiciona como secrets quando eu pedir.
+### Calendário de Projetos (`/calendario`)
 
-## Etapa 2 — Banco
+| Tipo de card | Cor | O que acontece ao arrastar |
+|---|---|---|
+| Execução aprovada | Verde | Move `executionStartDate` e `executionEndDate` mantendo a duração; também ajusta `executionMonth` |
+| Pendente (sem aprovar) | Amarelo | Mesmo comportamento acima |
+| Entrega de serviço | Azul | Converte o serviço para `deliveryType='data_especifica'` e fixa `deliveryDate` no novo dia |
 
-Nova tabela `user_google_tokens`:
-- `user_id`, `workspace_id`
-- `access_token`, `refresh_token`, `expires_at`
-- `google_email`, `connected_at`
-- RLS: cada usuário só vê/edita o próprio registro
+Além disso, **redimensionar**: ao segurar a borda esquerda/direita do card e arrastar, ajusta só `executionStartDate` ou só `executionEndDate` (sem mexer no outro).
 
-Nova tabela `google_calendar_sync_map` (rastreia o que já foi enviado):
-- `activity_id` (do sistema) → `google_event_id`
-- `user_id`, `last_synced_at`
+### Meu Calendário (`/meu-calendario`)
 
-## Etapa 3 — Edge Functions
+- Atividades de projeto → atualiza `dueDate` da `project_activities`
+- Ações de prospecção → atualiza `nextActionDate` do lead
+- Compromissos (novo) → atualiza `startAt`/`endAt`
 
-1. **`google-calendar-oauth-start`**: gera URL de autorização do Google e redireciona o usuário.
-2. **`google-calendar-oauth-callback`**: recebe o `code`, troca por tokens, salva em `user_google_tokens`.
-3. **`google-calendar-sync-activity`**: dado um `activity_id`, faz upsert do evento no Google Calendar do responsável (cria se não existir, atualiza se já existir, deleta se a atividade for removida). Renova `access_token` via `refresh_token` quando expirado.
+### Implementação técnica
 
-## Etapa 4 — UI
+- Biblioteca: `@dnd-kit/core` (já usada no projeto, evita conflito)
+- Cada célula de dia vira um `useDroppable`
+- Cada card vira um `useDraggable`; bordas viram handles próprios para resize
+- Confirmação otimista no UI + persistência via contexto (CRMContext / novo hook)
 
-- **Perfil do usuário** (ProfileEditDialog): seção "Google Calendar" com:
-  - Botão **"Conectar Google Calendar"** (se não conectado)
-  - E-mail conectado + botão **"Desconectar"** (se conectado)
-- **ProjectActivitiesDialog**: ao criar/editar/excluir uma atividade com `due_date` e `assignee`, chama `google-calendar-sync-activity` em background (silencioso, com toast só em erro).
+---
 
-## Etapa 5 — O que vai pro Google
+## 2. Nova tabela: `appointments` (compromissos)
 
-Por atividade enviada:
-- **Título**: `[Projeto X] Nome da atividade`
-- **Data**: `due_date` (evento de dia inteiro)
-- **Descrição**: link de volta para o projeto no sistema + descrição da tarefa
-- **Calendário**: `primary` do usuário
+Compromissos são eventos do calendário **independentes de orçamento**, com data + horário opcional. Podem ser vinculados a um orçamento, cliente ou lead para contexto.
 
-## Decisões técnicas
+### Colunas
 
-- Sentido único Sistema→Google (sem polling, sem webhooks, simples e seguro).
-- Sem sync de execução de orçamentos, leads ou notas (apenas atividades, conforme pedido).
-- Atividades **existentes** não são enviadas em massa — só novas/editadas a partir da conexão. (Posso adicionar botão "Sincronizar tudo agora" depois, se quiser.)
-- Em modo de teste do Google Cloud, só funciona para e-mails na lista de teste. Para liberar para qualquer usuário, precisa enviar o app para verificação do Google (processo separado, pode levar dias). Recomendo começar em teste com sua equipe.
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | uuid PK | |
+| workspace_id | uuid | RLS por workspace |
+| created_by | uuid | auth.users |
+| assigned_to | uuid[] | participantes |
+| title | text | "Reunião com X", "Gravação Y" |
+| kind | enum | `reuniao` · `gravacao` · `entrega` · `visita` · `outro` |
+| description | text | |
+| location | text | |
+| start_at | timestamptz | obrigatório |
+| end_at | timestamptz | opcional |
+| all_day | boolean | default false |
+| color | text | opcional, para destaque |
+| budget_id | uuid? FK | vínculo opcional ao projeto |
+| client_id | uuid? FK | vínculo opcional ao cliente |
+| lead_id | uuid? FK | vínculo opcional ao lead |
+| created_at / updated_at | timestamptz | |
 
-## Próximos passos
+RLS: leitura/escrita restrita ao `workspace_id` do usuário (helper `has_workspace_access` já existe). GRANTs para `authenticated` e `service_role`.
 
-Quando você terminar a Etapa 1, me avise que parto para banco + edge functions, te passo a **URI de redirecionamento exata** para colar no Google Console, e depois te peço os secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`.
+### UI
+
+- **Botão "Novo compromisso"** na toolbar do Calendário de Projetos e do Meu Calendário
+- **Dialog** com: título, tipo, data início/fim, hora início/fim (ou "dia inteiro"), local, descrição, vincular a projeto/cliente/lead (opcionais)
+- **Card no calendário** com cor por tipo + horário no rótulo (ex: `14:30 · Reunião com Acme`)
+- **Drag-and-drop**: arrastar move data mantendo horário; redimensionar ajusta duração
+- **Filtro** na toolbar para ligar/desligar compromissos (como já existe para entregas)
+
+---
+
+## 3. Horários em execuções/entregas existentes
+
+Para execuções e entregas que **já vêm de orçamentos**, adicionar campos opcionais:
+
+- `budgets.execution_start_time` / `execution_end_time` (text `HH:MM`)
+- Em cada serviço (JSONB do BudgetVersion): `deliveryTime` opcional
+
+Quando preenchidos, aparecem no rótulo do card (ex: `09:00 · 986 - Conteúdo Juice`).
+
+Edição: campos de hora no diálogo de detalhe que já abre ao clicar no card, e no formulário de novo/editar orçamento (seção de execução).
+
+---
+
+## Arquivos afetados (alto nível)
+
+**Backend (migration)**
+- nova tabela `appointments` + enum `appointment_kind` + grants + RLS + trigger updated_at
+- `ALTER TABLE budgets ADD COLUMN execution_start_time text, execution_end_time text`
+
+**Frontend**
+- `src/types/crm.ts` — novo tipo `Appointment`, campos de hora em Budget/ServiceItem
+- `src/contexts/CRMContext.tsx` — CRUD de appointments, helper `moveBudgetDates`, `resizeBudget`, `convertServiceToSpecificDate`
+- `src/components/operation/CalendarEventCard.tsx` — suporte a drag, resize handles, exibição de hora
+- `src/components/operation/CalendarMonthView.tsx` + `CalendarWeekView.tsx` — `DndContext`, droppable nas células, render de appointments
+- `src/components/operation/AppointmentDialog.tsx` — **novo**: criar/editar compromisso
+- `src/pages/operation/CalendarPage.tsx` — botão "Novo compromisso", filtro, integração
+- `src/pages/welcome/MyCalendarPage.tsx` — drag-and-drop + appointments do usuário
+- mapper de snake_case ↔ camelCase para appointments
+
+---
+
+## Pontos de atenção
+
+- Mobile: drag-and-drop em touch fica ruim em células pequenas. Sugiro **desabilitar drag no mobile** e manter só edição via diálogo (manter UX já existente).
+- Validação: ao arrastar uma execução, se cair em mês diferente, o `executionMonth` é recalculado automaticamente.
+- Entregas convertidas para "data específica" perdem o vínculo com a fórmula original (X dias úteis). Mostraremos um toast confirmando a conversão.
+- Compromissos não entram na lógica financeira nem de metas — são puramente de agenda.
+
+---
+
+## Ordem de execução
+
+1. Migration (tabela + colunas) — aguarda aprovação
+2. Tipos + mapper + contexto
+3. AppointmentDialog
+4. Drag-and-drop no Calendário de Projetos
+5. Drag-and-drop no Meu Calendário
+6. Exibição/edição de horários
