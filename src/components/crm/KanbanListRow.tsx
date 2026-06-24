@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CRMCard, formatCurrency } from '@/types/crm';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar as CalendarIcon, GripVertical, Copy } from 'lucide-react';
+import { FileText, Calendar as CalendarIcon, GripVertical, Copy, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DuplicateBudgetDialog } from './DuplicateBudgetDialog';
 
@@ -65,12 +65,17 @@ export function KanbanListRow({ card, hideValues }: Props) {
           </Badge>
         ))}
       </div>
-      {card.executionMonth && (
+      {card.executionMonth ? (
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 hidden sm:inline-flex">
           <CalendarIcon className="w-2.5 h-2.5" />
           {formatExecutionMonth(card.executionMonth)}
         </Badge>
-      )}
+      ) : card.status === 'aprovada' ? (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 hidden sm:inline-flex border-destructive/40 text-destructive bg-destructive/5" title="Mês de execução não definido">
+          <AlertCircle className="w-2.5 h-2.5" />
+          Sem mês
+        </Badge>
+      ) : null}
       <button
         type="button"
         onPointerDown={(e) => e.stopPropagation()}

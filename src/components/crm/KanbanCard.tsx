@@ -129,12 +129,17 @@ export function KanbanCard({ card, hideValue = false }: KanbanCardProps) {
                 {formatCurrency(card.value)}
               </span>
             )}
-            {card.executionMonth && (
+            {card.executionMonth ? (
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
                 <Calendar className="w-2.5 h-2.5" />
                 {formatExecutionMonth(card.executionMonth)}
               </Badge>
-            )}
+            ) : card.status === 'aprovada' ? (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 border-destructive/40 text-destructive bg-destructive/5" title="Mês de execução não definido">
+                <AlertCircle className="w-2.5 h-2.5" />
+                Sem mês de execução
+              </Badge>
+            ) : null}
           </div>
 
           {/* Actions (visible on hover) */}
