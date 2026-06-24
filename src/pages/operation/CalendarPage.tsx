@@ -380,23 +380,37 @@ export function CalendarPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">Início</Label>
-                      <Input type="date" value={editStart} onChange={e => setEditStart(e.target.value)} />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Início</Label>
+                        <Input type="date" value={editStart} onChange={e => setEditStart(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Hora início</Label>
+                        <Input type="time" value={editStartTime} onChange={e => setEditStartTime(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Fim</Label>
+                        <Input type="date" value={editEnd} onChange={e => setEditEnd(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Hora fim</Label>
+                        <Input type="time" value={editEndTime} onChange={e => setEditEndTime(e.target.value)} />
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-xs">Hora início</Label>
-                      <Input type="time" value={editStartTime} onChange={e => setEditStartTime(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Fim</Label>
-                      <Input type="date" value={editEnd} onChange={e => setEditEnd(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Hora fim</Label>
-                      <Input type="time" value={editEndTime} onChange={e => setEditEndTime(e.target.value)} />
-                    </div>
+                    {(() => {
+                      const outOfHours =
+                        (editStartTime && (editStartTime < '08:00' || editStartTime > '18:00')) ||
+                        (editEndTime && (editEndTime < '08:00' || editEndTime > '18:00'));
+                      const lateDelivery = editEndTime && editEndTime > '18:00';
+                      return (
+                        <div className={`rounded-md border p-3 text-xs ${outOfHours ? 'border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200' : 'border-muted bg-muted/30 text-muted-foreground'}`}>
+                          <strong>Horário comercial:</strong> entregas de projetos ao cliente devem ocorrer no máximo entre <strong>17h e 18h</strong>, preservando o horário comercial (08h–18h).
+                          {lateDelivery && <div className="mt-1 font-medium">⚠ A hora de fim está fora do horário comercial.</div>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
