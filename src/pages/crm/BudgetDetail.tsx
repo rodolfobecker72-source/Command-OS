@@ -1217,11 +1217,29 @@ export function BudgetDetail() {
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Condição de Pagamento</p>
                       {isEditing ? (
-                        <Input
-                          value={editedPaymentTerms}
-                          onChange={(e) => setEditedPaymentTerms(e.target.value)}
-                          placeholder="Ex: 50% entrada + 50% na entrega"
-                        />
+                        availablePaymentTerms.length > 0 ? (
+                          <Select
+                            value={editedPaymentTerms}
+                            onValueChange={(value) => setEditedPaymentTerms(value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma condição" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availablePaymentTerms.map((term) => (
+                                <SelectItem key={term.id} value={term.name}>
+                                  {term.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={editedPaymentTerms}
+                            onChange={(e) => setEditedPaymentTerms(e.target.value)}
+                            placeholder="Ex: 50% entrada + 50% na entrega"
+                          />
+                        )
                       ) : (
                         <p className="font-medium">{budget.paymentTerms || 'Não definido'}</p>
                       )}
