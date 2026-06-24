@@ -220,6 +220,65 @@ export function MyCalendarPage() {
     return m;
   }, [notes]);
 
+  // Appointments filtered to the user (assigned or created)
+  const myAppointments = useMemo(() => {
+    if (!user?.id) return [];
+    return appointments.filter(a => a.createdBy === user.id || (a.assignedTo || []).includes(user.id));
+  }, [appointments, user?.id]);
+
+  const apptsByDay = useMemo(() => {
+    const m = new Map<string, Appointment[]>();
+    if (!showAppointments) return m;
+    for (const a of myAppointments) {
+      const key = format(a.startAt, 'yyyy-MM-dd');
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(a);
+    }
+    return m;
+  }, [myAppointments, showAppointments]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const handleDragEnd = useCallback(async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const dropDate: Date | undefined = (over.data?.current as any)?.date;
+    if (!dropDate) return;
+    const data = active.data?.current as any;
+    if (!data) return;
+
+    const dropIso = format(dropDate, 'yyyy-MM-dd');
+
+    if (data.type === 'activity') {
+      const ev = events.find(x => x.id === data.eventId);
+      if (!ev) return;
+      const prev = events;
+      setEvents(es => es.map(x => x.id === ev.id ? { ...x, date: dropDate } : x));
+      const { error } = await supabase.from('project_activities').update({ due_date: dropIso }).eq('id', ev.sourceId);
+      if (error) { toast.error('Erro ao mover atividade'); setEvents(prev); }
+      else toast.success('Atividade movida');
+    } else if (data.type === 'lead') {
+      const ev = events.find(x => x.id === data.eventId);
+      if (!ev) return;
+      const prev = events;
+      setEvents(es => es.map(x => x.id === ev.id ? { ...x, date: dropDate } : x));
+      const { error } = await supabase.from('prospection_leads').update({ next_action_date: dropIso }).eq('id', ev.sourceId);
+      if (error) { toast.error('Erro ao mover ação'); setEvents(prev); }
+      else toast.success('Ação movida');
+    } else if (data.type === 'appointment') {
+      const a = myAppointments.find(x => x.id === data.appointmentId);
+      if (!a) return;
+      const oldDay = new Date(a.startAt); oldDay.setHours(0,0,0,0);
+      const newDay = new Date(dropDate); newDay.setHours(0,0,0,0);
+      const delta = differenceInCalendarDays(newDay, oldDay);
+      if (delta === 0) return;
+      const newStart = addDays(new Date(a.startAt), delta);
+      const newEnd = a.endAt ? addDays(new Date(a.endAt), delta) : null;
+      await updateAppt(a.id, { startAt: newStart, endAt: newEnd });
+    }
+  }, [events, myAppointments, updateAppt]);
+
+
   const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
   const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
   const goToday = () => setCurrentDate(new Date());
