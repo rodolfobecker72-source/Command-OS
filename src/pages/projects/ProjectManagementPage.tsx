@@ -1,6 +1,6 @@
 import { useState, useMemo, ReactNode, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink } from 'lucide-react';
+import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink, Search } from 'lucide-react';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCenter,
@@ -72,6 +72,7 @@ export function ProjectManagementPage() {
   const { projectColumns, projectCards, updateProjectCard, budgets, updateBudget } = useCRM();
   const { workspace } = useAuth();
   const [manageOpen, setManageOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
   const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
@@ -147,7 +148,19 @@ export function ProjectManagementPage() {
     };
     const result: Record<string, { month: string | null; cards: typeof projectCards }[]> = {};
     for (const col of projectColumns) result[col.key] = [];
-    for (const card of projectCards) {
+
+    const filteredCards = searchQuery
+      ? projectCards.filter(card => {
+          const q = searchQuery.toLowerCase();
+          return (
+            (card.projectName || '').toLowerCase().includes(q) ||
+            (card.clientName || '').toLowerCase().includes(q) ||
+            (card.proposalId || '').toLowerCase().includes(q)
+          );
+        })
+      : projectCards;
+
+    for (const card of filteredCards) {
       const statusKey = result[card.status] ? card.status : null;
       if (!statusKey) {
         if (!result[card.status]) result[card.status] = [];
@@ -175,7 +188,7 @@ export function ProjectManagementPage() {
       });
     }
     return result;
-  }, [projectColumns, projectCards, budgetById]);
+  }, [projectColumns, projectCards, budgetById, searchQuery]);
 
   const toggle = (key: string) => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -204,8 +217,25 @@ export function ProjectManagementPage() {
         subtitle="Acompanhe todo fluxo de projetos da produtora, demandas, responsáveis, datas e objetivos."
       />
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-end gap-4 mb-2">
-        <Button variant="outline" size="sm" onClick={() => setManageOpen(true)}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar projeto por nome, cliente ou ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 pl-9 pr-8"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="shrink-0">
           <Settings2 className="w-4 h-4 mr-2" />
           Gerenciar status
         </Button>
