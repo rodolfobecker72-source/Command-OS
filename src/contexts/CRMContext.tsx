@@ -977,6 +977,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         } : pc));
       }
 
+      // If status changed to 'nao_aprovada', remove the associated project card
+      if (updates.status === 'nao_aprovada') {
+        const { error: pcDelError } = await supabase.from('project_cards').delete().eq('budget_id', id);
+        if (pcDelError) console.error('[CRM] updateBudget: erro ao excluir project card:', pcDelError.message);
+        else setProjectCards(prev => prev.filter(pc => pc.budgetId !== id));
+      }
+
+
+
       setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b));
     } catch (e: any) { toast.error('Erro ao atualizar orçamento: ' + e.message); }
   };
