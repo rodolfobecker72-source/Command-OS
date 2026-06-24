@@ -148,7 +148,19 @@ export function ProjectManagementPage() {
     };
     const result: Record<string, { month: string | null; cards: typeof projectCards }[]> = {};
     for (const col of projectColumns) result[col.key] = [];
-    for (const card of projectCards) {
+
+    const filteredCards = searchQuery
+      ? projectCards.filter(card => {
+          const q = searchQuery.toLowerCase();
+          return (
+            (card.projectName || '').toLowerCase().includes(q) ||
+            (card.clientName || '').toLowerCase().includes(q) ||
+            (card.proposalId || '').toLowerCase().includes(q)
+          );
+        })
+      : projectCards;
+
+    for (const card of filteredCards) {
       const statusKey = result[card.status] ? card.status : null;
       if (!statusKey) {
         if (!result[card.status]) result[card.status] = [];
@@ -176,7 +188,7 @@ export function ProjectManagementPage() {
       });
     }
     return result;
-  }, [projectColumns, projectCards, budgetById]);
+  }, [projectColumns, projectCards, budgetById, searchQuery]);
 
   const toggle = (key: string) => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
 
