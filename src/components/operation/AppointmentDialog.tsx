@@ -206,6 +206,22 @@ export function AppointmentDialog({
             )}
           </div>
 
+          {!allDay && (() => {
+            const isEntrega = kind === 'entrega';
+            const outOfHours =
+              (startTime && (startTime < '08:00' || startTime > '18:00')) ||
+              (endTime && (endTime < '08:00' || endTime > '18:00'));
+            const lateDelivery = isEntrega && endTime && endTime > '18:00';
+            const highlight = outOfHours || lateDelivery;
+            return (
+              <div className={`rounded-md border p-3 text-xs ${highlight ? 'border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200' : 'border-muted bg-muted/30 text-muted-foreground'}`}>
+                <strong>Horário comercial:</strong> entregas de projetos ao cliente devem ocorrer no máximo entre <strong>17h e 18h</strong>, preservando o horário comercial (08h–18h).
+                {lateDelivery && <div className="mt-1 font-medium">⚠ Esta entrega está fora do horário comercial recomendado.</div>}
+                {outOfHours && !lateDelivery && <div className="mt-1 font-medium">⚠ Horário fora do expediente comercial (08h–18h).</div>}
+              </div>
+            );
+          })()}
+
           <div>
             <Label>Local</Label>
             <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="Onde será o compromisso" />
