@@ -245,13 +245,6 @@ export function ProjectManagementPage() {
                   ) : (
                     buckets.map((bucket) => (
                       <div key={bucket.month || '__none__'} className="space-y-1">
-                        <div className="flex items-center gap-2 mb-1 mt-1">
-                          <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {formatMonthLabel(bucket.month)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">· {bucket.cards.length}</span>
-                        </div>
                         <ul className="space-y-1 md:overflow-x-auto -mx-2 px-2">
                           {bucket.cards.map((card) => {
                             const budget = budgetById[card.budgetId];
