@@ -217,8 +217,25 @@ export function ProjectManagementPage() {
         subtitle="Acompanhe todo fluxo de projetos da produtora, demandas, responsáveis, datas e objetivos."
       />
       <div className="p-4 md:p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-end gap-4 mb-2">
-        <Button variant="outline" size="sm" onClick={() => setManageOpen(true)}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar projeto por nome, cliente ou ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 pl-9 pr-8"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="shrink-0">
           <Settings2 className="w-4 h-4 mr-2" />
           Gerenciar status
         </Button>
