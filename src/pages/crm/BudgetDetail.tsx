@@ -653,7 +653,7 @@ export function BudgetDetail() {
         costs: [],
         fixedCostPercentage: 0,
         nfCostPercentage: 0,
-        targetMargin: 0,
+        targetMargin: defaultTargetMargin || 20,
       },
     ]);
   };
