@@ -72,6 +72,7 @@ export function ProjectManagementPage() {
   const { projectColumns, projectCards, updateProjectCard, budgets, updateBudget } = useCRM();
   const { workspace } = useAuth();
   const [manageOpen, setManageOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activitiesFor, setActivitiesFor] = useState<{ id: string; name: string } | null>(null);
   const [activityCounts, setActivityCounts] = useState<Record<string, { total: number; done: number }>>({});
