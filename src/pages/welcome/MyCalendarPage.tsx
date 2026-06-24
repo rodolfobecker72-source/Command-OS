@@ -421,12 +421,27 @@ export function MyCalendarPage() {
             Notas
           </label>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={showAppointments} onCheckedChange={setShowAppointments} className="scale-90" />
+          <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowAppointments(v => !v)}>
+            <CalendarDays className="w-3.5 h-3.5 text-indigo-500" />
+            Compromissos
+          </label>
+        </div>
 
         <Button variant="outline" size="sm" className="text-xs h-8" onClick={goToday}>Hoje</Button>
-        <Button size="sm" className="text-xs h-8 gap-1" onClick={() => openNewNote()}>
+        <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => openNewNote()}>
           <Plus className="w-3.5 h-3.5" /> Nota
         </Button>
+        <Button size="sm" className="text-xs h-8 gap-1" onClick={() => { setEditingAppt(null); setCreateApptAt(null); setApptDialogOpen(true); }}>
+          <Plus className="w-3.5 h-3.5" /> Compromisso
+        </Button>
       </div>
+
+      <div className="px-4 md:px-6 py-1.5 text-[11px] text-muted-foreground bg-muted/40 border-b border-border">
+        Arraste itens para outro dia para reagendar.
+      </div>
+
 
       {/* Grid */}
       <div className="flex-1 overflow-auto bg-card">
