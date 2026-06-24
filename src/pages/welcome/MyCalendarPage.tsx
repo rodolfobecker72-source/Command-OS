@@ -133,6 +133,7 @@ export function MyCalendarPage() {
           const card = cardsMap.get(a.project_card_id);
           list.push({
             id: `proj-${a.id}`,
+            sourceId: a.id,
             date: d,
             kind: 'project',
             title: a.title || '(sem título)',
@@ -147,6 +148,7 @@ export function MyCalendarPage() {
           if (!d) continue;
           list.push({
             id: `prosp-${l.id}`,
+            sourceId: l.id,
             date: d,
             kind: 'prospection',
             title: l.next_action || 'Próxima ação',
@@ -154,6 +156,7 @@ export function MyCalendarPage() {
             leadId: l.id,
           });
         }
+
 
         if (active) {
           setEvents(list);
