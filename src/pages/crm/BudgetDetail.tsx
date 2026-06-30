@@ -352,6 +352,7 @@ export function BudgetDetail() {
         hasExecutionDate: editedHasExecutionDate,
         executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
         executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
+        executionMonth: editedHasExecutionDate && editedExecutionStartDate ? format(new Date(editedExecutionStartDate), 'yyyy-MM') : (budget.executionMonth || null),
       });
       setIsEditing(false);
       toast.success('Informações atualizadas!');
@@ -1284,7 +1285,10 @@ export function BudgetDetail() {
                                   <CalendarComponent
                                     mode="single"
                                     selected={editedExecutionStartDate ? new Date(editedExecutionStartDate) : undefined}
-                                    onSelect={(date) => setEditedExecutionStartDate(date || null)}
+                                    onSelect={(date) => {
+                                      setEditedExecutionStartDate(date || null);
+                                      if (date) setEditedExecutionMonth(format(date, 'yyyy-MM'));
+                                    }}
                                     locale={ptBR}
                                     className="p-3 pointer-events-auto"
                                   />
@@ -1322,6 +1326,7 @@ export function BudgetDetail() {
                                     hasExecutionDate: editedHasExecutionDate,
                                     executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
                                     executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
+                                    executionMonth: editedHasExecutionDate && editedExecutionStartDate ? format(new Date(editedExecutionStartDate), 'yyyy-MM') : (budget.executionMonth || null),
                                   });
                                   setIsEditingExecDate(false);
                                   toast.success('Datas de execução atualizadas!');
