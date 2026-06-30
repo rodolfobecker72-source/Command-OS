@@ -159,6 +159,7 @@ export function ProspectionPage() {
 
 
   const [activeTab, setActiveTab] = useState<'leads' | 'painel' | 'funil'>('leads');
+  const [funnelPeriod, setFunnelPeriod] = useState<'7d' | '30d' | '90d' | 'mes' | 'ano' | 'all'>('30d');
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
