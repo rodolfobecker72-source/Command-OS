@@ -815,11 +815,27 @@ export function ProspectionPage() {
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             <Card className="border-0 shadow-sm rounded-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-primary" />
-                  Funil de Vendas
-                </CardTitle>
+              <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="w-5 h-5 text-primary" />
+                    Funil de Vendas
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">{periodLabel} · {funnelLeads.length} leads</p>
+                </div>
+                <Select value={funnelPeriod} onValueChange={(v) => setFunnelPeriod(v as typeof funnelPeriod)}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                    <SelectItem value="mes">Mês atual</SelectItem>
+                    <SelectItem value="ano">Ano atual</SelectItem>
+                    <SelectItem value="all">Todo o período</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col lg:flex-row items-center gap-8">
