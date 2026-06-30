@@ -3436,9 +3436,21 @@ export function BudgetDetail() {
             >
               <Card className="card-elevated">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-base">Cliente</CardTitle>
-                    <ScoreBadge score={client.score} />
+                    <div className="flex items-center gap-2">
+                      <ScoreBadge score={client.score} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 gap-1 text-xs"
+                        onClick={() => navigate(`/clientes/${client.id}`)}
+                        title="Ver perfil do cliente"
+                      >
+                        Ver perfil
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
