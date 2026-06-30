@@ -1284,7 +1284,10 @@ export function BudgetDetail() {
                                   <CalendarComponent
                                     mode="single"
                                     selected={editedExecutionStartDate ? new Date(editedExecutionStartDate) : undefined}
-                                    onSelect={(date) => setEditedExecutionStartDate(date || null)}
+                                    onSelect={(date) => {
+                                      setEditedExecutionStartDate(date || null);
+                                      if (date) setEditedExecutionMonth(format(date, 'yyyy-MM'));
+                                    }}
                                     locale={ptBR}
                                     className="p-3 pointer-events-auto"
                                   />
