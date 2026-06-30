@@ -1325,6 +1325,7 @@ export function BudgetDetail() {
                                     hasExecutionDate: editedHasExecutionDate,
                                     executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
                                     executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
+                                    executionMonth: editedHasExecutionDate && editedExecutionStartDate ? format(new Date(editedExecutionStartDate), 'yyyy-MM') : (budget.executionMonth || null),
                                   });
                                   setIsEditingExecDate(false);
                                   toast.success('Datas de execução atualizadas!');
