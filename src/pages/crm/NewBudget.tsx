@@ -413,7 +413,7 @@ export function NewBudget() {
         executionEndDate: formData.executionEndDate,
         location: formData.location,
         driveUrl: (formData as any).driveUrl || '',
-        executionMonth: null,
+        executionMonth: formData.hasExecutionDate && formData.executionStartDate ? format(formData.executionStartDate, 'yyyy-MM') : null,
         status: formData.status,
         rejectionReason: '',
         rejectionObservation: '',
