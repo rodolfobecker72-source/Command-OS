@@ -158,7 +158,7 @@ export function ProspectionPage() {
   };
 
 
-  const [activeTab, setActiveTab] = useState<'leads' | 'painel'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'painel' | 'funil'>('leads');
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -452,6 +452,13 @@ export function ProspectionPage() {
           onClick={() => setActiveTab('painel')}
         >
           <BarChart3 className="w-4 h-4" /> Painel de Controle
+        </Button>
+        <Button
+          variant={activeTab === 'funil' ? 'default' : 'outline'}
+          className="gap-2 rounded-xl"
+          onClick={() => setActiveTab('funil')}
+        >
+          <Filter className="w-4 h-4" /> Funil
         </Button>
       </div>
 
@@ -751,6 +758,182 @@ export function ProspectionPage() {
       </AnimatePresence>
         </>
       )}
+
+      {/* Funil */}
+      {activeTab === 'funil' && (() => {
+        const funnelStages: { key: LeadFunnelStatus; label: string; color: string }[] = [
+          { key: 'mapeado', label: 'Mapeado', color: '#94a3b8' },
+          { key: 'contato_realizado', label: 'Contato Realizado', color: '#3b82f6' },
+          { key: 'reuniao_agendada', label: 'Reunião Agendada', color: '#f59e0b' },
+          { key: 'qualificado_crm', label: 'Qualificado p/ CRM', color: '#10b981' },
+        ];
+        const counts = funnelStages.map(s => ({
+          ...s,
+          count: filteredLeads.filter(l => l.funnelStatus === s.key).length,
+        }));
+        const lostCount = filteredLeads.filter(l => l.funnelStatus === 'perdido').length;
+        const nurtureCount = filteredLeads.filter(l => l.funnelStatus === 'nutricao').length;
+        const maxCount = Math.max(...counts.map(c => c.count), 1);
+
+        const svgWidth = 800;
+        const svgHeight = 480;
+        const topWidth = 720;
+        const bottomWidth = 220;
+        const stageHeight = svgHeight / counts.length;
+
+        return (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-primary" />
+                  Funil de Vendas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col lg:flex-row items-center gap-8">
+                  {/* SVG Funnel */}
+                  <div className="w-full lg:flex-1 flex justify-center">
+                    <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full max-w-[640px] h-auto">
+                      <defs>
+                        {counts.map((s, i) => (
+                          <linearGradient key={i} id={`grad-${i}`} x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor={s.color} stopOpacity="0.95" />
+                            <stop offset="100%" stopColor={s.color} stopOpacity="0.75" />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      {counts.map((s, i) => {
+                        const t1 = i / counts.length;
+                        const t2 = (i + 1) / counts.length;
+                        const w1 = topWidth - (topWidth - bottomWidth) * t1;
+                        const w2 = topWidth - (topWidth - bottomWidth) * t2;
+                        const cx = svgWidth / 2;
+                        const y1 = i * stageHeight;
+                        const y2 = (i + 1) * stageHeight - 6;
+                        const points = [
+                          `${cx - w1 / 2},${y1}`,
+                          `${cx + w1 / 2},${y1}`,
+                          `${cx + w2 / 2},${y2}`,
+                          `${cx - w2 / 2},${y2}`,
+                        ].join(' ');
+                        return (
+                          <g key={s.key}>
+                            <polygon
+                              points={points}
+                              fill={`url(#grad-${i})`}
+                              stroke="hsl(var(--background))"
+                              strokeWidth="2"
+                            />
+                            <text
+                              x={cx}
+                              y={y1 + stageHeight / 2 - 8}
+                              textAnchor="middle"
+                              fill="white"
+                              fontSize="22"
+                              fontWeight="700"
+                              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.25)' }}
+                            >
+                              {s.count}
+                            </text>
+                            <text
+                              x={cx}
+                              y={y1 + stageHeight / 2 + 16}
+                              textAnchor="middle"
+                              fill="white"
+                              fontSize="13"
+                              fontWeight="500"
+                              opacity="0.95"
+                            >
+                              {s.label}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+
+                  {/* Side breakdown */}
+                  <div className="w-full lg:w-72 space-y-3">
+                    {counts.map((s, i) => {
+                      const prev = i > 0 ? counts[i - 1].count : null;
+                      const convPct = prev && prev > 0 ? Math.round((s.count / prev) * 100) : null;
+                      const widthPct = (s.count / maxCount) * 100;
+                      return (
+                        <div key={s.key} className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-sm" style={{ background: s.color }} />
+                              <span className="font-medium">{s.label}</span>
+                            </div>
+                            <span className="font-bold tabular-nums">{s.count}</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${widthPct}%`, background: s.color }}
+                            />
+                          </div>
+                          {convPct !== null && (
+                            <div className="text-[11px] text-muted-foreground">
+                              Conversão da etapa anterior: <span className="font-semibold">{convPct}%</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    <div className="pt-3 mt-3 border-t space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-sm bg-primary/40" />
+                          <span className="text-muted-foreground">Em nutrição</span>
+                        </div>
+                        <span className="font-semibold tabular-nums">{nurtureCount}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-sm bg-destructive" />
+                          <span className="text-muted-foreground">Perdidos</span>
+                        </div>
+                        <span className="font-semibold tabular-nums">{lostCount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{filteredLeads.length}</div>
+                    <div className="text-xs text-muted-foreground">Total no funil</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-success">
+                      {filteredLeads.length > 0
+                        ? Math.round((counts[counts.length - 1].count / filteredLeads.length) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-destructive">
+                      {filteredLeads.length > 0
+                        ? Math.round((lostCount / filteredLeads.length) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Taxa de perda</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-warning">{counts[2].count}</div>
+                    <div className="text-xs text-muted-foreground">Reuniões agendadas</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        );
+      })()}
 
       {/* Painel de Controle */}
       {activeTab === 'painel' && (
