@@ -159,6 +159,7 @@ export function ProspectionPage() {
 
 
   const [activeTab, setActiveTab] = useState<'leads' | 'painel' | 'funil'>('leads');
+  const [funnelPeriod, setFunnelPeriod] = useState<'7d' | '30d' | '90d' | 'mes' | 'ano' | 'all'>('30d');
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -767,12 +768,42 @@ export function ProspectionPage() {
           { key: 'reuniao_agendada', label: 'Reunião Agendada', color: '#f59e0b' },
           { key: 'qualificado_crm', label: 'Qualificado p/ CRM', color: '#10b981' },
         ];
+
+        const now = new Date();
+        let periodStart: Date | null = null;
+        let periodEnd: Date | null = null;
+        let periodLabel = 'Todo o período';
+        if (funnelPeriod === '7d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 6); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 7 dias';
+        } else if (funnelPeriod === '30d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 29); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 30 dias';
+        } else if (funnelPeriod === '90d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 89); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 90 dias';
+        } else if (funnelPeriod === 'mes') {
+          periodStart = startOfMonth(now); periodEnd = endOfMonth(now);
+          periodLabel = `Mês atual (${format(now, "MMMM 'de' yyyy", { locale: ptBR })})`;
+        } else if (funnelPeriod === 'ano') {
+          periodStart = new Date(now.getFullYear(), 0, 1);
+          periodEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+          periodLabel = `Ano de ${now.getFullYear()}`;
+        }
+
+        const funnelLeads = filteredLeads.filter(l => {
+          if (!periodStart || !periodEnd) return true;
+          if (!l.createdAt) return false;
+          const d = parseISO(l.createdAt);
+          return isWithinInterval(d, { start: periodStart, end: periodEnd });
+        });
+
         const counts = funnelStages.map(s => ({
           ...s,
-          count: filteredLeads.filter(l => l.funnelStatus === s.key).length,
+          count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        const lostCount = filteredLeads.filter(l => l.funnelStatus === 'perdido').length;
-        const nurtureCount = filteredLeads.filter(l => l.funnelStatus === 'nutricao').length;
+        const lostCount = funnelLeads.filter(l => l.funnelStatus === 'perdido').length;
+        const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
         const svgWidth = 800;
@@ -784,11 +815,27 @@ export function ProspectionPage() {
         return (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             <Card className="border-0 shadow-sm rounded-2xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-primary" />
-                  Funil de Vendas
-                </CardTitle>
+              <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Filter className="w-5 h-5 text-primary" />
+                    Funil de Vendas
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">{periodLabel} · {funnelLeads.length} leads</p>
+                </div>
+                <Select value={funnelPeriod} onValueChange={(v) => setFunnelPeriod(v as typeof funnelPeriod)}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                    <SelectItem value="mes">Mês atual</SelectItem>
+                    <SelectItem value="ano">Ano atual</SelectItem>
+                    <SelectItem value="all">Todo o período</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -905,21 +952,21 @@ export function ProspectionPage() {
                 {/* Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">{filteredLeads.length}</div>
+                    <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-success">
-                      {filteredLeads.length > 0
-                        ? Math.round((counts[counts.length - 1].count / filteredLeads.length) * 100)
+                      {funnelLeads.length > 0
+                        ? Math.round((counts[counts.length - 1].count / funnelLeads.length) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-destructive">
-                      {filteredLeads.length > 0
-                        ? Math.round((lostCount / filteredLeads.length) * 100)
+                      {funnelLeads.length > 0
+                        ? Math.round((lostCount / funnelLeads.length) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de perda</div>
