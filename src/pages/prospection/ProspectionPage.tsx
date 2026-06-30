@@ -952,21 +952,21 @@ export function ProspectionPage() {
                 {/* Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">{filteredLeads.length}</div>
+                    <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-success">
-                      {filteredLeads.length > 0
-                        ? Math.round((counts[counts.length - 1].count / filteredLeads.length) * 100)
+                      {funnelLeads.length > 0
+                        ? Math.round((counts[counts.length - 1].count / funnelLeads.length) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-destructive">
-                      {filteredLeads.length > 0
-                        ? Math.round((lostCount / filteredLeads.length) * 100)
+                      {funnelLeads.length > 0
+                        ? Math.round((lostCount / funnelLeads.length) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de perda</div>
