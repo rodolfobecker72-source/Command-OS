@@ -768,12 +768,42 @@ export function ProspectionPage() {
           { key: 'reuniao_agendada', label: 'Reunião Agendada', color: '#f59e0b' },
           { key: 'qualificado_crm', label: 'Qualificado p/ CRM', color: '#10b981' },
         ];
+
+        const now = new Date();
+        let periodStart: Date | null = null;
+        let periodEnd: Date | null = null;
+        let periodLabel = 'Todo o período';
+        if (funnelPeriod === '7d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 6); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 7 dias';
+        } else if (funnelPeriod === '30d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 29); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 30 dias';
+        } else if (funnelPeriod === '90d') {
+          periodStart = new Date(now); periodStart.setDate(now.getDate() - 89); periodStart.setHours(0,0,0,0);
+          periodEnd = now; periodLabel = 'Últimos 90 dias';
+        } else if (funnelPeriod === 'mes') {
+          periodStart = startOfMonth(now); periodEnd = endOfMonth(now);
+          periodLabel = `Mês atual (${format(now, "MMMM 'de' yyyy", { locale: ptBR })})`;
+        } else if (funnelPeriod === 'ano') {
+          periodStart = new Date(now.getFullYear(), 0, 1);
+          periodEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+          periodLabel = `Ano de ${now.getFullYear()}`;
+        }
+
+        const funnelLeads = filteredLeads.filter(l => {
+          if (!periodStart || !periodEnd) return true;
+          if (!l.createdAt) return false;
+          const d = parseISO(l.createdAt);
+          return isWithinInterval(d, { start: periodStart, end: periodEnd });
+        });
+
         const counts = funnelStages.map(s => ({
           ...s,
-          count: filteredLeads.filter(l => l.funnelStatus === s.key).length,
+          count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        const lostCount = filteredLeads.filter(l => l.funnelStatus === 'perdido').length;
-        const nurtureCount = filteredLeads.filter(l => l.funnelStatus === 'nutricao').length;
+        const lostCount = funnelLeads.filter(l => l.funnelStatus === 'perdido').length;
+        const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
         const svgWidth = 800;
