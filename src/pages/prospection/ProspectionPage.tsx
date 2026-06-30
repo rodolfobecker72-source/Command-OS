@@ -453,6 +453,13 @@ export function ProspectionPage() {
         >
           <BarChart3 className="w-4 h-4" /> Painel de Controle
         </Button>
+        <Button
+          variant={activeTab === 'funil' ? 'default' : 'outline'}
+          className="gap-2 rounded-xl"
+          onClick={() => setActiveTab('funil')}
+        >
+          <Filter className="w-4 h-4" /> Funil
+        </Button>
       </div>
 
       {activeTab === 'leads' && (
