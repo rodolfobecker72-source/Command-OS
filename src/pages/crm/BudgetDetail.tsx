@@ -352,6 +352,7 @@ export function BudgetDetail() {
         hasExecutionDate: editedHasExecutionDate,
         executionStartDate: editedHasExecutionDate ? editedExecutionStartDate : null,
         executionEndDate: editedHasExecutionDate ? editedExecutionEndDate : null,
+        executionMonth: editedHasExecutionDate && editedExecutionStartDate ? format(new Date(editedExecutionStartDate), 'yyyy-MM') : (budget.executionMonth || null),
       });
       setIsEditing(false);
       toast.success('Informações atualizadas!');
