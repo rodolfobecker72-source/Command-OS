@@ -143,6 +143,11 @@ export function ProjectManagementPage() {
     () => [...projectColumns].sort((a, b) => a.order - b.order),
     [projectColumns]
   );
+  const columnByKey = useMemo(() => {
+    const map: Record<string, typeof projectColumns[number]> = {};
+    for (const c of projectColumns) map[c.key] = c;
+    return map;
+  }, [projectColumns]);
 
   const budgetById = useMemo(() => {
     const m: Record<string, typeof budgets[number]> = {};
