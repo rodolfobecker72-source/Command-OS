@@ -2636,22 +2636,37 @@ export function BudgetDetail() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          {budget.versions.map((version) => (
+                          {budget.versions.map((version) => {
+                            const isSelected = version.version === budget.currentVersion;
+                            const hasMultiple = budget.versions.length > 1;
+                            return (
                             <div
                               key={version.id}
-                              className={`p-4 rounded-lg border ${
+                              onClick={() => {
+                                if (!hasMultiple || isSelected || isEditingVersion) return;
+                                updateBudget(budget.id, { currentVersion: version.version });
+                                toast.success(`Exibindo V${version.version}`);
+                              }}
+                              className={`p-4 rounded-lg border transition-colors ${
+                                hasMultiple && !isSelected && !isEditingVersion ? 'cursor-pointer hover:border-primary/60 hover:bg-muted/30' : ''
+                              } ${
                                 version.version === budget.approvedVersion
                                   ? 'border-success bg-success/5'
                                   : version.isRejected
                                   ? 'border-destructive/30 bg-destructive/5'
-                                  : version.version === budget.currentVersion
-                                  ? 'border-foreground/20 bg-muted/50'
+                                  : isSelected
+                                  ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
                                   : 'border-muted'
                               }`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <span className="font-bold">V{version.version}</span>
+                                  {isSelected && (
+                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+                                      Exibindo
+                                    </span>
+                                  )}
                                   {version.version === budget.approvedVersion && (
                                     <span className="text-xs bg-success text-success-foreground px-2 py-0.5 rounded">
                                       Aprovada
@@ -2663,6 +2678,7 @@ export function BudgetDetail() {
                                     </span>
                                   )}
                                 </div>
+
                                 <div className="flex items-center gap-2">
                                   <span className="font-bold">{formatCurrency(version.fullPrice)}</span>
                                   {!version.isRejected && budget.status !== 'aprovada' && (
@@ -2670,10 +2686,12 @@ export function BudgetDetail() {
                                       variant="ghost" 
                                       size="sm"
                                       className="text-destructive hover:text-destructive"
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         setRejectingVersionId(version.id);
                                         setRejectDialogOpen(true);
                                       }}
+
                                       title="Marcar como recusada"
                                     >
                                       <XCircle className="w-4 h-4" />
@@ -2684,11 +2702,13 @@ export function BudgetDetail() {
                                       variant="ghost" 
                                       size="sm"
                                       className="text-destructive hover:text-destructive"
-                                      onClick={async () => {
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
                                         if (window.confirm(`Tem certeza que deseja excluir a versão V${version.version}?`)) {
                                           await deleteLastVersion(budget.id);
                                         }
                                       }}
+
                                       title={`Excluir V${version.version}`}
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -2698,7 +2718,7 @@ export function BudgetDetail() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      onClick={() => generatePDFForVersion(version)}
+                                      onClick={(e) => { e.stopPropagation(); generatePDFForVersion(version); }}
                                       title={`Gerar PDF V${version.version}`}
                                     >
                                       <Download className="w-4 h-4" />
@@ -2717,7 +2737,9 @@ export function BudgetDetail() {
                                 {new Date(version.createdAt).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
-                          ))}
+                            );
+                          })}
+
                         </div>
                       </CardContent>
                     </Card>
