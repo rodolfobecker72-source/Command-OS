@@ -248,7 +248,7 @@ export function ProjectManagementPage() {
           const buckets = cardsByStatusAndMonth[col.key] || [];
           const totalCards = buckets.reduce((acc, b) => acc + b.cards.length, 0);
           const isCollapsed = collapsed[col.key];
-          const tint = STATUS_TINT[col.color] || DEFAULT_TINT;
+          const tint = DEFAULT_TINT;
           return (
             <div key={col.id} className={cn('rounded-lg border', tint.border, tint.block)}>
               <button
