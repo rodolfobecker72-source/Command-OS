@@ -424,6 +424,20 @@ export function ProjectManagementPage() {
                                         </div>
                                       </PopoverContent>
                                     </Popover>
+                                    {canDelete && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (window.confirm(`Excluir o projeto "${card.projectName}" da gestão de projetos? Esta ação não pode ser desfeita.`)) {
+                                            deleteProjectCard(card.id);
+                                          }
+                                        }}
+                                        className="inline-flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive shrink-0"
+                                        title="Excluir projeto da gestão"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </DraggableRow>
