@@ -296,6 +296,8 @@ export function ProjectManagementPage() {
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
                             const driveUrl = card.driveUrl?.trim();
+                            const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
+                            const isOddMonth = monthNum !== null && monthNum % 2 === 1;
                             const handleEditDrive = (e: React.MouseEvent) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -310,7 +312,8 @@ export function ProjectManagementPage() {
                                   <div
                                     ref={(el) => { cardRefs.current[card.id] = el; }}
                                     className={cn(
-                                      'text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 bg-background md:min-w-0 transition-all',
+                                      'text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 md:min-w-0 transition-all',
+                                      isOddMonth ? 'bg-primary/10' : 'bg-background',
                                       highlightCardId === card.id && 'ring-2 ring-primary bg-primary/10'
                                     )}
                                   >
