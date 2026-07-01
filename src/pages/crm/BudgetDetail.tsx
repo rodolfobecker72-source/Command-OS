@@ -2718,7 +2718,7 @@ export function BudgetDetail() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      onClick={() => generatePDFForVersion(version)}
+                                      onClick={(e) => { e.stopPropagation(); generatePDFForVersion(version); }}
                                       title={`Gerar PDF V${version.version}`}
                                     >
                                       <Download className="w-4 h-4" />
