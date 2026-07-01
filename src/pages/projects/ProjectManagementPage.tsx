@@ -55,6 +55,16 @@ const STATUS_TINT: Record<string, { block: string; month: string; border: string
 };
 const DEFAULT_TINT = { block: 'bg-muted/30', month: 'bg-muted/50', border: 'border-border/50' };
 
+// Colored SelectTrigger styles per status color token
+const STATUS_TRIGGER: Record<string, string> = {
+  'bg-info': 'bg-info/10 border-info/30 text-info hover:bg-info/15',
+  'bg-warning': 'bg-warning/10 border-warning/30 text-warning hover:bg-warning/15',
+  'bg-success': 'bg-success/10 border-success/30 text-success hover:bg-success/15',
+  'bg-destructive': 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/15',
+  'bg-accent': 'bg-accent/10 border-accent/30 text-accent hover:bg-accent/15',
+  'bg-muted-foreground': 'bg-muted-foreground/10 border-muted-foreground/30 text-muted-foreground hover:bg-muted-foreground/15',
+};
+
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
