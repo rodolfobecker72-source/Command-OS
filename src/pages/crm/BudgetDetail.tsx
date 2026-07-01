@@ -2702,11 +2702,13 @@ export function BudgetDetail() {
                                       variant="ghost" 
                                       size="sm"
                                       className="text-destructive hover:text-destructive"
-                                      onClick={async () => {
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
                                         if (window.confirm(`Tem certeza que deseja excluir a versão V${version.version}?`)) {
                                           await deleteLastVersion(budget.id);
                                         }
                                       }}
+
                                       title={`Excluir V${version.version}`}
                                     >
                                       <Trash2 className="w-4 h-4" />
