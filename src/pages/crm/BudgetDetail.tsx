@@ -2686,10 +2686,12 @@ export function BudgetDetail() {
                                       variant="ghost" 
                                       size="sm"
                                       className="text-destructive hover:text-destructive"
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         setRejectingVersionId(version.id);
                                         setRejectDialogOpen(true);
                                       }}
+
                                       title="Marcar como recusada"
                                     >
                                       <XCircle className="w-4 h-4" />
