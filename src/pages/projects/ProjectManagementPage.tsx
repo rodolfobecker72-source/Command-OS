@@ -312,7 +312,7 @@ export function ProjectManagementPage() {
                                   <div
                                     ref={(el) => { cardRefs.current[card.id] = el; }}
                                     className={cn(
-                                      'text-sm py-1.5 px-2 rounded hover:bg-muted/40 flex items-center gap-3 md:min-w-0 transition-all',
+                                      'text-sm py-1.5 px-2 rounded flex items-center gap-3 md:min-w-0 transition-all',
                                       isOddMonth ? 'bg-primary/10' : 'bg-background',
                                       highlightCardId === card.id && 'ring-2 ring-primary bg-primary/10'
                                     )}
