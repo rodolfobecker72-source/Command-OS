@@ -864,7 +864,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       try {
         const { data: newBudgetRow, error: insErr } = await supabase.from('budgets').insert({
           workspace_id: wsId,
-          proposal_id: String(nextId),
+          proposal_id: original.proposalId,
           project_name: original.projectName,
           project_description: original.projectDescription || '',
           client_id: original.clientId,
