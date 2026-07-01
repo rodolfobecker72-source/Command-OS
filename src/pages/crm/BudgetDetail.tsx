@@ -2733,7 +2733,9 @@ export function BudgetDetail() {
                                 {new Date(version.createdAt).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
-                          ))}
+                            );
+                          })}
+
                         </div>
                       </CardContent>
                     </Card>
