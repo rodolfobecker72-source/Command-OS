@@ -989,6 +989,32 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         else setProjectCards(prev => prev.filter(pc => pc.budgetId !== id));
       }
 
+      // If status changed to 'aprovada', ensure a project card exists
+      if (updates.status === 'aprovada' && workspaceId) {
+        const budget = budgets.find(b => b.id === id);
+        const alreadyExists = projectCards.some(pc => pc.budgetId === id);
+        if (budget && !alreadyExists) {
+          const client = clients.find(c => c.id === budget.clientId);
+          const approvedVer = budget.versions.find(v => v.version === (budget.approvedVersion ?? budget.currentVersion));
+          const serviceTypes = approvedVer?.services && approvedVer.services.length > 0
+            ? [...new Set(approvedVer.services.map(s => s.serviceType))]
+            : (budget.serviceType ? [budget.serviceType] : []);
+          const objective = approvedVer?.services?.[0]?.objective || budget.objective || '';
+          const firstColKey = [...projectColumns].sort((a, b) => a.order - b.order)[0]?.key || 'planejamento';
+          const { data: pcData, error: pcError } = await supabase.from('project_cards').insert({
+            workspace_id: workspaceId, budget_id: id, proposal_id: budget.proposalId,
+            project_name: updates.projectName ?? budget.projectName,
+            client_name: client?.companyName || 'Cliente não encontrado',
+            client_id: budget.clientId, service_types: serviceTypes as any, objective,
+            status: firstColKey, progress: 0, tasks: [] as any, links: [] as any, comments: [] as any,
+            material_link: '', start_date: budget.executionStartDate?.toISOString() || null,
+            end_date: budget.executionEndDate?.toISOString() || null, notes: '',
+          }).select().single();
+          if (pcError) console.error('[CRM] updateBudget: erro ao criar project card:', pcError.message);
+          if (pcData) setProjectCards(prev => [...prev, projectCardFromDb(pcData)]);
+        }
+      }
+
 
 
       setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b));
