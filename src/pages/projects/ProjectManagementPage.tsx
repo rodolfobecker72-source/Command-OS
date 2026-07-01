@@ -1,6 +1,6 @@
 import { useState, useMemo, ReactNode, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink, Search } from 'lucide-react';
+import { ChevronRight, Settings2, Calendar as CalendarIcon, GripVertical, ExternalLink, Search, Trash2 } from 'lucide-react';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCenter,
@@ -79,8 +79,9 @@ function formatMonthLabel(ym: string | null): string {
 }
 
 export function ProjectManagementPage() {
-  const { projectColumns, projectCards, updateProjectCard, budgets, updateBudget } = useCRM();
-  const { workspace } = useAuth();
+  const { projectColumns, projectCards, updateProjectCard, deleteProjectCard, budgets, updateBudget } = useCRM();
+  const { workspace, role } = useAuth();
+  const canDelete = role === 'owner' || role === 'admin';
   const [manageOpen, setManageOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
