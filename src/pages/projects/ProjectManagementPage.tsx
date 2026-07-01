@@ -328,7 +328,7 @@ export function ProjectManagementPage() {
                                       value={card.status}
                                       onValueChange={(value) => updateProjectCard(card.id, { status: value })}
                                     >
-                                      <SelectTrigger className="hidden md:flex h-7 w-[150px] text-xs shrink-0">
+                                      <SelectTrigger className={cn('hidden md:flex h-7 w-[150px] text-xs shrink-0 font-medium', STATUS_TRIGGER[columnByKey[card.status]?.color || ''])}>
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent className="z-[200]">
