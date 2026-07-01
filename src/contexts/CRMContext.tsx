@@ -276,6 +276,7 @@ interface CRMContextType {
   projectCards: ProjectCard[];
   projectColumns: ProjectColumn[];
   updateProjectCard: (id: string, updates: Partial<ProjectCard>) => Promise<void>;
+  deleteProjectCard: (id: string) => Promise<void>;
   addProjectColumn: (column: Omit<ProjectColumn, 'id' | 'order'>) => Promise<void>;
   updateProjectColumn: (id: string, updates: Partial<ProjectColumn>) => Promise<void>;
   deleteProjectColumn: (id: string) => Promise<void>;
@@ -1544,6 +1545,18 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     } catch (e: any) { toast.error('Erro: ' + e.message); }
   };
 
+  const deleteProjectCard = async (id: string) => {
+    try {
+      await supabase.from('project_activities').delete().eq('project_card_id', id);
+      const { error } = await supabase.from('project_cards').delete().eq('id', id);
+      if (error) throw error;
+      setProjectCards(prev => prev.filter(card => card.id !== id));
+      toast.success('Projeto excluído da gestão de projetos');
+    } catch (e: any) { toast.error('Erro: ' + e.message); }
+  };
+
+
+
   const addProjectColumn = async (colData: Omit<ProjectColumn, 'id' | 'order'>) => {
     const wsId = await ensureWorkspace();
     if (!wsId) return;
@@ -1647,7 +1660,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     legacyProjects, addLegacyProject, deleteLegacyProject, getLegacyProject, getHDForBudget,
     scoreHistory, getClientScoreHistory,
     assets, addAsset, updateAsset, deleteAsset,
-    projectCards, projectColumns, updateProjectCard, addProjectColumn, updateProjectColumn, deleteProjectColumn, reorderProjectColumns,
+    projectCards, projectColumns, updateProjectCard, deleteProjectCard, addProjectColumn, updateProjectColumn, deleteProjectColumn, reorderProjectColumns,
     getCRMCards, getCardsByStatus, moveCard,
   }), [
     isLoading, clients, budgets, kanbanColumns, serviceCategories, serviceObjectives,
