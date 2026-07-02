@@ -31,8 +31,8 @@ interface UserActivities {
   userId: string;
   name: string;
   photoUrl: string | null;
-  overdue: ActivityItem[];
-  toStart: ActivityItem[];
+  naoIniciado: ActivityItem[];
+  emAndamento: ActivityItem[];
 }
 
 type LeadAlertStatus = 'overdue' | 'today' | 'upcoming';
@@ -191,14 +191,9 @@ export function WelcomePage() {
         userId: profile.id,
         name: me.name || 'Sem nome',
         photoUrl: me.photo_url || null,
-        overdue: [],
-        toStart: [],
+        naoIniciado: [],
+        emAndamento: [],
       };
-
-      const horizon = new Date();
-      horizon.setHours(0, 0, 0, 0);
-      horizon.setDate(horizon.getDate() + 5);
-      const horizonStr = horizon.toISOString().slice(0, 10);
 
       for (const a of activities as any[]) {
         const ids: string[] = Array.isArray(a.assigned_to_user_ids) && a.assigned_to_user_ids.length > 0
@@ -213,11 +208,11 @@ export function WelcomePage() {
           isOverdue: !!a.due_date && a.due_date < today,
           freelaName: a.freela_name || null,
         };
-        if (item.isOverdue) bucket.overdue.push(item);
-        else if (a.due_date && a.due_date >= today && a.due_date <= horizonStr) bucket.toStart.push(item);
+        if (a.status === 'em_andamento') bucket.emAndamento.push(item);
+        else bucket.naoIniciado.push(item);
       }
 
-      const list = (bucket.overdue.length > 0 || bucket.toStart.length > 0) ? [bucket] : [];
+      const list = (bucket.naoIniciado.length > 0 || bucket.emAndamento.length > 0) ? [bucket] : [];
 
       if (!cancelled) setUserActivities(list);
     };
@@ -360,10 +355,10 @@ export function WelcomePage() {
       prev
         .map((u) => ({
           ...u,
-          overdue: u.overdue.filter((a) => a.id !== activityId),
-          toStart: u.toStart.filter((a) => a.id !== activityId),
+          naoIniciado: u.naoIniciado.filter((a) => a.id !== activityId),
+          emAndamento: u.emAndamento.filter((a) => a.id !== activityId),
         }))
-        .filter((u) => u.overdue.length > 0 || u.toStart.length > 0)
+        .filter((u) => u.naoIniciado.length > 0 || u.emAndamento.length > 0)
     );
     const { error } = await supabase
       .from('project_activities')
@@ -497,65 +492,34 @@ export function WelcomePage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold truncate">{u.name}</p>
                         <div className="flex flex-wrap gap-1.5 mt-0.5">
-                          {u.overdue.length > 0 && (
-                            <Badge variant="destructive" className="text-[10px] py-0 px-1.5">
-                              {u.overdue.length} em atraso
+                          {u.naoIniciado.length > 0 && (
+                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                              {u.naoIniciado.length} não iniciado{u.naoIniciado.length > 1 ? 's' : ''}
                             </Badge>
                           )}
-                          {u.toStart.length > 0 && (
-                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
-                              {u.toStart.length} para iniciar
+                          {u.emAndamento.length > 0 && (
+                            <Badge className="text-[10px] py-0 px-1.5 bg-info/15 text-info hover:bg-info/20">
+                              {u.emAndamento.length} em andamento
                             </Badge>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {u.overdue.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold text-destructive flex items-center gap-1">
-                          <AlertTriangle className="w-3.5 h-3.5" /> Em atraso
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {u.overdue.map((a) => (
-                            <div
-                              key={a.id}
-                              className="border border-destructive/30 bg-destructive/5 rounded-lg p-3 flex items-start gap-2.5 shadow-sm"
-                            >
-                              <Checkbox
-                                className="mt-0.5"
-                                onCheckedChange={(c) => c && handleCompleteActivity(a.id)}
-                                aria-label="Concluir tarefa"
-                              />
-                              <div className="min-w-0 flex-1 space-y-1">
-                                <p className="text-sm font-medium leading-snug break-words">{a.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{a.projectName}</p>
-                                {a.freelaName && (
-                                  <p className="text-xs text-amber-600 font-medium tabular-nums flex items-center gap-1">
-                                    <span className="inline-block w-4 h-4 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold flex items-center justify-center">F</span>
-                                    {a.freelaName}
-                                  </p>
-                                )}
-                                <p className="text-xs text-destructive font-semibold tabular-nums">
-                                  Vence em {formatDateBR(a.dueDate)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {u.toStart.length > 0 && (
+                    {u.naoIniciado.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                          <Play className="w-3.5 h-3.5" /> Para iniciar
+                          <Play className="w-3.5 h-3.5" /> Não iniciado
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {u.toStart.map((a) => (
+                          {u.naoIniciado.map((a) => (
                             <div
                               key={a.id}
-                              className="border border-border bg-muted/30 rounded-lg p-3 flex items-start gap-2.5 shadow-sm"
+                              className={`border rounded-lg p-3 flex items-start gap-2.5 shadow-sm ${
+                                a.isOverdue
+                                  ? 'border-destructive/30 bg-destructive/5'
+                                  : 'border-border bg-muted/30'
+                              }`}
                             >
                               <Checkbox
                                 className="mt-0.5"
@@ -572,8 +536,49 @@ export function WelcomePage() {
                                   </p>
                                 )}
                                 {a.dueDate && (
-                                  <p className="text-xs text-muted-foreground tabular-nums">
-                                    {formatDateBR(a.dueDate)}
+                                  <p className={`text-xs tabular-nums ${a.isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                    {a.isOverdue ? `Venceu em ${formatDateBR(a.dueDate)}` : formatDateBR(a.dueDate)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {u.emAndamento.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-info flex items-center gap-1">
+                          <Play className="w-3.5 h-3.5" /> Em andamento
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {u.emAndamento.map((a) => (
+                            <div
+                              key={a.id}
+                              className={`border rounded-lg p-3 flex items-start gap-2.5 shadow-sm ${
+                                a.isOverdue
+                                  ? 'border-destructive/30 bg-destructive/5'
+                                  : 'border-info/25 bg-info/[0.08]'
+                              }`}
+                            >
+                              <Checkbox
+                                className="mt-0.5"
+                                onCheckedChange={(c) => c && handleCompleteActivity(a.id)}
+                                aria-label="Concluir tarefa"
+                              />
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <p className="text-sm font-medium leading-snug break-words">{a.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{a.projectName}</p>
+                                {a.freelaName && (
+                                  <p className="text-xs text-amber-600 font-medium tabular-nums flex items-center gap-1">
+                                    <span className="inline-block w-4 h-4 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold flex items-center justify-center">F</span>
+                                    {a.freelaName}
+                                  </p>
+                                )}
+                                {a.dueDate && (
+                                  <p className={`text-xs tabular-nums ${a.isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                                    {a.isOverdue ? `Venceu em ${formatDateBR(a.dueDate)}` : formatDateBR(a.dueDate)}
                                   </p>
                                 )}
                               </div>
