@@ -360,10 +360,10 @@ export function WelcomePage() {
       prev
         .map((u) => ({
           ...u,
-          overdue: u.overdue.filter((a) => a.id !== activityId),
-          toStart: u.toStart.filter((a) => a.id !== activityId),
+          naoIniciado: u.naoIniciado.filter((a) => a.id !== activityId),
+          emAndamento: u.emAndamento.filter((a) => a.id !== activityId),
         }))
-        .filter((u) => u.overdue.length > 0 || u.toStart.length > 0)
+        .filter((u) => u.naoIniciado.length > 0 || u.emAndamento.length > 0)
     );
     const { error } = await supabase
       .from('project_activities')
