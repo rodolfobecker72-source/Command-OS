@@ -20,7 +20,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial', restrictedFrom: ['time_hero'] },
 
   // Operação / Projetos
-  { key: 'gestao-projetos', label: 'Gestão de Projetos', href: '/gestao-projetos', group: 'Projetos' },
+  { key: 'gestao-projetos', label: 'Área de Projetos', href: '/gestao-projetos', group: 'Projetos' },
   { key: 'calendario', label: 'Calendário de Projetos', href: '/calendario', group: 'Projetos' },
   { key: 'calendario-time', label: 'Calendário do Time', href: '/calendario-time', group: 'Projetos', restrictedFrom: ['vendedor', 'visualizador', 'time_hero'] },
   { key: 'central-midia', label: 'Central de Mídias', href: '/central-midia', group: 'Projetos' },
