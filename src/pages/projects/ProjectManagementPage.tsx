@@ -286,7 +286,10 @@ export function ProjectManagementPage() {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
-                            const driveUrl = (card as any).materialLink?.trim() || '';
+                            const rawLinks = (card as any).materialLinks;
+                            const projectLinks: string[] = Array.isArray(rawLinks) && rawLinks.length > 0
+                              ? rawLinks.filter((l: any) => typeof l === 'string' && l.trim())
+                              : ((card as any).materialLink?.trim() ? [(card as any).materialLink.trim()] : []);
                             const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
                             const isOddMonth = monthNum !== null && monthNum % 2 === 1;
                             return (
