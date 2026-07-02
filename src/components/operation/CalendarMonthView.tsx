@@ -13,7 +13,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { Budget } from '@/types/crm';
 import { Appointment } from '@/types/appointment';
-import { CalendarEventCard, CalendarDeliveryEvent } from './CalendarEventCard';
+import { CalendarEventCard, CalendarActivityEvent, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 import { DndContext, DragEndEvent, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
@@ -22,9 +22,11 @@ interface CalendarMonthViewProps {
   events: Budget[];
   pendingEvents?: Budget[];
   deliveryEvents: CalendarDeliveryEvent[];
+  activityEvents?: CalendarActivityEvent[];
   appointments?: Appointment[];
   onEventClick: (budget: Budget) => void;
   onDeliveryClick?: (budget: Budget, serviceId?: string) => void;
+  onActivityClick?: (activity: CalendarActivityEvent) => void;
   onAppointmentClick?: (appointment: Appointment) => void;
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
@@ -53,6 +55,10 @@ function getAppointmentsForDay(day: Date, appts: Appointment[]): Appointment[] {
   return appts.filter(a => isSameDay(a.startAt, day));
 }
 
+function getActivityEventsForDay(day: Date, activityEvents: CalendarActivityEvent[]): CalendarActivityEvent[] {
+  return activityEvents.filter(ev => isSameDay(ev.date, day));
+}
+
 function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; children: React.ReactNode; onCreate?: () => void } & React.HTMLAttributes<HTMLDivElement>) {
   const id = `day-${format(day, 'yyyy-MM-dd')}`;
   const { setNodeRef, isOver } = useDroppable({ id, data: { date: day } });
@@ -69,8 +75,8 @@ function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; childre
 }
 
 export function CalendarMonthView({
-  currentDate, events, pendingEvents = [], deliveryEvents, appointments = [],
-  onEventClick, onDeliveryClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
+  currentDate, events, pendingEvents = [], deliveryEvents, activityEvents = [], appointments = [],
+  onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
 }: CalendarMonthViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -100,6 +106,7 @@ export function CalendarMonthView({
             const dayEvents = getEventsForDay(day, events);
             const dayPending = getEventsForDay(day, pendingEvents);
             const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
+            const dayActivities = getActivityEventsForDay(day, activityEvents);
             const dayAppts = getAppointmentsForDay(day, appointments);
 
             return (
@@ -156,6 +163,18 @@ export function CalendarMonthView({
                       eventType="delivery"
                       deliveryLabel={ev.label}
                       onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
+                    />
+                  ))}
+                  {dayActivities.map(ev => (
+                    <CalendarEventCard
+                      key={ev.id}
+                      dragId={`act-${ev.id}`}
+                      dragData={{ type: 'activity', activityId: ev.id }}
+                      budget={ev.budget}
+                      activity={ev}
+                      compact
+                      eventType="activity"
+                      onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
                     />
                   ))}
                   {dayAppts.map(ap => (
