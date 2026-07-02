@@ -219,7 +219,7 @@ export function ProjectManagementPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header
-        title="Gestão de Projetos"
+        title="Área de Projetos"
         subtitle="Acompanhe todo fluxo de projetos da produtora, demandas, responsáveis, datas e objetivos."
       />
       <div className="p-4 md:p-6 max-w-5xl mx-auto">

@@ -27,7 +27,7 @@ const features = [
   { icon: Target, title: 'Prospecção', desc: 'Funil de leads com próximas ações e responsáveis.' },
   { icon: Users, title: 'Clientes', desc: 'Base completa com score, histórico e segmentação.' },
   { icon: Kanban, title: 'CRM & Orçamentos', desc: 'Pipeline visual com propostas, margem e impostos.' },
-  { icon: FolderKanban, title: 'Gestão de Projetos', desc: 'Kanban de atividades e acompanhamento por projeto.' },
+  { icon: FolderKanban, title: 'Área de Projetos', desc: 'Kanban de atividades e acompanhamento por projeto.' },
   { icon: Calendar, title: 'Calendário', desc: 'Agenda integrada de entregas e gravações.' },
   { icon: DollarSign, title: 'Financeiro', desc: 'Fluxo de caixa, contas, cartões e projeções.' },
   { icon: FileText, title: 'Propostas em PDF', desc: 'Layout personalizado com marca da sua produtora.' },
@@ -227,7 +227,7 @@ export default function HomePage() {
           {/* Mock Projects */}
           <Card className="overflow-hidden">
             <div className="bg-muted/40 px-5 py-3 border-b">
-              <span className="text-sm font-medium">Gestão de Projetos</span>
+              <span className="text-sm font-medium">Área de Projetos</span>
             </div>
             <CardContent className="p-5 space-y-2 text-xs">
               {[

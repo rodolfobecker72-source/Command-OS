@@ -561,7 +561,7 @@ export function MyCalendarPage() {
               )}
               <Button onClick={handleGoTo} className="w-full gap-2 mt-2">
                 <ExternalLink className="w-4 h-4" />
-                {selected.kind === 'project' ? 'Abrir em Gestão de Projetos' : 'Abrir em Prospecção'}
+                {selected.kind === 'project' ? 'Abrir em Área de Projetos' : 'Abrir em Prospecção'}
               </Button>
             </div>
           )}
