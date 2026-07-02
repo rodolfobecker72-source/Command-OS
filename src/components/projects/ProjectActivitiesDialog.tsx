@@ -1010,10 +1010,28 @@ function Column({
               type="date"
               value={newDue}
               onChange={e => onNewDue(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
-              placeholder="Add Prazo"
+              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
+              placeholder="Início"
+            />
+            <span className="opacity-60">→</span>
+            <input
+              type="date"
+              value={newEnd}
+              min={newDue || undefined}
+              onChange={e => onNewEnd(e.target.value)}
+              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
+              placeholder="Fim"
             />
           </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={newDelivery}
+              onChange={e => onNewDelivery(e.target.checked)}
+              className="h-3.5 w-3.5 accent-blue-500"
+            />
+            Marcar como entrega
+          </label>
           {newTitle.trim() && (
             <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
               Adicionar tarefa
