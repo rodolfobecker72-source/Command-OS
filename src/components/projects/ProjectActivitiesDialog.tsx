@@ -299,20 +299,40 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     }
   };
 
-  const handleSaveDrive = async () => {
-    if (driveLink === driveLinkSaved) return;
+  const persistLinks = async (links: string[]) => {
     setSavingDrive(true);
     const { error } = await supabase
       .from('project_cards')
-      .update({ material_link: driveLink })
+      .update({ material_links: links as any, material_link: links[0] || '' })
       .eq('id', projectCardId);
     setSavingDrive(false);
     if (error) {
       toast.error('Erro ao salvar link');
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddLink = async () => {
+    const url = newLink.trim();
+    if (!url) return;
+    if (driveLinks.includes(url)) {
+      toast.error('Link já adicionado');
       return;
     }
-    setDriveLinkSaved(driveLink);
-    toast.success('Link salvo');
+    const next = [...driveLinks, url];
+    const ok = await persistLinks(next);
+    if (ok) {
+      setDriveLinks(next);
+      setNewLink('');
+      toast.success('Link adicionado');
+    }
+  };
+
+  const handleRemoveLink = async (index: number) => {
+    const next = driveLinks.filter((_, i) => i !== index);
+    const ok = await persistLinks(next);
+    if (ok) setDriveLinks(next);
   };
 
   const grouped = useMemo(() => {
