@@ -191,7 +191,7 @@ export function MyCalendarPage() {
     })();
 
     return () => { active = false; };
-  }, [user?.id, workspace?.id]);
+  }, [user?.id, workspace?.id, hideProspection]);
 
   const visibleEvents = useMemo(
     () => events.filter(e => (e.kind === 'project' ? showProjects : showProspection)),
