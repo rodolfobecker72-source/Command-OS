@@ -162,22 +162,9 @@ export function AppointmentDialog({
             <Input id="appt-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Reunião com Acme" autoFocus />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Tipo</Label>
-              <Select value={kind} onValueChange={v => setKind(v as AppointmentKind)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent className="z-[200]">
-                  {Object.entries(APPOINTMENT_KIND_LABELS).map(([k, label]) => (
-                    <SelectItem key={k} value={k}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end gap-2 pb-1">
-              <Switch checked={allDay} onCheckedChange={setAllDay} />
-              <Label className="cursor-pointer" onClick={() => setAllDay(v => !v)}>Dia inteiro</Label>
-            </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={allDay} onCheckedChange={setAllDay} />
+            <Label className="cursor-pointer" onClick={() => setAllDay(v => !v)}>Dia inteiro</Label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -230,35 +217,6 @@ export function AppointmentDialog({
           <div>
             <Label>Descrição</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Projeto (opcional)</Label>
-              <Select value={budgetId} onValueChange={setBudgetId}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent className="z-[200] max-h-72">
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {sortedBudgets.map(b => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.proposalId} — {b.projectName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Cliente (opcional)</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent className="z-[200] max-h-72">
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {sortedClients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
 
