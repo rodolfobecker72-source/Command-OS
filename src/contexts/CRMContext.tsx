@@ -1558,6 +1558,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.links !== undefined) dbUpdates.links = updates.links as any;
       if (updates.comments !== undefined) dbUpdates.comments = updates.comments as any;
       if (updates.materialLink !== undefined) dbUpdates.material_link = updates.materialLink;
+      if (updates.materialLinks !== undefined) (dbUpdates as any).material_links = updates.materialLinks;
       if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
       if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate?.toISOString() || null;
       if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate?.toISOString() || null;
