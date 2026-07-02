@@ -18,6 +18,7 @@ export interface CalendarDeliveryEvent {
 
 export interface CalendarActivityEvent {
   id: string;
+  activityId: string;
   date: Date;
   title: string;
   status: string;
