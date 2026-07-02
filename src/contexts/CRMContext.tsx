@@ -194,6 +194,7 @@ function projectCardFromDb(row: any): ProjectCard {
     objective: row.objective, status: row.status, progress: row.progress,
     tasks: (row.tasks || []) as any[], links: (row.links || []) as any[],
     comments: (row.comments || []) as any[], materialLink: row.material_link,
+    materialLinks: Array.isArray((row as any).material_links) ? ((row as any).material_links as string[]) : (row.material_link ? [row.material_link] : []),
     startDate: row.start_date ? new Date(row.start_date) : null,
     endDate: row.end_date ? new Date(row.end_date) : null,
     notes: row.notes, driveUrl: row.drive_url || '', createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at),
