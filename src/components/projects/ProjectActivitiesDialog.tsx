@@ -937,6 +937,8 @@ function Column({
               onDelete={onDelete}
               onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
+              onUpdateEnd={onUpdateEnd}
+              onUpdateDelivery={onUpdateDelivery}
               onUpdateFreela={onUpdateFreela}
             />
           ))}
