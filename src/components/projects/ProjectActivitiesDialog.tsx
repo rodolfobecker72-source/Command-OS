@@ -229,6 +229,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
               ? d.assigned_to_user_ids
               : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
+            endDate: d.end_date ?? null,
+            isDelivery: !!d.is_delivery,
             freelaName: d.freela_name ?? null,
           })));
         }
