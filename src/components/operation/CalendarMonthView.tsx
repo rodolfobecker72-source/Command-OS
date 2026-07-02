@@ -169,7 +169,7 @@ export function CalendarMonthView({
                     <CalendarEventCard
                       key={ev.id}
                       dragId={`act-${ev.id}`}
-                      dragData={{ type: 'activity', activityId: ev.id }}
+                      dragData={{ type: 'activity', activityId: ev.activityId }}
                       budget={ev.budget}
                       activity={ev}
                       compact

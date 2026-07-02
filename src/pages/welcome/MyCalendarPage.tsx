@@ -36,6 +36,7 @@ interface PersonalEvent {
   status?: string;
   budgetId?: string;
   leadId?: string;
+  isDelivery?: boolean;
   /** Raw id used to persist date updates when dragging. */
   sourceId: string;
 }
@@ -99,7 +100,7 @@ export function MyCalendarPage() {
         const [activitiesRes, leadsRes, notesRes] = await Promise.all([
           supabase
             .from('project_activities')
-            .select('id, title, status, due_date, project_card_id, assigned_to_user_ids')
+            .select('id, title, status, due_date, end_date, is_delivery, project_card_id, assigned_to_user_ids')
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [user.id])
             .not('due_date', 'is', null),
@@ -138,17 +139,25 @@ export function MyCalendarPage() {
         for (const a of activitiesRes.data || []) {
           const d = parseDate(a.due_date as string);
           if (!d) continue;
+          const endD = a.end_date ? parseDate(a.end_date as string) : null;
           const card = cardsMap.get(a.project_card_id);
-          list.push({
-            id: `proj-${a.id}`,
-            sourceId: a.id,
-            date: d,
-            kind: 'project',
-            title: a.title || '(sem título)',
-            subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
-            status: a.status,
-            budgetId: card?.budgetId,
-          });
+          const cur = new Date(d);
+          const last = endD && endD.getTime() >= d.getTime() ? endD : d;
+          while (cur.getTime() <= last.getTime()) {
+            const iso = cur.toISOString().slice(0, 10);
+            list.push({
+              id: `proj-${a.id}-${iso}`,
+              sourceId: a.id,
+              date: new Date(cur),
+              kind: 'project',
+              title: a.title || '(sem título)',
+              subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
+              status: a.status,
+              budgetId: card?.budgetId,
+              isDelivery: !!a.is_delivery,
+            });
+            cur.setDate(cur.getDate() + 1);
+          }
         }
 
         for (const l of leadsRes.data || []) {
@@ -692,9 +701,11 @@ function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void 
       onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
       className={cn(
         'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
-        ev.kind === 'project'
-          ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
-          : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
+        ev.kind === 'project' && ev.isDelivery
+          ? 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25'
+          : ev.kind === 'project'
+            ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
+            : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
         isDragging && 'opacity-50',
       )}
       title={`${ev.title} — ${ev.subtitle}`}

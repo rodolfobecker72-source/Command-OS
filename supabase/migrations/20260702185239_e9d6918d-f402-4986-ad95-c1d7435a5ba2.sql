@@ -1,0 +1,1 @@
+ALTER TABLE public.project_activities ADD COLUMN IF NOT EXISTS is_delivery boolean NOT NULL DEFAULT false; ALTER TABLE public.project_activities ADD COLUMN IF NOT EXISTS end_date date;

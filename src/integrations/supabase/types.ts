@@ -990,8 +990,10 @@ export type Database = {
           assigned_to_user_ids: string[]
           created_at: string
           due_date: string | null
+          end_date: string | null
           freela_name: string | null
           id: string
+          is_delivery: boolean
           order: number
           project_card_id: string
           status: string
@@ -1004,8 +1006,10 @@ export type Database = {
           assigned_to_user_ids?: string[]
           created_at?: string
           due_date?: string | null
+          end_date?: string | null
           freela_name?: string | null
           id?: string
+          is_delivery?: boolean
           order?: number
           project_card_id: string
           status?: string
@@ -1018,8 +1022,10 @@ export type Database = {
           assigned_to_user_ids?: string[]
           created_at?: string
           due_date?: string | null
+          end_date?: string | null
           freela_name?: string | null
           id?: string
+          is_delivery?: boolean
           order?: number
           project_card_id?: string
           status?: string

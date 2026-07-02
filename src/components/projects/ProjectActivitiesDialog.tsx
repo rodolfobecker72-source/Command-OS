@@ -52,6 +52,8 @@ interface Activity {
   order: number;
   assignedToUserIds: string[];
   dueDate: string | null;
+  endDate: string | null;
+  isDelivery: boolean;
   freelaName: string | null;
 }
 
@@ -100,6 +102,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newTitleByCol, setNewTitleByCol] = useState<Record<string, string>>({});
   const [newAssigneeByCol, setNewAssigneeByCol] = useState<Record<string, string>>({});
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
+  const [newEndByCol, setNewEndByCol] = useState<Record<string, string>>({});
+  const [newDeliveryByCol, setNewDeliveryByCol] = useState<Record<string, boolean>>({});
   const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
   const [expandedNewByCol, setExpandedNewByCol] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -227,6 +231,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
               ? d.assigned_to_user_ids
               : (d.assigned_to_user_id ? [d.assigned_to_user_id] : []),
             dueDate: d.due_date ?? null,
+            endDate: d.end_date ?? null,
+            isDelivery: !!d.is_delivery,
             freelaName: d.freela_name ?? null,
           })));
         }
@@ -324,6 +330,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       : null;
     const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
+    const endRaw = newEndByCol[status] || null;
+    const end = endRaw && due && endRaw >= due ? endRaw : null;
+    const isDelivery = !!newDeliveryByCol[status];
     const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -336,6 +345,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         assigned_to_user_id: assignee,
         assigned_to_user_ids: ids,
         due_date: due,
+        end_date: end,
+        is_delivery: isDelivery,
         freela_name: freelaName || null,
       } as any)
       .select()
@@ -353,11 +364,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         ? (data as any).assigned_to_user_ids
         : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
+      endDate: (data as any).end_date ?? null,
+      isDelivery: !!(data as any).is_delivery,
       freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
+    setNewEndByCol(prev => ({ ...prev, [status]: '' }));
+    setNewDeliveryByCol(prev => ({ ...prev, [status]: false }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
     syncActivityToGoogle(data.id, 'upsert');
@@ -414,14 +429,41 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
-    setActivities(prev => prev.map(a => a.id === id ? { ...a, dueDate: due } : a));
+    setActivities(prev => prev.map(a => {
+      if (a.id !== id) return a;
+      const nextEnd = a.endDate && due && a.endDate >= due ? a.endDate : null;
+      return { ...a, dueDate: due, endDate: nextEnd };
+    }));
+    const target = activities.find(a => a.id === id);
+    const nextEnd = target?.endDate && due && target.endDate >= due ? target.endDate : null;
     const { error } = await supabase
       .from('project_activities')
-      .update({ due_date: due } as any)
+      .update({ due_date: due, end_date: nextEnd } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
     else syncActivityToGoogle(id, 'upsert');
   };
+
+  const handleUpdateEnd = async (id: string, end: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, endDate: end } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ end_date: end } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar data final');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
+  const handleUpdateDelivery = async (id: string, value: boolean) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, isDelivery: value } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ is_delivery: value } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar entrega');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
 
   const handleUpdateFreela = async (id: string, name: string | null) => {
     setActivities(prev => prev.map(a => a.id === id ? { ...a, freelaName: name } : a));
@@ -622,6 +664,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newTitle={newTitleByCol[col.key] || ''}
                   newAssignee={newAssigneeByCol[col.key] || ''}
                   newDue={newDueByCol[col.key] || ''}
+                  newEnd={newEndByCol[col.key] || ''}
+                  newDelivery={!!newDeliveryByCol[col.key]}
                   newFreela={newFreelaByCol[col.key] || ''}
                   expanded={!!expandedNewByCol[col.key]}
                   onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
@@ -630,11 +674,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     setNewTitleByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewAssigneeByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewEndByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewDeliveryByCol(prev => ({ ...prev, [col.key]: false }));
                     setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
                   }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewEnd={(v) => setNewEndByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewDelivery={(v) => setNewDeliveryByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewFreela={(v) => setNewFreelaByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
@@ -645,6 +693,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onSaveEdit={handleSaveEdit}
                   onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
+                  onUpdateEnd={handleUpdateEnd}
+                  onUpdateDelivery={handleUpdateDelivery}
                   onUpdateFreela={handleUpdateFreela}
                 />
               ))}
@@ -799,6 +849,8 @@ function Column({
   newTitle,
   newAssignee,
   newDue,
+  newEnd,
+  newDelivery,
   newFreela,
   expanded,
   onExpand,
@@ -806,6 +858,8 @@ function Column({
   onNewTitle,
   onNewAssignee,
   onNewDue,
+  onNewEnd,
+  onNewDelivery,
   onNewFreela,
   onAdd,
   onDelete,
@@ -816,6 +870,8 @@ function Column({
   onSaveEdit,
   onToggleAssignee,
   onUpdateDue,
+  onUpdateEnd,
+  onUpdateDelivery,
   onUpdateFreela,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
@@ -824,6 +880,8 @@ function Column({
   newTitle: string;
   newAssignee: string;
   newDue: string;
+  newEnd: string;
+  newDelivery: boolean;
   newFreela: string;
   expanded: boolean;
   onExpand: () => void;
@@ -831,6 +889,8 @@ function Column({
   onNewTitle: (v: string) => void;
   onNewAssignee: (v: string) => void;
   onNewDue: (v: string) => void;
+  onNewEnd: (v: string) => void;
+  onNewDelivery: (v: boolean) => void;
   onNewFreela: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
@@ -841,6 +901,8 @@ function Column({
   onSaveEdit: (id: string) => void;
   onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
+  onUpdateEnd: (id: string, end: string | null) => void;
+  onUpdateDelivery: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
@@ -875,6 +937,8 @@ function Column({
               onDelete={onDelete}
               onToggleAssignee={onToggleAssignee}
               onUpdateDue={onUpdateDue}
+              onUpdateEnd={onUpdateEnd}
+              onUpdateDelivery={onUpdateDelivery}
               onUpdateFreela={onUpdateFreela}
             />
           ))}
@@ -946,10 +1010,28 @@ function Column({
               type="date"
               value={newDue}
               onChange={e => onNewDue(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1 text-muted-foreground"
-              placeholder="Add Prazo"
+              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
+              placeholder="Início"
+            />
+            <span className="opacity-60">→</span>
+            <input
+              type="date"
+              value={newEnd}
+              min={newDue || undefined}
+              onChange={e => onNewEnd(e.target.value)}
+              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
+              placeholder="Fim"
             />
           </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={newDelivery}
+              onChange={e => onNewDelivery(e.target.checked)}
+              className="h-3.5 w-3.5 accent-blue-500"
+            />
+            Marcar como entrega
+          </label>
           {newTitle.trim() && (
             <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
               Adicionar tarefa
@@ -973,6 +1055,8 @@ function SortableCard({
   onDelete,
   onToggleAssignee,
   onUpdateDue,
+  onUpdateEnd,
+  onUpdateDelivery,
   onUpdateFreela,
 }: {
   activity: Activity;
@@ -986,6 +1070,8 @@ function SortableCard({
   onDelete: (id: string) => void;
   onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
+  onUpdateEnd: (id: string, end: string | null) => void;
+  onUpdateDelivery: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -1185,16 +1271,34 @@ function SortableCard({
       </Popover>
 
       {/* Date */}
-      <div className={cn('flex items-center gap-2 text-xs', isOverdue ? 'text-destructive' : 'text-muted-foreground')}>
-        <Calendar className="w-3.5 h-3.5 shrink-0" />
+      <div className={cn('flex items-center gap-2 text-xs flex-wrap', isOverdue ? 'text-destructive' : 'text-muted-foreground')}>
+        <Calendar className={cn('w-3.5 h-3.5 shrink-0', activity.isDelivery && 'text-blue-500')} />
         <input
           type="date"
           value={activity.dueDate || ''}
           onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
-          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1"
-          placeholder="Add Prazo"
+          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors"
+          placeholder="Início"
+        />
+        <span className="opacity-60">→</span>
+        <input
+          type="date"
+          value={activity.endDate || ''}
+          min={activity.dueDate || undefined}
+          onChange={(e) => onUpdateEnd(activity.id, e.target.value || null)}
+          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors"
+          placeholder="Fim"
         />
       </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={activity.isDelivery}
+          onChange={(e) => onUpdateDelivery(activity.id, e.target.checked)}
+          className="h-3.5 w-3.5 accent-blue-500"
+        />
+        <span className={cn(activity.isDelivery && 'text-blue-600 font-medium')}>Entrega</span>
+      </label>
     </div>
   );
 }
