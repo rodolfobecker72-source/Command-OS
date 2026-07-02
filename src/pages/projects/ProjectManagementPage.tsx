@@ -120,23 +120,13 @@ export function ProjectManagementPage() {
     if (!card) return;
     setCollapsed((prev) => ({ ...prev, [card.status]: false }));
     setHighlightCardId(card.id);
-    const tryScroll = (attempt = 0) => {
-      const el = cardRefs.current[card.id];
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (attempt < 10) {
-        setTimeout(() => tryScroll(attempt + 1), 100);
-      }
-    };
-    setTimeout(() => tryScroll(), 50);
-    const t = setTimeout(() => {
-      setHighlightCardId(null);
-      setSearchParams((prev) => {
-        const sp = new URLSearchParams(prev);
-        sp.delete('budget');
-        return sp;
-      }, { replace: true });
-    }, 3000);
+    setActivitiesFor({ id: card.id, name: card.projectName });
+    setSearchParams((prev) => {
+      const sp = new URLSearchParams(prev);
+      sp.delete('budget');
+      return sp;
+    }, { replace: true });
+    const t = setTimeout(() => setHighlightCardId(null), 3000);
     return () => clearTimeout(t);
   }, [highlightBudgetId, projectCards, setSearchParams]);
 

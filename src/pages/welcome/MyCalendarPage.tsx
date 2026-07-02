@@ -62,7 +62,8 @@ function parseDate(s: string | null | undefined): Date | null {
 }
 
 export function MyCalendarPage() {
-  const { user, workspace } = useAuth();
+  const { user, workspace, role } = useAuth();
+  const hideProspection = role === 'time_hero';
   const navigate = useNavigate();
 
   const [view, setView] = useState<'month' | 'week'>('month');
@@ -104,13 +105,15 @@ export function MyCalendarPage() {
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [user.id])
             .not('due_date', 'is', null),
-          supabase
-            .from('prospection_leads')
-            .select('id, company_name, next_action, next_action_date')
-            .eq('workspace_id', workspace.id)
-            .eq('responsible_user_id', user.id)
-            .not('next_action_date', 'is', null)
-            .neq('next_action_date', ''),
+          hideProspection
+            ? Promise.resolve({ data: [] as any[], error: null })
+            : supabase
+                .from('prospection_leads')
+                .select('id, company_name, next_action, next_action_date')
+                .eq('workspace_id', workspace.id)
+                .eq('responsible_user_id', user.id)
+                .not('next_action_date', 'is', null)
+                .neq('next_action_date', ''),
           supabase
             .from('calendar_notes' as any)
             .select('id, date, content')
@@ -188,7 +191,7 @@ export function MyCalendarPage() {
     })();
 
     return () => { active = false; };
-  }, [user?.id, workspace?.id]);
+  }, [user?.id, workspace?.id, hideProspection]);
 
   const visibleEvents = useMemo(
     () => events.filter(e => (e.kind === 'project' ? showProjects : showProspection)),
