@@ -23,6 +23,7 @@ export interface CalendarActivityEvent {
   status: string;
   budget: Budget;
   projectCardId: string;
+  isDelivery?: boolean;
 }
 
 interface CalendarEventCardProps {
