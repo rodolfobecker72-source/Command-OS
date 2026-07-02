@@ -429,14 +429,41 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   };
 
   const handleUpdateDue = async (id: string, due: string | null) => {
-    setActivities(prev => prev.map(a => a.id === id ? { ...a, dueDate: due } : a));
+    setActivities(prev => prev.map(a => {
+      if (a.id !== id) return a;
+      const nextEnd = a.endDate && due && a.endDate >= due ? a.endDate : null;
+      return { ...a, dueDate: due, endDate: nextEnd };
+    }));
+    const target = activities.find(a => a.id === id);
+    const nextEnd = target?.endDate && due && target.endDate >= due ? target.endDate : null;
     const { error } = await supabase
       .from('project_activities')
-      .update({ due_date: due } as any)
+      .update({ due_date: due, end_date: nextEnd } as any)
       .eq('id', id);
     if (error) toast.error('Erro ao atualizar prazo');
     else syncActivityToGoogle(id, 'upsert');
   };
+
+  const handleUpdateEnd = async (id: string, end: string | null) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, endDate: end } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ end_date: end } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar data final');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
+  const handleUpdateDelivery = async (id: string, value: boolean) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, isDelivery: value } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ is_delivery: value } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar entrega');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
 
   const handleUpdateFreela = async (id: string, name: string | null) => {
     setActivities(prev => prev.map(a => a.id === id ? { ...a, freelaName: name } : a));
