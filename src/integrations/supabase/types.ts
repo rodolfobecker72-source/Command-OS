@@ -1047,6 +1047,7 @@ export type Database = {
           id: string
           links: Json
           material_link: string
+          material_links: Json
           notes: string
           objective: string
           progress: number
@@ -1070,6 +1071,7 @@ export type Database = {
           id?: string
           links?: Json
           material_link?: string
+          material_links?: Json
           notes?: string
           objective?: string
           progress?: number
@@ -1093,6 +1095,7 @@ export type Database = {
           id?: string
           links?: Json
           material_link?: string
+          material_links?: Json
           notes?: string
           objective?: string
           progress?: number

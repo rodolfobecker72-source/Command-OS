@@ -286,7 +286,10 @@ export function ProjectManagementPage() {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
-                            const driveUrl = (card as any).materialLink?.trim() || '';
+                            const rawLinks = (card as any).materialLinks;
+                            const projectLinks: string[] = Array.isArray(rawLinks) && rawLinks.length > 0
+                              ? rawLinks.filter((l: any) => typeof l === 'string' && l.trim())
+                              : ((card as any).materialLink?.trim() ? [(card as any).materialLink.trim()] : []);
                             const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
                             const isOddMonth = monthNum !== null && monthNum % 2 === 1;
                             return (
@@ -350,17 +353,53 @@ export function ProjectManagementPage() {
                                     >
                                       {pct}%
                                     </span>
-                                    {driveUrl && (
+                                    {projectLinks.length === 1 && (
                                       <a
-                                        href={driveUrl}
+                                        href={projectLinks[0]}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary shrink-0"
-                                        title={`Abrir link do projeto\n${driveUrl}`}
+                                        title={`Abrir link do projeto\n${projectLinks[0]}`}
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </a>
+                                    )}
+                                    {projectLinks.length > 1 && (
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <button
+                                            type="button"
+                                            className="relative inline-flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary shrink-0"
+                                            title={`${projectLinks.length} links salvos`}
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
+                                              {projectLinks.length}
+                                            </span>
+                                          </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-72 p-2 z-[200]" align="end" onClick={(e) => e.stopPropagation()}>
+                                          <div className="text-xs font-medium text-muted-foreground mb-1 px-1">Links do projeto</div>
+                                          <ul className="space-y-1">
+                                            {projectLinks.map((url, i) => (
+                                              <li key={i}>
+                                                <a
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="flex items-center gap-2 text-xs px-2 py-1.5 rounded hover:bg-muted"
+                                                  title={url}
+                                                >
+                                                  <ExternalLink className="w-3 h-3 shrink-0" />
+                                                  <span className="truncate">{url}</span>
+                                                </a>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </PopoverContent>
+                                      </Popover>
                                     )}
                                     <Popover>
                                       <PopoverTrigger asChild>

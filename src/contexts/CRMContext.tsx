@@ -194,6 +194,7 @@ function projectCardFromDb(row: any): ProjectCard {
     objective: row.objective, status: row.status, progress: row.progress,
     tasks: (row.tasks || []) as any[], links: (row.links || []) as any[],
     comments: (row.comments || []) as any[], materialLink: row.material_link,
+    materialLinks: Array.isArray((row as any).material_links) ? ((row as any).material_links as string[]) : (row.material_link ? [row.material_link] : []),
     startDate: row.start_date ? new Date(row.start_date) : null,
     endDate: row.end_date ? new Date(row.end_date) : null,
     notes: row.notes, driveUrl: row.drive_url || '', createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at),
@@ -1557,6 +1558,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
       if (updates.links !== undefined) dbUpdates.links = updates.links as any;
       if (updates.comments !== undefined) dbUpdates.comments = updates.comments as any;
       if (updates.materialLink !== undefined) dbUpdates.material_link = updates.materialLink;
+      if (updates.materialLinks !== undefined) (dbUpdates as any).material_links = updates.materialLinks;
       if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
       if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate?.toISOString() || null;
       if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate?.toISOString() || null;

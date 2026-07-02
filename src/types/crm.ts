@@ -512,6 +512,7 @@ export interface ProjectCard {
   links: ProjectLink[];
   comments: ProjectComment[];
   materialLink: string;
+  materialLinks: string[];
   startDate: Date | null;
   endDate: Date | null;
   notes: string;
