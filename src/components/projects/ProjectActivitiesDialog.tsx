@@ -737,7 +737,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     }
                   }}
                   placeholder="Escreva um comentário... (Ctrl+Enter para enviar)"
-                  className="min-h-[60px] text-sm w-full resize-none"
+                  className="min-h-[60px] max-h-[400px] text-sm w-full resize-y"
                 />
                 {mentionQuery !== null && (() => {
                   const q = mentionQuery.toLowerCase();
