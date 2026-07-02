@@ -707,7 +707,7 @@ function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void 
         ev.kind === 'project' && ev.isDelivery
           ? 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25'
           : ev.kind === 'project'
-            ? 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20'
+            ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300 hover:bg-green-500/25'
             : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
         isDragging && 'opacity-50',
       )}
