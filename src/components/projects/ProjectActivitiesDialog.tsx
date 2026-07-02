@@ -1271,16 +1271,34 @@ function SortableCard({
       </Popover>
 
       {/* Date */}
-      <div className={cn('flex items-center gap-2 text-xs', isOverdue ? 'text-destructive' : 'text-muted-foreground')}>
-        <Calendar className="w-3.5 h-3.5 shrink-0" />
+      <div className={cn('flex items-center gap-2 text-xs flex-wrap', isOverdue ? 'text-destructive' : 'text-muted-foreground')}>
+        <Calendar className={cn('w-3.5 h-3.5 shrink-0', activity.isDelivery && 'text-blue-500')} />
         <input
           type="date"
           value={activity.dueDate || ''}
           onChange={(e) => onUpdateDue(activity.id, e.target.value || null)}
-          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors flex-1"
-          placeholder="Add Prazo"
+          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors"
+          placeholder="Início"
+        />
+        <span className="opacity-60">→</span>
+        <input
+          type="date"
+          value={activity.endDate || ''}
+          min={activity.dueDate || undefined}
+          onChange={(e) => onUpdateEnd(activity.id, e.target.value || null)}
+          className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors"
+          placeholder="Fim"
         />
       </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={activity.isDelivery}
+          onChange={(e) => onUpdateDelivery(activity.id, e.target.checked)}
+          className="h-3.5 w-3.5 accent-blue-500"
+        />
+        <span className={cn(activity.isDelivery && 'text-blue-600 font-medium')}>Entrega</span>
+      </label>
     </div>
   );
 }
