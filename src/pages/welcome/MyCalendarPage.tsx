@@ -62,7 +62,8 @@ function parseDate(s: string | null | undefined): Date | null {
 }
 
 export function MyCalendarPage() {
-  const { user, workspace } = useAuth();
+  const { user, workspace, role } = useAuth();
+  const hideProspection = role === 'time_hero';
   const navigate = useNavigate();
 
   const [view, setView] = useState<'month' | 'week'>('month');
