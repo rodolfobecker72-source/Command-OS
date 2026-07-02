@@ -296,7 +296,7 @@ export function ProjectManagementPage() {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
-                            const driveUrl = card.driveUrl?.trim();
+                            const driveUrl = card.driveUrl?.trim() || budget?.driveUrl?.trim() || '';
                             const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
                             const isOddMonth = monthNum !== null && monthNum % 2 === 1;
                             const handleEditDrive = (e: React.MouseEvent) => {
