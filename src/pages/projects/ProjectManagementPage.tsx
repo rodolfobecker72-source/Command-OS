@@ -286,17 +286,9 @@ export function ProjectManagementPage() {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
-                            const driveUrl = card.driveUrl?.trim() || budget?.driveUrl?.trim() || '';
+                            const driveUrl = (card as any).materialLink?.trim() || '';
                             const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
                             const isOddMonth = monthNum !== null && monthNum % 2 === 1;
-                            const handleEditDrive = (e: React.MouseEvent) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const current = card.driveUrl || '';
-                              const next = window.prompt('Link do Google Drive deste projeto:', current);
-                              if (next === null) return;
-                              updateProjectCard(card.id, { driveUrl: next.trim() });
-                            };
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
@@ -358,27 +350,17 @@ export function ProjectManagementPage() {
                                     >
                                       {pct}%
                                     </span>
-                                    {driveUrl ? (
+                                    {driveUrl && (
                                       <a
                                         href={driveUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-primary hover:border-primary shrink-0"
-                                        title={`Abrir Drive do projeto · clique direito para editar\n${driveUrl}`}
+                                        title={`Abrir link do projeto\n${driveUrl}`}
                                         onClick={(e) => e.stopPropagation()}
-                                        onContextMenu={handleEditDrive}
                                       >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </a>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={handleEditDrive}
-                                        className="inline-flex items-center justify-center h-7 w-7 rounded border border-dashed border-border text-muted-foreground/60 hover:text-primary hover:border-primary shrink-0"
-                                        title="Cadastrar link do Drive deste projeto"
-                                      >
-                                        <ExternalLink className="w-3.5 h-3.5" />
-                                      </button>
                                     )}
                                     <Popover>
                                       <PopoverTrigger asChild>
