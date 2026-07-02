@@ -137,21 +137,26 @@ export function TeamCalendarPage() {
           }
         }
 
-        // Also include budgets where the member is executor of any service
+        // Also include budgets where the member is executor or a cost supplier
         if (memberName) {
+          const matches = (raw?: string | null) => {
+            if (!raw) return false;
+            const name = raw.trim().toLowerCase().replace(/^freela:\s*/i, '');
+            return name === memberName;
+          };
           for (const b of budgets) {
             if (bids.has(b.id)) continue;
-            const hasExecutor = (b.versions || []).some(v =>
-              (v.services || []).some(s => {
-                const raw = (s.executor || '').trim();
-                if (!raw) return false;
-                const name = raw.toLowerCase().replace(/^freela:\s*/i, '');
-                return name === memberName;
-              })
-            );
-            if (hasExecutor) bids.add(b.id);
+            const exec = (b as any).execution;
+            const inExecutor = matches(exec?.executor);
+            const inCosts = !!exec && [
+              ...((exec.services || []) as any[]).flatMap(s => [...(s.costs || []), ...(s.extraCosts || [])]),
+              ...((exec.operationalCosts || []) as any[]),
+              ...((exec.extraOperationalCosts || []) as any[]),
+            ].some((c: any) => matches(c?.supplier));
+            if (inExecutor || inCosts) bids.add(b.id);
           }
         }
+
 
         if (!cancelled) setMemberBudgetIds(bids);
       } finally {
