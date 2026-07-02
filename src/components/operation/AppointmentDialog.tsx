@@ -162,22 +162,9 @@ export function AppointmentDialog({
             <Input id="appt-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Reunião com Acme" autoFocus />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Tipo</Label>
-              <Select value={kind} onValueChange={v => setKind(v as AppointmentKind)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent className="z-[200]">
-                  {Object.entries(APPOINTMENT_KIND_LABELS).map(([k, label]) => (
-                    <SelectItem key={k} value={k}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end gap-2 pb-1">
-              <Switch checked={allDay} onCheckedChange={setAllDay} />
-              <Label className="cursor-pointer" onClick={() => setAllDay(v => !v)}>Dia inteiro</Label>
-            </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={allDay} onCheckedChange={setAllDay} />
+            <Label className="cursor-pointer" onClick={() => setAllDay(v => !v)}>Dia inteiro</Label>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
