@@ -286,17 +286,9 @@ export function ProjectManagementPage() {
                             const budget = budgetById[card.budgetId];
                             const counts = activityCounts[card.id] || { total: 0, done: 0 };
                             const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
-                            const driveUrl = card.driveUrl?.trim() || budget?.driveUrl?.trim() || '';
+                            const driveUrl = (card as any).materialLink?.trim() || '';
                             const monthNum = bucket.month ? parseInt(bucket.month.split('-')[1], 10) : null;
                             const isOddMonth = monthNum !== null && monthNum % 2 === 1;
-                            const handleEditDrive = (e: React.MouseEvent) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              const current = card.driveUrl || '';
-                              const next = window.prompt('Link do Google Drive deste projeto:', current);
-                              if (next === null) return;
-                              updateProjectCard(card.id, { driveUrl: next.trim() });
-                            };
                             return (
                               <DraggableRow key={card.id} id={card.id}>
                                 {({ listeners, attributes }) => (
