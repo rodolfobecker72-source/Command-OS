@@ -110,8 +110,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [editTitle, setEditTitle] = useState('');
   const [editingFreelaId, setEditingFreelaId] = useState<string | null>(null);
   const [editFreelaName, setEditFreelaName] = useState('');
-  const [driveLink, setDriveLink] = useState('');
-  const [driveLinkSaved, setDriveLinkSaved] = useState('');
+  const [driveLinks, setDriveLinks] = useState<string[]>([]);
+  const [newLink, setNewLink] = useState('');
   const [savingDrive, setSavingDrive] = useState(false);
   const [briefing, setBriefing] = useState<{
     objective: string;
