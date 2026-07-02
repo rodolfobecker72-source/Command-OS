@@ -105,13 +105,15 @@ export function MyCalendarPage() {
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [user.id])
             .not('due_date', 'is', null),
-          supabase
-            .from('prospection_leads')
-            .select('id, company_name, next_action, next_action_date')
-            .eq('workspace_id', workspace.id)
-            .eq('responsible_user_id', user.id)
-            .not('next_action_date', 'is', null)
-            .neq('next_action_date', ''),
+          hideProspection
+            ? Promise.resolve({ data: [] as any[], error: null })
+            : supabase
+                .from('prospection_leads')
+                .select('id, company_name, next_action, next_action_date')
+                .eq('workspace_id', workspace.id)
+                .eq('responsible_user_id', user.id)
+                .not('next_action_date', 'is', null)
+                .neq('next_action_date', ''),
           supabase
             .from('calendar_notes' as any)
             .select('id, date, content')
