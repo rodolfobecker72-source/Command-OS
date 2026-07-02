@@ -100,7 +100,7 @@ export function MyCalendarPage() {
         const [activitiesRes, leadsRes, notesRes] = await Promise.all([
           supabase
             .from('project_activities')
-            .select('id, title, status, due_date, project_card_id, assigned_to_user_ids')
+            .select('id, title, status, due_date, end_date, is_delivery, project_card_id, assigned_to_user_ids')
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [user.id])
             .not('due_date', 'is', null),
