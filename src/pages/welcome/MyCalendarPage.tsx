@@ -139,17 +139,25 @@ export function MyCalendarPage() {
         for (const a of activitiesRes.data || []) {
           const d = parseDate(a.due_date as string);
           if (!d) continue;
+          const endD = a.end_date ? parseDate(a.end_date as string) : null;
           const card = cardsMap.get(a.project_card_id);
-          list.push({
-            id: `proj-${a.id}`,
-            sourceId: a.id,
-            date: d,
-            kind: 'project',
-            title: a.title || '(sem título)',
-            subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
-            status: a.status,
-            budgetId: card?.budgetId,
-          });
+          const cur = new Date(d);
+          const last = endD && endD.getTime() >= d.getTime() ? endD : d;
+          while (cur.getTime() <= last.getTime()) {
+            const iso = cur.toISOString().slice(0, 10);
+            list.push({
+              id: `proj-${a.id}-${iso}`,
+              sourceId: a.id,
+              date: new Date(cur),
+              kind: 'project',
+              title: a.title || '(sem título)',
+              subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
+              status: a.status,
+              budgetId: card?.budgetId,
+              isDelivery: !!a.is_delivery,
+            });
+            cur.setDate(cur.getDate() + 1);
+          }
         }
 
         for (const l of leadsRes.data || []) {
