@@ -387,9 +387,9 @@ export function TeamCalendarPage() {
         ) : view === 'month' ? (
           <CalendarMonthView
             currentDate={currentDate}
-            events={calendarEvents}
-            pendingEvents={pendingBudgets}
-            deliveryEvents={showDeliveries ? deliveryEvents : []}
+            events={[]}
+            pendingEvents={[]}
+            deliveryEvents={[]}
             activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
@@ -399,9 +399,9 @@ export function TeamCalendarPage() {
         ) : (
           <CalendarWeekView
             currentDate={currentDate}
-            events={calendarEvents}
-            pendingEvents={pendingBudgets}
-            deliveryEvents={showDeliveries ? deliveryEvents : []}
+            events={[]}
+            pendingEvents={[]}
+            deliveryEvents={[]}
             activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
