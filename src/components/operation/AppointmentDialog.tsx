@@ -218,35 +218,6 @@ export function AppointmentDialog({
             <Label>Descrição</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} />
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Projeto (opcional)</Label>
-              <Select value={budgetId} onValueChange={setBudgetId}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent className="z-[200] max-h-72">
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {sortedBudgets.map(b => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.proposalId} — {b.projectName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Cliente (opcional)</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent className="z-[200] max-h-72">
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {sortedClients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
 
         <DialogFooter className="flex sm:justify-between gap-2">
