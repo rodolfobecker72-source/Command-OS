@@ -849,6 +849,8 @@ function Column({
   newTitle,
   newAssignee,
   newDue,
+  newEnd,
+  newDelivery,
   newFreela,
   expanded,
   onExpand,
@@ -856,6 +858,8 @@ function Column({
   onNewTitle,
   onNewAssignee,
   onNewDue,
+  onNewEnd,
+  onNewDelivery,
   onNewFreela,
   onAdd,
   onDelete,
@@ -866,6 +870,8 @@ function Column({
   onSaveEdit,
   onToggleAssignee,
   onUpdateDue,
+  onUpdateEnd,
+  onUpdateDelivery,
   onUpdateFreela,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
@@ -874,6 +880,8 @@ function Column({
   newTitle: string;
   newAssignee: string;
   newDue: string;
+  newEnd: string;
+  newDelivery: boolean;
   newFreela: string;
   expanded: boolean;
   onExpand: () => void;
@@ -881,6 +889,8 @@ function Column({
   onNewTitle: (v: string) => void;
   onNewAssignee: (v: string) => void;
   onNewDue: (v: string) => void;
+  onNewEnd: (v: string) => void;
+  onNewDelivery: (v: boolean) => void;
   onNewFreela: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
@@ -891,6 +901,8 @@ function Column({
   onSaveEdit: (id: string) => void;
   onToggleAssignee: (id: string, userId: string | null) => void;
   onUpdateDue: (id: string, due: string | null) => void;
+  onUpdateEnd: (id: string, end: string | null) => void;
+  onUpdateDelivery: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
