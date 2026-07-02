@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
 
-export type CalendarEventType = 'execution' | 'delivery' | 'pending' | 'appointment';
+export type CalendarEventType = 'execution' | 'delivery' | 'pending' | 'appointment' | 'activity';
 
 export interface CalendarDeliveryEvent {
   id: string;
@@ -16,6 +16,15 @@ export interface CalendarDeliveryEvent {
   serviceId?: string;
 }
 
+export interface CalendarActivityEvent {
+  id: string;
+  date: Date;
+  title: string;
+  status: string;
+  budget: Budget;
+  projectCardId: string;
+}
+
 interface CalendarEventCardProps {
   /** Stable id used for drag identification */
   dragId?: string;
@@ -23,6 +32,7 @@ interface CalendarEventCardProps {
   dragData?: Record<string, any>;
   budget?: Budget;
   appointment?: Appointment;
+  activity?: CalendarActivityEvent;
   compact?: boolean;
   onClick?: () => void;
   eventType?: CalendarEventType;
@@ -35,6 +45,7 @@ export function CalendarEventCard({
   dragData,
   budget,
   appointment,
+  activity,
   compact = false,
   onClick,
   eventType = 'execution',
@@ -53,6 +64,7 @@ export function CalendarEventCard({
   const isDelivery = eventType === 'delivery';
   const isPending = eventType === 'pending';
   const isAppointment = eventType === 'appointment';
+  const isActivity = eventType === 'activity';
 
   const apptColors = appointment ? APPOINTMENT_KIND_COLORS[appointment.kind] : null;
 
@@ -60,6 +72,8 @@ export function CalendarEventCard({
     ? cn(apptColors.bg, apptColors.border, apptColors.text)
     : isDelivery
       ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
+      : isActivity
+        ? 'bg-primary/10 border-primary/25 text-primary'
       : isPending
         ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
         : 'bg-success/15 border-success/30 text-success';
@@ -67,6 +81,7 @@ export function CalendarEventCard({
   const dotColor = isAppointment && apptColors
     ? apptColors.dot
     : isDelivery ? 'bg-blue-500'
+    : isActivity ? 'bg-primary'
     : isPending ? 'bg-yellow-500'
     : 'bg-success';
 
@@ -76,6 +91,8 @@ export function CalendarEventCard({
   if (isAppointment && appointment) {
     if (!appointment.allDay) timeLabel = format(appointment.startAt, 'HH:mm');
     mainLabel = appointment.title;
+  } else if (isActivity && activity) {
+    mainLabel = `✓ ${budget?.proposalId || ''} - ${activity.title}`;
   } else if (isDelivery) {
     mainLabel = deliveryLabel || '';
   } else if (budget) {
@@ -133,7 +150,10 @@ export function CalendarEventCard({
       {isAppointment && appointment?.location && (
         <p className="text-[10px] text-muted-foreground truncate pl-3.5">{appointment.location}</p>
       )}
-      {!isAppointment && client && (
+      {isActivity && activity && (
+        <p className="text-[10px] text-muted-foreground truncate pl-3.5">{activity.budget.projectName}</p>
+      )}
+      {!isAppointment && !isActivity && client && (
         <p className="text-[10px] text-muted-foreground truncate pl-3.5">{client.companyName}</p>
       )}
     </button>
