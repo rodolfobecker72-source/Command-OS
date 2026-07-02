@@ -52,6 +52,8 @@ interface Activity {
   order: number;
   assignedToUserIds: string[];
   dueDate: string | null;
+  endDate: string | null;
+  isDelivery: boolean;
   freelaName: string | null;
 }
 
