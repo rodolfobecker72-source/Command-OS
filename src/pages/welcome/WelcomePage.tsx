@@ -158,6 +158,9 @@ export function WelcomePage() {
     const loadActivities = async () => {
       if (!workspace || !profile?.id) return;
       const today = new Date().toISOString().slice(0, 10);
+      const horizon = new Date();
+      horizon.setDate(horizon.getDate() + 7);
+      const horizonStr = horizon.toISOString().slice(0, 10);
 
       const { data: activities } = await supabase
         .from('project_activities')
@@ -209,7 +212,10 @@ export function WelcomePage() {
           freelaName: a.freela_name || null,
         };
         if (a.status === 'em_andamento') bucket.emAndamento.push(item);
-        else bucket.naoIniciado.push(item);
+        else {
+          // Não iniciadas: só mostrar com 7 dias de antecedência (ou já vencidas)
+          if (a.due_date && a.due_date <= horizonStr) bucket.naoIniciado.push(item);
+        }
       }
 
       const list = (bucket.naoIniciado.length > 0 || bucket.emAndamento.length > 0) ? [bucket] : [];
