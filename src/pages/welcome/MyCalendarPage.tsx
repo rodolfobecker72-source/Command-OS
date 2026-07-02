@@ -36,6 +36,7 @@ interface PersonalEvent {
   status?: string;
   budgetId?: string;
   leadId?: string;
+  isDelivery?: boolean;
   /** Raw id used to persist date updates when dragging. */
   sourceId: string;
 }
