@@ -573,54 +573,73 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           <DialogDescription className="truncate">{projectName}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2">
-          <Input
-            value={driveLink}
-            onChange={e => setDriveLink(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveDrive(); } }}
-            placeholder="Link do projeto (Drive, Dropbox, Frame.io, etc.)"
-            className="h-9 flex-1"
-          />
-          <Button
-            type="button"
-            size="sm"
-            className="h-9 shrink-0"
-            onClick={handleSaveDrive}
-            disabled={savingDrive || driveLink === driveLinkSaved}
-          >
-            {savingDrive ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
-          </Button>
-          {driveLinkSaved && (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-9 w-9 shrink-0"
-                title="Copiar link"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(driveLinkSaved);
-                    toast.success('Link copiado');
-                  } catch {
-                    toast.error('Não foi possível copiar');
-                  }
-                }}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 shrink-0"
-                onClick={() => window.open(driveLinkSaved, '_blank')}
-              >
-                <ExternalLink className="w-4 h-4 mr-1" /> Abrir
-              </Button>
-            </>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Input
+              value={newLink}
+              onChange={e => setNewLink(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLink(); } }}
+              placeholder="Cole um link (Drive, Dropbox, Frame.io, etc.) e clique em Adicionar"
+              className="h-9 flex-1"
+            />
+            <Button
+              type="button"
+              size="sm"
+              className="h-9 shrink-0"
+              onClick={handleAddLink}
+              disabled={savingDrive || !newLink.trim()}
+            >
+              {savingDrive ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Adicionar'}
+            </Button>
+          </div>
+          {driveLinks.length > 0 && (
+            <ul className="space-y-1">
+              {driveLinks.map((url, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm border border-border rounded px-2 py-1">
+                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate hover:text-primary hover:underline"
+                    title={url}
+                  >
+                    {url}
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    title="Copiar link"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        toast.success('Link copiado');
+                      } catch {
+                        toast.error('Não foi possível copiar');
+                      }
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-destructive hover:text-destructive"
+                    title="Remover link"
+                    onClick={() => handleRemoveLink(i)}
+                    disabled={savingDrive}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
+
 
 
         {briefing && (briefing.objective || briefing.projectDescription || briefing.description || briefing.services.length > 0) && (
