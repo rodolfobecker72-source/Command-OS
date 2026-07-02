@@ -132,14 +132,18 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     (async () => {
       const { data: card } = await supabase
         .from('project_cards')
-        .select('material_link, budget_id, comments')
+        .select('material_link, material_links, budget_id, comments')
         .eq('id', projectCardId)
         .maybeSingle();
-      const link = (card as any)?.material_link || '';
+      const rawLinks = (card as any)?.material_links;
+      const legacyLink = (card as any)?.material_link || '';
+      const links: string[] = Array.isArray(rawLinks) && rawLinks.length > 0
+        ? rawLinks.filter((l: any) => typeof l === 'string' && l.trim())
+        : (legacyLink ? [legacyLink] : []);
       const cardComments = Array.isArray((card as any)?.comments) ? (card as any).comments : [];
       if (!cancelled) {
-        setDriveLink(link);
-        setDriveLinkSaved(link);
+        setDriveLinks(links);
+        setNewLink('');
         setComments(cardComments);
       }
       const budgetId = (card as any)?.budget_id;
