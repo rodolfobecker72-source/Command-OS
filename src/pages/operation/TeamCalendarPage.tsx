@@ -161,6 +161,7 @@ export function TeamCalendarPage() {
             while (cur.getTime() <= end.getTime()) {
               events.push({
                 id: `${a.id}-${cur.toISOString().slice(0, 10)}`,
+                activityId: a.id,
                 date: new Date(cur),
                 title: a.title || 'Atividade',
                 status: a.status || 'nao_iniciado',
