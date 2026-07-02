@@ -97,32 +97,70 @@ export function TeamCalendarPage() {
     })();
   }, [workspace?.id]);
 
-  // Load budget ids associated to selected member via project_activities -> project_cards
+  // Load budget ids associated to selected member via:
+  // 1) project_activities.assigned_to_user_ids (array)
+  // 2) project_activities.assigned_to_user_id (legacy singular)
+  // 3) budgets whose any version has a service.executor matching the member name
   useEffect(() => {
     if (!workspace?.id || !memberId) { setMemberBudgetIds(new Set()); return; }
     let cancelled = false;
     (async () => {
       setLoadingMember(true);
       try {
-        const { data: acts } = await supabase
-          .from('project_activities')
-          .select('project_card_id')
-          .eq('workspace_id', workspace.id)
-          .contains('assigned_to_user_ids', [memberId]);
-        const cardIds = Array.from(new Set((acts || []).map((a: any) => a.project_card_id).filter(Boolean)));
-        if (!cardIds.length) { if (!cancelled) setMemberBudgetIds(new Set()); return; }
-        const { data: cards } = await supabase
-          .from('project_cards')
-          .select('budget_id')
-          .in('id', cardIds);
-        const bids = new Set<string>((cards || []).map((c: any) => c.budget_id).filter(Boolean));
+        const memberName = members.find(m => m.id === memberId)?.name?.trim().toLowerCase() || '';
+
+        const [actsArrRes, actsLegacyRes] = await Promise.all([
+          supabase
+            .from('project_activities')
+            .select('project_card_id')
+            .eq('workspace_id', workspace.id)
+            .contains('assigned_to_user_ids', [memberId]),
+          supabase
+            .from('project_activities')
+            .select('project_card_id')
+            .eq('workspace_id', workspace.id)
+            .eq('assigned_to_user_id', memberId),
+        ]);
+        const cardIds = Array.from(new Set([
+          ...((actsArrRes.data || []) as any[]).map(a => a.project_card_id),
+          ...((actsLegacyRes.data || []) as any[]).map(a => a.project_card_id),
+        ].filter(Boolean)));
+
+        const bids = new Set<string>();
+        if (cardIds.length) {
+          const { data: cards } = await supabase
+            .from('project_cards')
+            .select('budget_id')
+            .in('id', cardIds);
+          for (const c of (cards || []) as any[]) {
+            if (c.budget_id) bids.add(c.budget_id);
+          }
+        }
+
+        // Also include budgets where the member is executor of any service
+        if (memberName) {
+          for (const b of budgets) {
+            if (bids.has(b.id)) continue;
+            const hasExecutor = (b.versions || []).some(v =>
+              (v.services || []).some(s => {
+                const raw = (s.executor || '').trim();
+                if (!raw) return false;
+                const name = raw.toLowerCase().replace(/^freela:\s*/i, '');
+                return name === memberName;
+              })
+            );
+            if (hasExecutor) bids.add(b.id);
+          }
+        }
+
         if (!cancelled) setMemberBudgetIds(bids);
       } finally {
         if (!cancelled) setLoadingMember(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, memberId, budgets.length]);
+  }, [workspace?.id, memberId, budgets, members]);
+
 
   const memberBudgets = useMemo(
     () => budgets.filter(b => memberBudgetIds.has(b.id)),
