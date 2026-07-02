@@ -664,6 +664,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newTitle={newTitleByCol[col.key] || ''}
                   newAssignee={newAssigneeByCol[col.key] || ''}
                   newDue={newDueByCol[col.key] || ''}
+                  newEnd={newEndByCol[col.key] || ''}
+                  newDelivery={!!newDeliveryByCol[col.key]}
                   newFreela={newFreelaByCol[col.key] || ''}
                   expanded={!!expandedNewByCol[col.key]}
                   onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
@@ -672,11 +674,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     setNewTitleByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewAssigneeByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewEndByCol(prev => ({ ...prev, [col.key]: '' }));
+                    setNewDeliveryByCol(prev => ({ ...prev, [col.key]: false }));
                     setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
                   }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewAssignee={(v) => setNewAssigneeByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewEnd={(v) => setNewEndByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewDelivery={(v) => setNewDeliveryByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewFreela={(v) => setNewFreelaByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
@@ -687,6 +693,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onSaveEdit={handleSaveEdit}
                   onToggleAssignee={handleToggleAssignee}
                   onUpdateDue={handleUpdateDue}
+                  onUpdateEnd={handleUpdateEnd}
+                  onUpdateDelivery={handleUpdateDelivery}
                   onUpdateFreela={handleUpdateFreela}
                 />
               ))}
