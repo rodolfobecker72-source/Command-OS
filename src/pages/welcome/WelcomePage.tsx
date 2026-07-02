@@ -158,6 +158,9 @@ export function WelcomePage() {
     const loadActivities = async () => {
       if (!workspace || !profile?.id) return;
       const today = new Date().toISOString().slice(0, 10);
+      const horizon = new Date();
+      horizon.setDate(horizon.getDate() + 7);
+      const horizonStr = horizon.toISOString().slice(0, 10);
 
       const { data: activities } = await supabase
         .from('project_activities')
