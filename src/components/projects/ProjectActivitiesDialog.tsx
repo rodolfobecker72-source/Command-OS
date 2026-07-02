@@ -330,6 +330,9 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       : null;
     const ids = assignee ? [assignee] : [];
     const due = newDueByCol[status] || null;
+    const endRaw = newEndByCol[status] || null;
+    const end = endRaw && due && endRaw >= due ? endRaw : null;
+    const isDelivery = !!newDeliveryByCol[status];
     const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -342,6 +345,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         assigned_to_user_id: assignee,
         assigned_to_user_ids: ids,
         due_date: due,
+        end_date: end,
+        is_delivery: isDelivery,
         freela_name: freelaName || null,
       } as any)
       .select()
@@ -359,11 +364,15 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         ? (data as any).assigned_to_user_ids
         : ((data as any).assigned_to_user_id ? [(data as any).assigned_to_user_id] : []),
       dueDate: (data as any).due_date ?? null,
+      endDate: (data as any).end_date ?? null,
+      isDelivery: !!(data as any).is_delivery,
       freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
     setNewAssigneeByCol(prev => ({ ...prev, [status]: '' }));
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
+    setNewEndByCol(prev => ({ ...prev, [status]: '' }));
+    setNewDeliveryByCol(prev => ({ ...prev, [status]: false }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
     syncActivityToGoogle(data.id, 'upsert');
