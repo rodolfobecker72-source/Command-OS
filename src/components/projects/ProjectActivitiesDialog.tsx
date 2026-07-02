@@ -553,11 +553,19 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
           <Input
             value={driveLink}
             onChange={e => setDriveLink(e.target.value)}
-            onBlur={handleSaveDrive}
-            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-            placeholder="Link do Google Drive do projeto"
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveDrive(); } }}
+            placeholder="Link do projeto (Drive, Dropbox, Frame.io, etc.)"
             className="h-9 flex-1"
           />
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 shrink-0"
+            onClick={handleSaveDrive}
+            disabled={savingDrive || driveLink === driveLinkSaved}
+          >
+            {savingDrive ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+          </Button>
           {driveLinkSaved && (
             <>
               <Button
@@ -588,8 +596,8 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
               </Button>
             </>
           )}
-          {savingDrive && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
         </div>
+
 
         {briefing && (briefing.objective || briefing.projectDescription || briefing.description || briefing.services.length > 0) && (
           <div className="border border-border rounded-lg overflow-hidden">
