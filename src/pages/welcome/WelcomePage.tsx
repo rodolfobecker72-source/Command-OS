@@ -214,7 +214,7 @@ export function WelcomePage() {
         if (a.status === 'em_andamento') bucket.emAndamento.push(item);
         else {
           // Não iniciadas: só mostrar com 7 dias de antecedência (ou já vencidas)
-          if (!a.due_date || a.due_date <= horizonStr) bucket.naoIniciado.push(item);
+          if (a.due_date && a.due_date <= horizonStr) bucket.naoIniciado.push(item);
         }
       }
 
