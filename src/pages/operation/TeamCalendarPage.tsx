@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarEventCard, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
+import { CalendarActivityEvent, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
 import { ChevronLeft, ChevronRight, CalendarDays, Package, Users } from 'lucide-react';
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,6 +73,7 @@ export function TeamCalendarPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [memberId, setMemberId] = useState<string>('');
   const [memberBudgetIds, setMemberBudgetIds] = useState<Set<string>>(new Set());
+  const [memberActivityEvents, setMemberActivityEvents] = useState<CalendarActivityEvent[]>([]);
   const [loadingMember, setLoadingMember] = useState(false);
 
   // Load workspace members
@@ -102,7 +103,11 @@ export function TeamCalendarPage() {
   // 2) project_activities.assigned_to_user_id (legacy singular)
   // 3) budgets whose any version has a service.executor matching the member name
   useEffect(() => {
-    if (!workspace?.id || !memberId) { setMemberBudgetIds(new Set()); return; }
+    if (!workspace?.id || !memberId) {
+      setMemberBudgetIds(new Set());
+      setMemberActivityEvents([]);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoadingMember(true);
@@ -112,30 +117,53 @@ export function TeamCalendarPage() {
         const [actsArrRes, actsLegacyRes] = await Promise.all([
           supabase
             .from('project_activities')
-            .select('project_card_id')
+            .select('id, title, status, due_date, project_card_id')
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [memberId]),
           supabase
             .from('project_activities')
-            .select('project_card_id')
+            .select('id, title, status, due_date, project_card_id')
             .eq('workspace_id', workspace.id)
             .eq('assigned_to_user_id', memberId),
         ]);
+        const activitiesById = new Map<string, any>();
+        for (const a of [...((actsArrRes.data || []) as any[]), ...((actsLegacyRes.data || []) as any[])]) {
+          if (a?.id) activitiesById.set(a.id, a);
+        }
+        const memberActivities = Array.from(activitiesById.values());
         const cardIds = Array.from(new Set([
-          ...((actsArrRes.data || []) as any[]).map(a => a.project_card_id),
-          ...((actsLegacyRes.data || []) as any[]).map(a => a.project_card_id),
+          ...memberActivities.map(a => a.project_card_id),
         ].filter(Boolean)));
 
         const bids = new Set<string>();
+        const cardBudgetMap = new Map<string, string>();
         if (cardIds.length) {
           const { data: cards } = await supabase
             .from('project_cards')
-            .select('budget_id')
+            .select('id, budget_id')
             .in('id', cardIds);
           for (const c of (cards || []) as any[]) {
+            if (c.id && c.budget_id) cardBudgetMap.set(c.id, c.budget_id);
             if (c.budget_id) bids.add(c.budget_id);
           }
         }
+
+        const activityEvents: CalendarActivityEvent[] = memberActivities
+          .filter((a: any) => a.due_date && a.project_card_id)
+          .map((a: any) => {
+            const budgetId = cardBudgetMap.get(a.project_card_id);
+            const budget = budgetId ? budgets.find(b => b.id === budgetId) : undefined;
+            if (!budget) return null;
+            return {
+              id: a.id,
+              date: new Date(`${a.due_date}T12:00:00`),
+              title: a.title || 'Atividade',
+              status: a.status || 'nao_iniciado',
+              budget,
+              projectCardId: a.project_card_id,
+            } satisfies CalendarActivityEvent;
+          })
+          .filter(Boolean) as CalendarActivityEvent[];
 
         // Also include budgets where the member is executor or a cost supplier
         if (memberName) {
@@ -157,8 +185,10 @@ export function TeamCalendarPage() {
           }
         }
 
-
-        if (!cancelled) setMemberBudgetIds(bids);
+        if (!cancelled) {
+          setMemberBudgetIds(bids);
+          setMemberActivityEvents(activityEvents);
+        }
       } finally {
         if (!cancelled) setLoadingMember(false);
       }
@@ -225,6 +255,22 @@ export function TeamCalendarPage() {
         : s);
       await updateBudgetVersion(b.id, ver.id, { services: newServices });
       toast.success(`Entrega ajustada para ${format(dropDate, 'dd/MM/yyyy')}`);
+    } else if (data.type === 'activity') {
+      const dropIso = toIsoDateOnly(dropDate);
+      const { error } = await supabase
+        .from('project_activities')
+        .update({ due_date: dropIso } as any)
+        .eq('id', data.activityId);
+      if (error) {
+        toast.error('Erro ao ajustar data da atividade');
+        return;
+      }
+      setMemberActivityEvents(prev => prev.map(activity => (
+        activity.id === data.activityId
+          ? { ...activity, date: new Date(`${dropIso}T12:00:00`) }
+          : activity
+      )));
+      toast.success(`Atividade ajustada para ${format(dropDate, 'dd/MM/yyyy')}`);
     }
   }, [budgets, updateBudget, updateBudgetVersion]);
 
@@ -307,8 +353,10 @@ export function TeamCalendarPage() {
             events={calendarEvents}
             pendingEvents={pendingBudgets}
             deliveryEvents={showDeliveries ? deliveryEvents : []}
+            activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
+            onActivityClick={(a) => setSelectedBudget(a.budget)}
             onDragEndDay={handleDragEnd}
           />
         ) : (
@@ -317,8 +365,10 @@ export function TeamCalendarPage() {
             events={calendarEvents}
             pendingEvents={pendingBudgets}
             deliveryEvents={showDeliveries ? deliveryEvents : []}
+            activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
+            onActivityClick={(a) => setSelectedBudget(a.budget)}
             onDragEndDay={handleDragEnd}
           />
         )}
