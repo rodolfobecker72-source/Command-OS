@@ -266,19 +266,47 @@ export function TeamCalendarPage() {
       toast.success(`Entrega ajustada para ${format(dropDate, 'dd/MM/yyyy')}`);
     } else if (data.type === 'activity') {
       const dropIso = toIsoDateOnly(dropDate);
+      // Fetch current activity to preserve duration if it has end_date
+      const { data: current } = await supabase
+        .from('project_activities')
+        .select('due_date, end_date')
+        .eq('id', data.activityId)
+        .maybeSingle();
+      let updates: any = { due_date: dropIso };
+      if (current?.due_date && current?.end_date) {
+        const oldStart = new Date(`${current.due_date}T12:00:00`);
+        const oldEnd = new Date(`${current.end_date}T12:00:00`);
+        const durationDays = differenceInCalendarDays(oldEnd, oldStart);
+        const newEnd = addDays(new Date(`${dropIso}T12:00:00`), durationDays);
+        updates.end_date = toIsoDateOnly(newEnd);
+      }
       const { error } = await supabase
         .from('project_activities')
-        .update({ due_date: dropIso } as any)
+        .update(updates)
         .eq('id', data.activityId);
       if (error) {
         toast.error('Erro ao ajustar data da atividade');
         return;
       }
-      setMemberActivityEvents(prev => prev.map(activity => (
-        activity.id === data.activityId
-          ? { ...activity, date: new Date(`${dropIso}T12:00:00`) }
-          : activity
-      )));
+      // Rebuild events with new dates
+      setMemberActivityEvents(prev => {
+        const others = prev.filter(a => a.activityId !== data.activityId);
+        const sample = prev.find(a => a.activityId === data.activityId);
+        if (!sample) return prev;
+        const start = new Date(`${dropIso}T12:00:00`);
+        const end = updates.end_date ? new Date(`${updates.end_date}T12:00:00`) : start;
+        const rebuilt: CalendarActivityEvent[] = [];
+        const cur = new Date(start);
+        while (cur.getTime() <= end.getTime()) {
+          rebuilt.push({
+            ...sample,
+            id: `${sample.activityId}-${cur.toISOString().slice(0, 10)}`,
+            date: new Date(cur),
+          });
+          cur.setDate(cur.getDate() + 1);
+        }
+        return [...others, ...rebuilt];
+      });
       toast.success(`Atividade ajustada para ${format(dropDate, 'dd/MM/yyyy')}`);
     }
   }, [budgets, updateBudget, updateBudgetVersion]);
