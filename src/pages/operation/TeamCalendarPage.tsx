@@ -117,12 +117,12 @@ export function TeamCalendarPage() {
         const [actsArrRes, actsLegacyRes] = await Promise.all([
           supabase
             .from('project_activities')
-            .select('id, title, status, due_date, project_card_id')
+            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [memberId]),
           supabase
             .from('project_activities')
-            .select('id, title, status, due_date, project_card_id')
+            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
             .eq('workspace_id', workspace.id)
             .eq('assigned_to_user_id', memberId),
         ]);
@@ -150,20 +150,28 @@ export function TeamCalendarPage() {
 
         const activityEvents: CalendarActivityEvent[] = memberActivities
           .filter((a: any) => a.due_date && a.project_card_id)
-          .map((a: any) => {
+          .flatMap((a: any) => {
             const budgetId = cardBudgetMap.get(a.project_card_id);
             const budget = budgetId ? budgets.find(b => b.id === budgetId) : undefined;
-            if (!budget) return null;
-            return {
-              id: a.id,
-              date: new Date(`${a.due_date}T12:00:00`),
-              title: a.title || 'Atividade',
-              status: a.status || 'nao_iniciado',
-              budget,
-              projectCardId: a.project_card_id,
-            } satisfies CalendarActivityEvent;
-          })
-          .filter(Boolean) as CalendarActivityEvent[];
+            if (!budget) return [];
+            const start = new Date(`${a.due_date}T12:00:00`);
+            const end = a.end_date ? new Date(`${a.end_date}T12:00:00`) : start;
+            const events: CalendarActivityEvent[] = [];
+            const cur = new Date(start);
+            while (cur.getTime() <= end.getTime()) {
+              events.push({
+                id: `${a.id}-${cur.toISOString().slice(0, 10)}`,
+                date: new Date(cur),
+                title: a.title || 'Atividade',
+                status: a.status || 'nao_iniciado',
+                budget,
+                projectCardId: a.project_card_id,
+                isDelivery: !!a.is_delivery,
+              });
+              cur.setDate(cur.getDate() + 1);
+            }
+            return events;
+          });
 
         // Also include budgets where the member is executor or a cost supplier
         if (memberName) {
