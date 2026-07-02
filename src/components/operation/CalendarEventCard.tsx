@@ -77,7 +77,7 @@ export function CalendarEventCard({
     : isDelivery || activityIsDelivery
       ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
       : isActivity
-        ? 'bg-primary/10 border-primary/25 text-primary'
+        ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300'
       : isPending
         ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
         : 'bg-success/15 border-success/30 text-success';
@@ -85,7 +85,7 @@ export function CalendarEventCard({
   const dotColor = isAppointment && apptColors
     ? apptColors.dot
     : isDelivery || activityIsDelivery ? 'bg-blue-500'
-    : isActivity ? 'bg-primary'
+    : isActivity ? 'bg-green-500'
     : isPending ? 'bg-yellow-500'
     : 'bg-success';
 
