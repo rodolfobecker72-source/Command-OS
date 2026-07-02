@@ -294,9 +294,13 @@ export function TeamCalendarPage() {
         ) : loadingMember ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Carregando…</div>
         ) : memberBudgets.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">
-            Nenhum projeto encontrado para <strong>{selectedMemberName}</strong>.
+          <div className="p-8 text-center text-muted-foreground text-sm space-y-2">
+            <div>Nenhum projeto encontrado para <strong>{selectedMemberName}</strong>.</div>
+            <div className="text-xs opacity-80">
+              Um projeto aparece aqui quando o membro é responsável por alguma atividade do projeto ou executor/fornecedor de algum custo na execução do orçamento.
+            </div>
           </div>
+
         ) : view === 'month' ? (
           <CalendarMonthView
             currentDate={currentDate}
