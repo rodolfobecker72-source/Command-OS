@@ -31,8 +31,8 @@ interface UserActivities {
   userId: string;
   name: string;
   photoUrl: string | null;
-  overdue: ActivityItem[];
-  toStart: ActivityItem[];
+  naoIniciado: ActivityItem[];
+  emAndamento: ActivityItem[];
 }
 
 type LeadAlertStatus = 'overdue' | 'today' | 'upcoming';
