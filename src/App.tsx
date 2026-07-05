@@ -43,6 +43,7 @@ import { MyCalendarPage } from "@/pages/welcome/MyCalendarPage";
 import HomePage from "@/pages/home/HomePage";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
+import PublicProjectPage from "@/pages/public/PublicProjectPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,10 @@ const App = () => (
               <Route path="/cadastro" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+
+              {/* Public project view (no auth) */}
+              <Route path="/p/projeto/:cardId" element={<PublicProjectPage />} />
+              
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
