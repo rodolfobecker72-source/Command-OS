@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.google-calendar-oauth-callback]
 verify_jwt = false
+
+[functions.public-project-view]
+verify_jwt = false
