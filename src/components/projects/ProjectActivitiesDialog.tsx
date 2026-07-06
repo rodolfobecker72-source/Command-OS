@@ -57,7 +57,7 @@ interface Activity {
   freelaName: string | null;
 }
 
-const MAX_ASSIGNEES = 2;
+const MAX_ASSIGNEES = Infinity;
 
 interface MemberOption {
   id: string;
