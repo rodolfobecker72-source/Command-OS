@@ -128,7 +128,6 @@ export const FUNNEL_STATUS_ORDER: LeadFunnelStatus[] = [
   'contato_realizado',
   'reuniao_agendada',
   'qualificado_crm',
-  'perdido',
   'nutricao',
 ];
 

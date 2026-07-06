@@ -159,7 +159,8 @@ export function ProspectionPage() {
 
 
   const [activeTab, setActiveTab] = useState<'leads' | 'painel' | 'funil'>('leads');
-  const [funnelPeriod, setFunnelPeriod] = useState<'7d' | '30d' | '90d' | 'mes' | 'ano' | 'all'>('30d');
+  const [funnelMonth, setFunnelMonth] = useState<string>(String(new Date().getMonth()));
+  const [funnelYear, setFunnelYear] = useState<string>(String(new Date().getFullYear()));
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -363,9 +364,9 @@ export function ProspectionPage() {
     toast.success(`"${lead.companyName}" reativado!`);
   };
 
-  // Kanban columns (filter out perdido and nutricao — they show separately)
+  // Kanban columns (nutricao shown separately)
   const kanbanStatuses: LeadFunnelStatus[] = [
-    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao', 'perdido',
+    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao',
   ];
 
 
@@ -769,26 +770,20 @@ export function ProspectionPage() {
           { key: 'qualificado_crm', label: 'Qualificado p/ CRM', color: '#10b981' },
         ];
 
-        const now = new Date();
+        const yearNum = Number(funnelYear);
         let periodStart: Date | null = null;
         let periodEnd: Date | null = null;
-        let periodLabel = 'Todo o período';
-        if (funnelPeriod === '7d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 6); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 7 dias';
-        } else if (funnelPeriod === '30d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 29); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 30 dias';
-        } else if (funnelPeriod === '90d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 89); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 90 dias';
-        } else if (funnelPeriod === 'mes') {
-          periodStart = startOfMonth(now); periodEnd = endOfMonth(now);
-          periodLabel = `Mês atual (${format(now, "MMMM 'de' yyyy", { locale: ptBR })})`;
-        } else if (funnelPeriod === 'ano') {
-          periodStart = new Date(now.getFullYear(), 0, 1);
-          periodEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-          periodLabel = `Ano de ${now.getFullYear()}`;
+        let periodLabel = '';
+        if (funnelMonth === 'all') {
+          periodStart = new Date(yearNum, 0, 1);
+          periodEnd = new Date(yearNum, 11, 31, 23, 59, 59);
+          periodLabel = `Ano de ${yearNum}`;
+        } else {
+          const monthNum = Number(funnelMonth);
+          const ref = new Date(yearNum, monthNum, 1);
+          periodStart = startOfMonth(ref);
+          periodEnd = endOfMonth(ref);
+          periodLabel = format(ref, "MMMM 'de' yyyy", { locale: ptBR });
         }
 
         const funnelLeads = filteredLeads.filter(l => {
@@ -802,7 +797,7 @@ export function ProspectionPage() {
           ...s,
           count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        const lostCount = funnelLeads.filter(l => l.funnelStatus === 'perdido').length;
+        
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
@@ -823,19 +818,29 @@ export function ProspectionPage() {
                   </CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">{periodLabel} · {funnelLeads.length} leads</p>
                 </div>
-                <Select value={funnelPeriod} onValueChange={(v) => setFunnelPeriod(v as typeof funnelPeriod)}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                    <SelectItem value="mes">Mês atual</SelectItem>
-                    <SelectItem value="ano">Ano atual</SelectItem>
-                    <SelectItem value="all">Todo o período</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={funnelMonth} onValueChange={setFunnelMonth}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Mês" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Ano inteiro</SelectItem>
+                      {MONTHS.map((m, i) => (
+                        <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={funnelYear} onValueChange={setFunnelYear}>
+                    <SelectTrigger className="w-[110px]">
+                      <SelectValue placeholder="Ano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map(y => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -938,19 +943,12 @@ export function ProspectionPage() {
                         </div>
                         <span className="font-semibold tabular-nums">{nurtureCount}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-sm bg-destructive" />
-                          <span className="text-muted-foreground">Perdidos</span>
-                        </div>
-                        <span className="font-semibold tabular-nums">{lostCount}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
+                <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
@@ -962,14 +960,6 @@ export function ProspectionPage() {
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-destructive">
-                      {funnelLeads.length > 0
-                        ? Math.round((lostCount / funnelLeads.length) * 100)
-                        : 0}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Taxa de perda</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-warning">{counts[2].count}</div>
@@ -1382,7 +1372,7 @@ export function ProspectionPage() {
               <Select value={formData.funnelStatus} onValueChange={(v: LeadFunnelStatus) => setFormData(p => ({ ...p, funnelStatus: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(LEAD_FUNNEL_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                  {Object.entries(LEAD_FUNNEL_STATUS_LABELS).filter(([k]) => k !== 'perdido').map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
