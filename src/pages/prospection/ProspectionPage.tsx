@@ -146,6 +146,25 @@ export function ProspectionPage() {
   const auth = useAuth();
 
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const changeLeadStatus = (lead: ProspectionLead, newStatus: LeadFunnelStatus, extraUpdates: Partial<ProspectionLead> = {}) => {
+    if (lead.funnelStatus === newStatus) {
+      if (Object.keys(extraUpdates).length > 0) updateLead(lead.id, extraUpdates);
+      return;
+    }
+    const updates: Partial<ProspectionLead> = { ...extraUpdates, funnelStatus: newStatus };
+    // Entering "reunião agendada" — mark schedule time and reset confirmation
+    if (newStatus === 'reuniao_agendada' && lead.funnelStatus !== 'reuniao_agendada') {
+      updates.meetingScheduledAt = new Date().toISOString();
+      updates.meetingHappened = null;
+    }
+    // Leaving "reunião agendada" without confirmation — ask if the meeting actually happened
+    if (lead.funnelStatus === 'reuniao_agendada' && newStatus !== 'reuniao_agendada' && (lead.meetingHappened === null || lead.meetingHappened === undefined)) {
+      setMeetingConfirm({ leadId: lead.id, newStatus, extraUpdates });
+      return;
+    }
+    updateLead(lead.id, updates);
+  };
+
   const handleKanbanDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over) return;
@@ -153,8 +172,8 @@ export function ProspectionPage() {
     if (!overId.startsWith('col-')) return;
     const newStatus = overId.slice(4) as LeadFunnelStatus;
     const lead = leads.find(l => l.id === active.id);
-    if (!lead || lead.funnelStatus === newStatus) return;
-    updateLead(lead.id, { funnelStatus: newStatus });
+    if (!lead) return;
+    changeLeadStatus(lead, newStatus);
   };
 
 
@@ -174,6 +193,7 @@ export function ProspectionPage() {
   const [formData, setFormData] = useState(emptyLead);
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [meetingConfirm, setMeetingConfirm] = useState<{ leadId: string; newStatus: LeadFunnelStatus; extraUpdates?: Partial<ProspectionLead> } | null>(null);
 
   // Workspace members eligible to be lead responsible (vendedor/admin/owner)
   const [members, setMembers] = useState<{ id: string; name: string; role: string; photoUrl: string | null }[]>([]);
@@ -312,7 +332,14 @@ export function ProspectionPage() {
       return;
     }
     if (editingLead) {
-      await updateLead(editingLead.id, formData);
+      const { funnelStatus, ...rest } = formData;
+      // Handle status transition (with meeting confirmation if applicable)
+      if (funnelStatus !== editingLead.funnelStatus) {
+        await updateLead(editingLead.id, rest);
+        changeLeadStatus(editingLead, funnelStatus);
+      } else {
+        await updateLead(editingLead.id, formData);
+      }
       toast.success('Lead atualizado!');
     } else {
       await addLead(formData);
@@ -354,7 +381,7 @@ export function ProspectionPage() {
       score: 0,
     });
     if (newClient) {
-      await updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
+      changeLeadStatus(lead, 'qualificado_crm');
       toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
     }
   };
@@ -797,7 +824,17 @@ export function ProspectionPage() {
           ...s,
           count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        
+
+        // Meetings scheduled in the period (based on when the lead was moved into "reunião agendada")
+        const meetingsInPeriod = funnelLeads.filter(l => {
+          if (!l.meetingScheduledAt) return l.funnelStatus === 'reuniao_agendada';
+          if (!periodStart || !periodEnd) return true;
+          const d = parseISO(l.meetingScheduledAt);
+          return isWithinInterval(d, { start: periodStart, end: periodEnd });
+        });
+        const meetingsScheduledCount = meetingsInPeriod.length;
+        const meetingsHappenedCount = meetingsInPeriod.filter(l => l.meetingHappened === true).length;
+
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
@@ -948,7 +985,7 @@ export function ProspectionPage() {
                 </div>
 
                 {/* Summary */}
-                <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
@@ -962,10 +999,20 @@ export function ProspectionPage() {
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-warning">{counts[2].count}</div>
+                    <div className="text-2xl font-bold text-warning">{meetingsScheduledCount}</div>
                     <div className="text-xs text-muted-foreground">Reuniões agendadas</div>
                   </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-success">{meetingsHappenedCount}</div>
+                    <div className="text-xs text-muted-foreground">Reuniões efetuadas</div>
+                    {meetingsScheduledCount > 0 && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        {Math.round((meetingsHappenedCount / meetingsScheduledCount) * 100)}% de conversão
+                      </div>
+                    )}
+                  </div>
                 </div>
+
               </CardContent>
             </Card>
           </motion.div>
@@ -1515,6 +1562,49 @@ export function ProspectionPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Meeting Happened Confirmation */}
+      <Dialog open={!!meetingConfirm} onOpenChange={(open) => { if (!open) setMeetingConfirm(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-warning" />
+              A reunião aconteceu?
+            </DialogTitle>
+            <DialogDescription>
+              Antes de mudar o status, confirme se a reunião agendada realmente aconteceu.
+              Isso será usado para contabilizar as reuniões efetuadas no funil.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!meetingConfirm) return;
+                const lead = leads.find(l => l.id === meetingConfirm.leadId);
+                if (!lead) { setMeetingConfirm(null); return; }
+                updateLead(lead.id, { ...(meetingConfirm.extraUpdates || {}), funnelStatus: meetingConfirm.newStatus, meetingHappened: false });
+                setMeetingConfirm(null);
+              }}
+            >
+              Não aconteceu
+            </Button>
+            <Button
+              onClick={() => {
+                if (!meetingConfirm) return;
+                const lead = leads.find(l => l.id === meetingConfirm.leadId);
+                if (!lead) { setMeetingConfirm(null); return; }
+                updateLead(lead.id, { ...(meetingConfirm.extraUpdates || {}), funnelStatus: meetingConfirm.newStatus, meetingHappened: true });
+                setMeetingConfirm(null);
+              }}
+            >
+              Sim, aconteceu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>

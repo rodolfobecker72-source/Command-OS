@@ -1170,6 +1170,8 @@ export type Database = {
           funnel_status: string
           id: string
           last_contact_date: string
+          meeting_happened: boolean | null
+          meeting_scheduled_at: string | null
           next_action: string
           next_action_date: string
           origin: string
@@ -1197,6 +1199,8 @@ export type Database = {
           funnel_status?: string
           id?: string
           last_contact_date?: string
+          meeting_happened?: boolean | null
+          meeting_scheduled_at?: string | null
           next_action?: string
           next_action_date?: string
           origin?: string
@@ -1224,6 +1228,8 @@ export type Database = {
           funnel_status?: string
           id?: string
           last_contact_date?: string
+          meeting_happened?: boolean | null
+          meeting_scheduled_at?: string | null
           next_action?: string
           next_action_date?: string
           origin?: string
