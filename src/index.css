@@ -201,15 +201,15 @@
   }
 
   .score-low {
-    @apply bg-orange-100 text-orange-700;
+    @apply bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300;
   }
 
   .score-medium {
-    @apply bg-yellow-100 text-yellow-700;
+    @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300;
   }
 
   .score-high {
-    @apply bg-green-100 text-green-700;
+    @apply bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300;
   }
 
   /* Navigation Link */
