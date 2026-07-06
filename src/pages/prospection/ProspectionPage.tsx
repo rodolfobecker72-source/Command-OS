@@ -818,19 +818,29 @@ export function ProspectionPage() {
                   </CardTitle>
                   <p className="text-xs text-muted-foreground mt-1">{periodLabel} · {funnelLeads.length} leads</p>
                 </div>
-                <Select value={funnelPeriod} onValueChange={(v) => setFunnelPeriod(v as typeof funnelPeriod)}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                    <SelectItem value="30d">Últimos 30 dias</SelectItem>
-                    <SelectItem value="90d">Últimos 90 dias</SelectItem>
-                    <SelectItem value="mes">Mês atual</SelectItem>
-                    <SelectItem value="ano">Ano atual</SelectItem>
-                    <SelectItem value="all">Todo o período</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={funnelMonth} onValueChange={setFunnelMonth}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Mês" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Ano inteiro</SelectItem>
+                      {MONTHS.map((m, i) => (
+                        <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={funnelYear} onValueChange={setFunnelYear}>
+                    <SelectTrigger className="w-[110px]">
+                      <SelectValue placeholder="Ano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map(y => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col lg:flex-row items-center gap-8">
