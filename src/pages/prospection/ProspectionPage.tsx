@@ -985,7 +985,7 @@ export function ProspectionPage() {
                 </div>
 
                 {/* Summary */}
-                <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
@@ -999,10 +999,20 @@ export function ProspectionPage() {
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-warning">{counts[2].count}</div>
+                    <div className="text-2xl font-bold text-warning">{meetingsScheduledCount}</div>
                     <div className="text-xs text-muted-foreground">Reuniões agendadas</div>
                   </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-success">{meetingsHappenedCount}</div>
+                    <div className="text-xs text-muted-foreground">Reuniões efetuadas</div>
+                    {meetingsScheduledCount > 0 && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        {Math.round((meetingsHappenedCount / meetingsScheduledCount) * 100)}% de conversão
+                      </div>
+                    )}
+                  </div>
                 </div>
+
               </CardContent>
             </Card>
           </motion.div>
