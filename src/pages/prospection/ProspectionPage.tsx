@@ -174,6 +174,7 @@ export function ProspectionPage() {
   const [formData, setFormData] = useState(emptyLead);
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [meetingConfirm, setMeetingConfirm] = useState<{ leadId: string; newStatus: LeadFunnelStatus; extraUpdates?: Partial<ProspectionLead> } | null>(null);
 
   // Workspace members eligible to be lead responsible (vendedor/admin/owner)
   const [members, setMembers] = useState<{ id: string; name: string; role: string; photoUrl: string | null }[]>([]);
