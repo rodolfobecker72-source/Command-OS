@@ -948,7 +948,7 @@ export function ProspectionPage() {
                 </div>
 
                 {/* Summary */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-6 border-t">
+                <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{funnelLeads.length}</div>
                     <div className="text-xs text-muted-foreground">Total no funil</div>
@@ -960,14 +960,6 @@ export function ProspectionPage() {
                         : 0}%
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-destructive">
-                      {funnelLeads.length > 0
-                        ? Math.round((lostCount / funnelLeads.length) * 100)
-                        : 0}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Taxa de perda</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-warning">{counts[2].count}</div>
