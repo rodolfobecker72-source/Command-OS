@@ -332,7 +332,14 @@ export function ProspectionPage() {
       return;
     }
     if (editingLead) {
-      await updateLead(editingLead.id, formData);
+      const { funnelStatus, ...rest } = formData;
+      // Handle status transition (with meeting confirmation if applicable)
+      if (funnelStatus !== editingLead.funnelStatus) {
+        await updateLead(editingLead.id, rest);
+        changeLeadStatus(editingLead, funnelStatus);
+      } else {
+        await updateLead(editingLead.id, formData);
+      }
       toast.success('Lead atualizado!');
     } else {
       await addLead(formData);
