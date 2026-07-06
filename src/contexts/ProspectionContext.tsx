@@ -65,6 +65,8 @@ function leadToDb(l: Partial<ProspectionLead>, workspaceId?: string): any {
   if (l.strategicNotes !== undefined) row.strategic_notes = l.strategicNotes;
   if (l.responsibleUserId !== undefined) row.responsible_user_id = l.responsibleUserId || null;
   if (l.temperatureManual !== undefined) row.temperature_manual = l.temperatureManual;
+  if (l.meetingScheduledAt !== undefined) row.meeting_scheduled_at = l.meetingScheduledAt;
+  if (l.meetingHappened !== undefined) row.meeting_happened = l.meetingHappened;
   return row;
 }
 
