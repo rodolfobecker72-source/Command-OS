@@ -363,9 +363,9 @@ export function ProspectionPage() {
     toast.success(`"${lead.companyName}" reativado!`);
   };
 
-  // Kanban columns (filter out perdido and nutricao — they show separately)
+  // Kanban columns (nutricao shown separately)
   const kanbanStatuses: LeadFunnelStatus[] = [
-    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao', 'perdido',
+    'mapeado', 'contato_realizado', 'reuniao_agendada', 'qualificado_crm', 'nutricao',
   ];
 
 
