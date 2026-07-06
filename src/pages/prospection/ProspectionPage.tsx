@@ -797,7 +797,7 @@ export function ProspectionPage() {
           ...s,
           count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        const lostCount = funnelLeads.filter(l => l.funnelStatus === 'perdido').length;
+        
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
