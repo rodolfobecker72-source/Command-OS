@@ -381,7 +381,7 @@ export function ProspectionPage() {
       score: 0,
     });
     if (newClient) {
-      await updateLead(lead.id, { funnelStatus: 'qualificado_crm' });
+      changeLeadStatus(lead, 'qualificado_crm');
       toast.success(`"${lead.companyName}" migrado para o CRM como cliente!`);
     }
   };
