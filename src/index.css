@@ -129,6 +129,26 @@
 
     --sidebar-background: 227 30% 5%;
     --sidebar-foreground: 225 15% 95%;
+    --sidebar-primary: 227 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 227 25% 14%;
+    --sidebar-accent-foreground: 225 15% 95%;
+    --sidebar-border: 227 15% 15%;
+    --sidebar-ring: 227 100% 55%;
+    --sidebar-muted: 225 10% 60%;
+
+    /* Info / Success / Warning tuned for dark backgrounds */
+    --success: 142 65% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 10%;
+    --info: 227 80% 65%;
+    --info-foreground: 0 0% 100%;
+
+    /* Score colors for dark mode */
+    --score-low: 28 90% 60%;
+    --score-medium: 38 92% 55%;
+    --score-high: 142 65% 45%;
   }
 }
 
@@ -181,15 +201,15 @@
   }
 
   .score-low {
-    @apply bg-orange-100 text-orange-700;
+    @apply bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300;
   }
 
   .score-medium {
-    @apply bg-yellow-100 text-yellow-700;
+    @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300;
   }
 
   .score-high {
-    @apply bg-green-100 text-green-700;
+    @apply bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300;
   }
 
   /* Navigation Link */

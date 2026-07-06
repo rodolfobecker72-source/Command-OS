@@ -17,10 +17,10 @@ interface KanbanColumnProps {
 
 const defaultColumnColors: Record<string, { bg: string; border: string; dot: string }> = {
   oportunidade_mapeada: { bg: 'bg-info/5', border: 'border-info/30', dot: 'bg-info' },
-  fazer_proposta: { bg: 'bg-purple-50', border: 'border-purple-200', dot: 'bg-purple-500' },
+  fazer_proposta: { bg: 'bg-accent/5', border: 'border-accent/30', dot: 'bg-accent' },
   pronta_enviar: { bg: 'bg-warning/5', border: 'border-warning/30', dot: 'bg-warning' },
   proposta_enviada: { bg: 'bg-accent/5', border: 'border-accent/30', dot: 'bg-accent' },
-  fazer_followup: { bg: 'bg-orange-50', border: 'border-orange-200', dot: 'bg-orange-500' },
+  fazer_followup: { bg: 'bg-warning/5', border: 'border-warning/30', dot: 'bg-warning' },
   nao_aprovada: { bg: 'bg-destructive/5', border: 'border-destructive/30', dot: 'bg-destructive' },
   aprovada: { bg: 'bg-success/5', border: 'border-success/30', dot: 'bg-success' },
 };

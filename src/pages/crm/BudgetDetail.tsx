@@ -1947,7 +1947,7 @@ export function BudgetDetail() {
                   });
 
                   const isApproved = budget.status === 'aprovada';
-                  const bgClass = isApproved ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200';
+                  const bgClass = isApproved ? 'bg-success/10 border-success/30 dark:bg-success/10' : 'bg-warning/10 border-warning/30 dark:bg-warning/10';
 
                   return (
                     <motion.div
