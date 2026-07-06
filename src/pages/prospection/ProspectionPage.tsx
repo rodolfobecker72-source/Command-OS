@@ -146,6 +146,25 @@ export function ProspectionPage() {
   const auth = useAuth();
 
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const changeLeadStatus = (lead: ProspectionLead, newStatus: LeadFunnelStatus, extraUpdates: Partial<ProspectionLead> = {}) => {
+    if (lead.funnelStatus === newStatus) {
+      if (Object.keys(extraUpdates).length > 0) updateLead(lead.id, extraUpdates);
+      return;
+    }
+    const updates: Partial<ProspectionLead> = { ...extraUpdates, funnelStatus: newStatus };
+    // Entering "reunião agendada" — mark schedule time and reset confirmation
+    if (newStatus === 'reuniao_agendada' && lead.funnelStatus !== 'reuniao_agendada') {
+      updates.meetingScheduledAt = new Date().toISOString();
+      updates.meetingHappened = null;
+    }
+    // Leaving "reunião agendada" without confirmation — ask if the meeting actually happened
+    if (lead.funnelStatus === 'reuniao_agendada' && newStatus !== 'reuniao_agendada' && (lead.meetingHappened === null || lead.meetingHappened === undefined)) {
+      setMeetingConfirm({ leadId: lead.id, newStatus, extraUpdates });
+      return;
+    }
+    updateLead(lead.id, updates);
+  };
+
   const handleKanbanDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over) return;
@@ -153,8 +172,8 @@ export function ProspectionPage() {
     if (!overId.startsWith('col-')) return;
     const newStatus = overId.slice(4) as LeadFunnelStatus;
     const lead = leads.find(l => l.id === active.id);
-    if (!lead || lead.funnelStatus === newStatus) return;
-    updateLead(lead.id, { funnelStatus: newStatus });
+    if (!lead) return;
+    changeLeadStatus(lead, newStatus);
   };
 
 
