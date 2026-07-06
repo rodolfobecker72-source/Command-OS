@@ -770,26 +770,20 @@ export function ProspectionPage() {
           { key: 'qualificado_crm', label: 'Qualificado p/ CRM', color: '#10b981' },
         ];
 
-        const now = new Date();
+        const yearNum = Number(funnelYear);
         let periodStart: Date | null = null;
         let periodEnd: Date | null = null;
-        let periodLabel = 'Todo o período';
-        if (funnelPeriod === '7d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 6); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 7 dias';
-        } else if (funnelPeriod === '30d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 29); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 30 dias';
-        } else if (funnelPeriod === '90d') {
-          periodStart = new Date(now); periodStart.setDate(now.getDate() - 89); periodStart.setHours(0,0,0,0);
-          periodEnd = now; periodLabel = 'Últimos 90 dias';
-        } else if (funnelPeriod === 'mes') {
-          periodStart = startOfMonth(now); periodEnd = endOfMonth(now);
-          periodLabel = `Mês atual (${format(now, "MMMM 'de' yyyy", { locale: ptBR })})`;
-        } else if (funnelPeriod === 'ano') {
-          periodStart = new Date(now.getFullYear(), 0, 1);
-          periodEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-          periodLabel = `Ano de ${now.getFullYear()}`;
+        let periodLabel = '';
+        if (funnelMonth === 'all') {
+          periodStart = new Date(yearNum, 0, 1);
+          periodEnd = new Date(yearNum, 11, 31, 23, 59, 59);
+          periodLabel = `Ano de ${yearNum}`;
+        } else {
+          const monthNum = Number(funnelMonth);
+          const ref = new Date(yearNum, monthNum, 1);
+          periodStart = startOfMonth(ref);
+          periodEnd = endOfMonth(ref);
+          periodLabel = format(ref, "MMMM 'de' yyyy", { locale: ptBR });
         }
 
         const funnelLeads = filteredLeads.filter(l => {
