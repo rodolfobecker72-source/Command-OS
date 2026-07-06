@@ -378,6 +378,18 @@ export function WelcomePage() {
     }
   };
 
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header title="Boas-vindas" />
@@ -387,7 +399,7 @@ export function WelcomePage() {
           <CardContent className="p-6 md:p-8">
             <div className="flex items-start gap-3">
               <Sparkles className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-1 opacity-90" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                   {greeting}{firstName ? `, ${firstName}` : ''}!
                 </h2>
@@ -395,9 +407,20 @@ export function WelcomePage() {
                   {formattedDate}
                 </p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsDark((v) => !v)}
+                className="shrink-0 text-primary-foreground hover:bg-white/20 hover:text-primary-foreground"
+                aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                title={isDark ? 'Modo claro' : 'Modo escuro'}
+              >
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </Button>
             </div>
           </CardContent>
         </Card>
+
 
         {/* Notas pessoais (hoje e amanhã) */}
         {personalNotes.length > 0 && (
