@@ -943,13 +943,6 @@ export function ProspectionPage() {
                         </div>
                         <span className="font-semibold tabular-nums">{nurtureCount}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="w-3 h-3 rounded-sm bg-destructive" />
-                          <span className="text-muted-foreground">Perdidos</span>
-                        </div>
-                        <span className="font-semibold tabular-nums">{lostCount}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
