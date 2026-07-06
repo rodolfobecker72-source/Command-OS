@@ -65,6 +65,8 @@ export interface ProspectionLead {
   // Responsible user (workspace member)
   responsibleUserId?: string | null;
   temperatureManual?: boolean;
+  meetingScheduledAt?: string | null;
+  meetingHappened?: boolean | null;
   // Notes
   strategicNotes: string;
   // Meta
