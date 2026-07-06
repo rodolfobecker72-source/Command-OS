@@ -824,7 +824,17 @@ export function ProspectionPage() {
           ...s,
           count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
-        
+
+        // Meetings scheduled in the period (based on when the lead was moved into "reunião agendada")
+        const meetingsInPeriod = funnelLeads.filter(l => {
+          if (!l.meetingScheduledAt) return l.funnelStatus === 'reuniao_agendada';
+          if (!periodStart || !periodEnd) return true;
+          const d = parseISO(l.meetingScheduledAt);
+          return isWithinInterval(d, { start: periodStart, end: periodEnd });
+        });
+        const meetingsScheduledCount = meetingsInPeriod.length;
+        const meetingsHappenedCount = meetingsInPeriod.filter(l => l.meetingHappened === true).length;
+
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
