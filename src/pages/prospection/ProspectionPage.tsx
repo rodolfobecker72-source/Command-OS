@@ -1563,6 +1563,49 @@ export function ProspectionPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Meeting Happened Confirmation */}
+      <Dialog open={!!meetingConfirm} onOpenChange={(open) => { if (!open) setMeetingConfirm(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-warning" />
+              A reunião aconteceu?
+            </DialogTitle>
+            <DialogDescription>
+              Antes de mudar o status, confirme se a reunião agendada realmente aconteceu.
+              Isso será usado para contabilizar as reuniões efetuadas no funil.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!meetingConfirm) return;
+                const lead = leads.find(l => l.id === meetingConfirm.leadId);
+                if (!lead) { setMeetingConfirm(null); return; }
+                updateLead(lead.id, { ...(meetingConfirm.extraUpdates || {}), funnelStatus: meetingConfirm.newStatus, meetingHappened: false });
+                setMeetingConfirm(null);
+              }}
+            >
+              Não aconteceu
+            </Button>
+            <Button
+              onClick={() => {
+                if (!meetingConfirm) return;
+                const lead = leads.find(l => l.id === meetingConfirm.leadId);
+                if (!lead) { setMeetingConfirm(null); return; }
+                updateLead(lead.id, { ...(meetingConfirm.extraUpdates || {}), funnelStatus: meetingConfirm.newStatus, meetingHappened: true });
+                setMeetingConfirm(null);
+              }}
+            >
+              Sim, aconteceu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
       {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
