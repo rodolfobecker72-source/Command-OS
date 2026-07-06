@@ -1084,34 +1084,45 @@ function Column({
               className="h-7 text-xs bg-background/70 w-full"
             />
           )}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <input
-              type="date"
-              value={newDue}
-              onChange={e => onNewDue(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
-              placeholder="Início"
-            />
-            <span className="opacity-60">→</span>
-            <input
-              type="date"
-              value={newEnd}
-              min={newDue || undefined}
-              onChange={e => onNewEnd(e.target.value)}
-              className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
-              placeholder="Fim"
-            />
-          </div>
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
             <input
               type="checkbox"
               checked={newDelivery}
-              onChange={e => onNewDelivery(e.target.checked)}
+              onChange={e => {
+                const checked = e.target.checked;
+                onNewDelivery(checked);
+                if (checked) onNewEnd('');
+              }}
               className="h-3.5 w-3.5 accent-blue-500"
             />
             Marcar como entrega
           </label>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className={cn('w-3.5 h-3.5 shrink-0', newDelivery && 'text-blue-500')} />
+            <input
+              type="date"
+              value={newDue}
+              onChange={e => onNewDue(e.target.value)}
+              className={cn(
+                'bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground',
+                newDelivery && 'text-blue-600 font-medium'
+              )}
+              placeholder={newDelivery ? 'Data de entrega' : 'Início'}
+            />
+            {!newDelivery && (
+              <>
+                <span className="opacity-60">→</span>
+                <input
+                  type="date"
+                  value={newEnd}
+                  min={newDue || undefined}
+                  onChange={e => onNewEnd(e.target.value)}
+                  className="bg-transparent outline-none cursor-pointer hover:text-foreground transition-colors text-muted-foreground"
+                  placeholder="Fim"
+                />
+              </>
+            )}
+          </div>
           {newTitle.trim() && (
             <Button size="sm" className="h-7 text-xs mt-1" onClick={onAdd}>
               Adicionar tarefa
