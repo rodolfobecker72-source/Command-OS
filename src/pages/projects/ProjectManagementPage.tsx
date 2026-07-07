@@ -115,6 +115,14 @@ export function ProjectManagementPage() {
     return () => { cancelled = true; };
   }, [workspace?.id, projectCards.length, activityRefreshKey]);
 
+  // Live-refresh activity counts when any project activity changes
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities'],
+    onChange: () => setActivityRefreshKey((k) => k + 1),
+  });
+
+
   useEffect(() => {
     if (!highlightBudgetId || projectCards.length === 0) return;
     const card = projectCards.find((c) => c.budgetId === highlightBudgetId);
