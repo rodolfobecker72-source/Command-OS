@@ -91,6 +91,7 @@ function getUpcomingRange(ref: Date) {
 
 export function WelcomePage() {
   const { profile, workspace } = useAuth();
+  const navigate = useNavigate();
   const [birthdays, setBirthdays] = useState<BirthdayMember[]>([]);
   const [userActivities, setUserActivities] = useState<UserActivities[]>([]);
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
