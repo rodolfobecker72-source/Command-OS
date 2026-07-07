@@ -169,6 +169,17 @@ export function FinancialPage() {
     if (workspace?.id) loadData();
   }, [workspace?.id]);
 
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: [
+      'cashflow_entries','financial_accounts','credit_cards',
+      'cost_centers','revenue_centers','monthly_goals','budgets','budget_versions',
+    ],
+    onChange: () => { if (workspace?.id) loadData(); },
+    debounceMs: 500,
+  });
+
+
   async function loadData() {
     setLoading(true);
     const wid = workspace!.id;
