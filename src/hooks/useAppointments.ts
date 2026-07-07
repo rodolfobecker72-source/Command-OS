@@ -41,6 +41,13 @@ export function useAppointments() {
     reload();
   }, [reload]);
 
+  useRealtimeSync({
+    workspaceId,
+    tables: ['appointments', 'calendar_notes'],
+    onChange: () => { reload(); },
+  });
+
+
   const create = useCallback(
     async (input: NewAppointmentInput): Promise<Appointment | null> => {
       if (!workspaceId || !user?.id) {
