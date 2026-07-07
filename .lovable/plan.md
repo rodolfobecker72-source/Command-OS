@@ -1,38 +1,54 @@
-# Corrigir "nada aparece no Calendário do Time"
+## Objetivo
+Fazer o sistema refletir automaticamente qualquer alteração de dados (feita por você ou por outro usuário) sem precisar recarregar a página, em todas as áreas: CRM, Prospecção, Projetos, Clientes, Financeiro e Calendários. As atualizações acontecem silenciosamente.
 
-## Diagnóstico
+## Como funciona (visão do usuário)
+- Você adiciona um link numa atividade → o atalho na listagem de projetos aparece na hora.
+- Um colega move um card no Kanban do CRM ou muda um lead de status → sua tela reflete a mudança em segundos.
+- Um lançamento novo no financeiro aparece automaticamente no dashboard.
+- Sem toasts, sem popups, sem "clique para atualizar" — a tela apenas se mantém viva.
 
-O `TeamCalendarPage` só considera um projeto como "do membro" quando existe uma **atividade de projeto (project_activities)** com o `user_id` do membro dentro do array `assigned_to_user_ids`.
+## Escopo das tabelas
+Habilitar realtime e assinar mudanças (INSERT / UPDATE / DELETE) nas tabelas:
 
-Na base atual:
-- 78 projetos aprovados
-- 48 atividades no total
-- **Apenas 5 atividades têm responsável atribuído**
+- **CRM**: `budgets`, `budget_versions`, `kanban_columns`, `service_categories`, `service_items`, `service_objectives`, `payment_terms`
+- **Prospecção**: `prospection_leads`
+- **Projetos**: `project_cards`, `project_activities`, `project_columns`, `legacy_projects`
+- **Clientes**: `clients`, `score_history`
+- **Financeiro**: `cashflow_entries`, `financial_accounts`, `credit_cards`, `cost_centers`, `revenue_centers`, `assets`, `hard_drives`
+- **Calendários / Operação**: `appointments`, `calendar_notes`, `monthly_goals`
+- **Workspace / Config** (para refletir mudanças de permissão, layout, metas): `workspace_members`, `workspace_settings`, `workspace_layout`, `workspace_contract_template`
 
-Ou seja, para quase todos os membros a busca devolve zero projetos → tela vazia. Também há um campo legado `assigned_to_user_id` (singular) usado em atividades antigas que hoje é ignorado pela query.
+## Estratégia técnica
+1. **Migration** única que roda `ALTER PUBLICATION supabase_realtime ADD TABLE …` para cada tabela acima, e `ALTER TABLE … REPLICA IDENTITY FULL` (necessário para receber payload completo em UPDATE/DELETE, respeitando RLS existente).
+2. **Hook genérico** `useRealtimeSync(tables, onChange)` em `src/hooks/useRealtimeSync.ts`:
+   - Cria um único `supabase.channel` por consumidor.
+   - Escuta `postgres_changes` filtrado por `workspace_id = <workspace atual>` quando a tabela tiver essa coluna.
+   - Chama um callback leve (normalmente um "refetch" do contexto) com debounce (~300ms) para agrupar bursts.
+   - Cleanup com `supabase.removeChannel` no unmount.
+3. **Integração nos contextos existentes** (fonte única de verdade já centralizada):
+   - `CRMContext` → refetch de budgets, versions, colunas, categorias, items, terms.
+   - `ProspectionContext` → refetch de leads.
+   - Novo hook local em `ProjectManagementPage` → refetch de cards + activities + columns (resolve exatamente o caso do link na atividade que não atualiza o atalho).
+   - `FinancialPage` / `PatrimonioPage` → refetch das listas exibidas.
+   - `useAppointments` → refetch de appointments.
+   - `MyCalendarPage`, `TeamCalendarPage`, `CalendarPage` → assinar `appointments`, `project_activities`, `prospection_leads` (para "próxima ação").
+   - `WelcomePage` / `HomePage` → assinar `prospection_leads`, `project_activities`, `monthly_goals` para manter avisos e métricas em dia.
+   - `Sidebar` / `PageGuard` → assinar `workspace_members` para refletir mudanças de permissão sem novo login.
+4. **RLS** permanece inalterada — realtime só entrega ao usuário linhas que ele já pode ler.
+5. **Sem toasts**: o refetch atualiza o estado do contexto e o React re-renderiza. Onde há edição em andamento (dialogs abertos, formulários), o refetch atualiza a lista de fundo mas não fecha o dialog.
 
-Além disso, o vínculo "quem executa" também aparece nos próprios serviços do orçamento (campo `executor` de cada serviço, editado via `TeamMemberSelect`) — mas isso guarda o **nome**, não o `user_id`.
-
-## Correções
-
-Ampliar a resolução de "projetos do membro" em `src/pages/operation/TeamCalendarPage.tsx`, unindo três fontes:
-
-1. **Atividades com array de responsáveis** (já existe): `project_activities.assigned_to_user_ids contains [memberId]`.
-2. **Atividades com responsável legado**: também consultar `project_activities.assigned_to_user_id = memberId` e unir os `project_card_id` resultantes.
-3. **Serviços com executor pelo nome do membro**: percorrer os `budgets` já carregados no contexto e incluir os que tenham alguma versão com `services[].executor === nomeDoMembro` (comparação case-insensitive, ignorando o prefixo `Freela: `). O nome vem da lista `members` já buscada.
-
-O `memberBudgetIds` final é a união dos três conjuntos, mantendo a lógica atual de filtrar por `status='aprovada'` para o calendário.
-
-## Feedback visual
-
-Quando o membro está selecionado e o resultado é vazio, manter a mensagem atual ("Nenhum projeto encontrado…") — mas incluir uma linha explicativa curta abaixo: "Um projeto aparece aqui quando o membro é responsável por alguma atividade do projeto ou executor de algum serviço do orçamento."
-
-## Arquivos alterados
-
-- `src/pages/operation/TeamCalendarPage.tsx` — expandir o `useEffect` que monta `memberBudgetIds` (adicionar segunda query em `project_activities` pelo campo singular; cruzar `budgets` do contexto pelo `executor`); ajustar a mensagem de estado vazio.
+## Detalhes técnicos
+- Um único canal por página/contexto (evita custo de reconexões).
+- `REPLICA IDENTITY FULL` só em tabelas com RLS por `workspace_id` para que o filtro no cliente funcione com o `OLD` record em DELETE.
+- Debounce evita tempestade de refetches quando um usuário salva 10 atividades em sequência.
+- Nada muda em UI/estilo; é puramente de dados.
 
 ## Fora de escopo
+- Colaboração ao vivo em campos de formulário (cursores, edição simultânea).
+- Notificações/toasts de "fulano alterou X" — você pediu silencioso.
+- Histórico de auditoria de alterações.
 
-- Não alterar o schema nem migrar `assigned_to_user_id` → `assigned_to_user_ids`.
-- Não mudar como o `executor` é salvo (continua por nome).
-- Não mexer nas views de mês/semana nem no drag-and-drop.
+## Entregáveis
+- 1 migration habilitando realtime nas tabelas listadas.
+- `src/hooks/useRealtimeSync.ts` (novo).
+- Edições nos contextos e páginas listados acima para plugar o hook a funções de refetch já existentes.

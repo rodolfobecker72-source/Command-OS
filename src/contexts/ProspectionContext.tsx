@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, ReactNode, useCallback, use
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import {
   ProspectionLead,
   LeadFunnelStatus,
 } from '@/types/prospection';
 import { computeLeadTemperature } from '@/utils/leadTemperature';
+
 
 // ============= DB mapping helpers =============
 
@@ -93,24 +95,30 @@ export function ProspectionProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<ProspectionLead[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async (silent = false) => {
     if (!workspaceId) {
       setIsLoading(false);
       return;
     }
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase.from('prospection_leads').select('*').eq('workspace_id', workspaceId);
-        if (error) throw error;
-        setLeads((data || []).map(leadFromDb));
-      } catch (e: any) {
-        console.error('Error loading leads:', e);
-        toast.error('Erro ao carregar leads');
-      } finally { setIsLoading(false); }
-    };
-    load();
-  }, [workspaceId]); // Removed authLoading — workspaceId is undefined until auth finishes
+    if (!silent) setIsLoading(true);
+    try {
+      const { data, error } = await supabase.from('prospection_leads').select('*').eq('workspace_id', workspaceId);
+      if (error) throw error;
+      setLeads((data || []).map(leadFromDb));
+    } catch (e: any) {
+      console.error('Error loading leads:', e);
+      if (!silent) toast.error('Erro ao carregar leads');
+    } finally { if (!silent) setIsLoading(false); }
+  }, [workspaceId]);
+
+  useEffect(() => { load(false); }, [load]);
+
+  useRealtimeSync({
+    workspaceId,
+    tables: ['prospection_leads'],
+    onChange: () => load(true),
+  });
+
 
   const addLead = useCallback(async (data: Omit<ProspectionLead, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProspectionLead | null> => {
     if (!workspaceId) {

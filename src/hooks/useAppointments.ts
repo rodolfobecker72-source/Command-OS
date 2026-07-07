@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import {
   Appointment,
   NewAppointmentInput,
   appointmentFromDb,
   appointmentToDb,
 } from '@/types/appointment';
+
 
 export function useAppointments() {
   const { user, workspace } = useAuth();
@@ -38,6 +40,13 @@ export function useAppointments() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useRealtimeSync({
+    workspaceId,
+    tables: ['appointments', 'calendar_notes'],
+    onChange: () => { reload(); },
+  });
+
 
   const create = useCallback(
     async (input: NewAppointmentInput): Promise<Appointment | null> => {

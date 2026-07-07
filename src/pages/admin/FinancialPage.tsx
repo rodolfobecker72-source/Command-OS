@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -167,6 +168,17 @@ export function FinancialPage() {
   useEffect(() => {
     if (workspace?.id) loadData();
   }, [workspace?.id]);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: [
+      'cashflow_entries','financial_accounts','credit_cards',
+      'cost_centers','revenue_centers','monthly_goals','budgets','budget_versions',
+    ],
+    onChange: () => { if (workspace?.id) loadData(); },
+    debounceMs: 500,
+  });
+
 
   async function loadData() {
     setLoading(true);

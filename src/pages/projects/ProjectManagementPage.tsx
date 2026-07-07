@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { ProjectStatusManagerDialog } from '@/components/projects/ProjectStatusManagerDialog';
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
@@ -113,6 +114,14 @@ export function ProjectManagementPage() {
     })();
     return () => { cancelled = true; };
   }, [workspace?.id, projectCards.length, activityRefreshKey]);
+
+  // Live-refresh activity counts when any project activity changes
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities'],
+    onChange: () => setActivityRefreshKey((k) => k + 1),
+  });
+
 
   useEffect(() => {
     if (!highlightBudgetId || projectCards.length === 0) return;
