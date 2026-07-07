@@ -1564,8 +1564,8 @@ export function ProspectionPage() {
                     <Edit className="w-4 h-4" /> Editar
                   </Button>
                   {detailLead.funnelStatus === 'qualificado_crm' && (
-                    <Button className="gap-1" onClick={() => { handleMigrateToCRM(detailLead); setDetailLead(null); }}>
-                      <ArrowUpRight className="w-4 h-4" /> Migrar para CRM
+                    <Button className={`gap-1 ${isLeadMigrated(detailLead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={() => { handleMigrateToCRM(detailLead); setDetailLead(null); }}>
+                      <ArrowUpRight className="w-4 h-4" /> {isLeadMigrated(detailLead) ? 'Migrado ao CRM ✓' : 'Migrar para CRM'}
                     </Button>
                   )}
                   {detailLead.funnelStatus === 'perdido' && (
