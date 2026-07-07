@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, ReactNode, useCallback, use
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import {
   ProspectionLead,
   LeadFunnelStatus,
 } from '@/types/prospection';
 import { computeLeadTemperature } from '@/utils/leadTemperature';
+
 
 // ============= DB mapping helpers =============
 
