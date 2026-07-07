@@ -770,7 +770,7 @@ export function ProspectionPage() {
               collisionDetection={closestCenter}
               onDragEnd={handleKanbanDragEnd}
             >
-            <div className="flex gap-5 overflow-x-auto pb-4">
+            <div ref={kanbanScrollRef} className="flex gap-5 overflow-x-auto pb-4 scrollbar-thin">
               {kanbanStatuses.map(status => {
                 const statusLeads = filteredLeads.filter(l => l.funnelStatus === status);
                 return (
