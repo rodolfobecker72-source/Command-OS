@@ -320,131 +320,134 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const [projectCards, setProjectCards] = useState<ProjectCard[]>([]);
   const [projectColumns, setProjectColumns] = useState<ProjectColumn[]>([]);
 
-  // ============= Load all data from DB =============
-  useEffect(() => {
-    if (!workspaceId) {
+  const loadAll = useCallback(async (force = false) => {
+    const wsId = workspaceIdRef.current;
+    if (!wsId) {
       setIsLoading(false);
       return;
     }
-
-    // Prevent re-loading if workspace hasn't changed (e.g. auth re-render)
-    if (lastLoadedWorkspaceRef.current === workspaceId) {
+    if (!force && lastLoadedWorkspaceRef.current === wsId) {
       console.log('[CRM] Workspace unchanged, skipping reload');
       return;
     }
+    setIsLoading(true);
+    const safetyTimeout = setTimeout(() => {
+      console.warn('[CRM] Safety timeout: forcing isLoading=false after 15s');
+      setIsLoading(false);
+    }, 15000);
+    try {
+      const [
+        clientsRes, kanbanRes, catRes, objRes, projColRes,
+        budgetsRes, versionsRes, projectCardsRes,
+        assetsRes, hdRes, legacyRes, scoreRes,
+      ] = await Promise.all([
+        supabase.from('clients').select('*').eq('workspace_id', wsId),
+        supabase.from('kanban_columns').select('*').eq('workspace_id', wsId).order('order'),
+        supabase.from('service_categories').select('*').eq('workspace_id', wsId).order('order'),
+        supabase.from('service_objectives').select('*').eq('workspace_id', wsId).order('order'),
+        supabase.from('project_columns').select('*').eq('workspace_id', wsId).order('order'),
+        supabase.from('budgets').select('*').eq('workspace_id', wsId),
+        supabase.from('budget_versions').select('*').eq('workspace_id', wsId),
+        supabase.from('project_cards').select('*').eq('workspace_id', wsId),
+        supabase.from('assets').select('*').eq('workspace_id', wsId),
+        supabase.from('hard_drives').select('*').eq('workspace_id', wsId),
+        supabase.from('legacy_projects').select('*').eq('workspace_id', wsId),
+        supabase.from('score_history').select('*').eq('workspace_id', wsId),
+      ]);
 
-    const loadAll = async () => {
-      setIsLoading(true);
-      const safetyTimeout = setTimeout(() => {
-        console.warn('[CRM] Safety timeout: forcing isLoading=false after 15s');
-        setIsLoading(false);
-      }, 15000);
-      try {
-        const [
-          clientsRes, kanbanRes, catRes, objRes, projColRes,
-          budgetsRes, versionsRes, projectCardsRes,
-          assetsRes, hdRes, legacyRes, scoreRes,
-        ] = await Promise.all([
-          supabase.from('clients').select('*').eq('workspace_id', workspaceId),
-          supabase.from('kanban_columns').select('*').eq('workspace_id', workspaceId).order('order'),
-          supabase.from('service_categories').select('*').eq('workspace_id', workspaceId).order('order'),
-          supabase.from('service_objectives').select('*').eq('workspace_id', workspaceId).order('order'),
-          supabase.from('project_columns').select('*').eq('workspace_id', workspaceId).order('order'),
-          supabase.from('budgets').select('*').eq('workspace_id', workspaceId),
-          supabase.from('budget_versions').select('*').eq('workspace_id', workspaceId),
-          supabase.from('project_cards').select('*').eq('workspace_id', workspaceId),
-          supabase.from('assets').select('*').eq('workspace_id', workspaceId),
-          supabase.from('hard_drives').select('*').eq('workspace_id', workspaceId),
-          supabase.from('legacy_projects').select('*').eq('workspace_id', workspaceId),
-          supabase.from('score_history').select('*').eq('workspace_id', workspaceId),
-        ]);
+      const errors: string[] = [];
+      if (clientsRes.error) errors.push('clientes');
+      if (kanbanRes.error) errors.push('kanban');
+      if (catRes.error) errors.push('categorias');
+      if (objRes.error) errors.push('objetivos');
+      if (projColRes.error) errors.push('colunas de projeto');
+      if (budgetsRes.error) errors.push('orçamentos');
+      if (versionsRes.error) errors.push('versões');
+      if (projectCardsRes.error) errors.push('cards de projeto');
+      if (assetsRes.error) errors.push('patrimônios');
+      if (hdRes.error) errors.push('HDs');
+      if (legacyRes.error) errors.push('projetos legados');
+      if (scoreRes.error) errors.push('histórico de score');
 
-        // Check individual errors and report
-        const errors: string[] = [];
-        if (clientsRes.error) errors.push('clientes');
-        if (kanbanRes.error) errors.push('kanban');
-        if (catRes.error) errors.push('categorias');
-        if (objRes.error) errors.push('objetivos');
-        if (projColRes.error) errors.push('colunas de projeto');
-        if (budgetsRes.error) errors.push('orçamentos');
-        if (versionsRes.error) errors.push('versões');
-        if (projectCardsRes.error) errors.push('cards de projeto');
-        if (assetsRes.error) errors.push('patrimônios');
-        if (hdRes.error) errors.push('HDs');
-        if (legacyRes.error) errors.push('projetos legados');
-        if (scoreRes.error) errors.push('histórico de score');
-
-        if (errors.length > 0) {
-          console.error('[CRM] Falha ao carregar:', errors.join(', '));
-          toast.error(`Erro ao carregar: ${errors.join(', ')}. Recarregue a página.`);
-        }
-
-        // Clients
-        setClients((clientsRes.data || []).map(clientFromDb).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR')));
-
-        // Settings - seed defaults if empty
-        let kanbanData = kanbanRes.data || [];
-        if (kanbanData.length === 0) {
-          const defaults = DEFAULT_KANBAN_COLUMNS.map(c => ({
-            workspace_id: workspaceId, key: c.key, label: c.label, color: c.color, order: c.order, is_default: c.isDefault || false,
-          }));
-          const { data } = await supabase.from('kanban_columns').insert(defaults).select();
-          kanbanData = data || [];
-        }
-        setKanbanColumns(kanbanData.map(kanbanColumnFromDb));
-
-        let catData = catRes.data || [];
-        if (catData.length === 0) {
-          const defaults = DEFAULT_SERVICE_CATEGORIES.map(c => ({
-            workspace_id: workspaceId, key: c.key, label: c.label, order: c.order, is_default: c.isDefault || false,
-          }));
-          const { data } = await supabase.from('service_categories').insert(defaults).select();
-          catData = data || [];
-        }
-        setServiceCategories(catData.map(serviceCategoryFromDb));
-
-        let objData = objRes.data || [];
-        setServiceObjectives(objData.map(serviceObjectiveFromDb));
-
-        let projColData = projColRes.data || [];
-        if (projColData.length === 0) {
-          const defaults = DEFAULT_PROJECT_COLUMNS.map(c => ({
-            workspace_id: workspaceId, key: c.key, label: c.label, color: c.color, order: c.order, is_default: c.isDefault || false,
-          }));
-          const { data } = await supabase.from('project_columns').insert(defaults).select();
-          projColData = data || [];
-        }
-        setProjectColumns(projColData.map(projectColumnFromDb));
-
-        // Budgets + versions
-        const versionsByBudget: Record<string, BudgetVersion[]> = {};
-        (versionsRes.data || []).forEach(row => {
-          const v = budgetVersionFromDb(row);
-          if (!versionsByBudget[v.budgetId]) versionsByBudget[v.budgetId] = [];
-          versionsByBudget[v.budgetId].push(v);
-        });
-        setBudgets((budgetsRes.data || []).map(row => budgetFromDb(row, versionsByBudget[row.id] || [])));
-
-        // Project cards
-        setProjectCards((projectCardsRes.data || []).map(projectCardFromDb));
-
-        // Assets, HDs, Legacy, Score
-        setAssets((assetsRes.data || []).map(assetFromDb));
-        setHardDrives((hdRes.data || []).map(hardDriveFromDb));
-        setLegacyProjects((legacyRes.data || []).map(legacyProjectFromDb));
-        setScoreHistory((scoreRes.data || []).map(scoreHistoryFromDb));
-      } catch (error) {
-        console.error('Error loading CRM data:', error);
-        toast.error('Erro ao carregar dados do CRM');
-      } finally {
-        clearTimeout(safetyTimeout);
-        lastLoadedWorkspaceRef.current = workspaceId;
-        setIsLoading(false);
+      if (errors.length > 0) {
+        console.error('[CRM] Falha ao carregar:', errors.join(', '));
+        if (!force) toast.error(`Erro ao carregar: ${errors.join(', ')}. Recarregue a página.`);
       }
-    };
 
-    loadAll();
-  }, [workspaceId]);
+      setClients((clientsRes.data || []).map(clientFromDb).sort((a, b) => a.companyName.localeCompare(b.companyName, 'pt-BR')));
+
+      let kanbanData = kanbanRes.data || [];
+      if (kanbanData.length === 0 && !force) {
+        const defaults = DEFAULT_KANBAN_COLUMNS.map(c => ({
+          workspace_id: wsId, key: c.key, label: c.label, color: c.color, order: c.order, is_default: c.isDefault || false,
+        }));
+        const { data } = await supabase.from('kanban_columns').insert(defaults).select();
+        kanbanData = data || [];
+      }
+      setKanbanColumns(kanbanData.map(kanbanColumnFromDb));
+
+      let catData = catRes.data || [];
+      if (catData.length === 0 && !force) {
+        const defaults = DEFAULT_SERVICE_CATEGORIES.map(c => ({
+          workspace_id: wsId, key: c.key, label: c.label, order: c.order, is_default: c.isDefault || false,
+        }));
+        const { data } = await supabase.from('service_categories').insert(defaults).select();
+        catData = data || [];
+      }
+      setServiceCategories(catData.map(serviceCategoryFromDb));
+
+      setServiceObjectives((objRes.data || []).map(serviceObjectiveFromDb));
+
+      let projColData = projColRes.data || [];
+      if (projColData.length === 0 && !force) {
+        const defaults = DEFAULT_PROJECT_COLUMNS.map(c => ({
+          workspace_id: wsId, key: c.key, label: c.label, color: c.color, order: c.order, is_default: c.isDefault || false,
+        }));
+        const { data } = await supabase.from('project_columns').insert(defaults).select();
+        projColData = data || [];
+      }
+      setProjectColumns(projColData.map(projectColumnFromDb));
+
+      const versionsByBudget: Record<string, BudgetVersion[]> = {};
+      (versionsRes.data || []).forEach(row => {
+        const v = budgetVersionFromDb(row);
+        if (!versionsByBudget[v.budgetId]) versionsByBudget[v.budgetId] = [];
+        versionsByBudget[v.budgetId].push(v);
+      });
+      setBudgets((budgetsRes.data || []).map(row => budgetFromDb(row, versionsByBudget[row.id] || [])));
+
+      setProjectCards((projectCardsRes.data || []).map(projectCardFromDb));
+
+      setAssets((assetsRes.data || []).map(assetFromDb));
+      setHardDrives((hdRes.data || []).map(hardDriveFromDb));
+      setLegacyProjects((legacyRes.data || []).map(legacyProjectFromDb));
+      setScoreHistory((scoreRes.data || []).map(scoreHistoryFromDb));
+    } catch (error) {
+      console.error('Error loading CRM data:', error);
+      if (!force) toast.error('Erro ao carregar dados do CRM');
+    } finally {
+      clearTimeout(safetyTimeout);
+      lastLoadedWorkspaceRef.current = wsId;
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAll(false);
+  }, [workspaceId, loadAll]);
+
+  // Realtime: refresh silently whenever any CRM-related table changes for this workspace
+  useRealtimeSync({
+    workspaceId,
+    tables: [
+      'clients','budgets','budget_versions','kanban_columns','service_categories',
+      'service_objectives','service_items','project_columns','project_cards',
+      'assets','hard_drives','legacy_projects','score_history','payment_terms',
+    ],
+    onChange: () => loadAll(true),
+    debounceMs: 400,
+  });
+
 
   // Helper: check workspace ready before any mutation, with DB fallback
   // Uses refs to avoid stale closures
