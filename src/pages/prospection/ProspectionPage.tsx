@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCenter,
