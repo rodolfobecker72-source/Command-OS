@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, ReactNode } from 'react';
+import { useState, useMemo, useEffect, ReactNode, useRef, useLayoutEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
@@ -143,7 +143,9 @@ function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children
 
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
-  const { addClient } = useCRM();
+  const { addClient, clients } = useCRM();
+  const isLeadMigrated = (lead: ProspectionLead) =>
+    clients.some(c => c.companyName.trim().toLowerCase() === lead.companyName.trim().toLowerCase());
   const auth = useAuth();
 
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -182,6 +184,39 @@ export function ProspectionPage() {
   const [funnelMonth, setFunnelMonth] = useState<string>(String(new Date().getMonth()));
   const [funnelYear, setFunnelYear] = useState<string>(String(new Date().getFullYear()));
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
+  const kanbanScrollRef = useRef<HTMLDivElement>(null);
+  const proxyScrollRef = useRef<HTMLDivElement>(null);
+  const [kanbanScrollWidth, setKanbanScrollWidth] = useState(0);
+  const [showProxyScroll, setShowProxyScroll] = useState(false);
+
+  // Sync kanban horizontal scroll <-> sticky proxy scrollbar at bottom of viewport
+  useLayoutEffect(() => {
+    const el = kanbanScrollRef.current;
+    if (!el) return;
+    const update = () => {
+      setKanbanScrollWidth(el.scrollWidth);
+      setShowProxyScroll(el.scrollWidth > el.clientWidth + 1);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    Array.from(el.children).forEach(c => ro.observe(c as Element));
+    window.addEventListener('resize', update);
+    return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+  }, [view, activeTab]);
+
+  useEffect(() => {
+    const el = kanbanScrollRef.current;
+    const proxy = proxyScrollRef.current;
+    if (!el || !proxy) return;
+    let syncing = false;
+    const onKanban = () => { if (syncing) return; syncing = true; proxy.scrollLeft = el.scrollLeft; syncing = false; };
+    const onProxy = () => { if (syncing) return; syncing = true; el.scrollLeft = proxy.scrollLeft; syncing = false; };
+    el.addEventListener('scroll', onKanban);
+    proxy.addEventListener('scroll', onProxy);
+    return () => { el.removeEventListener('scroll', onKanban); proxy.removeEventListener('scroll', onProxy); };
+  }, [showProxyScroll]);
+
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>(String(new Date().getFullYear()));
@@ -639,8 +674,8 @@ export function ProspectionPage() {
                         <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                           <div className="flex gap-1 justify-end">
                             {lead.funnelStatus === 'qualificado_crm' && (
-                              <Button size="sm" variant="default" className="gap-1 text-xs h-7" onClick={() => handleMigrateToCRM(lead)}>
-                                <ArrowUpRight className="w-3 h-3" /> CRM
+                              <Button size="sm" variant="default" className={`gap-1 text-xs h-7 ${isLeadMigrated(lead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={() => handleMigrateToCRM(lead)}>
+                                <ArrowUpRight className="w-3 h-3" /> {isLeadMigrated(lead) ? 'CRM ✓' : 'CRM'}
                               </Button>
                             )}
                             {lead.funnelStatus === 'perdido' && (
@@ -706,8 +741,8 @@ export function ProspectionPage() {
                       )}
                       <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/40" onClick={e => e.stopPropagation()}>
                         {lead.funnelStatus === 'qualificado_crm' && (
-                          <Button size="sm" variant="default" className="gap-1 text-xs h-7" onClick={() => handleMigrateToCRM(lead)}>
-                            <ArrowUpRight className="w-3 h-3" /> CRM
+                          <Button size="sm" variant="default" className={`gap-1 text-xs h-7 ${isLeadMigrated(lead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={() => handleMigrateToCRM(lead)}>
+                            <ArrowUpRight className="w-3 h-3" /> {isLeadMigrated(lead) ? 'CRM ✓' : 'CRM'}
                           </Button>
                         )}
                         {lead.funnelStatus === 'perdido' && (
@@ -735,7 +770,7 @@ export function ProspectionPage() {
               collisionDetection={closestCenter}
               onDragEnd={handleKanbanDragEnd}
             >
-            <div className="flex gap-5 overflow-x-auto pb-4">
+            <div ref={kanbanScrollRef} className="flex gap-5 overflow-x-auto pb-4 scrollbar-thin">
               {kanbanStatuses.map(status => {
                 const statusLeads = filteredLeads.filter(l => l.funnelStatus === status);
                 return (
@@ -775,8 +810,8 @@ export function ProspectionPage() {
                                 </p>
                               )}
                               {status === 'qualificado_crm' && (
-                                <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
-                                  <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
+                                <Button size="sm" className={`w-full gap-1 text-xs h-7 mt-1 ${isLeadMigrated(lead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
+                                  <ArrowUpRight className="w-3 h-3" /> {isLeadMigrated(lead) ? 'Migrado ao CRM ✓' : 'Migrar para CRM'}
                                 </Button>
                               )}
                             </CardContent>
@@ -794,6 +829,15 @@ export function ProspectionPage() {
               })}
             </div>
             </DndContext>
+            {showProxyScroll && (
+              <div
+                ref={proxyScrollRef}
+                className="sticky bottom-0 left-0 right-0 overflow-x-auto overflow-y-hidden bg-background/80 backdrop-blur border-t border-border z-30 scrollbar-thin"
+                style={{ height: 14 }}
+              >
+                <div style={{ width: kanbanScrollWidth, height: 1 }} />
+              </div>
+            )}
 
 
 
@@ -1562,8 +1606,8 @@ export function ProspectionPage() {
                     <Edit className="w-4 h-4" /> Editar
                   </Button>
                   {detailLead.funnelStatus === 'qualificado_crm' && (
-                    <Button className="gap-1" onClick={() => { handleMigrateToCRM(detailLead); setDetailLead(null); }}>
-                      <ArrowUpRight className="w-4 h-4" /> Migrar para CRM
+                    <Button className={`gap-1 ${isLeadMigrated(detailLead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={() => { handleMigrateToCRM(detailLead); setDetailLead(null); }}>
+                      <ArrowUpRight className="w-4 h-4" /> {isLeadMigrated(detailLead) ? 'Migrado ao CRM ✓' : 'Migrar para CRM'}
                     </Button>
                   )}
                   {detailLead.funnelStatus === 'perdido' && (
