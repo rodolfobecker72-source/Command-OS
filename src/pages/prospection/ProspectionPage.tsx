@@ -641,8 +641,8 @@ export function ProspectionPage() {
                         <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                           <div className="flex gap-1 justify-end">
                             {lead.funnelStatus === 'qualificado_crm' && (
-                              <Button size="sm" variant="default" className="gap-1 text-xs h-7" onClick={() => handleMigrateToCRM(lead)}>
-                                <ArrowUpRight className="w-3 h-3" /> CRM
+                              <Button size="sm" variant="default" className={`gap-1 text-xs h-7 ${isLeadMigrated(lead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={() => handleMigrateToCRM(lead)}>
+                                <ArrowUpRight className="w-3 h-3" /> {isLeadMigrated(lead) ? 'CRM ✓' : 'CRM'}
                               </Button>
                             )}
                             {lead.funnelStatus === 'perdido' && (
