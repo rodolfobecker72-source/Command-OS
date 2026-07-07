@@ -777,8 +777,8 @@ export function ProspectionPage() {
                                 </p>
                               )}
                               {status === 'qualificado_crm' && (
-                                <Button size="sm" className="w-full gap-1 text-xs h-7 mt-1" onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
-                                  <ArrowUpRight className="w-3 h-3" /> Migrar para CRM
+                                <Button size="sm" className={`w-full gap-1 text-xs h-7 mt-1 ${isLeadMigrated(lead) ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}`} onClick={e => { e.stopPropagation(); handleMigrateToCRM(lead); }}>
+                                  <ArrowUpRight className="w-3 h-3" /> {isLeadMigrated(lead) ? 'Migrado ao CRM ✓' : 'Migrar para CRM'}
                                 </Button>
                               )}
                             </CardContent>
