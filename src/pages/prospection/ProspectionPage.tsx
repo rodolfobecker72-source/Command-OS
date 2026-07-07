@@ -829,6 +829,15 @@ export function ProspectionPage() {
               })}
             </div>
             </DndContext>
+            {showProxyScroll && (
+              <div
+                ref={proxyScrollRef}
+                className="sticky bottom-0 left-0 right-0 overflow-x-auto overflow-y-hidden bg-background/80 backdrop-blur border-t border-border z-30 scrollbar-thin"
+                style={{ height: 14 }}
+              >
+                <div style={{ width: kanbanScrollWidth, height: 1 }} />
+              </div>
+            )}
 
 
 
