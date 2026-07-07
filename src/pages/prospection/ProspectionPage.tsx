@@ -143,7 +143,9 @@ function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children
 
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
-  const { addClient } = useCRM();
+  const { addClient, clients } = useCRM();
+  const isLeadMigrated = (lead: ProspectionLead) =>
+    clients.some(c => c.companyName.trim().toLowerCase() === lead.companyName.trim().toLowerCase());
   const auth = useAuth();
 
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
