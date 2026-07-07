@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   DndContext, DragEndEvent, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCenter,
@@ -194,6 +195,20 @@ export function ProspectionPage() {
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [meetingConfirm, setMeetingConfirm] = useState<{ leadId: string; newStatus: LeadFunnelStatus; extraUpdates?: Partial<ProspectionLead> } | null>(null);
+
+  // Open lead profile via ?lead=<id> URL param (e.g., from Welcome page alerts)
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const leadId = searchParams.get('lead');
+    if (!leadId || leads.length === 0) return;
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      setDetailLead(lead);
+      const next = new URLSearchParams(searchParams);
+      next.delete('lead');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, leads, setSearchParams]);
 
   // Workspace members eligible to be lead responsible (vendedor/admin/owner)
   const [members, setMembers] = useState<{ id: string; name: string; role: string; photoUrl: string | null }[]>([]);
