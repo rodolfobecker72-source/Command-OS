@@ -184,6 +184,39 @@ export function ProspectionPage() {
   const [funnelMonth, setFunnelMonth] = useState<string>(String(new Date().getMonth()));
   const [funnelYear, setFunnelYear] = useState<string>(String(new Date().getFullYear()));
   const [view, setView] = useState<'table' | 'kanban'>('kanban');
+  const kanbanScrollRef = useRef<HTMLDivElement>(null);
+  const proxyScrollRef = useRef<HTMLDivElement>(null);
+  const [kanbanScrollWidth, setKanbanScrollWidth] = useState(0);
+  const [showProxyScroll, setShowProxyScroll] = useState(false);
+
+  // Sync kanban horizontal scroll <-> sticky proxy scrollbar at bottom of viewport
+  useLayoutEffect(() => {
+    const el = kanbanScrollRef.current;
+    if (!el) return;
+    const update = () => {
+      setKanbanScrollWidth(el.scrollWidth);
+      setShowProxyScroll(el.scrollWidth > el.clientWidth + 1);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    Array.from(el.children).forEach(c => ro.observe(c as Element));
+    window.addEventListener('resize', update);
+    return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+  }, [view, activeTab]);
+
+  useEffect(() => {
+    const el = kanbanScrollRef.current;
+    const proxy = proxyScrollRef.current;
+    if (!el || !proxy) return;
+    let syncing = false;
+    const onKanban = () => { if (syncing) return; syncing = true; proxy.scrollLeft = el.scrollLeft; syncing = false; };
+    const onProxy = () => { if (syncing) return; syncing = true; el.scrollLeft = proxy.scrollLeft; syncing = false; };
+    el.addEventListener('scroll', onKanban);
+    proxy.addEventListener('scroll', onProxy);
+    return () => { el.removeEventListener('scroll', onKanban); proxy.removeEventListener('scroll', onProxy); };
+  }, [showProxyScroll]);
+
   const [search, setSearch] = useState('');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>(String(new Date().getFullYear()));
