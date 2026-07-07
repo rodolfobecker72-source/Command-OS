@@ -703,7 +703,11 @@ export function WelcomePage() {
                   return (
                     <li
                       key={l.id}
-                      className={`border ${styles} rounded-lg p-3 flex items-start gap-2.5 shadow-sm`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate(`/prospeccao?lead=${l.id}`)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/prospeccao?lead=${l.id}`); } }}
+                      className={`border ${styles} rounded-lg p-3 flex items-start gap-2.5 shadow-sm cursor-pointer hover:shadow-md hover:brightness-[1.02] transition`}
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
