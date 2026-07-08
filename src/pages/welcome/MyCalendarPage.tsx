@@ -653,10 +653,10 @@ export function MyCalendarPage() {
 // ============= Inline helpers =============
 
 function DayCell({
-  day, inMonth, today, view, onAddNote, onCreateAppt, children,
+  day, inMonth, today, view, onAddNote, onCreateAppt, onDayNumClick, children,
 }: {
-  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week';
-  onAddNote: () => void; onCreateAppt: () => void;
+  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week' | 'day';
+  onAddNote: () => void; onCreateAppt: () => void; onDayNumClick?: () => void;
   children: React.ReactNode;
 }) {
   const id = `day-${format(day, 'yyyy-MM-dd')}`;
@@ -667,20 +667,38 @@ function DayCell({
       onDoubleClick={onCreateAppt}
       className={cn(
         'group border-b border-r border-border p-1 relative transition-colors',
-        view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
+        view === 'month' && 'min-h-[80px] md:min-h-[110px]',
+        view === 'week' && 'min-h-[200px]',
+        view === 'day' && 'flex-1 min-h-0 flex flex-col p-3 md:p-4',
         !inMonth && 'bg-muted/30',
         today && 'bg-primary/5',
         isOver && 'ring-2 ring-primary/40 bg-primary/10',
       )}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className={cn(
-          'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
-          today && 'bg-primary text-primary-foreground',
-          !inMonth && 'text-muted-foreground/50',
-        )}>
-          {format(day, 'd')}
-        </span>
+        {view === 'day' ? (
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              {format(day, 'EEEE', { locale: ptBR })}
+            </p>
+            <h3 className="text-lg md:text-xl font-bold capitalize">
+              {format(day, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </h3>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onDayNumClick}
+            className={cn(
+              'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors',
+              today && 'bg-primary text-primary-foreground',
+              !inMonth && 'text-muted-foreground/50',
+              onDayNumClick && 'hover:bg-primary/20 cursor-pointer',
+            )}
+          >
+            {format(day, 'd')}
+          </button>
+        )}
         <button
           type="button"
           onClick={onAddNote}
@@ -691,7 +709,12 @@ function DayCell({
           <Plus className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+      <div className={cn(
+        'space-y-1',
+        view === 'month' && 'overflow-y-auto max-h-[60px] md:max-h-[84px]',
+        view === 'week' && 'overflow-y-auto',
+        view === 'day' && 'flex-1 min-h-0 overflow-y-auto',
+      )}>
         {children}
       </div>
     </div>
