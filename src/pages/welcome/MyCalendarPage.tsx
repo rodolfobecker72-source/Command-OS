@@ -715,9 +715,9 @@ function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void 
     >
       <div className="font-semibold truncate flex items-center gap-1">
         {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
-        <span className="truncate">{ev.title}</span>
+        <span className="truncate">{ev.kind === 'project' ? ev.subtitle : ev.title}</span>
       </div>
-      <div className="truncate opacity-80">{ev.subtitle}</div>
+      <div className="truncate opacity-80">{ev.kind === 'project' ? ev.title : ev.subtitle}</div>
     </button>
   );
 }
