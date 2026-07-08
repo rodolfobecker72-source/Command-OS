@@ -195,9 +195,10 @@ export default function PublicProjectPage() {
                             })}
                             {a.freelaName && (
                               <span className="text-xs bg-background/70 rounded-full px-2 py-0.5 text-muted-foreground">
-                                Freela: {a.freelaName}
+                                {a.freelaName}
                               </span>
                             )}
+
                           </div>
                         )}
                         {(a.dueDate || a.endDate) && (
