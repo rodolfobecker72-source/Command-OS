@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
+import { CalendarDayView } from '@/components/operation/CalendarDayView';
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,7 +67,7 @@ export function TeamCalendarPage() {
   const { budgets, updateBudget, updateBudgetVersion } = useCRM();
   const { workspace } = useAuth();
 
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [activityDialog, setActivityDialog] = useState<{ projectCardId: string; projectName: string } | null>(null);
@@ -222,12 +223,14 @@ export function TeamCalendarPage() {
   const deliveryEvents = useMemo(() => computeDeliveryEvents(approvedBudgets), [approvedBudgets]);
 
   const goToday = () => setCurrentDate(new Date());
-  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
-  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
+  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : view === 'week' ? subWeeks(d, 1) : addDays(d, -1));
+  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : view === 'week' ? addWeeks(d, 1) : addDays(d, 1));
 
   const headerLabel = view === 'month'
     ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-    : `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`;
+    : view === 'week'
+      ? `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`
+      : format(currentDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -338,10 +341,11 @@ export function TeamCalendarPage() {
           </Select>
         </div>
 
-        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week')}>
+        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
           <TabsList className="h-8">
             <TabsTrigger value="month" className="text-xs px-3 h-7">Mês</TabsTrigger>
             <TabsTrigger value="week" className="text-xs px-3 h-7">Semana</TabsTrigger>
+            <TabsTrigger value="day" className="text-xs px-3 h-7">Dia</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -368,7 +372,7 @@ export function TeamCalendarPage() {
           : 'Selecione um membro acima para ver seus projetos.'}
       </div>
 
-      <div className="flex-1 overflow-auto bg-card">
+      <div className="flex-1 min-h-0 overflow-hidden bg-card">
         {!memberId ? (
           <div className="h-full flex items-center justify-center p-12 text-center text-muted-foreground text-sm">
             <div>
@@ -397,9 +401,23 @@ export function TeamCalendarPage() {
             onDeliveryClick={(b) => setSelectedBudget(b)}
             onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
             onDragEndDay={handleDragEnd}
+            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+          />
+        ) : view === 'week' ? (
+          <CalendarWeekView
+            currentDate={currentDate}
+            events={[]}
+            pendingEvents={[]}
+            deliveryEvents={[]}
+            activityEvents={memberActivityEvents}
+            onEventClick={setSelectedBudget}
+            onDeliveryClick={(b) => setSelectedBudget(b)}
+            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+            onDragEndDay={handleDragEnd}
+            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
           />
         ) : (
-          <CalendarWeekView
+          <CalendarDayView
             currentDate={currentDate}
             events={[]}
             pendingEvents={[]}

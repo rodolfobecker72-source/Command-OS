@@ -27,6 +27,7 @@ interface CalendarWeekViewProps {
   onAppointmentClick?: (appointment: Appointment) => void;
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
+  onDayClick?: (date: Date) => void;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
@@ -66,7 +67,7 @@ function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; childre
 
 export function CalendarWeekView({
   currentDate, events, pendingEvents = [], deliveryEvents, activityEvents = [], appointments = [],
-  onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
+  onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt, onDayClick,
 }: CalendarWeekViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -78,8 +79,8 @@ export function CalendarWeekView({
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEndDay}>
-      <div className="flex flex-col h-full">
-        <div className="grid grid-cols-7 border-b border-border">
+      <div className="flex flex-col h-full min-h-0">
+        <div className="grid grid-cols-7 border-b border-border shrink-0">
           {days.map((day, i) => {
             const today = isToday(day);
             return (
@@ -93,20 +94,23 @@ export function CalendarWeekView({
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
                   {format(day, 'EEE', { locale: ptBR })}
                 </div>
-                <div
+                <button
+                  type="button"
+                  onClick={() => onDayClick?.(day)}
                   className={cn(
-                    'text-lg font-bold mt-0.5 w-9 h-9 flex items-center justify-center rounded-full mx-auto',
+                    'text-lg font-bold mt-0.5 w-9 h-9 flex items-center justify-center rounded-full mx-auto transition-colors',
                     today && 'bg-primary text-primary-foreground',
+                    onDayClick && 'hover:bg-primary/20 cursor-pointer',
                   )}
                 >
                   {format(day, 'd')}
-                </div>
+                </button>
               </div>
             );
           })}
         </div>
 
-        <div className="grid grid-cols-7 flex-1">
+        <div className="grid grid-cols-7 flex-1 min-h-0">
           {days.map((day, i) => {
             const today = isToday(day);
             const dayEvents = getEventsForDay(day, events);

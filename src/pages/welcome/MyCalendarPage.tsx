@@ -66,7 +66,7 @@ export function MyCalendarPage() {
   const hideProspection = role === 'time_hero';
   const navigate = useNavigate();
 
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showProjects, setShowProjects] = useState(true);
   const [showProspection, setShowProspection] = useState(true);
@@ -207,6 +207,9 @@ export function MyCalendarPage() {
         end: endOfWeek(me, { locale: ptBR }),
       });
     }
+    if (view === 'day') {
+      return [currentDate];
+    }
     return eachDayOfInterval({
       start: startOfWeek(currentDate, { locale: ptBR }),
       end: endOfWeek(currentDate, { locale: ptBR }),
@@ -291,13 +294,15 @@ export function MyCalendarPage() {
   }, [events, myAppointments, updateAppt]);
 
 
-  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
-  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
+  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : view === 'week' ? subWeeks(d, 1) : addDays(d, -1));
+  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : view === 'week' ? addWeeks(d, 1) : addDays(d, 1));
   const goToday = () => setCurrentDate(new Date());
 
   const headerLabel = view === 'month'
     ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-    : `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`;
+    : view === 'week'
+      ? `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`
+      : format(currentDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   const handleOpen = (ev: PersonalEvent) => setSelected(ev);
 
@@ -394,10 +399,11 @@ export function MyCalendarPage() {
 
       {/* Toolbar */}
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
-        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week')}>
+        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
           <TabsList className="h-8">
             <TabsTrigger value="month" className="text-xs px-3 h-7">Mês</TabsTrigger>
             <TabsTrigger value="week" className="text-xs px-3 h-7">Semana</TabsTrigger>
+            <TabsTrigger value="day" className="text-xs px-3 h-7">Dia</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -456,19 +462,24 @@ export function MyCalendarPage() {
 
 
       {/* Grid */}
-      <div className="flex-1 overflow-auto bg-card">
-        <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card z-10">
-          {WEEKDAYS.map(d => (
-            <div key={d} className="py-2 text-center text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {d}
-            </div>
-          ))}
-        </div>
+      <div className={cn('flex-1 bg-card', view === 'day' ? 'overflow-hidden flex flex-col min-h-0' : 'overflow-auto')}>
+        {view !== 'day' && (
+          <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card z-10">
+            {WEEKDAYS.map(d => (
+              <div key={d} className="py-2 text-center text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {d}
+              </div>
+            ))}
+          </div>
+        )}
 
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
+          <div className={cn(
+            view === 'day' ? 'flex-1 min-h-0 flex' : 'grid grid-cols-7',
+            view === 'month' && 'auto-rows-fr',
+          )}>
             {days.map((day, i) => {
-              const inMonth = view === 'week' || isSameMonth(day, currentDate);
+              const inMonth = view !== 'month' || isSameMonth(day, currentDate);
               const today = isToday(day);
               const key = format(day, 'yyyy-MM-dd');
               const dayEvents = eventsByDay.get(key) || [];
@@ -484,6 +495,7 @@ export function MyCalendarPage() {
                   view={view}
                   onAddNote={() => openNewNote(key)}
                   onCreateAppt={() => { setEditingAppt(null); setCreateApptAt(day); setApptDialogOpen(true); }}
+                  onDayNumClick={view === 'day' ? undefined : () => { setCurrentDate(day); setView('day'); }}
                 >
                   {dayEvents.map(ev => (
                     <DraggableEvent
@@ -641,10 +653,10 @@ export function MyCalendarPage() {
 // ============= Inline helpers =============
 
 function DayCell({
-  day, inMonth, today, view, onAddNote, onCreateAppt, children,
+  day, inMonth, today, view, onAddNote, onCreateAppt, onDayNumClick, children,
 }: {
-  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week';
-  onAddNote: () => void; onCreateAppt: () => void;
+  day: Date; inMonth: boolean; today: boolean; view: 'month' | 'week' | 'day';
+  onAddNote: () => void; onCreateAppt: () => void; onDayNumClick?: () => void;
   children: React.ReactNode;
 }) {
   const id = `day-${format(day, 'yyyy-MM-dd')}`;
@@ -655,20 +667,38 @@ function DayCell({
       onDoubleClick={onCreateAppt}
       className={cn(
         'group border-b border-r border-border p-1 relative transition-colors',
-        view === 'month' ? 'min-h-[80px] md:min-h-[110px]' : 'min-h-[200px]',
+        view === 'month' && 'min-h-[80px] md:min-h-[110px]',
+        view === 'week' && 'min-h-[200px]',
+        view === 'day' && 'flex-1 min-h-0 flex flex-col p-3 md:p-4',
         !inMonth && 'bg-muted/30',
         today && 'bg-primary/5',
         isOver && 'ring-2 ring-primary/40 bg-primary/10',
       )}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className={cn(
-          'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
-          today && 'bg-primary text-primary-foreground',
-          !inMonth && 'text-muted-foreground/50',
-        )}>
-          {format(day, 'd')}
-        </span>
+        {view === 'day' ? (
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              {format(day, 'EEEE', { locale: ptBR })}
+            </p>
+            <h3 className="text-lg md:text-xl font-bold capitalize">
+              {format(day, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </h3>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onDayNumClick}
+            className={cn(
+              'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors',
+              today && 'bg-primary text-primary-foreground',
+              !inMonth && 'text-muted-foreground/50',
+              onDayNumClick && 'hover:bg-primary/20 cursor-pointer',
+            )}
+          >
+            {format(day, 'd')}
+          </button>
+        )}
         <button
           type="button"
           onClick={onAddNote}
@@ -679,7 +709,12 @@ function DayCell({
           <Plus className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[84px]">
+      <div className={cn(
+        'space-y-1',
+        view === 'month' && 'overflow-y-auto max-h-[60px] md:max-h-[84px]',
+        view === 'week' && 'overflow-y-auto',
+        view === 'day' && 'flex-1 min-h-0 overflow-y-auto',
+      )}>
         {children}
       </div>
     </div>
