@@ -66,7 +66,7 @@ export function MyCalendarPage() {
   const hideProspection = role === 'time_hero';
   const navigate = useNavigate();
 
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showProjects, setShowProjects] = useState(true);
   const [showProspection, setShowProspection] = useState(true);
@@ -207,6 +207,9 @@ export function MyCalendarPage() {
         end: endOfWeek(me, { locale: ptBR }),
       });
     }
+    if (view === 'day') {
+      return [currentDate];
+    }
     return eachDayOfInterval({
       start: startOfWeek(currentDate, { locale: ptBR }),
       end: endOfWeek(currentDate, { locale: ptBR }),
@@ -291,13 +294,15 @@ export function MyCalendarPage() {
   }, [events, myAppointments, updateAppt]);
 
 
-  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : subWeeks(d, 1));
-  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : addWeeks(d, 1));
+  const goPrev = () => setCurrentDate(d => view === 'month' ? subMonths(d, 1) : view === 'week' ? subWeeks(d, 1) : addDays(d, -1));
+  const goNext = () => setCurrentDate(d => view === 'month' ? addMonths(d, 1) : view === 'week' ? addWeeks(d, 1) : addDays(d, 1));
   const goToday = () => setCurrentDate(new Date());
 
   const headerLabel = view === 'month'
     ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-    : `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`;
+    : view === 'week'
+      ? `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`
+      : format(currentDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   const handleOpen = (ev: PersonalEvent) => setSelected(ev);
 
@@ -394,10 +399,11 @@ export function MyCalendarPage() {
 
       {/* Toolbar */}
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
-        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week')}>
+        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
           <TabsList className="h-8">
             <TabsTrigger value="month" className="text-xs px-3 h-7">Mês</TabsTrigger>
             <TabsTrigger value="week" className="text-xs px-3 h-7">Semana</TabsTrigger>
+            <TabsTrigger value="day" className="text-xs px-3 h-7">Dia</TabsTrigger>
           </TabsList>
         </Tabs>
 
