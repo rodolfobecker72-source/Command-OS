@@ -57,19 +57,30 @@ export default function PublicProjectPage() {
     if (!cardId) return;
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    fetch(`${supabaseUrl}/functions/v1/public-project-view?cardId=${encodeURIComponent(cardId)}`, {
-      headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
-    })
-      .then(async (r) => {
-        const body = await r.json();
-        if (!r.ok) throw new Error(body?.error || 'Erro ao carregar');
-        setCard(body.card);
-        setActivities(body.activities || []);
-        setMembers(body.members || []);
+    let cancelled = false;
+
+    const fetchData = (initial: boolean) => {
+      return fetch(`${supabaseUrl}/functions/v1/public-project-view?cardId=${encodeURIComponent(cardId)}`, {
+        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
       })
-      .catch((e) => setError(String(e.message || e)))
-      .finally(() => setLoading(false));
+        .then(async (r) => {
+          const body = await r.json();
+          if (!r.ok) throw new Error(body?.error || 'Erro ao carregar');
+          if (cancelled) return;
+          setCard(body.card);
+          setActivities(body.activities || []);
+          setMembers(body.members || []);
+          if (initial) setError(null);
+        })
+        .catch((e) => { if (initial && !cancelled) setError(String(e.message || e)); })
+        .finally(() => { if (initial && !cancelled) setLoading(false); });
+    };
+
+    fetchData(true);
+    const interval = setInterval(() => fetchData(false), 10000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [cardId]);
+
 
   const memberById = new Map(members.map((m) => [m.id, m]));
   const grouped: Record<ActivityStatus, Activity[]> = { nao_iniciado: [], em_andamento: [], concluido: [] };
