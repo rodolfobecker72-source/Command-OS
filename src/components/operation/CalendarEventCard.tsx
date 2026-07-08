@@ -129,11 +129,23 @@ export function CalendarEventCard({
         {...draggable.listeners}
         {...draggable.attributes}
         onClick={(e) => { if (!draggable.isDragging) onClick?.(); e.stopPropagation(); }}
-        className={cn(baseClasses, 'px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate flex items-center gap-1 hover:opacity-80')}
+        className={cn(baseClasses, 'px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold hover:opacity-80', isActivity ? 'block' : 'flex items-center gap-1 truncate')}
       >
-        <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
-        {timeLabel && <span className="text-foreground/70 font-semibold shrink-0">{timeLabel}</span>}
-        <span className="truncate text-foreground">{mainLabel}</span>
+        {isActivity ? (
+          <>
+            <div className="flex items-center gap-1 truncate">
+              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+              <span className="truncate text-foreground">{mainLabel}</span>
+            </div>
+            <div className="truncate text-foreground/80 pl-2.5 font-medium">{secondaryLabel}</div>
+          </>
+        ) : (
+          <>
+            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+            {timeLabel && <span className="text-foreground/70 font-semibold shrink-0">{timeLabel}</span>}
+            <span className="truncate text-foreground">{mainLabel}</span>
+          </>
+        )}
       </button>
     );
   }
@@ -157,7 +169,7 @@ export function CalendarEventCard({
         <p className="text-[10px] text-muted-foreground truncate pl-3.5">{appointment.location}</p>
       )}
       {isActivity && activity && (
-        <p className="text-[10px] text-muted-foreground truncate pl-3.5">{activity.budget.projectName}</p>
+        <p className="text-[10px] text-muted-foreground truncate pl-3.5">{secondaryLabel}</p>
       )}
       {!isAppointment && !isActivity && client && (
         <p className="text-[10px] text-muted-foreground truncate pl-3.5">{client.companyName}</p>
