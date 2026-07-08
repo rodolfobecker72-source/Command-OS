@@ -69,6 +69,7 @@ export function TeamCalendarPage() {
   const [view, setView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [activityDialog, setActivityDialog] = useState<{ projectCardId: string; projectName: string } | null>(null);
   const [showDeliveries, setShowDeliveries] = useState(true);
 
   const [members, setMembers] = useState<Member[]>([]);
