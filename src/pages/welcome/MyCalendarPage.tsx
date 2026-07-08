@@ -462,19 +462,24 @@ export function MyCalendarPage() {
 
 
       {/* Grid */}
-      <div className="flex-1 overflow-auto bg-card">
-        <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card z-10">
-          {WEEKDAYS.map(d => (
-            <div key={d} className="py-2 text-center text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {d}
-            </div>
-          ))}
-        </div>
+      <div className={cn('flex-1 bg-card', view === 'day' ? 'overflow-hidden flex flex-col min-h-0' : 'overflow-auto')}>
+        {view !== 'day' && (
+          <div className="grid grid-cols-7 border-b border-border sticky top-0 bg-card z-10">
+            {WEEKDAYS.map(d => (
+              <div key={d} className="py-2 text-center text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {d}
+              </div>
+            ))}
+          </div>
+        )}
 
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className={cn('grid grid-cols-7', view === 'month' ? 'auto-rows-fr' : '')}>
+          <div className={cn(
+            view === 'day' ? 'flex-1 min-h-0 flex' : 'grid grid-cols-7',
+            view === 'month' && 'auto-rows-fr',
+          )}>
             {days.map((day, i) => {
-              const inMonth = view === 'week' || isSameMonth(day, currentDate);
+              const inMonth = view !== 'month' || isSameMonth(day, currentDate);
               const today = isToday(day);
               const key = format(day, 'yyyy-MM-dd');
               const dayEvents = eventsByDay.get(key) || [];
@@ -490,6 +495,7 @@ export function MyCalendarPage() {
                   view={view}
                   onAddNote={() => openNewNote(key)}
                   onCreateAppt={() => { setEditingAppt(null); setCreateApptAt(day); setApptDialogOpen(true); }}
+                  onDayNumClick={view === 'day' ? undefined : () => { setCurrentDate(day); setView('day'); }}
                 >
                   {dayEvents.map(ev => (
                     <DraggableEvent
