@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
+import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
