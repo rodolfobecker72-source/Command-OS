@@ -27,6 +27,7 @@ interface CalendarWeekViewProps {
   onAppointmentClick?: (appointment: Appointment) => void;
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
+  onDayClick?: (date: Date) => void;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
