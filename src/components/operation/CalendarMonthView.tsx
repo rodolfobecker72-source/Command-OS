@@ -77,7 +77,7 @@ function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; childre
 
 export function CalendarMonthView({
   currentDate, events, pendingEvents = [], deliveryEvents, activityEvents = [], appointments = [],
-  onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
+  onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt, onDayClick,
 }: CalendarMonthViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -91,8 +91,8 @@ export function CalendarMonthView({
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEndDay}>
-      <div className="flex flex-col h-full">
-        <div className="grid grid-cols-7 border-b border-border">
+      <div className="flex flex-col h-full min-h-0">
+        <div className="grid grid-cols-7 border-b border-border shrink-0">
           {WEEKDAYS.map(d => (
             <div key={d} className="py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {d}
@@ -100,7 +100,7 @@ export function CalendarMonthView({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+        <div className="grid grid-cols-7 flex-1 auto-rows-fr min-h-0">
           {days.map((day, i) => {
             const inMonth = isSameMonth(day, currentDate);
             const today = isToday(day);
@@ -122,15 +122,18 @@ export function CalendarMonthView({
                 )}
               >
                 <div className="flex items-center justify-between mb-0.5">
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => onDayClick?.(day)}
                     className={cn(
-                      'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full',
+                      'text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors',
                       today && 'bg-primary text-primary-foreground',
                       !inMonth && 'text-muted-foreground/50',
+                      onDayClick && 'hover:bg-primary/20 cursor-pointer',
                     )}
                   >
                     {format(day, 'd')}
-                  </span>
+                  </button>
                 </div>
                 <div className="space-y-0.5 overflow-y-auto max-h-[52px] md:max-h-[76px] scrollbar-thin">
                   {dayEvents.map(ev => (
