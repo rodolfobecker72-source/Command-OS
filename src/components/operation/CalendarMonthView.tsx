@@ -30,6 +30,7 @@ interface CalendarMonthViewProps {
   onAppointmentClick?: (appointment: Appointment) => void;
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
+  onDayClick?: (date: Date) => void;
 }
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
