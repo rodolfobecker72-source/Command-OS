@@ -91,12 +91,14 @@ export function CalendarEventCard({
 
   // Build label
   let mainLabel = '';
+  let secondaryLabel = '';
   let timeLabel = '';
   if (isAppointment && appointment) {
     if (!appointment.allDay) timeLabel = format(appointment.startAt, 'HH:mm');
     mainLabel = appointment.title;
   } else if (isActivity && activity) {
-    mainLabel = `✓ ${budget?.proposalId || ''} - ${activity.title}`;
+    mainLabel = `${budget?.proposalId || ''} - ${budget?.projectName || ''}`.replace(/^ - /, '');
+    secondaryLabel = `✓ ${activity.title}`;
   } else if (isDelivery) {
     mainLabel = deliveryLabel || '';
   } else if (budget) {
