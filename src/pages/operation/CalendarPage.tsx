@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Switch } from '@/components/ui/switch';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
+import { CalendarDayView } from '@/components/operation/CalendarDayView';
 import { AppointmentDialog } from '@/components/operation/AppointmentDialog';
 import { Header } from '@/components/layout/Header';
 import { generateProjectPDF } from '@/utils/projectPDF';
@@ -79,7 +80,7 @@ export function CalendarPage() {
   const navigate = useNavigate();
   const { appointments, create: createAppointment, update: updateAppointment, remove: removeAppointment } = useAppointments();
 
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -112,12 +113,14 @@ export function CalendarPage() {
   );
 
   const goToday = () => setCurrentDate(new Date());
-  const goPrev = () => setCurrentDate(d => (view === 'month' ? subMonths(d, 1) : subWeeks(d, 1)));
-  const goNext = () => setCurrentDate(d => (view === 'month' ? addMonths(d, 1) : addWeeks(d, 1)));
+  const goPrev = () => setCurrentDate(d => (view === 'month' ? subMonths(d, 1) : view === 'week' ? subWeeks(d, 1) : addDays(d, -1)));
+  const goNext = () => setCurrentDate(d => (view === 'month' ? addMonths(d, 1) : view === 'week' ? addWeeks(d, 1) : addDays(d, 1)));
 
   const headerLabel = view === 'month'
     ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
-    : `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`;
+    : view === 'week'
+      ? `Semana de ${format(currentDate, "dd 'de' MMMM", { locale: ptBR })}`
+      : format(currentDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   const openBudget = useCallback((budget: Budget) => {
     setSelectedBudget(budget);
@@ -238,10 +241,11 @@ export function CalendarPage() {
 
       {/* Toolbar */}
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
-        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week')}>
+        <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
           <TabsList className="h-8">
             <TabsTrigger value="month" className="text-xs px-3 h-7">Mês</TabsTrigger>
             <TabsTrigger value="week" className="text-xs px-3 h-7">Semana</TabsTrigger>
+            <TabsTrigger value="day" className="text-xs px-3 h-7">Dia</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -276,7 +280,7 @@ export function CalendarPage() {
       </div>
 
       {/* Calendar body */}
-      <div className="flex-1 overflow-auto bg-card">
+      <div className="flex-1 min-h-0 overflow-hidden bg-card">
         {view === 'month' ? (
           <CalendarMonthView
             currentDate={currentDate}
@@ -289,9 +293,24 @@ export function CalendarPage() {
             onAppointmentClick={(a) => { setEditingAppt(a); setApptDialogOpen(true); }}
             onDragEndDay={handleDragEnd}
             onCreateAppointmentAt={handleOpenNewAppointment}
+            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+          />
+        ) : view === 'week' ? (
+          <CalendarWeekView
+            currentDate={currentDate}
+            events={calendarEvents}
+            pendingEvents={pendingBudgets}
+            deliveryEvents={showDeliveries ? deliveryEvents : []}
+            appointments={showAppointments ? appointments : []}
+            onEventClick={openBudget}
+            onDeliveryClick={handleDeliveryClick}
+            onAppointmentClick={(a) => { setEditingAppt(a); setApptDialogOpen(true); }}
+            onDragEndDay={handleDragEnd}
+            onCreateAppointmentAt={handleOpenNewAppointment}
+            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
           />
         ) : (
-          <CalendarWeekView
+          <CalendarDayView
             currentDate={currentDate}
             events={calendarEvents}
             pendingEvents={pendingBudgets}
