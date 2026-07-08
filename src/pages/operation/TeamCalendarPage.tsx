@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
+import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -68,6 +69,7 @@ export function TeamCalendarPage() {
   const [view, setView] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [activityDialog, setActivityDialog] = useState<{ projectCardId: string; projectName: string } | null>(null);
   const [showDeliveries, setShowDeliveries] = useState(true);
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -393,7 +395,7 @@ export function TeamCalendarPage() {
             activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setSelectedBudget(a.budget)}
+            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
             onDragEndDay={handleDragEnd}
           />
         ) : (
@@ -405,11 +407,19 @@ export function TeamCalendarPage() {
             activityEvents={memberActivityEvents}
             onEventClick={setSelectedBudget}
             onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setSelectedBudget(a.budget)}
+            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
             onDragEndDay={handleDragEnd}
           />
         )}
       </div>
+
+      <ProjectActivitiesDialog
+        open={!!activityDialog}
+        onOpenChange={(o) => { if (!o) setActivityDialog(null); }}
+        projectCardId={activityDialog?.projectCardId || ''}
+        projectName={activityDialog?.projectName || ''}
+      />
+
 
       {/* Simple detail dialog */}
       <Dialog open={!!selectedBudget} onOpenChange={open => { if (!open) setSelectedBudget(null); }}>
