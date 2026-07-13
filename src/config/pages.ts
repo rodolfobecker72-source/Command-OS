@@ -15,7 +15,7 @@ export const APP_PAGES: AppPage[] = [
   { key: 'meu-calendario', label: 'Meu Calendário', href: '/meu-calendario', group: 'Início' },
 
   // Comercial
-  { key: 'prospeccao', label: 'Prospecção', href: '/prospeccao', group: 'Comercial', restrictedFrom: ['time_hero'] },
+  { key: 'prospeccao', label: 'Gestão de Leads', href: '/prospeccao', group: 'Comercial', restrictedFrom: ['time_hero'] },
   { key: 'clientes', label: 'Clientes', href: '/clientes', group: 'Comercial', restrictedFrom: ['time_hero'] },
   { key: 'crm', label: 'CRM', href: '/crm', group: 'Comercial', restrictedFrom: ['time_hero'] },
 

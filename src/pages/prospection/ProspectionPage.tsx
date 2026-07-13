@@ -505,7 +505,7 @@ export function ProspectionPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="Prospecção" subtitle="Módulo pré-CRM de aquisição e qualificação" />
+      <Header title="Gestão de Leads" subtitle="Módulo pré-CRM de aquisição e qualificação" />
       <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

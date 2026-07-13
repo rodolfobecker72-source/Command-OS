@@ -429,7 +429,7 @@ export function MyCalendarPage() {
           <Switch checked={showProspection} onCheckedChange={setShowProspection} className="scale-90" />
           <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => setShowProspection(v => !v)}>
             <Phone className="w-3.5 h-3.5 text-orange-500" />
-            Prospecção
+            Gestão de Leads
           </label>
         </div>
         <div className="flex items-center gap-2">
@@ -573,7 +573,7 @@ export function MyCalendarPage() {
               )}
               <Button onClick={handleGoTo} className="w-full gap-2 mt-2">
                 <ExternalLink className="w-4 h-4" />
-                {selected.kind === 'project' ? 'Abrir em Área de Projetos' : 'Abrir em Prospecção'}
+                {selected.kind === 'project' ? 'Abrir em Área de Projetos' : 'Abrir em Gestão de Leads'}
               </Button>
             </div>
           )}
