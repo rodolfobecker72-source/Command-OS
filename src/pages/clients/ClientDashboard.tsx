@@ -156,13 +156,6 @@ export function ClientDashboard() {
                   {filteredClients.length} cadastro(s) encontrado(s)
                 </CardDescription>
               </div>
-              <Button
-                onClick={() => navigate('/clientes/novo')}
-                className="btn-hero"
-              >
-                <Plus className="w-4 h-4" />
-                Novo Cadastro
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
