@@ -380,16 +380,6 @@ export function ProjectManagementPage() {
                                             </span>
                                           </button>
                                         </PopoverTrigger>
-                                    )}
-                                    <span
-                                      className={cn(
-                                        'hidden md:inline-flex text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
-                                        pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                                      )}
-                                      title={`${counts.done}/${counts.total} atividades concluídas`}
-                                    >
-                                      {pct}%
-                                    </span>
                                         <PopoverContent className="w-72 p-2 z-[200]" align="end" onClick={(e) => e.stopPropagation()}>
                                           <div className="text-xs font-medium text-muted-foreground mb-1 px-1">Links do projeto</div>
                                           <ul className="space-y-1">
@@ -411,6 +401,15 @@ export function ProjectManagementPage() {
                                         </PopoverContent>
                                       </Popover>
                                     )}
+                                    <span
+                                      className={cn(
+                                        'hidden md:inline-flex text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
+                                        pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                      )}
+                                      title={`${counts.done}/${counts.total} atividades concluídas`}
+                                    >
+                                      {pct}%
+                                    </span>
                                     <Popover>
                                       <PopoverTrigger asChild>
                                         <Button
