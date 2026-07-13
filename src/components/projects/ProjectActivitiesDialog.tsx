@@ -8,6 +8,8 @@ import {
   TouchSensor,
   KeyboardSensor,
   closestCorners,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
