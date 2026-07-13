@@ -5,6 +5,8 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
   closestCorners,
   useSensor,
   useSensors,
@@ -13,6 +15,7 @@ import {
   SortableContext,
   arrayMove,
   useSortable,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -121,7 +124,11 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   } | null>(null);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     if (!open || !projectCardId) return;
@@ -1191,36 +1198,45 @@ function SortableCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative rounded-lg border p-3 text-sm flex flex-col gap-1.5 transition-colors',
+        'group relative rounded-lg border text-sm flex transition-colors overflow-hidden',
         col.cardBg,
         col.cardBorder,
-        'hover:border-primary/40'
+        'hover:border-primary/40',
+        isDragging && 'ring-2 ring-primary/40 shadow-lg',
       )}
     >
-      <div className="absolute top-2 right-2 flex items-center gap-1">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
-          title="Arrastar para outra coluna"
-          aria-label="Arrastar"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(activity.id)}
-          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-          title="Remover"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
+      {/* Full-height drag handle strip */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className={cn(
+          'shrink-0 w-7 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none',
+          'bg-foreground/[0.04] hover:bg-foreground/10 text-muted-foreground hover:text-foreground',
+          'border-r border-border/50 transition-colors',
+        )}
+        title="Arrastar para mover"
+        aria-label="Arrastar atividade"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
 
-      {/* Title */}
-      <div className="flex items-start gap-2 pr-14">
-        <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+      <div className="flex-1 min-w-0 p-3 flex flex-col gap-1.5">
+        <div className="absolute top-2 right-2 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onDelete(activity.id)}
+            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+            title="Remover"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Title */}
+        <div className="flex items-start gap-2 pr-6">
+          <FileText className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+
         {isEditing ? (
           <Input
             autoFocus
@@ -1390,6 +1406,7 @@ function SortableCard({
         />
         <span className={cn(activity.isDelivery && 'text-blue-600 font-medium')}>Entrega</span>
       </label>
+      </div>
     </div>
   );
 }
