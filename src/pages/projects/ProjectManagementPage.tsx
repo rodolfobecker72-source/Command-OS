@@ -353,15 +353,6 @@ export function ProjectManagementPage() {
                                         <div className="text-xs text-muted-foreground truncate">{card.clientName}</div>
                                       )}
                                     </button>
-                                    <span
-                                      className={cn(
-                                        'hidden md:inline-flex text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
-                                        pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                                      )}
-                                      title={`${counts.done}/${counts.total} atividades concluídas`}
-                                    >
-                                      {pct}%
-                                    </span>
                                     {projectLinks.length === 1 && (
                                       <a
                                         href={projectLinks[0]}
@@ -410,6 +401,15 @@ export function ProjectManagementPage() {
                                         </PopoverContent>
                                       </Popover>
                                     )}
+                                    <span
+                                      className={cn(
+                                        'hidden md:inline-flex text-xs font-semibold shrink-0 tabular-nums px-2 py-0.5 rounded-full',
+                                        pct === 100 ? 'bg-success/10 text-success' : pct > 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                      )}
+                                      title={`${counts.done}/${counts.total} atividades concluídas`}
+                                    >
+                                      {pct}%
+                                    </span>
                                     <Popover>
                                       <PopoverTrigger asChild>
                                         <Button
