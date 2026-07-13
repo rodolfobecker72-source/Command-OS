@@ -47,7 +47,7 @@ const navGroups: NavGroup[] = [
     label: 'Comercial',
     icon: Briefcase,
     items: [
-      { name: 'Prospecção', href: '/prospeccao', icon: Target, pageKey: 'prospeccao' },
+      { name: 'Gestão de Leads', href: '/prospeccao', icon: Target, pageKey: 'prospeccao' },
       { name: 'Empresas Cadastradas', href: '/clientes', icon: Users, pageKey: 'clientes' },
       { name: 'CRM', href: '/crm', icon: LayoutGrid, pageKey: 'crm' },
       { name: 'Dashboard', href: '/crm/dashboard', icon: TrendingUp, pageKey: 'crm' },
