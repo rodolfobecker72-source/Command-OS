@@ -1406,6 +1406,7 @@ function SortableCard({
         />
         <span className={cn(activity.isDelivery && 'text-blue-600 font-medium')}>Entrega</span>
       </label>
+      </div>
     </div>
   );
 }
