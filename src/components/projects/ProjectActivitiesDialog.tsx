@@ -524,6 +524,14 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     return null;
   };
 
+  const collisionDetection = (args: any) => {
+    const pointer = pointerWithin(args);
+    if (pointer.length > 0) return pointer;
+    const intersecting = rectIntersection(args);
+    if (intersecting.length > 0) return intersecting;
+    return closestCorners(args);
+  };
+
   const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
   const handleDragEnd = (e: DragEndEvent) => {
