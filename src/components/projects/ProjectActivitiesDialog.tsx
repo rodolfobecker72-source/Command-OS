@@ -747,7 +747,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         ) : (
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
