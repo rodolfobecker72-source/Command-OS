@@ -96,6 +96,7 @@ export function ServiceItemsPage() {
       .from('service_items')
       .select('*')
       .eq('workspace_id', workspaceId)
+      .order('sort_order', { ascending: true })
       .order('name');
     if (error) {
       toast.error('Erro ao carregar itens de serviço');
