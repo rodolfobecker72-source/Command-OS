@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Calendar, Loader2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,38 +12,42 @@ export function GoogleCalendarConnect() {
   const [busy, setBusy] = useState(false);
   const [connected, setConnected] = useState<{ email: string } | null>(null);
 
-  const load = async () => {
-    if (!user) return;
+  const load = useCallback(async () => {
+    if (!user) return false;
     setLoading(true);
     const { data } = await supabase
       .from('user_google_tokens')
       .select('google_email')
       .eq('user_id', user.id)
       .maybeSingle();
-    setConnected(data ? { email: data.google_email } : null);
+    const nextConnected = data ? { email: data.google_email } : null;
+    setConnected(nextConnected);
     setLoading(false);
-  };
+    return Boolean(nextConnected);
+  }, [user]);
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [load]);
 
   // Recarrega ao voltar foco (após popup OAuth fechar)
   useEffect(() => {
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, []);
+  }, [load]);
 
   const handleConnect = async () => {
+    const popup = window.open('', '_blank');
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke('google-calendar-oauth-start', {
         body: { return_to: window.location.pathname },
       });
       if (error || !data?.url) throw error || new Error('Sem URL');
-      // Abre em nova aba de nível superior (sem opener) para evitar bloqueio
-      // do Google quando o app está dentro de um iframe (preview do Lovable).
-      const newTab = window.open(data.url, '_blank', 'noopener,noreferrer');
-      if (!newTab) {
+      // A aba é criada imediatamente no clique e só depois recebe a URL,
+      // evitando que o navegador trate o OAuth como popup não solicitado.
+      if (popup) {
+        popup.location.href = data.url;
+      } else {
         // Fallback: se popup bloqueado, navega a janela top-level inteira.
         try {
           if (window.top) {
@@ -55,7 +59,22 @@ export function GoogleCalendarConnect() {
           window.location.href = data.url;
         }
       }
+
+      for (let attempt = 0; attempt < 90; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const isConnected = await load();
+        if (isConnected) {
+          toast({ title: 'Google Calendar conectado' });
+          return;
+        }
+      }
+
+      toast({
+        title: 'Conexão ainda não confirmada',
+        description: 'Se o Google exibiu um bloqueio, adicione este e-mail como usuário de teste no OAuth do Google ou publique o app OAuth.',
+      });
     } catch (e: any) {
+      popup?.close();
       toast({ title: 'Erro ao iniciar conexão', description: e.message, variant: 'destructive' });
     } finally {
       setBusy(false);
