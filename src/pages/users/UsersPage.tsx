@@ -42,7 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase, Camera, Users } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, Crown, ShieldCheck, Eye as EyeIcon, Briefcase, Camera, Users, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
@@ -86,6 +86,10 @@ export function UsersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberWithProfile | null>(null);
   const [deletingMember, setDeletingMember] = useState<MemberWithProfile | null>(null);
+  const [resetPasswordMember, setResetPasswordMember] = useState<MemberWithProfile | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -323,6 +327,46 @@ export function UsersPage() {
     setDeletingMember(null);
   };
 
+  const handleResetPassword = async () => {
+    if (!resetPasswordMember) return;
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const response = await supabase.functions.invoke('reset-user-password', {
+        body: { email: resetPasswordMember.email, new_password: newPassword },
+      });
+
+      if (response.error) {
+        toast.error('Erro ao redefinir senha: ' + (response.error.message || 'Erro desconhecido'));
+        return;
+      }
+
+      const result = response.data;
+      if (result?.error) {
+        toast.error('Erro ao redefinir senha: ' + result.error);
+        return;
+      }
+
+      toast.success(`Senha redefinida para ${resetPasswordMember.email}`);
+      setResetPasswordMember(null);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      toast.error('Erro ao redefinir senha: ' + err.message);
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
@@ -490,8 +534,16 @@ export function UsersPage() {
                             {canManage && (
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
-                                  <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)}>
+                                  <Button variant="ghost" size="icon" onClick={() => handleEditMember(member)} title="Editar">
                                     <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setResetPasswordMember(member)}
+                                    title="Redefinir senha"
+                                  >
+                                    <KeyRound className="w-4 h-4" />
                                   </Button>
                                   {member.role !== 'owner' && (
                                     <Button
@@ -499,6 +551,7 @@ export function UsersPage() {
                                       size="icon"
                                       className="text-destructive hover:text-destructive"
                                       onClick={() => setDeletingMember(member)}
+                                      title="Remover"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </Button>
@@ -532,8 +585,17 @@ export function UsersPage() {
                           </div>
                           {canManage && (
                             <div className="flex gap-1 shrink-0">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditMember(member)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditMember(member)} title="Editar">
                                 <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setResetPasswordMember(member)}
+                                title="Redefinir senha"
+                              >
+                                <KeyRound className="w-4 h-4" />
                               </Button>
                               {member.role !== 'owner' && (
                                 <Button
@@ -541,6 +603,7 @@ export function UsersPage() {
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={() => setDeletingMember(member)}
+                                  title="Remover"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -666,6 +729,78 @@ export function UsersPage() {
                 </Button>
                 <Button onClick={handleSaveEdit} disabled={isSavingEdit || editForm.name.trim().length === 0}>
                   {isSavingEdit ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reset Password Dialog */}
+        <Dialog
+          open={!!resetPasswordMember}
+          onOpenChange={(open) => {
+            if (!open) {
+              setResetPasswordMember(null);
+              setNewPassword('');
+              setConfirmPassword('');
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Redefinir senha</DialogTitle>
+              <DialogDescription>
+                Definir uma nova senha para{' '}
+                <strong>{resetPasswordMember?.profile?.name || resetPasswordMember?.email}</strong>
+                {resetPasswordMember?.profile?.name && (
+                  <span className="block text-xs text-muted-foreground mt-1">
+                    {resetPasswordMember.email}
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-new-password">Nova senha <span className="text-destructive">*</span></Label>
+                <PasswordInput
+                  id="reset-new-password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                {newPassword.length > 0 && newPassword.length < 6 && (
+                  <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reset-confirm-password">Confirmar nova senha <span className="text-destructive">*</span></Label>
+                <PasswordInput
+                  id="reset-confirm-password"
+                  placeholder="Repita a senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                  <p className="text-xs text-destructive">As senhas não coincidem</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setResetPasswordMember(null)}
+                  disabled={isResettingPassword}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={
+                    isResettingPassword ||
+                    newPassword.length < 6 ||
+                    newPassword !== confirmPassword
+                  }
+                >
+                  {isResettingPassword ? 'Salvando...' : 'Salvar nova senha'}
                 </Button>
               </DialogFooter>
             </div>
