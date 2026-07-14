@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Search, Pencil, Trash2, Package } from 'lucide-react';
 import { SortableTableBody } from '@/components/crm/SortableTableBody';
-import { TableCell as TC } from '@/components/ui/table';
 import { toast } from 'sonner';
 
 export interface ServiceItemRecord {
