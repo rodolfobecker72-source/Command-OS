@@ -161,6 +161,9 @@ export function ServiceItemsPage() {
         if (error) throw error;
         toast.success('Item atualizado!');
       } else {
+        const maxOrder = items
+          .filter(i => i.categoryKey === form.categoryKey)
+          .reduce((m, i) => Math.max(m, i.sortOrder), 0);
         const { error } = await supabase.from('service_items').insert({
           workspace_id: workspaceId,
           name: form.name.trim(),
@@ -168,7 +171,8 @@ export function ServiceItemsPage() {
           default_price: form.defaultPrice,
           unit: form.unit,
           description: form.description.trim(),
-        });
+          sort_order: maxOrder + 1,
+        } as any);
         if (error) throw error;
         toast.success('Item criado!');
       }
