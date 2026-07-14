@@ -86,6 +86,10 @@ export function UsersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberWithProfile | null>(null);
   const [deletingMember, setDeletingMember] = useState<MemberWithProfile | null>(null);
+  const [resetPasswordMember, setResetPasswordMember] = useState<MemberWithProfile | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
