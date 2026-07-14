@@ -735,6 +735,78 @@ export function UsersPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Reset Password Dialog */}
+        <Dialog
+          open={!!resetPasswordMember}
+          onOpenChange={(open) => {
+            if (!open) {
+              setResetPasswordMember(null);
+              setNewPassword('');
+              setConfirmPassword('');
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Redefinir senha</DialogTitle>
+              <DialogDescription>
+                Definir uma nova senha para{' '}
+                <strong>{resetPasswordMember?.profile?.name || resetPasswordMember?.email}</strong>
+                {resetPasswordMember?.profile?.name && (
+                  <span className="block text-xs text-muted-foreground mt-1">
+                    {resetPasswordMember.email}
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-new-password">Nova senha <span className="text-destructive">*</span></Label>
+                <PasswordInput
+                  id="reset-new-password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                {newPassword.length > 0 && newPassword.length < 6 && (
+                  <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reset-confirm-password">Confirmar nova senha <span className="text-destructive">*</span></Label>
+                <PasswordInput
+                  id="reset-confirm-password"
+                  placeholder="Repita a senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                  <p className="text-xs text-destructive">As senhas não coincidem</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setResetPasswordMember(null)}
+                  disabled={isResettingPassword}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={
+                    isResettingPassword ||
+                    newPassword.length < 6 ||
+                    newPassword !== confirmPassword
+                  }
+                >
+                  {isResettingPassword ? 'Salvando...' : 'Salvar nova senha'}
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deletingMember} onOpenChange={(open) => { if (!open) setDeletingMember(null); }}>
           <AlertDialogContent>
