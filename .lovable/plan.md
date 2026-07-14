@@ -1,71 +1,42 @@
-## Escopo
+## Migrar Google Calendar para App User Connector
 
-Migrar a integração Google Calendar do OAuth próprio (Edge Functions + `user_google_tokens`) para o **App User Connector Lovable** já configurado no workspace (cliente `lovable-command`, `connector_id: google_calendar`).
+Substituir todo o OAuth próprio (client ID/secret, edge functions de callback, tabela `user_google_tokens`) pelo **App User Connector do Google Calendar** gerenciado pela Lovable. Cada usuário só clica em "Conectar Google Calendar", autoriza e pronto — sem tela de "app não verificado", sem cadastrar testadores, sem Google Cloud Console.
 
-## Passos
+### O que muda para o usuário final
+- Popup de consentimento oficial do Google (via gateway Lovable)
+- Sem erro `access_denied` mesmo com contas que não são "test users"
+- Refresh de token automático (não precisa reconectar)
 
-### 1. Vincular o client ao projeto
-Chamar `connector_app_user--connect_client` com `connector_id: google_calendar`. Isso injeta o secret `GOOGLE_CALENDAR_APP_USER_CONNECTOR_CLIENT_API_KEY` no projeto e habilita as chamadas via gateway (`https://connector-gateway.lovable.dev/google_calendar/...`).
+### Passos
 
-### 2. Novas Edge Functions
+**1. Registrar o App User Connector**
+- Rodar `connector_app_user--connect_client` com `connector_id: "google_calendar"`. Abre um formulário onde o admin cola Client ID/Secret de um Google OAuth Web Client (pode reaproveitar o atual). O único redirect URI a cadastrar no Google agora é `https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/callback`.
 
-Como o app é Vite + React (não TanStack Start), o helper `callAsAppUser` do knowledge da Lovable não se aplica diretamente. Vou implementar o equivalente em duas Edge Functions:
+**2. Nova edge function `google-calendar-connect-init`**
+- Recebe o usuário autenticado, chama `connectAppUser` com escopos `userinfo.email`, `userinfo.profile`, `calendar.readonly` (ou `calendar` se precisar escrever), retorna a URL de consentimento para abrir no popup.
 
-- **`google-calendar-connect-start`** — recebe o `user_id` autenticado, chama `POST https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/authorize` com os escopos abaixo e devolve a `authorization_url` do Google + um `session_id`. O front abre em nova aba (mesmo padrão que corrigimos hoje).
-- **`google-calendar-connect-status`** — dado o `session_id`, pergunta ao gateway se a autorização foi concluída e recupera a `connection_key` per-user, que fica armazenada em `user_google_tokens` (mantemos a tabela, mas passa a guardar `connection_key` em vez de `access_token`/`refresh_token`).
+**3. Nova edge function `google-calendar-api` (proxy autenticado)**
+- Substitui chamadas diretas ao Google. Usa `callAsAppUser` do helper `appUserConnector.ts` para chamar `/calendar/v3/...` via gateway. Cobre listar calendários, listar/criar/atualizar eventos — o que `google_calendar_sync_map` já usa hoje.
 
-Escopos:
-```
-https://www.googleapis.com/auth/userinfo.email
-https://www.googleapis.com/auth/userinfo.profile
-https://www.googleapis.com/auth/calendar.events
-```
+**4. Refactor do front-end (`GoogleCalendarConnect.tsx`)**
+- Trocar o fluxo `google-calendar-oauth-start` → popup → callback pelo novo `google-calendar-connect-init`.
+- Status "conectado" passa a vir de `hasAppUserConnection('google_calendar')` em vez da tabela `user_google_tokens`.
+- Manter polling de 2s para detectar a conexão após o popup fechar.
 
-### 3. Reescrever a sincronização
+**5. Migrar chamadas existentes ao Calendar**
+- Todo código que hoje lê `user_google_tokens` + chama Google direto → passa a invocar `google-calendar-api`. A tabela `google_calendar_sync_map` (mapeamento evento CRM ↔ evento Google) continua igual.
 
-`google-calendar-sync-activity` e `google-calendar-disconnect` passam a chamar o gateway com dois headers:
-```
-Authorization: Bearer ${LOVABLE_API_KEY}
-X-Connection-Api-Key: ${connection_key do usuário}
-```
-em vez de renovar tokens manualmente. Endpoints usados continuam os mesmos:
-- `POST /calendar/v3/calendars/primary/events`
-- `PATCH /calendar/v3/calendars/primary/events/{id}`
-- `DELETE /calendar/v3/calendars/primary/events/{id}`
+**6. Limpar o legado**
+- Remover edge functions `google-calendar-oauth-start` e `google-calendar-oauth-callback`.
+- Remover secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET` (não são mais usados no app; ficam só dentro do connector).
+- Migration para dropar `user_google_tokens` (só depois de confirmar que ninguém mais lê dela).
 
-Isso remove todo o código de refresh de token, que era o ponto mais frágil da implementação anterior.
+### Detalhes técnicos
+- Helper `supabase/functions/_shared/appUserConnector.ts` conforme o padrão `tanstack-app-user-connector`, adaptado para Deno/Supabase Edge Functions.
+- Chave `GOOGLE_CALENDAR_APP_USER_CONNECTOR_CLIENT_API_KEY` é injetada automaticamente pelo `connect_client`.
+- Storage da conexão fica no connector gateway — não precisa de tabela nova no banco.
 
-### 4. Ajuste do banco
+### Pré-requisito
+Você (admin do workspace) precisa completar o formulário do passo 1 colando Client ID/Secret. Pode ser o mesmo par que já usa hoje.
 
-Alteração mínima em `user_google_tokens`:
-- Adicionar coluna `connection_key text` (nullable).
-- Manter `google_email`, `user_id`, `workspace_id`.
-- Remover uso das colunas `access_token`, `refresh_token`, `expires_at`, `scope` no código (colunas continuam no banco por compatibilidade; podem ser dropadas depois).
-
-Migration com `GRANT` + RLS já existente.
-
-### 5. Front-end
-
-`GoogleCalendarConnect.tsx` passa a:
-1. Chamar `google-calendar-connect-start` → recebe URL do Google + `session_id`.
-2. Abre a URL em nova aba (correção que já fizemos, mantida).
-3. Faz polling a cada 2s em `google-calendar-connect-status` até detectar `connected` (ou timeout de 3 min).
-4. Ao conectar, mostra o e-mail e permite desconectar.
-
-### 6. Limpeza (só depois de validar)
-
-- Deletar Edge Functions antigas: `google-calendar-oauth-start`, `google-calendar-oauth-callback`.
-- Remover secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET` (agora inúteis).
-- No Google Cloud Console, o client OAuth antigo pode ser desativado — o client do connector (`lovable-command`, `919967526716-…`) é quem passa a atender todos os usuários.
-
-## Riscos / observações
-
-- **App é Vite, não TanStack Start.** A knowledge oficial da Lovable pressupõe TanStack; vou adaptar o mesmo protocolo (`/api/v1/app-users/oauth2/authorize` + `X-Connection-Api-Key`) manualmente nas Edge Functions. Se o gateway exigir um fluxo específico que só o SDK TanStack implementa, ajusto na hora da execução.
-- Usuários já conectados no fluxo antigo terão que **reconectar** — não dá para migrar tokens de um sistema para o outro.
-- A URI de callback do OAuth agora é do gateway da Lovable (`https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/callback`), não do Supabase. Já está configurada corretamente porque o client foi criado via `connect_client`.
-
-## O que NÃO vou mexer
-
-- Lógica de negócio da sincronização (o que vira evento, título, descrição, mapa em `google_calendar_sync_map`).
-- UI do Perfil, botões, textos.
-- Escopo da sincronização (continua só atividades de projeto, unidirecional Hero → Google).
+**Quer que eu prossiga?**
