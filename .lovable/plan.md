@@ -1,36 +1,71 @@
-## Diagnóstico
+## Escopo
 
-O erro `ERR_BLOCKED_BY_RESPONSE` na tela `accounts.google.com/signin/oauth/error` acontece **depois** de você escolher a conta. Isso não é problema das credenciais do OAuth (elas funcionaram — a tela de escolher conta abriu). É o Google recusando continuar o fluxo porque a janela foi aberta **a partir do iframe de preview do Lovable**.
+Migrar a integração Google Calendar do OAuth próprio (Edge Functions + `user_google_tokens`) para o **App User Connector Lovable** já configurado no workspace (cliente `lovable-command`, `connector_id: google_calendar`).
 
-O Google usa cabeçalhos `Cross-Origin-Opener-Policy` / `X-Frame-Options` para bloquear qualquer fluxo OAuth que esteja associado a um contexto embutido (iframe). Como hoje o `GoogleCalendarConnect` faz:
+## Passos
 
-```ts
-window.open(data.url, 'google-oauth', 'width=520,height=640');
+### 1. Vincular o client ao projeto
+Chamar `connector_app_user--connect_client` com `connector_id: google_calendar`. Isso injeta o secret `GOOGLE_CALENDAR_APP_USER_CONNECTOR_CLIENT_API_KEY` no projeto e habilita as chamadas via gateway (`https://connector-gateway.lovable.dev/google_calendar/...`).
+
+### 2. Novas Edge Functions
+
+Como o app é Vite + React (não TanStack Start), o helper `callAsAppUser` do knowledge da Lovable não se aplica diretamente. Vou implementar o equivalente em duas Edge Functions:
+
+- **`google-calendar-connect-start`** — recebe o `user_id` autenticado, chama `POST https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/authorize` com os escopos abaixo e devolve a `authorization_url` do Google + um `session_id`. O front abre em nova aba (mesmo padrão que corrigimos hoje).
+- **`google-calendar-connect-status`** — dado o `session_id`, pergunta ao gateway se a autorização foi concluída e recupera a `connection_key` per-user, que fica armazenada em `user_google_tokens` (mantemos a tabela, mas passa a guardar `connection_key` em vez de `access_token`/`refresh_token`).
+
+Escopos:
+```
+https://www.googleapis.com/auth/userinfo.email
+https://www.googleapis.com/auth/userinfo.profile
+https://www.googleapis.com/auth/calendar.events
 ```
 
-…o popup herda o "opener" do iframe do preview, e após selecionar a conta o Google bloqueia (`ERR_BLOCKED_BY_RESPONSE`).
+### 3. Reescrever a sincronização
 
-## O que corrigir
+`google-calendar-sync-activity` e `google-calendar-disconnect` passam a chamar o gateway com dois headers:
+```
+Authorization: Bearer ${LOVABLE_API_KEY}
+X-Connection-Api-Key: ${connection_key do usuário}
+```
+em vez de renovar tokens manualmente. Endpoints usados continuam os mesmos:
+- `POST /calendar/v3/calendars/primary/events`
+- `PATCH /calendar/v3/calendars/primary/events/{id}`
+- `DELETE /calendar/v3/calendars/primary/events/{id}`
 
-Ajustar `src/components/profile/GoogleCalendarConnect.tsx` para abrir o OAuth em uma **aba de nível superior**, sem opener, em vez de um popup filho do iframe:
+Isso remove todo o código de refresh de token, que era o ponto mais frágil da implementação anterior.
 
-1. Trocar `window.open(url, 'google-oauth', 'width=…,height=…')` por `window.open(url, '_blank', 'noopener,noreferrer')`.
-   - Sem opener a nova aba fica desacoplada do iframe do preview e o Google aceita renderizar o consent.
-2. Se `window.open` retornar `null` (bloqueio de popup), cair para `window.top.location.href = url` (navega a página inteira em vez de só o iframe) como fallback.
-3. Após o OAuth terminar, o callback já redireciona para o app com `?google_calendar=connected` — o `useEffect` de `focus` continua funcionando para recarregar o status quando o usuário volta.
+### 4. Ajuste do banco
 
-Também vou reforçar a mensagem para o usuário: se ele estiver testando **dentro do editor Lovable**, avisar que o fluxo do Google funciona melhor no preview em nova aba ou na URL publicada (`https://command.hero.rec.br` ou `https://herocommandcrm.lovable.app`).
+Alteração mínima em `user_google_tokens`:
+- Adicionar coluna `connection_key text` (nullable).
+- Manter `google_email`, `user_id`, `workspace_id`.
+- Remover uso das colunas `access_token`, `refresh_token`, `expires_at`, `scope` no código (colunas continuam no banco por compatibilidade; podem ser dropadas depois).
 
-## Fora do escopo (só se der ruim depois)
+Migration com `GRANT` + RLS já existente.
 
-- Não vou alterar as Edge Functions — o OAuth start/callback estão funcionando (a tela do Google abriu).
-- Não vou mexer no `redirect_uri` (continua apontando para `…/functions/v1/google-calendar-oauth-callback`), pois o próprio erro mostra que o Google chegou até a etapa pós-escolha de conta.
+### 5. Front-end
 
-## Como validar
+`GoogleCalendarConnect.tsx` passa a:
+1. Chamar `google-calendar-connect-start` → recebe URL do Google + `session_id`.
+2. Abre a URL em nova aba (correção que já fizemos, mantida).
+3. Faz polling a cada 2s em `google-calendar-connect-status` até detectar `connected` (ou timeout de 3 min).
+4. Ao conectar, mostra o e-mail e permite desconectar.
 
-1. Você clica em **Conectar Google Calendar** dentro do Perfil.
-2. Abre uma **nova aba** com a tela do Google.
-3. Escolhe a conta → aceita permissões → é redirecionado para o callback.
-4. O callback fecha/redireciona e ao voltar ao Perfil aparece o e-mail conectado.
+### 6. Limpeza (só depois de validar)
 
-Se ainda der `ERR_BLOCKED_BY_RESPONSE`, teste direto na URL publicada — o preview em iframe pode ter restrições adicionais em alguns navegadores (Safari com bloqueio de cookies de terceiros).
+- Deletar Edge Functions antigas: `google-calendar-oauth-start`, `google-calendar-oauth-callback`.
+- Remover secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET` (agora inúteis).
+- No Google Cloud Console, o client OAuth antigo pode ser desativado — o client do connector (`lovable-command`, `919967526716-…`) é quem passa a atender todos os usuários.
+
+## Riscos / observações
+
+- **App é Vite, não TanStack Start.** A knowledge oficial da Lovable pressupõe TanStack; vou adaptar o mesmo protocolo (`/api/v1/app-users/oauth2/authorize` + `X-Connection-Api-Key`) manualmente nas Edge Functions. Se o gateway exigir um fluxo específico que só o SDK TanStack implementa, ajusto na hora da execução.
+- Usuários já conectados no fluxo antigo terão que **reconectar** — não dá para migrar tokens de um sistema para o outro.
+- A URI de callback do OAuth agora é do gateway da Lovable (`https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/callback`), não do Supabase. Já está configurada corretamente porque o client foi criado via `connect_client`.
+
+## O que NÃO vou mexer
+
+- Lógica de negócio da sincronização (o que vira evento, título, descrição, mapa em `google_calendar_sync_map`).
+- UI do Perfil, botões, textos.
+- Escopo da sincronização (continua só atividades de projeto, unidirecional Hero → Google).
