@@ -271,6 +271,7 @@ export function ServiceItemsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/20">
+                      <TableHead className="w-8"></TableHead>
                       <TableHead>Nome do Item</TableHead>
                       <TableHead>Valor Padrão</TableHead>
                       <TableHead>Unidade</TableHead>
@@ -278,9 +279,12 @@ export function ServiceItemsPage() {
                       <TableHead className="w-24">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {catItems.map(item => (
-                      <TableRow key={item.id}>
+                  <SortableTableBody
+                    items={catItems}
+                    onReorder={(next) => handleReorder(category.key, next)}
+                    renderRow={(item, handle) => (
+                      <>
+                        <TableCell className="w-8">{handle}</TableCell>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
                         <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
@@ -297,15 +301,16 @@ export function ServiceItemsPage() {
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                      </>
+                    )}
+                  />
                 </Table>
               </div>
             ))}
           </div>
         )}
       </div>
+
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
