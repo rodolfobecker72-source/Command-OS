@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Plus, Search, Pencil, Trash2, Package } from 'lucide-react';
+import { SortableTableBody } from '@/components/crm/SortableTableBody';
 import { toast } from 'sonner';
 
 export interface ServiceItemRecord {
@@ -41,6 +42,7 @@ export interface ServiceItemRecord {
   defaultPrice: number;
   unit: string;
   description: string;
+  sortOrder: number;
   createdAt: Date;
 }
 
@@ -66,6 +68,7 @@ function itemFromDb(row: any): ServiceItemRecord {
     defaultPrice: Number(row.default_price),
     unit: row.unit,
     description: row.description,
+    sortOrder: Number(row.sort_order ?? 0),
     createdAt: new Date(row.created_at),
   };
 }
@@ -93,6 +96,7 @@ export function ServiceItemsPage() {
       .from('service_items')
       .select('*')
       .eq('workspace_id', workspaceId)
+      .order('sort_order', { ascending: true })
       .order('name');
     if (error) {
       toast.error('Erro ao carregar itens de serviço');
@@ -157,6 +161,9 @@ export function ServiceItemsPage() {
         if (error) throw error;
         toast.success('Item atualizado!');
       } else {
+        const maxOrder = items
+          .filter(i => i.categoryKey === form.categoryKey)
+          .reduce((m, i) => Math.max(m, i.sortOrder), 0);
         const { error } = await supabase.from('service_items').insert({
           workspace_id: workspaceId,
           name: form.name.trim(),
@@ -164,7 +171,8 @@ export function ServiceItemsPage() {
           default_price: form.defaultPrice,
           unit: form.unit,
           description: form.description.trim(),
-        });
+          sort_order: maxOrder + 1,
+        } as any);
         if (error) throw error;
         toast.success('Item criado!');
       }
@@ -182,6 +190,26 @@ export function ServiceItemsPage() {
     if (error) { toast.error('Erro ao excluir item'); return; }
     toast.success('Item excluído');
     setItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  const handleReorder = async (categoryKey: string, reordered: ServiceItemRecord[]) => {
+    // Optimistic update: apply new sort_order to items of this category
+    const updated = reordered.map((it, idx) => ({ ...it, sortOrder: idx + 1 }));
+    setItems(prev => {
+      const others = prev.filter(i => i.categoryKey !== categoryKey);
+      return [...others, ...updated];
+    });
+    // Persist in background
+    try {
+      await Promise.all(
+        updated.map(it =>
+          supabase.from('service_items').update({ sort_order: it.sortOrder } as any).eq('id', it.id)
+        )
+      );
+    } catch (e) {
+      toast.error('Erro ao salvar ordem');
+      loadItems();
+    }
   };
 
 
@@ -247,6 +275,7 @@ export function ServiceItemsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/20">
+                      <TableHead className="w-8"></TableHead>
                       <TableHead>Nome do Item</TableHead>
                       <TableHead>Valor Padrão</TableHead>
                       <TableHead>Unidade</TableHead>
@@ -254,9 +283,12 @@ export function ServiceItemsPage() {
                       <TableHead className="w-24">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {catItems.map(item => (
-                      <TableRow key={item.id}>
+                  <SortableTableBody
+                    items={catItems}
+                    onReorder={(next) => handleReorder(category.key, next)}
+                    renderRow={(item, handle) => (
+                      <>
+                        <TableCell className="w-8">{handle}</TableCell>
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
                         <TableCell>{UNIT_LABELS[item.unit] || item.unit}</TableCell>
@@ -273,15 +305,16 @@ export function ServiceItemsPage() {
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                      </>
+                    )}
+                  />
                 </Table>
               </div>
             ))}
           </div>
         )}
       </div>
+
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

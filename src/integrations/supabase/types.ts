@@ -1367,6 +1367,7 @@ export type Database = {
           description: string
           id: string
           name: string
+          sort_order: number
           unit: string
           workspace_id: string
         }
@@ -1377,6 +1378,7 @@ export type Database = {
           description?: string
           id?: string
           name?: string
+          sort_order?: number
           unit?: string
           workspace_id: string
         }
@@ -1387,6 +1389,7 @@ export type Database = {
           description?: string
           id?: string
           name?: string
+          sort_order?: number
           unit?: string
           workspace_id?: string
         }
