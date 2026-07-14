@@ -188,6 +188,26 @@ export function ServiceItemsPage() {
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
+  const handleReorder = async (categoryKey: string, reordered: ServiceItemRecord[]) => {
+    // Optimistic update: apply new sort_order to items of this category
+    const updated = reordered.map((it, idx) => ({ ...it, sortOrder: idx + 1 }));
+    setItems(prev => {
+      const others = prev.filter(i => i.categoryKey !== categoryKey);
+      return [...others, ...updated];
+    });
+    // Persist in background
+    try {
+      await Promise.all(
+        updated.map(it =>
+          supabase.from('service_items').update({ sort_order: it.sortOrder } as any).eq('id', it.id)
+        )
+      );
+    } catch (e) {
+      toast.error('Erro ao salvar ordem');
+      loadItems();
+    }
+  };
+
 
   const getCategoryLabel = (key: string) => {
     return allCategories.find(c => c.key === key)?.label || key;
