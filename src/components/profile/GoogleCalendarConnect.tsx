@@ -10,25 +10,23 @@ export function GoogleCalendarConnect() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [connected, setConnected] = useState<{ email: string } | null>(null);
+  const [connected, setConnected] = useState<{ email?: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return false;
     setLoading(true);
-    const { data } = await supabase
-      .from('user_google_tokens')
-      .select('google_email')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const nextConnected = data ? { email: data.google_email } : null;
-    setConnected(nextConnected);
-    setLoading(false);
-    return Boolean(nextConnected);
+    try {
+      const { data } = await supabase.functions.invoke('google-calendar-status');
+      const isConnected = Boolean(data?.connected);
+      setConnected(isConnected ? { email: data?.email } : null);
+      return isConnected;
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Recarrega ao voltar foco (após popup OAuth fechar)
   useEffect(() => {
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
@@ -36,45 +34,34 @@ export function GoogleCalendarConnect() {
   }, [load]);
 
   const handleConnect = async () => {
-    const popup = window.open('', '_blank');
+    const popup = window.open('', '_blank', 'width=520,height=650');
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('google-calendar-oauth-start', {
-        body: { return_to: window.location.pathname },
+      const { data, error } = await supabase.functions.invoke('google-calendar-connect-init', {
+        body: { origin: window.location.origin },
       });
       if (error || !data?.url) throw error || new Error('Sem URL');
-      // A aba é criada imediatamente no clique e só depois recebe a URL,
-      // evitando que o navegador trate o OAuth como popup não solicitado.
       if (popup) {
         popup.location.href = data.url;
       } else {
-        // Fallback: se popup bloqueado, navega a janela top-level inteira.
-        try {
-          if (window.top) {
-            window.top.location.href = data.url;
-          } else {
-            window.location.href = data.url;
-          }
-        } catch {
-          window.location.href = data.url;
-        }
+        window.location.href = data.url;
       }
 
       for (let attempt = 0; attempt < 90; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const isConnected = await load();
-        if (isConnected) {
+        await new Promise((r) => setTimeout(r, 2000));
+        if (await load()) {
           toast({ title: 'Google Calendar conectado' });
+          try { popup?.close(); } catch { /* ignore */ }
           return;
         }
       }
 
       toast({
         title: 'Conexão ainda não confirmada',
-        description: 'Se o Google exibiu um bloqueio, adicione este e-mail como usuário de teste no OAuth do Google ou publique o app OAuth.',
+        description: 'Se a janela do Google fechou sem confirmar, tente novamente.',
       });
     } catch (e: any) {
-      popup?.close();
+      try { popup?.close(); } catch { /* ignore */ }
       toast({ title: 'Erro ao iniciar conexão', description: e.message, variant: 'destructive' });
     } finally {
       setBusy(false);
@@ -113,7 +100,7 @@ export function GoogleCalendarConnect() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Check className="w-4 h-4 text-success" />
-            <span className="font-medium">{connected.email}</span>
+            <span className="font-medium">{connected.email || 'Conectado'}</span>
           </div>
           <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={busy}>
             {busy ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <X className="w-3 h-3 mr-1" />}
