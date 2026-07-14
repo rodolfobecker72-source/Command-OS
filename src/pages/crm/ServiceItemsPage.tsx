@@ -42,6 +42,7 @@ export interface ServiceItemRecord {
   defaultPrice: number;
   unit: string;
   description: string;
+  sortOrder: number;
   createdAt: Date;
 }
 
