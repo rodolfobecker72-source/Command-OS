@@ -327,6 +327,46 @@ export function UsersPage() {
     setDeletingMember(null);
   };
 
+  const handleResetPassword = async () => {
+    if (!resetPasswordMember) return;
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const response = await supabase.functions.invoke('reset-user-password', {
+        body: { email: resetPasswordMember.email, new_password: newPassword },
+      });
+
+      if (response.error) {
+        toast.error('Erro ao redefinir senha: ' + (response.error.message || 'Erro desconhecido'));
+        return;
+      }
+
+      const result = response.data;
+      if (result?.error) {
+        toast.error('Erro ao redefinir senha: ' + result.error);
+        return;
+      }
+
+      toast.success(`Senha redefinida para ${resetPasswordMember.email}`);
+      setResetPasswordMember(null);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      toast.error('Erro ao redefinir senha: ' + err.message);
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
