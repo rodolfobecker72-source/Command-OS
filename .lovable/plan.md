@@ -1,29 +1,53 @@
-## Objetivo
-Permitir que owners/admins definam uma nova senha manualmente para qualquer membro da workspace, direto da tela **Gestão de Usuários**.
+SITUAÇÃO ATUAL
 
-## Contexto
-- A Edge Function `reset-user-password` já existe e já aceita chamada autenticada de `owner`/`admin` (valida via `get_user_role` + `getClaims`), buscando o usuário por e-mail e trocando a senha via service role.
-- Hoje ela não é chamada por nenhuma UI — falta apenas o botão.
-- A página `src/pages/users/UsersPage.tsx` já lista os membros e tem ações de editar/excluir por linha.
+A integração com Google Calendar já está implementada no código e as Edge Functions estão implantadas:
 
-## Mudanças
+- `google-calendar-oauth-start` — gera URL de consentimento OAuth.
+- `google-calendar-oauth-callback` — troca o `code` por tokens e salva em `user_google_tokens`.
+- `google-calendar-sync-activity` — cria/atualiza/remove eventos no Google Calendar dos responsáveis a partir das atividades de projeto.
+- `google-calendar-disconnect` — revoga o token e remove a conexão.
+- A tela **Perfil → Google Calendar** permite conectar/desconectar a conta.
 
-### 1. `src/pages/users/UsersPage.tsx`
-- Adicionar ação **"Redefinir senha"** (ícone `KeyRound`) em cada linha da lista de membros, ao lado dos botões de editar/excluir.
-- Ao clicar, abrir um `Dialog` com:
-  - Nome + e-mail do membro (apenas leitura, para confirmação).
-  - Campo `PasswordInput` "Nova senha" (mín. 6 caracteres, mesma validação usada no cadastro).
-  - Campo "Confirmar nova senha" (precisa bater).
-  - Botões **Cancelar** / **Salvar nova senha**.
-- Ao confirmar, chamar `supabase.functions.invoke('reset-user-password', { body: { email, new_password } })` — o header `Authorization` é enviado automaticamente pelo client autenticado; a Edge Function já valida a role.
-- Feedback: `toast` de sucesso ("Senha redefinida para {email}") ou erro; fechar dialog e limpar campos.
-- Restrição de exibição: só mostrar o botão se o usuário atual for `owner` ou `admin` (usar o mesmo check já usado para editar/excluir na página).
+Porém, a chamada de teste à Edge Function retornou:
 
-### 2. Sem mudanças de backend
-- Edge Function `reset-user-password` já está pronta e correta.
-- Sem migrations, sem novos secrets.
+```text
+500 — {"error":"GOOGLE_OAUTH_CLIENT_ID não configurado"}
+```
 
-## Observações de segurança
-- Nenhuma senha é lida/exibida — apenas gravação.
-- Autorização é feita server-side (Edge Function checa role via `get_user_role`), não confiando só no client.
-- Validação client-side (mín. 6, confirmação) espelha a do cadastro.
+E o projeto não possui os secrets `GOOGLE_OAUTH_CLIENT_ID` nem `GOOGLE_OAUTH_CLIENT_SECRET`. Ou seja: o fluxo está pronto, mas ainda não funciona porque faltam as credenciais do Google OAuth.
+
+O QUE SERÁ FEITO
+
+1. Obter credenciais OAuth do Google
+   - Acessar Google Cloud Console → APIs & Services → Credentials.
+   - Criar (ou usar) um OAuth 2.0 Web client.
+   - Adicionar a URI de redirecionamento autorizada:
+     ```text
+     https://itglphakocafsmzsdyfo.supabase.co/functions/v1/google-calendar-oauth-callback
+     ```
+   - Copiar `Client ID` e `Client Secret`.
+
+2. Configurar secrets no projeto
+   - Adicionar `GOOGLE_OAUTH_CLIENT_ID` com o Client ID.
+   - Adicionar `GOOGLE_OAUTH_CLIENT_SECRET` com o Client Secret.
+   - Reimplantar as Edge Functions para que elas recebam as novas variáveis.
+
+3. Validar a integração
+   - Testar `google-calendar-oauth-start` para confirmar que a URL de consentimento é gerada sem erro.
+   - Testar `google-calendar-sync-activity` com uma atividade de projeto que tenha data e responsável conectado.
+
+4. Documentar limitações atuais para o usuário
+   - A sincronização é unidirecional: Hero → Google Calendar.
+   - Sincroniza apenas atividades de projeto (`project_activities`) que tenham `due_date` e responsáveis conectados.
+   - Não sincroniza compromissos do Meu Calendário, datas de execução de orçamentos nem eventos do Google de volta para o Hero.
+
+PRÉ-REQUISITO DO USUÁRIO
+
+- Disponibilizar o `Client ID` e o `Client Secret` do Google OAuth (ou acesso ao Google Cloud Console para criá-los).
+- Confirmar se o domínio de publicação `https://command.hero.rec.br` deve aparecer na tela de consentimento e na origem do evento (já está hardcoded no `source.url` da função de sync).
+
+ESCOPO FORA DESTE PLANO
+
+- Sincronizar compromissos do Meu Calendário.
+- Sincronização bidirecional.
+- Alterar o escopo de permissões do Google (será mantido `calendar.events` + `userinfo.email`).
