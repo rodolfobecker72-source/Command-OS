@@ -40,9 +40,20 @@ export function GoogleCalendarConnect() {
         body: { return_to: window.location.pathname },
       });
       if (error || !data?.url) throw error || new Error('Sem URL');
-      const popup = window.open(data.url, 'google-oauth', 'width=520,height=640');
-      if (!popup) {
-        window.location.href = data.url;
+      // Abre em nova aba de nível superior (sem opener) para evitar bloqueio
+      // do Google quando o app está dentro de um iframe (preview do Lovable).
+      const newTab = window.open(data.url, '_blank', 'noopener,noreferrer');
+      if (!newTab) {
+        // Fallback: se popup bloqueado, navega a janela top-level inteira.
+        try {
+          if (window.top) {
+            window.top.location.href = data.url;
+          } else {
+            window.location.href = data.url;
+          }
+        } catch {
+          window.location.href = data.url;
+        }
       }
     } catch (e: any) {
       toast({ title: 'Erro ao iniciar conexão', description: e.message, variant: 'destructive' });

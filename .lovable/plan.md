@@ -1,21 +1,36 @@
-Você já tem o Client ID e o Client Secret, então o plano é curto:
+## Diagnóstico
 
-1. **Cadastrar os secrets no projeto**
-   - Abrir o formulário seguro do Lovable com `add_secret` para `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`.
-   - Você cola os dois valores e salva.
+O erro `ERR_BLOCKED_BY_RESPONSE` na tela `accounts.google.com/signin/oauth/error` acontece **depois** de você escolher a conta. Isso não é problema das credenciais do OAuth (elas funcionaram — a tela de escolher conta abriu). É o Google recusando continuar o fluxo porque a janela foi aberta **a partir do iframe de preview do Lovable**.
 
-2. **Confirmar URI de redirecionamento no Google Cloud Console**
-   - No OAuth Client, em *Authorized redirect URIs*, deve estar:
-     ```
-     https://itglphakocafsmzsdyfo.supabase.co/functions/v1/google-calendar-oauth-callback
-     ```
-   - Se ainda não estiver, adicionar e salvar.
+O Google usa cabeçalhos `Cross-Origin-Opener-Policy` / `X-Frame-Options` para bloquear qualquer fluxo OAuth que esteja associado a um contexto embutido (iframe). Como hoje o `GoogleCalendarConnect` faz:
 
-3. **Validar a integração**
-   - Chamar `google-calendar-oauth-start` via curl para confirmar que retorna a URL do Google (sem mais o erro `GOOGLE_OAUTH_CLIENT_ID não configurado`).
-   - Você entra em **Perfil → Google Calendar → Conectar**, autoriza a conta, e confirmamos que o e-mail aparece como conectado.
-   - Opcional: abrir uma atividade de projeto com data e responsável conectado para confirmar que o evento aparece no Google Calendar.
+```ts
+window.open(data.url, 'google-oauth', 'width=520,height=640');
+```
 
-Sem alterações de código nesta etapa — o backend já está pronto e a UI de conexão já existe em Perfil.
+…o popup herda o "opener" do iframe do preview, e após selecionar a conta o Google bloqueia (`ERR_BLOCKED_BY_RESPONSE`).
 
-Se algum passo falhar, olho os logs da Edge Function e ajusto.
+## O que corrigir
+
+Ajustar `src/components/profile/GoogleCalendarConnect.tsx` para abrir o OAuth em uma **aba de nível superior**, sem opener, em vez de um popup filho do iframe:
+
+1. Trocar `window.open(url, 'google-oauth', 'width=…,height=…')` por `window.open(url, '_blank', 'noopener,noreferrer')`.
+   - Sem opener a nova aba fica desacoplada do iframe do preview e o Google aceita renderizar o consent.
+2. Se `window.open` retornar `null` (bloqueio de popup), cair para `window.top.location.href = url` (navega a página inteira em vez de só o iframe) como fallback.
+3. Após o OAuth terminar, o callback já redireciona para o app com `?google_calendar=connected` — o `useEffect` de `focus` continua funcionando para recarregar o status quando o usuário volta.
+
+Também vou reforçar a mensagem para o usuário: se ele estiver testando **dentro do editor Lovable**, avisar que o fluxo do Google funciona melhor no preview em nova aba ou na URL publicada (`https://command.hero.rec.br` ou `https://herocommandcrm.lovable.app`).
+
+## Fora do escopo (só se der ruim depois)
+
+- Não vou alterar as Edge Functions — o OAuth start/callback estão funcionando (a tela do Google abriu).
+- Não vou mexer no `redirect_uri` (continua apontando para `…/functions/v1/google-calendar-oauth-callback`), pois o próprio erro mostra que o Google chegou até a etapa pós-escolha de conta.
+
+## Como validar
+
+1. Você clica em **Conectar Google Calendar** dentro do Perfil.
+2. Abre uma **nova aba** com a tela do Google.
+3. Escolhe a conta → aceita permissões → é redirecionado para o callback.
+4. O callback fecha/redireciona e ao voltar ao Perfil aparece o e-mail conectado.
+
+Se ainda der `ERR_BLOCKED_BY_RESPONSE`, teste direto na URL publicada — o preview em iframe pode ter restrições adicionais em alguns navegadores (Safari com bloqueio de cookies de terceiros).
