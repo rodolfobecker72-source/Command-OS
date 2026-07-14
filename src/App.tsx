@@ -41,6 +41,7 @@ import MyFinancePage from "@/pages/MyFinancePage";
 import { WelcomePage } from "@/pages/welcome/WelcomePage";
 import { MyCalendarPage } from "@/pages/welcome/MyCalendarPage";
 import HomePage from "@/pages/home/HomePage";
+import GoogleCalendarCallback from "@/pages/GoogleCalendarCallback";
 
 import { MaintenancePage } from "@/pages/MaintenancePage";
 import PublicProjectPage from "@/pages/public/PublicProjectPage";
@@ -69,6 +70,10 @@ const App = () => (
 
               {/* Public project view (no auth) */}
               <Route path="/p/projeto/:cardId" element={<PublicProjectPage />} />
+
+              {/* Google Calendar OAuth popup callback (public — just closes) */}
+              <Route path="/auth/google-calendar-callback" element={<GoogleCalendarCallback />} />
+              
               
               
               {/* Protected routes */}

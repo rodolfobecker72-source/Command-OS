@@ -1435,45 +1435,6 @@ export type Database = {
           },
         ]
       }
-      user_google_tokens: {
-        Row: {
-          access_token: string
-          connected_at: string
-          expires_at: string
-          google_email: string
-          id: string
-          refresh_token: string
-          scope: string
-          updated_at: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          access_token: string
-          connected_at?: string
-          expires_at: string
-          google_email?: string
-          id?: string
-          refresh_token: string
-          scope?: string
-          updated_at?: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          access_token?: string
-          connected_at?: string
-          expires_at?: string
-          google_email?: string
-          id?: string
-          refresh_token?: string
-          scope?: string
-          updated_at?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: []
-      }
       workspace_contract_template: {
         Row: {
           content: string
