@@ -585,8 +585,17 @@ export function UsersPage() {
                           </div>
                           {canManage && (
                             <div className="flex gap-1 shrink-0">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditMember(member)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditMember(member)} title="Editar">
                                 <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setResetPasswordMember(member)}
+                                title="Redefinir senha"
+                              >
+                                <KeyRound className="w-4 h-4" />
                               </Button>
                               {member.role !== 'owner' && (
                                 <Button
@@ -594,6 +603,7 @@ export function UsersPage() {
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={() => setDeletingMember(member)}
+                                  title="Remover"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
