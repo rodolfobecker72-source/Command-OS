@@ -68,6 +68,7 @@ function itemFromDb(row: any): ServiceItemRecord {
     defaultPrice: Number(row.default_price),
     unit: row.unit,
     description: row.description,
+    sortOrder: Number(row.sort_order ?? 0),
     createdAt: new Date(row.created_at),
   };
 }
