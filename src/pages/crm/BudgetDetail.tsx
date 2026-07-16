@@ -2837,63 +2837,72 @@ export function BudgetDetail() {
                   </motion.div>
                 )}
 
-                {/* Ocultar NF no PDF toggle */}
+                {/* Ocultar NF/Despesas no PDF */}
                 {isAdminOrOwner && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="mt-4 flex flex-col gap-2"
+                    className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3"
                   >
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const newValue = !budget.hideNfInPdf;
-                        await updateBudget(budget.id, { hideNfInPdf: newValue });
-                        toast.success(newValue ? 'NF será ocultada no PDF (diluída nos serviços)' : 'NF voltará a aparecer no PDF');
-                      }}
-                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      title="Quando ativo, o valor da NF é diluído proporcionalmente nos serviços e não aparece como linha separada no PDF"
-                    >
-                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideNfInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
-                        {budget.hideNfInPdf && <CheckCircle className="w-3 h-3" />}
-                      </span>
-                      Ocultar Nota Fiscal no PDF (diluir valor nos serviços)
-                    </button>
+                    {/* Box 1: Nota Fiscal */}
+                    <div className="rounded-lg border border-border bg-muted/30 p-4 flex flex-col gap-3">
+                      <h4 className="text-sm font-semibold text-foreground">Nota Fiscal</h4>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newValue = !budget.hideNfInPdf;
+                          await updateBudget(budget.id, { hideNfInPdf: newValue });
+                          toast.success(newValue ? 'NF será ocultada no PDF (diluída nos serviços)' : 'NF voltará a aparecer no PDF');
+                        }}
+                        className="flex items-start gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+                        title="Quando ativo, o valor da NF é diluído proporcionalmente nos serviços e não aparece como linha separada no PDF"
+                      >
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${budget.hideNfInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                          {budget.hideNfInPdf && <CheckCircle className="w-3 h-3" />}
+                        </span>
+                        Ocultar Nota Fiscal no PDF (diluir valor nos serviços)
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const newValue = !budget.hideOperationalInPdf;
-                        await updateBudget(budget.id, { hideOperationalInPdf: newValue });
-                        toast.success(newValue ? 'Despesas Operacionais serão ocultadas no PDF (diluídas nos serviços)' : 'Despesas Operacionais voltarão a aparecer no PDF');
-                      }}
-                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      title="Quando ativo, o valor das despesas operacionais é diluído proporcionalmente nos serviços e não aparece como bloco separado no PDF"
-                    >
-                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideOperationalInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
-                        {budget.hideOperationalInPdf && <CheckCircle className="w-3 h-3" />}
-                      </span>
-                      Ocultar Despesas Operacionais no PDF (diluir valor nos serviços)
-                    </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newValue = !budget.hideNfObservationInPdf;
+                          await updateBudget(budget.id, { hideNfObservationInPdf: newValue });
+                          toast.success(newValue ? 'Observação sobre NF será ocultada no PDF' : 'Observação sobre NF voltará a aparecer no PDF');
+                        }}
+                        className="flex items-start gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+                        title="Quando ativo, o quadro de observação sobre emissão de Nota Fiscal não aparece no PDF"
+                      >
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${budget.hideNfObservationInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                          {budget.hideNfObservationInPdf && <CheckCircle className="w-3 h-3" />}
+                        </span>
+                        Ocultar observação sobre faturamento (Nota Fiscal) no PDF
+                      </button>
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const newValue = !budget.hideNfObservationInPdf;
-                        await updateBudget(budget.id, { hideNfObservationInPdf: newValue });
-                        toast.success(newValue ? 'Observação sobre NF será ocultada no PDF' : 'Observação sobre NF voltará a aparecer no PDF');
-                      }}
-                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      title="Quando ativo, o quadro de observação sobre emissão de Nota Fiscal não aparece no PDF"
-                    >
-                      <span className={`w-4 h-4 rounded border flex items-center justify-center ${budget.hideNfObservationInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
-                        {budget.hideNfObservationInPdf && <CheckCircle className="w-3 h-3" />}
-                      </span>
-                      Ocultar observação sobre faturamento (Nota Fiscal) no PDF
-                    </button>
+                    {/* Box 2: Despesas Operacionais */}
+                    <div className="rounded-lg border border-border bg-muted/30 p-4 flex flex-col gap-3">
+                      <h4 className="text-sm font-semibold text-foreground">Despesas Operacionais</h4>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newValue = !budget.hideOperationalInPdf;
+                          await updateBudget(budget.id, { hideOperationalInPdf: newValue });
+                          toast.success(newValue ? 'Despesas Operacionais serão ocultadas no PDF (diluídas nos serviços)' : 'Despesas Operacionais voltarão a aparecer no PDF');
+                        }}
+                        className="flex items-start gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+                        title="Quando ativo, o valor das despesas operacionais é diluído proporcionalmente nos serviços e não aparece como bloco separado no PDF"
+                      >
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${budget.hideOperationalInPdf ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                          {budget.hideOperationalInPdf && <CheckCircle className="w-3 h-3" />}
+                        </span>
+                        Ocultar Despesas Operacionais no PDF (diluir valor nos serviços)
+                      </button>
+                    </div>
                   </motion.div>
                 )}
+
               </>
             )}
 
