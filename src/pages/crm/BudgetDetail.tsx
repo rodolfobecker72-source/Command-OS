@@ -1876,10 +1876,16 @@ export function BudgetDetail() {
                             </div>
                           </div>
                           {isEditingVersion && (
-                            <Button variant="outline" size="sm" onClick={addEditOperationalCost}>
-                              <Plus className="w-3 h-3 mr-1" />
-                              Adicionar
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={addEditOperationalCost}>
+                                <Plus className="w-3 h-3 mr-1" />
+                                Adicionar
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={openCatalogForEditOperational}>
+                                <Package className="w-3 h-3 mr-1" />
+                                Do catálogo
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </CardHeader>
