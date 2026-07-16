@@ -174,6 +174,16 @@ export function GoalsPage() {
                 className="h-9 text-sm"
               />
             </div>
+            <div className="space-y-1 w-32">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Reuniões</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={newMeetings}
+                onChange={e => setNewMeetings(e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
             <Button onClick={handleAdd} disabled={saving || !newMonth || !newValue} size="sm" className="h-9">
               <Plus className="w-4 h-4 mr-1" />
               Adicionar
@@ -198,6 +208,7 @@ export function GoalsPage() {
                 <TableRow>
                   <TableHead className="text-xs">Mês</TableHead>
                   <TableHead className="text-xs text-right">Valor da Meta</TableHead>
+                  <TableHead className="text-xs text-right">Meta Reuniões</TableHead>
                   <TableHead className="text-xs text-right w-20">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -219,17 +230,26 @@ function GoalRow({ goal, formatLabel, formatCurrency, onUpdate, onDelete }: {
   goal: MonthlyGoal;
   formatLabel: (m: string) => string;
   formatCurrency: (v: number) => string;
-  onUpdate: (g: MonthlyGoal, v: number) => void;
+  onUpdate: (g: MonthlyGoal, updates: Partial<Pick<MonthlyGoal, 'value' | 'meetingsGoal'>>) => void;
   onDelete: (g: MonthlyGoal) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(goal.value));
+  const [editingMeetings, setEditingMeetings] = useState(false);
+  const [editMeetings, setEditMeetings] = useState(String(goal.meetingsGoal));
 
   function handleSave() {
     const v = parseFloat(editValue);
     if (isNaN(v) || v <= 0) return;
-    onUpdate(goal, v);
+    onUpdate(goal, { value: v });
     setEditing(false);
+  }
+
+  function handleSaveMeetings() {
+    const v = parseInt(editMeetings, 10);
+    if (isNaN(v) || v < 0) return;
+    onUpdate(goal, { meetingsGoal: v });
+    setEditingMeetings(false);
   }
 
   return (
@@ -253,6 +273,27 @@ function GoalRow({ goal, formatLabel, formatCurrency, onUpdate, onDelete }: {
         ) : (
           <span className="text-xs font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => { setEditing(true); setEditValue(String(goal.value)); }}>
             {formatCurrency(goal.value)}
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-right py-2">
+        {editingMeetings ? (
+          <div className="flex items-center gap-1 justify-end">
+            <Input
+              type="number"
+              value={editMeetings}
+              onChange={e => setEditMeetings(e.target.value)}
+              className="h-7 text-xs w-20 text-right"
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleSaveMeetings()}
+            />
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleSaveMeetings}>
+              <Save className="w-3 h-3" />
+            </Button>
+          </div>
+        ) : (
+          <span className="text-xs font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => { setEditingMeetings(true); setEditMeetings(String(goal.meetingsGoal)); }}>
+            {goal.meetingsGoal > 0 ? `${goal.meetingsGoal} reuniões` : '—'}
           </span>
         )}
       </TableCell>
