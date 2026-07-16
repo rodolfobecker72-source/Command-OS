@@ -3805,6 +3805,13 @@ export function BudgetDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ServiceItemSelector
+        open={catalogSelector.open}
+        onOpenChange={(open) => setCatalogSelector(prev => ({ ...prev, open }))}
+        categoryKey={catalogSelector.categoryKey}
+        onSelect={catalogSelector.onPick}
+      />
     </div>
   );
 }
