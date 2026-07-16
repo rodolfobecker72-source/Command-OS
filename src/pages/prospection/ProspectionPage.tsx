@@ -886,11 +886,18 @@ export function ProspectionPage() {
           count: funnelLeads.filter(l => l.funnelStatus === s.key).length,
         }));
 
-        // Meetings scheduled in the period (based on when the lead was moved into "reunião agendada")
+        // Meetings scheduled/realized in the period.
+        // Uses meetingScheduledAt when present; falls back to updatedAt for leads
+        // that were marked as "realizada" without a scheduling timestamp;
+        // also keeps leads currently in "reuniao_agendada" regardless of timestamps.
         const meetingsInPeriod = funnelLeads.filter(l => {
-          if (!l.meetingScheduledAt) return l.funnelStatus === 'reuniao_agendada';
+          if (l.funnelStatus === 'reuniao_agendada') return true;
+          const hasHappenedFlag = l.meetingHappened === true || l.meetingHappened === false;
+          if (!l.meetingScheduledAt && !hasHappenedFlag) return false;
           if (!periodStart || !periodEnd) return true;
-          const d = parseISO(l.meetingScheduledAt);
+          const ref = l.meetingScheduledAt || l.updatedAt || l.createdAt;
+          if (!ref) return false;
+          const d = parseISO(ref);
           return isWithinInterval(d, { start: periodStart, end: periodEnd });
         });
         const meetingsScheduledCount = meetingsInPeriod.length;
