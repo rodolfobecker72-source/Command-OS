@@ -1816,10 +1816,16 @@ export function BudgetDetail() {
                                 </Table>
                               </div>
                               {isEditingVersion && (
-                                <Button variant="outline" size="sm" onClick={() => addEditCost(service.id)} className="mb-4">
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Adicionar item
-                                </Button>
+                                <div className="flex gap-2 mb-4">
+                                  <Button variant="outline" size="sm" onClick={() => addEditCost(service.id)}>
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Adicionar item
+                                  </Button>
+                                  <Button variant="outline" size="sm" onClick={() => openCatalogForEditService(service.id, service.serviceType)}>
+                                    <Package className="w-3 h-3 mr-1" />
+                                    Do catálogo
+                                  </Button>
+                                </div>
                               )}
 
                               {/* Service Calculations */}
