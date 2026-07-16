@@ -997,11 +997,25 @@ export function ProspectionPage() {
                             >
                               {s.label}
                             </text>
+                            {s.key === 'reuniao_agendada' && (
+                              <text
+                                x={cx}
+                                y={y1 + stageHeight / 2 + 34}
+                                textAnchor="middle"
+                                fill="white"
+                                fontSize="11"
+                                fontWeight="600"
+                                opacity="0.95"
+                              >
+                                {meetingsHappenedCount} realizadas
+                              </text>
+                            )}
                           </g>
                         );
                       })}
                     </svg>
                   </div>
+
 
                   {/* Side breakdown */}
                   <div className="w-full lg:w-72 space-y-3">
