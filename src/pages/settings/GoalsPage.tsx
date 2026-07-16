@@ -16,6 +16,7 @@ interface MonthlyGoal {
   id?: string;
   month: string;
   value: number;
+  meetingsGoal: number;
   isNew?: boolean;
 }
 
