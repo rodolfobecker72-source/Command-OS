@@ -185,6 +185,61 @@ export function BudgetDetail() {
   const [editVersionNfPct, setEditVersionNfPct] = useState(13);
   const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
 
+  // Catalog (service items) selector
+  const [catalogSelector, setCatalogSelector] = useState<{
+    open: boolean;
+    categoryKey: string;
+    onPick: (item: { description: string; unitValue: number }) => void;
+  }>({ open: false, categoryKey: '', onPick: () => {} });
+
+  const openCatalogForEditService = (serviceId: string, categoryKey: string) => {
+    setCatalogSelector({
+      open: true,
+      categoryKey,
+      onPick: ({ description, unitValue }) => {
+        setEditVersionServices(prev => prev.map(s =>
+          s.id === serviceId
+            ? { ...s, costs: [...s.costs, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] }
+            : s
+        ));
+      },
+    });
+  };
+
+  const openCatalogForEditOperational = () => {
+    setCatalogSelector({
+      open: true,
+      categoryKey: 'despesas_operacionais',
+      onPick: ({ description, unitValue }) => {
+        setEditVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+      },
+    });
+  };
+
+  const openCatalogForNewVersionService = (serviceId: string, categoryKey: string) => {
+    setCatalogSelector({
+      open: true,
+      categoryKey,
+      onPick: ({ description, unitValue }) => {
+        setNewVersionServices(prev => prev.map(s =>
+          s.id === serviceId
+            ? { ...s, costs: [...s.costs, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] }
+            : s
+        ));
+      },
+    });
+  };
+
+  const openCatalogForNewVersionOperational = () => {
+    setCatalogSelector({
+      open: true,
+      categoryKey: 'despesas_operacionais',
+      onPick: ({ description, unitValue }) => {
+        setNewVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+      },
+    });
+  };
+
   // Commercial rules (loaded for draft editing)
   const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
   const [defaultTargetMargin, setDefaultTargetMargin] = useState<number>(20);
