@@ -230,6 +230,7 @@ export function ProspectionPage() {
   const [editingLead, setEditingLead] = useState<ProspectionLead | null>(null);
   const [formData, setFormData] = useState(emptyLead);
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
+  const [meetingsListOpen, setMeetingsListOpen] = useState<null | { title: string; leads: ProspectionLead[] }>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [meetingConfirm, setMeetingConfirm] = useState<{ leadId: string; newStatus: LeadFunnelStatus; extraUpdates?: Partial<ProspectionLead> } | null>(null);
 
@@ -1092,15 +1093,22 @@ export function ProspectionPage() {
                     <div className="text-2xl font-bold text-warning">{meetingsScheduledCount}</div>
                     <div className="text-xs text-muted-foreground">Reuniões agendadas</div>
                   </div>
-                  <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setMeetingsListOpen({
+                      title: `Reuniões realizadas · ${periodLabel}`,
+                      leads: meetingsInPeriod.filter(l => l.meetingHappened === true),
+                    })}
+                    className="text-center rounded-xl transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 p-1 -m-1 cursor-pointer"
+                  >
                     <div className="text-2xl font-bold text-success">{meetingsHappenedCount}</div>
-                    <div className="text-xs text-muted-foreground">Reuniões efetuadas</div>
+                    <div className="text-xs text-muted-foreground underline-offset-2 hover:underline">Reuniões efetuadas</div>
                     {meetingsScheduledCount > 0 && (
                       <div className="text-[11px] text-muted-foreground mt-0.5">
                         {Math.round((meetingsHappenedCount / meetingsScheduledCount) * 100)}% de conversão
                       </div>
                     )}
-                  </div>
+                  </button>
                 </div>
 
                 {/* Meta de reuniões do mês */}
@@ -1735,6 +1743,52 @@ export function ProspectionPage() {
       </Dialog>
 
 
+
+      {/* Meetings realized list */}
+      <Dialog open={!!meetingsListOpen} onOpenChange={() => setMeetingsListOpen(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-success" />
+              {meetingsListOpen?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {meetingsListOpen?.leads.length ?? 0} {(meetingsListOpen?.leads.length ?? 0) === 1 ? 'reunião realizada' : 'reuniões realizadas'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto -mx-1 px-1">
+            {!meetingsListOpen?.leads.length ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma reunião realizada no período.</p>
+            ) : (
+              <div className="space-y-2">
+                {meetingsListOpen.leads.map(l => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => { setMeetingsListOpen(null); setDetailLead(l); }}
+                    className="w-full text-left flex items-center gap-3 p-3 rounded-xl border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="p-2 rounded-lg bg-success/10 shrink-0">
+                      <CalendarCheck className="w-4 h-4 text-success" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{l.companyName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {l.contactName || '—'}
+                        {l.meetingScheduledAt && ` · ${format(parseISO(l.meetingScheduledAt), "dd/MM/yyyy", { locale: ptBR })}`}
+                      </p>
+                    </div>
+                    <FunnelStatusBadge status={l.funnelStatus} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMeetingsListOpen(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
