@@ -896,6 +896,14 @@ export function ProspectionPage() {
         const meetingsScheduledCount = meetingsInPeriod.length;
         const meetingsHappenedCount = meetingsInPeriod.filter(l => l.meetingHappened === true).length;
 
+        // Monthly meeting goal (only when a specific month is selected)
+        const meetingsGoal = funnelMonth !== 'all'
+          ? getMeetingsGoalForMonth(`${yearNum}-${String(Number(funnelMonth) + 1).padStart(2, '0')}`)
+          : null;
+        const meetingsGoalPct = meetingsGoal && meetingsGoal > 0
+          ? Math.min(100, Math.round((meetingsHappenedCount / meetingsGoal) * 100))
+          : null;
+
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
