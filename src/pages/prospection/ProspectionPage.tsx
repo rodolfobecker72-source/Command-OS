@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { useProspection } from '@/contexts/ProspectionContext';
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMonthlyGoals } from '@/hooks/useMonthlyGoals';
 import {
   ProspectionLead, LeadOriginType, LeadSegment, LeadTemperature,
   LeadFunnelStatus, LeadPriority, AcquisitionType,
@@ -144,6 +145,7 @@ function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
   const { addClient, clients } = useCRM();
+  const { getMeetingsGoalForMonth } = useMonthlyGoals();
   const isLeadMigrated = (lead: ProspectionLead) =>
     clients.some(c => c.companyName.trim().toLowerCase() === lead.companyName.trim().toLowerCase());
   const auth = useAuth();
