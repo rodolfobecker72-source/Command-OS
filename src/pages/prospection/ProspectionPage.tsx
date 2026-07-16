@@ -1089,10 +1089,17 @@ export function ProspectionPage() {
                     </div>
                     <div className="text-xs text-muted-foreground">Taxa de qualificação</div>
                   </div>
-                  <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setMeetingsListOpen({
+                      title: `Reuniões agendadas · ${periodLabel}`,
+                      leads: meetingsInPeriod,
+                    })}
+                    className="text-center rounded-xl transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 p-1 -m-1 cursor-pointer"
+                  >
                     <div className="text-2xl font-bold text-warning">{meetingsScheduledCount}</div>
-                    <div className="text-xs text-muted-foreground">Reuniões agendadas</div>
-                  </div>
+                    <div className="text-xs text-muted-foreground underline-offset-2 hover:underline">Reuniões agendadas</div>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMeetingsListOpen({
