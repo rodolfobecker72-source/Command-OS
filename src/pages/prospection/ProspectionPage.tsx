@@ -230,6 +230,7 @@ export function ProspectionPage() {
   const [editingLead, setEditingLead] = useState<ProspectionLead | null>(null);
   const [formData, setFormData] = useState(emptyLead);
   const [detailLead, setDetailLead] = useState<ProspectionLead | null>(null);
+  const [meetingsListOpen, setMeetingsListOpen] = useState<null | { title: string; leads: ProspectionLead[] }>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [meetingConfirm, setMeetingConfirm] = useState<{ leadId: string; newStatus: LeadFunnelStatus; extraUpdates?: Partial<ProspectionLead> } | null>(null);
 
