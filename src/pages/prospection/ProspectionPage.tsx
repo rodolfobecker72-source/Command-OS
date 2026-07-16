@@ -1096,6 +1096,46 @@ export function ProspectionPage() {
                   </div>
                 </div>
 
+                {/* Meta de reuniões do mês */}
+                {funnelMonth !== 'all' && (
+                  <div className="mt-4 rounded-2xl border bg-muted/30 p-4">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-semibold">Meta de Reuniões · {periodLabel}</span>
+                      </div>
+                      {meetingsGoal ? (
+                        <span className="text-xs font-medium tabular-nums">
+                          <span className="text-primary font-bold">{meetingsHappenedCount}</span>
+                          <span className="text-muted-foreground"> / {meetingsGoal} realizadas</span>
+                        </span>
+                      ) : (
+                        <a href="/configuracoes/metas" className="text-xs text-primary hover:underline">
+                          Definir meta →
+                        </a>
+                      )}
+                    </div>
+                    {meetingsGoal && meetingsGoalPct !== null && (
+                      <>
+                        <div className="h-2.5 bg-background rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${meetingsGoalPct >= 100 ? 'bg-success' : 'bg-primary'}`}
+                            style={{ width: `${meetingsGoalPct}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between mt-1.5 text-[11px] text-muted-foreground">
+                          <span>{meetingsGoalPct}% da meta</span>
+                          <span>
+                            {meetingsHappenedCount >= meetingsGoal
+                              ? 'Meta atingida 🎯'
+                              : `Faltam ${meetingsGoal - meetingsHappenedCount} reuniões`}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
               </CardContent>
             </Card>
           </motion.div>
