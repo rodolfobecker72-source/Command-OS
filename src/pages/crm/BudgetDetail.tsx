@@ -2352,15 +2352,26 @@ export function BudgetDetail() {
                                               <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                   <Label>Custos</Label>
-                                                  <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => addCostToNewVersionService(service.id)}
-                                                  >
-                                                    <Plus className="w-3 h-3 mr-1" />
-                                                    Item
-                                                  </Button>
+                                                  <div className="flex gap-2">
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => addCostToNewVersionService(service.id)}
+                                                    >
+                                                      <Plus className="w-3 h-3 mr-1" />
+                                                      Item
+                                                    </Button>
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => openCatalogForNewVersionService(service.id, service.serviceType)}
+                                                    >
+                                                      <Package className="w-3 h-3 mr-1" />
+                                                      Do catálogo
+                                                    </Button>
+                                                  </div>
                                                 </div>
                                                 {service.costs.length > 0 && (
                                                   <Table>
