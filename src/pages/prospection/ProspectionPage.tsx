@@ -1744,6 +1744,52 @@ export function ProspectionPage() {
 
 
 
+      {/* Meetings realized list */}
+      <Dialog open={!!meetingsListOpen} onOpenChange={() => setMeetingsListOpen(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-success" />
+              {meetingsListOpen?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {meetingsListOpen?.leads.length ?? 0} {(meetingsListOpen?.leads.length ?? 0) === 1 ? 'reunião realizada' : 'reuniões realizadas'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto -mx-1 px-1">
+            {!meetingsListOpen?.leads.length ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma reunião realizada no período.</p>
+            ) : (
+              <div className="space-y-2">
+                {meetingsListOpen.leads.map(l => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => { setMeetingsListOpen(null); setDetailLead(l); }}
+                    className="w-full text-left flex items-center gap-3 p-3 rounded-xl border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="p-2 rounded-lg bg-success/10 shrink-0">
+                      <CalendarCheck className="w-4 h-4 text-success" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{l.companyName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {l.contactName || '—'}
+                        {l.meetingScheduledAt && ` · ${format(parseISO(l.meetingScheduledAt), "dd/MM/yyyy", { locale: ptBR })}`}
+                      </p>
+                    </div>
+                    <FunnelStatusBadge status={l.funnelStatus} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMeetingsListOpen(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
