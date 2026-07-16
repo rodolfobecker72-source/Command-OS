@@ -37,6 +37,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TeamMemberSelect } from '@/components/crm/TeamMemberSelect';
 import { SortableTableBody } from '@/components/crm/SortableTableBody';
+import { ServiceItemSelector } from '@/components/crm/ServiceItemSelector';
 import {
   Select,
   SelectContent,
@@ -109,6 +110,7 @@ import {
   Eye,
   Loader2,
   AlertCircle,
+  Package,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -183,6 +185,61 @@ export function BudgetDetail() {
   const [editVersionOperationalCosts, setEditVersionOperationalCosts] = useState<CostItem[]>([]);
   const [editVersionNfPct, setEditVersionNfPct] = useState(13);
   const [editVersionTargetMargin, setEditVersionTargetMargin] = useState(0);
+
+  // Catalog (service items) selector
+  const [catalogSelector, setCatalogSelector] = useState<{
+    open: boolean;
+    categoryKey: string;
+    onPick: (item: { description: string; unitValue: number }) => void;
+  }>({ open: false, categoryKey: '', onPick: () => {} });
+
+  const openCatalogForEditService = (serviceId: string, categoryKey: string) => {
+    setCatalogSelector({
+      open: true,
+      categoryKey,
+      onPick: ({ description, unitValue }) => {
+        setEditVersionServices(prev => prev.map(s =>
+          s.id === serviceId
+            ? { ...s, costs: [...s.costs, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] }
+            : s
+        ));
+      },
+    });
+  };
+
+  const openCatalogForEditOperational = () => {
+    setCatalogSelector({
+      open: true,
+      categoryKey: 'despesas_operacionais',
+      onPick: ({ description, unitValue }) => {
+        setEditVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+      },
+    });
+  };
+
+  const openCatalogForNewVersionService = (serviceId: string, categoryKey: string) => {
+    setCatalogSelector({
+      open: true,
+      categoryKey,
+      onPick: ({ description, unitValue }) => {
+        setNewVersionServices(prev => prev.map(s =>
+          s.id === serviceId
+            ? { ...s, costs: [...s.costs, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }] }
+            : s
+        ));
+      },
+    });
+  };
+
+  const openCatalogForNewVersionOperational = () => {
+    setCatalogSelector({
+      open: true,
+      categoryKey: 'despesas_operacionais',
+      onPick: ({ description, unitValue }) => {
+        setNewVersionOperationalCosts(prev => [...prev, { id: uuidv4(), description, quantity: 1, unitValue, value: unitValue, paymentStatus: 'pendente' as PaymentStatus, paymentDate: null }]);
+      },
+    });
+  };
 
   // Commercial rules (loaded for draft editing)
   const [availablePaymentTerms, setAvailablePaymentTerms] = useState<{ id: string; name: string }[]>([]);
@@ -1760,10 +1817,16 @@ export function BudgetDetail() {
                                 </Table>
                               </div>
                               {isEditingVersion && (
-                                <Button variant="outline" size="sm" onClick={() => addEditCost(service.id)} className="mb-4">
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Adicionar item
-                                </Button>
+                                <div className="flex gap-2 mb-4">
+                                  <Button variant="outline" size="sm" onClick={() => addEditCost(service.id)}>
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Adicionar item
+                                  </Button>
+                                  <Button variant="outline" size="sm" onClick={() => openCatalogForEditService(service.id, service.serviceType)}>
+                                    <Package className="w-3 h-3 mr-1" />
+                                    Do catálogo
+                                  </Button>
+                                </div>
                               )}
 
                               {/* Service Calculations */}
@@ -1813,10 +1876,16 @@ export function BudgetDetail() {
                             </div>
                           </div>
                           {isEditingVersion && (
-                            <Button variant="outline" size="sm" onClick={addEditOperationalCost}>
-                              <Plus className="w-3 h-3 mr-1" />
-                              Adicionar
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={addEditOperationalCost}>
+                                <Plus className="w-3 h-3 mr-1" />
+                                Adicionar
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={openCatalogForEditOperational}>
+                                <Package className="w-3 h-3 mr-1" />
+                                Do catálogo
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </CardHeader>
@@ -2283,15 +2352,26 @@ export function BudgetDetail() {
                                               <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                   <Label>Custos</Label>
-                                                  <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => addCostToNewVersionService(service.id)}
-                                                  >
-                                                    <Plus className="w-3 h-3 mr-1" />
-                                                    Item
-                                                  </Button>
+                                                  <div className="flex gap-2">
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => addCostToNewVersionService(service.id)}
+                                                    >
+                                                      <Plus className="w-3 h-3 mr-1" />
+                                                      Item
+                                                    </Button>
+                                                    <Button
+                                                      type="button"
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => openCatalogForNewVersionService(service.id, service.serviceType)}
+                                                    >
+                                                      <Package className="w-3 h-3 mr-1" />
+                                                      Do catálogo
+                                                    </Button>
+                                                  </div>
                                                 </div>
                                                 {service.costs.length > 0 && (
                                                   <Table>
@@ -2390,25 +2470,36 @@ export function BudgetDetail() {
                                               <DollarSign className="w-4 h-4 text-warning" />
                                               Despesas Operacionais
                                             </CardTitle>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => {
-                                                setNewVersionOperationalCosts(prev => [...prev, {
-                                                  id: uuidv4(),
-                                                  description: '',
-                                                  quantity: 1,
-                                                  unitValue: 0,
-                                                  value: 0,
-                                                  paymentStatus: 'pendente' as PaymentStatus,
-                                                  paymentDate: null,
-                                                }]);
-                                              }}
-                                            >
-                                              <Plus className="w-3 h-3 mr-1" />
-                                              Adicionar
-                                            </Button>
+                                            <div className="flex gap-2">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                  setNewVersionOperationalCosts(prev => [...prev, {
+                                                    id: uuidv4(),
+                                                    description: '',
+                                                    quantity: 1,
+                                                    unitValue: 0,
+                                                    value: 0,
+                                                    paymentStatus: 'pendente' as PaymentStatus,
+                                                    paymentDate: null,
+                                                  }]);
+                                                }}
+                                              >
+                                                <Plus className="w-3 h-3 mr-1" />
+                                                Adicionar
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={openCatalogForNewVersionOperational}
+                                              >
+                                                <Package className="w-3 h-3 mr-1" />
+                                                Do catálogo
+                                              </Button>
+                                            </div>
                                           </div>
                                         </CardHeader>
                                         <CardContent>
@@ -3714,6 +3805,13 @@ export function BudgetDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ServiceItemSelector
+        open={catalogSelector.open}
+        onOpenChange={(open) => setCatalogSelector(prev => ({ ...prev, open }))}
+        categoryKey={catalogSelector.categoryKey}
+        onSelect={catalogSelector.onPick}
+      />
     </div>
   );
 }
