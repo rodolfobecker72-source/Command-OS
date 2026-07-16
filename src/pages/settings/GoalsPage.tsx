@@ -30,6 +30,7 @@ export function GoalsPage() {
   const [newMonth, setNewMonth] = useState('');
   const [newYear, setNewYear] = useState(String(new Date().getFullYear()));
   const [newValue, setNewValue] = useState('');
+  const [newMeetings, setNewMeetings] = useState('');
 
   const currentYear = new Date().getFullYear();
   const availableYears = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
@@ -52,7 +53,7 @@ export function GoalsPage() {
       toast.error('Erro ao carregar metas');
       console.error(error);
     } else {
-      setGoals((data || []).map(g => ({ id: g.id, month: g.month, value: Number(g.value) })));
+      setGoals((data || []).map((g: any) => ({ id: g.id, month: g.month, value: Number(g.value), meetingsGoal: Number(g.meetings_goal ?? 0) })));
     }
     setLoading(false);
   }
@@ -71,7 +72,8 @@ export function GoalsPage() {
       workspace_id: workspace.id,
       month: monthKey,
       value: parseFloat(newValue),
-    });
+      meetings_goal: newMeetings ? parseInt(newMeetings, 10) : 0,
+    } as any);
 
     if (error) {
       toast.error('Erro ao salvar meta');
@@ -80,23 +82,27 @@ export function GoalsPage() {
       toast.success('Meta adicionada');
       setNewMonth('');
       setNewValue('');
+      setNewMeetings('');
       await loadGoals();
     }
     setSaving(false);
   }
 
-  async function handleUpdate(goal: MonthlyGoal, newVal: number) {
+  async function handleUpdate(goal: MonthlyGoal, updates: Partial<Pick<MonthlyGoal, 'value' | 'meetingsGoal'>>) {
     if (!goal.id) return;
+    const dbUpdates: any = { updated_at: new Date().toISOString() };
+    if (updates.value !== undefined) dbUpdates.value = updates.value;
+    if (updates.meetingsGoal !== undefined) dbUpdates.meetings_goal = updates.meetingsGoal;
     const { error } = await supabase
       .from('monthly_goals')
-      .update({ value: newVal, updated_at: new Date().toISOString() })
+      .update(dbUpdates)
       .eq('id', goal.id);
 
     if (error) {
       toast.error('Erro ao atualizar meta');
     } else {
       toast.success('Meta atualizada');
-      setGoals(prev => prev.map(g => g.id === goal.id ? { ...g, value: newVal } : g));
+      setGoals(prev => prev.map(g => g.id === goal.id ? { ...g, ...updates } : g));
     }
   }
 
