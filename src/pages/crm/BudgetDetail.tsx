@@ -110,6 +110,7 @@ import {
   Eye,
   Loader2,
   AlertCircle,
+  Package,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
