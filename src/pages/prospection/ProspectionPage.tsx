@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { useProspection } from '@/contexts/ProspectionContext';
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMonthlyGoals } from '@/hooks/useMonthlyGoals';
 import {
   ProspectionLead, LeadOriginType, LeadSegment, LeadTemperature,
   LeadFunnelStatus, LeadPriority, AcquisitionType,
@@ -144,6 +145,7 @@ function DraggableLeadCard({ lead, children }: { lead: ProspectionLead; children
 export function ProspectionPage() {
   const { leads, addLead, updateLead, deleteLead, reactivateLead } = useProspection();
   const { addClient, clients } = useCRM();
+  const { getMeetingsGoalForMonth } = useMonthlyGoals();
   const isLeadMigrated = (lead: ProspectionLead) =>
     clients.some(c => c.companyName.trim().toLowerCase() === lead.companyName.trim().toLowerCase());
   const auth = useAuth();
@@ -894,6 +896,14 @@ export function ProspectionPage() {
         const meetingsScheduledCount = meetingsInPeriod.length;
         const meetingsHappenedCount = meetingsInPeriod.filter(l => l.meetingHappened === true).length;
 
+        // Monthly meeting goal (only when a specific month is selected)
+        const meetingsGoal = funnelMonth !== 'all'
+          ? getMeetingsGoalForMonth(`${yearNum}-${String(Number(funnelMonth) + 1).padStart(2, '0')}`)
+          : null;
+        const meetingsGoalPct = meetingsGoal && meetingsGoal > 0
+          ? Math.min(100, Math.round((meetingsHappenedCount / meetingsGoal) * 100))
+          : null;
+
         const nurtureCount = funnelLeads.filter(l => l.funnelStatus === 'nutricao').length;
         const maxCount = Math.max(...counts.map(c => c.count), 1);
 
@@ -995,11 +1005,25 @@ export function ProspectionPage() {
                             >
                               {s.label}
                             </text>
+                            {s.key === 'reuniao_agendada' && (
+                              <text
+                                x={cx}
+                                y={y1 + stageHeight / 2 + 34}
+                                textAnchor="middle"
+                                fill="white"
+                                fontSize="11"
+                                fontWeight="600"
+                                opacity="0.95"
+                              >
+                                {meetingsHappenedCount} realizadas
+                              </text>
+                            )}
                           </g>
                         );
                       })}
                     </svg>
                   </div>
+
 
                   {/* Side breakdown */}
                   <div className="w-full lg:w-72 space-y-3">
@@ -1071,6 +1095,46 @@ export function ProspectionPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Meta de reuniões do mês */}
+                {funnelMonth !== 'all' && (
+                  <div className="mt-4 rounded-2xl border bg-muted/30 p-4">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-semibold">Meta de Reuniões · {periodLabel}</span>
+                      </div>
+                      {meetingsGoal ? (
+                        <span className="text-xs font-medium tabular-nums">
+                          <span className="text-primary font-bold">{meetingsHappenedCount}</span>
+                          <span className="text-muted-foreground"> / {meetingsGoal} realizadas</span>
+                        </span>
+                      ) : (
+                        <a href="/configuracoes/metas" className="text-xs text-primary hover:underline">
+                          Definir meta →
+                        </a>
+                      )}
+                    </div>
+                    {meetingsGoal && meetingsGoalPct !== null && (
+                      <>
+                        <div className="h-2.5 bg-background rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${meetingsGoalPct >= 100 ? 'bg-success' : 'bg-primary'}`}
+                            style={{ width: `${meetingsGoalPct}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between mt-1.5 text-[11px] text-muted-foreground">
+                          <span>{meetingsGoalPct}% da meta</span>
+                          <span>
+                            {meetingsHappenedCount >= meetingsGoal
+                              ? 'Meta atingida 🎯'
+                              : `Faltam ${meetingsGoal - meetingsHappenedCount} reuniões`}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
 
               </CardContent>
             </Card>

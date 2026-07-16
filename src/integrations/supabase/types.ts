@@ -891,6 +891,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          meetings_goal: number
           month: string
           updated_at: string
           value: number
@@ -899,6 +900,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          meetings_goal?: number
           month?: string
           updated_at?: string
           value?: number
@@ -907,6 +909,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          meetings_goal?: number
           month?: string
           updated_at?: string
           value?: number

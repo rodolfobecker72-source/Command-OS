@@ -6,6 +6,7 @@ export interface MonthlyGoal {
   id: string;
   month: string;
   value: number;
+  meetingsGoal: number;
 }
 
 export function useMonthlyGoals() {
@@ -21,7 +22,12 @@ export function useMonthlyGoals() {
         .from('monthly_goals')
         .select('*')
         .eq('workspace_id', workspace.id);
-      setGoals((data || []).map(g => ({ id: g.id, month: g.month, value: Number(g.value) })));
+      setGoals((data || []).map((g: any) => ({
+        id: g.id,
+        month: g.month,
+        value: Number(g.value),
+        meetingsGoal: Number(g.meetings_goal ?? 0),
+      })));
       setLoading(false);
     })();
   }, [workspace]);
@@ -31,5 +37,10 @@ export function useMonthlyGoals() {
     return g ? g.value : null;
   }
 
-  return { goals, loading, getGoalForMonth };
+  function getMeetingsGoalForMonth(month: string): number | null {
+    const g = goals.find(g => g.month === month);
+    return g && g.meetingsGoal > 0 ? g.meetingsGoal : null;
+  }
+
+  return { goals, loading, getGoalForMonth, getMeetingsGoalForMonth };
 }
