@@ -2470,25 +2470,36 @@ export function BudgetDetail() {
                                               <DollarSign className="w-4 h-4 text-warning" />
                                               Despesas Operacionais
                                             </CardTitle>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => {
-                                                setNewVersionOperationalCosts(prev => [...prev, {
-                                                  id: uuidv4(),
-                                                  description: '',
-                                                  quantity: 1,
-                                                  unitValue: 0,
-                                                  value: 0,
-                                                  paymentStatus: 'pendente' as PaymentStatus,
-                                                  paymentDate: null,
-                                                }]);
-                                              }}
-                                            >
-                                              <Plus className="w-3 h-3 mr-1" />
-                                              Adicionar
-                                            </Button>
+                                            <div className="flex gap-2">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                  setNewVersionOperationalCosts(prev => [...prev, {
+                                                    id: uuidv4(),
+                                                    description: '',
+                                                    quantity: 1,
+                                                    unitValue: 0,
+                                                    value: 0,
+                                                    paymentStatus: 'pendente' as PaymentStatus,
+                                                    paymentDate: null,
+                                                  }]);
+                                                }}
+                                              >
+                                                <Plus className="w-3 h-3 mr-1" />
+                                                Adicionar
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={openCatalogForNewVersionOperational}
+                                              >
+                                                <Package className="w-3 h-3 mr-1" />
+                                                Do catálogo
+                                              </Button>
+                                            </div>
                                           </div>
                                         </CardHeader>
                                         <CardContent>
