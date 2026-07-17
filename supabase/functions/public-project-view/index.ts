@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     const { data: card, error: cardError } = await supabase
       .from("project_cards")
-      .select("id, project_name, client_name, proposal_id, material_links, material_link, workspace_id")
+      .select("id, project_name, client_name, proposal_id, material_links, material_link, workspace_id, comments")
       .eq("id", cardId)
       .maybeSingle();
 
@@ -69,6 +69,16 @@ Deno.serve(async (req) => {
       ? rawLinks.filter((l: any) => typeof l === "string" && l.trim())
       : (legacy ? [legacy] : []);
 
+    const rawComments = Array.isArray((card as any).comments) ? (card as any).comments : [];
+    const comments = rawComments.map((c: any) => ({
+      id: c.id,
+      userName: c.userName || 'Usuário',
+      photoUrl: c.photoUrl || null,
+      text: c.text || '',
+      createdAt: c.createdAt || null,
+      editedAt: c.editedAt || null,
+    }));
+
     return new Response(
       JSON.stringify({
         card: {
@@ -92,6 +102,7 @@ Deno.serve(async (req) => {
           freelaName: d.freela_name ?? null,
         })),
         members,
+        comments,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
