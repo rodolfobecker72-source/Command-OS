@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Loader2, ExternalLink, Eye, Calendar, User, Package } from 'lucide-react';
+import { Loader2, ExternalLink, Eye, Calendar, User, Package, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 
 type ActivityStatus = 'nao_iniciado' | 'em_andamento' | 'concluido';
+
+interface Comment {
+  id: string;
+  userName: string;
+  photoUrl: string | null;
+  text: string;
+  createdAt: string | null;
+  editedAt: string | null;
+}
 
 interface Activity {
   id: string;
