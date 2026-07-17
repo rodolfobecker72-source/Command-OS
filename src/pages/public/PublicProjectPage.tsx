@@ -61,6 +61,7 @@ export default function PublicProjectPage() {
   const [card, setCard] = useState<CardInfo | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
 
   useEffect(() => {
     if (!cardId) return;
@@ -79,6 +80,7 @@ export default function PublicProjectPage() {
           setCard(body.card);
           setActivities(body.activities || []);
           setMembers(body.members || []);
+          setComments(body.comments || []);
           if (initial) setError(null);
         })
         .catch((e) => { if (initial && !cancelled) setError(String(e.message || e)); })
