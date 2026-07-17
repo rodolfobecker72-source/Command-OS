@@ -95,9 +95,11 @@ function formatDateBR(iso: string | null): string {
 export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, projectName }: Props) {
   const { workspace, profile } = useAuth();
   const workspaceId = workspace?.id;
-  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string; mentions?: string[]; readBy?: string[] }>>([]);
+  const [comments, setComments] = useState<Array<{ id: string; userId: string; userName: string; photoUrl: string | null; text: string; createdAt: string; editedAt?: string | null; mentions?: string[]; readBy?: string[] }>>([]);
   const [newComment, setNewComment] = useState('');
   const [postingComment, setPostingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [pendingMentions, setPendingMentions] = useState<string[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
