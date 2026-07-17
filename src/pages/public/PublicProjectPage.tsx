@@ -233,6 +233,50 @@ export default function PublicProjectPage() {
           </div>
         )}
 
+        {/* Comentários do projeto */}
+        <div className="border border-border rounded-lg p-4 space-y-3 bg-card">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">Comentários do projeto</span>
+            <span className="text-xs text-muted-foreground">({comments.length})</span>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {comments.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Nenhum comentário ainda.</p>
+            ) : (
+              [...comments]
+                .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+                .map((c) => {
+                  const initials = (c.userName || '?').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+                  return (
+                    <div key={c.id} className="flex gap-2">
+                      <Avatar className="w-7 h-7 shrink-0">
+                        {c.photoUrl && <AvatarImage src={c.photoUrl} alt={c.userName} />}
+                        <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0 bg-muted/40 rounded-lg px-3 py-2">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <span className="text-xs font-semibold truncate">{c.userName}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {c.createdAt ? new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                            {c.editedAt && <span className="ml-1 italic">(editado)</span>}
+                          </span>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {c.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                            part.startsWith('@')
+                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+        </div>
+
         <p className="text-center text-xs text-muted-foreground pt-4">
           Esta é uma página de acompanhamento somente leitura.
         </p>
