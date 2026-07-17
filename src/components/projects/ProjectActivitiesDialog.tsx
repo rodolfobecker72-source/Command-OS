@@ -310,6 +310,35 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     }
   };
 
+  const handleStartEditComment = (id: string, text: string) => {
+    setEditingCommentId(id);
+    setEditingCommentText(text);
+  };
+
+  const handleSaveEditComment = async () => {
+    if (!editingCommentId) return;
+    const text = editingCommentText.trim();
+    if (!text) {
+      toast.error('Comentário não pode ficar vazio');
+      return;
+    }
+    const prev = comments;
+    const next = comments.map(c => c.id === editingCommentId ? { ...c, text, editedAt: new Date().toISOString() } : c);
+    setComments(next);
+    const { error } = await supabase
+      .from('project_cards')
+      .update({ comments: next as any })
+      .eq('id', projectCardId);
+    if (error) {
+      setComments(prev);
+      toast.error('Erro ao salvar comentário');
+      return;
+    }
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  };
+
+
   const persistLinks = async (links: string[]) => {
     setSavingDrive(true);
     const { error } = await supabase
