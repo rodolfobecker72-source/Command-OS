@@ -862,26 +862,55 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-[10px] text-muted-foreground">
                               {new Date(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              {c.editedAt && <span className="ml-1 italic">(editado)</span>}
                             </span>
-                            {isMine && (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteComment(c.id)}
-                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"
-                                title="Remover"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
+                            {isMine && editingCommentId !== c.id && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditComment(c.id, c.text)}
+                                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition"
+                                  title="Editar"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteComment(c.id)}
+                                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition"
+                                  title="Remover"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap break-words">
-                          {c.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
-                            part.startsWith('@')
-                              ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
-                              : <span key={i}>{part}</span>
-                          )}
-                        </p>
+                        {editingCommentId === c.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={editingCommentText}
+                              onChange={(e) => setEditingCommentText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') { e.preventDefault(); setEditingCommentId(null); setEditingCommentText(''); }
+                                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveEditComment(); }
+                              }}
+                              className="min-h-[60px] text-sm"
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingCommentId(null); setEditingCommentText(''); }}>Cancelar</Button>
+                              <Button size="sm" onClick={handleSaveEditComment}>Salvar</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {c.text.split(/(@[\p{L}\d_]+)/u).map((part, i) =>
+                              part.startsWith('@')
+                                ? <span key={i} className="text-primary font-medium bg-primary/10 rounded px-1">{part}</span>
+                                : <span key={i}>{part}</span>
+                            )}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
