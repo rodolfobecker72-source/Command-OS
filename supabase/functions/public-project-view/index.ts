@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     const { data: card, error: cardError } = await supabase
       .from("project_cards")
-      .select("id, project_name, client_name, proposal_id, material_links, material_link, workspace_id")
+      .select("id, project_name, client_name, proposal_id, material_links, material_link, workspace_id, comments")
       .eq("id", cardId)
       .maybeSingle();
 
