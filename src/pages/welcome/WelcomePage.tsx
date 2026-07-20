@@ -221,6 +221,7 @@ export function WelcomePage() {
           title: a.title,
           dueDate: a.due_date,
           projectName: cardMap.get(a.project_card_id) || 'Projeto',
+          projectCardId: a.project_card_id,
           isOverdue: !!a.due_date && a.due_date < today,
           freelaName: a.freela_name || null,
         };
