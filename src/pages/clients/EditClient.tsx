@@ -46,6 +46,15 @@ export function EditClient() {
     email: '',
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
+    address: '',
+    addressNumber: '',
+    addressComplement: '',
+    neighborhood: '',
+    zipCode: '',
+    city: '',
+    state: '',
+    stateRegistration: '',
+    municipalRegistration: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
