@@ -266,7 +266,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [open, projectCardId, workspaceId]);
+  }, [open, projectCardId, workspaceId, reloadNonce]);
 
   const handlePostComment = async () => {
     const text = newComment.trim();
