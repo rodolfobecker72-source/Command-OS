@@ -27,6 +27,7 @@ interface ActivityItem {
   title: string;
   dueDate: string | null;
   projectName: string;
+  projectCardId: string;
   isOverdue: boolean;
   freelaName: string | null;
 }
