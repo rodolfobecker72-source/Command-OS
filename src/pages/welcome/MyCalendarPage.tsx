@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { DndContext, DragEndEvent, useDroppable, useDraggable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useAppointments } from '@/hooks/useAppointments';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { AppointmentDialog } from '@/components/operation/AppointmentDialog';
 import { Appointment, APPOINTMENT_KIND_COLORS } from '@/types/appointment';
 
