@@ -593,6 +593,16 @@ export function WelcomePage() {
                             </p>
                           )}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 -mr-1 -mt-1 h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.projectName })}
+                          title="Abrir painel de atividades do projeto"
+                          aria-label="Abrir painel de atividades do projeto"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
                       </li>
                     );
                   })}
