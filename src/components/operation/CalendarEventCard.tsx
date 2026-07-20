@@ -147,6 +147,7 @@ export function CalendarEventCard({
           <>
             <div className="flex items-center gap-1 truncate">
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+              {showDeliveryIcon && <Package className="w-3 h-3 shrink-0" />}
               <span className="truncate text-foreground">{mainLabel}</span>
             </div>
             <div className="truncate text-foreground/80 pl-2.5 font-medium">{secondaryLabel}</div>
@@ -154,6 +155,7 @@ export function CalendarEventCard({
         ) : (
           <>
             <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+            {showDeliveryIcon && <Package className="w-3 h-3 shrink-0" />}
             {timeLabel && <span className="text-foreground/70 font-semibold shrink-0">{timeLabel}</span>}
             <span className="truncate text-foreground">{mainLabel}</span>
           </>
@@ -174,6 +176,7 @@ export function CalendarEventCard({
     >
       <div className="flex items-center gap-1.5">
         <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />
+        {showDeliveryIcon && <Package className="w-3.5 h-3.5 shrink-0" />}
         {timeLabel && <span className="text-foreground/70 text-[11px] font-semibold shrink-0">{timeLabel}</span>}
         <span className="text-xs font-semibold truncate text-foreground">{mainLabel}</span>
       </div>
