@@ -1,0 +1,1 @@
+ALTER TABLE public.project_activities ADD COLUMN IF NOT EXISTS is_captacao boolean NOT NULL DEFAULT false;

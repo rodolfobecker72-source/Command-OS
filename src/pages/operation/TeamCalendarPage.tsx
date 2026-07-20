@@ -158,12 +158,12 @@ export function TeamCalendarPage() {
             const [arrRes, legacyRes] = await Promise.all([
               supabase
                 .from('project_activities')
-                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .select('id, title, status, due_date, end_date, is_delivery, is_captacao, project_card_id')
                 .eq('workspace_id', workspace.id)
                 .contains('assigned_to_user_ids', [uid]),
               supabase
                 .from('project_activities')
-                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .select('id, title, status, due_date, end_date, is_delivery, is_captacao, project_card_id')
                 .eq('workspace_id', workspace.id)
                 .eq('assigned_to_user_id', uid),
             ]);
@@ -219,6 +219,7 @@ export function TeamCalendarPage() {
                   budget,
                   projectCardId: a.project_card_id,
                   isDelivery: !!a.is_delivery,
+                  isCaptacao: !!a.is_captacao,
                   assignedUserId: uid,
                 });
               }

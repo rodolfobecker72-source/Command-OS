@@ -27,6 +27,7 @@ export interface CalendarActivityEvent {
   budget: Budget;
   projectCardId: string;
   isDelivery?: boolean;
+  isCaptacao?: boolean;
   /** User id whose color should be used to render this event. */
   assignedUserId?: string;
 }
@@ -126,9 +127,12 @@ export function CalendarEventCard({
       }
     : undefined;
 
+  const isCaptacao = isActivity && !!activity?.isCaptacao;
+
   const baseClasses = cn(
     'w-full text-left border transition-opacity active:scale-[0.97]',
     statusStyle,
+    isCaptacao && 'border-l-4 !border-l-red-500',
     !disableDrag && dragId && 'cursor-grab active:cursor-grabbing',
     draggable.isDragging && 'opacity-50',
   );

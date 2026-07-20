@@ -59,6 +59,7 @@ interface Activity {
   dueDate: string | null;
   endDate: string | null;
   isDelivery: boolean;
+  isCaptacao: boolean;
   freelaName: string | null;
 }
 
@@ -111,6 +112,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
   const [newEndByCol, setNewEndByCol] = useState<Record<string, string>>({});
   const [newDeliveryByCol, setNewDeliveryByCol] = useState<Record<string, boolean>>({});
+  const [newCaptacaoByCol, setNewCaptacaoByCol] = useState<Record<string, boolean>>({});
   const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
   const [expandedNewByCol, setExpandedNewByCol] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -248,6 +250,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             dueDate: d.due_date ?? null,
             endDate: d.end_date ?? null,
             isDelivery: !!d.is_delivery,
+            isCaptacao: !!d.is_captacao,
             freelaName: d.freela_name ?? null,
           })));
         }
@@ -397,6 +400,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const endRaw = newEndByCol[status] || null;
     const end = endRaw && due && endRaw >= due ? endRaw : null;
     const isDelivery = !!newDeliveryByCol[status];
+    const isCaptacao = !!newCaptacaoByCol[status];
     const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -411,6 +415,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         due_date: due,
         end_date: end,
         is_delivery: isDelivery,
+        is_captacao: isCaptacao,
         freela_name: freelaName || null,
       } as any)
       .select()
@@ -430,6 +435,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       dueDate: (data as any).due_date ?? null,
       endDate: (data as any).end_date ?? null,
       isDelivery: !!(data as any).is_delivery,
+      isCaptacao: !!(data as any).is_captacao,
       freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
@@ -437,6 +443,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewEndByCol(prev => ({ ...prev, [status]: '' }));
     setNewDeliveryByCol(prev => ({ ...prev, [status]: false }));
+    setNewCaptacaoByCol(prev => ({ ...prev, [status]: false }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
     syncActivityToGoogle(data.id, 'upsert');
@@ -527,6 +534,17 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) toast.error('Erro ao atualizar entrega');
     else syncActivityToGoogle(id, 'upsert');
   };
+
+  const handleUpdateCaptacao = async (id: string, value: boolean) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, isCaptacao: value } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ is_captacao: value } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar captação');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
 
 
   const handleUpdateFreela = async (id: string, name: string | null) => {
@@ -794,6 +812,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newDue={newDueByCol[col.key] || ''}
                   newEnd={newEndByCol[col.key] || ''}
                   newDelivery={!!newDeliveryByCol[col.key]}
+                  newCaptacao={!!newCaptacaoByCol[col.key]}
                   newFreela={newFreelaByCol[col.key] || ''}
                   expanded={!!expandedNewByCol[col.key]}
                   onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
@@ -804,6 +823,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewEndByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewDeliveryByCol(prev => ({ ...prev, [col.key]: false }));
+                    setNewCaptacaoByCol(prev => ({ ...prev, [col.key]: false }));
                     setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
                   }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
@@ -811,6 +831,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewEnd={(v) => setNewEndByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDelivery={(v) => setNewDeliveryByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewCaptacao={(v) => setNewCaptacaoByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewFreela={(v) => setNewFreelaByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
@@ -823,6 +844,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onUpdateDue={handleUpdateDue}
                   onUpdateEnd={handleUpdateEnd}
                   onUpdateDelivery={handleUpdateDelivery}
+                  onUpdateCaptacao={handleUpdateCaptacao}
                   onUpdateFreela={handleUpdateFreela}
                 />
               ))}
@@ -1008,6 +1030,7 @@ function Column({
   newDue,
   newEnd,
   newDelivery,
+  newCaptacao,
   newFreela,
   expanded,
   onExpand,
@@ -1017,6 +1040,7 @@ function Column({
   onNewDue,
   onNewEnd,
   onNewDelivery,
+  onNewCaptacao,
   onNewFreela,
   onAdd,
   onDelete,
@@ -1029,6 +1053,7 @@ function Column({
   onUpdateDue,
   onUpdateEnd,
   onUpdateDelivery,
+  onUpdateCaptacao,
   onUpdateFreela,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
@@ -1039,6 +1064,7 @@ function Column({
   newDue: string;
   newEnd: string;
   newDelivery: boolean;
+  newCaptacao: boolean;
   newFreela: string;
   expanded: boolean;
   onExpand: () => void;
@@ -1048,6 +1074,7 @@ function Column({
   onNewDue: (v: string) => void;
   onNewEnd: (v: string) => void;
   onNewDelivery: (v: boolean) => void;
+  onNewCaptacao: (v: boolean) => void;
   onNewFreela: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
@@ -1060,6 +1087,7 @@ function Column({
   onUpdateDue: (id: string, due: string | null) => void;
   onUpdateEnd: (id: string, end: string | null) => void;
   onUpdateDelivery: (id: string, value: boolean) => void;
+  onUpdateCaptacao: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
@@ -1096,6 +1124,7 @@ function Column({
               onUpdateDue={onUpdateDue}
               onUpdateEnd={onUpdateEnd}
               onUpdateDelivery={onUpdateDelivery}
+              onUpdateCaptacao={onUpdateCaptacao}
               onUpdateFreela={onUpdateFreela}
             />
           ))}
@@ -1164,6 +1193,15 @@ function Column({
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
             <input
               type="checkbox"
+              checked={newCaptacao}
+              onChange={e => onNewCaptacao(e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-500"
+            />
+            <span className={cn(newCaptacao && 'text-red-600 font-medium')}>Marcar como captação</span>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
               checked={newDelivery}
               onChange={e => {
                 const checked = e.target.checked;
@@ -1225,6 +1263,7 @@ function SortableCard({
   onUpdateDue,
   onUpdateEnd,
   onUpdateDelivery,
+  onUpdateCaptacao,
   onUpdateFreela,
 }: {
   activity: Activity;
@@ -1240,6 +1279,7 @@ function SortableCard({
   onUpdateDue: (id: string, due: string | null) => void;
   onUpdateEnd: (id: string, end: string | null) => void;
   onUpdateDelivery: (id: string, value: boolean) => void;
+  onUpdateCaptacao: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -1272,6 +1312,7 @@ function SortableCard({
         col.cardBg,
         col.cardBorder,
         'hover:border-primary/40',
+        activity.isCaptacao && 'border-l-4 border-l-red-500',
         isDragging && 'ring-2 ring-primary/40 shadow-lg',
       )}
     >
@@ -1467,6 +1508,15 @@ function SortableCard({
           placeholder="Fim"
         />
       </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={activity.isCaptacao}
+          onChange={(e) => onUpdateCaptacao(activity.id, e.target.checked)}
+          className="h-3.5 w-3.5 accent-red-500"
+        />
+        <span className={cn(activity.isCaptacao && 'text-red-600 font-medium')}>Captação</span>
+      </label>
       <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
         <input
           type="checkbox"
