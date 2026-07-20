@@ -812,6 +812,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   newDue={newDueByCol[col.key] || ''}
                   newEnd={newEndByCol[col.key] || ''}
                   newDelivery={!!newDeliveryByCol[col.key]}
+                  newCaptacao={!!newCaptacaoByCol[col.key]}
                   newFreela={newFreelaByCol[col.key] || ''}
                   expanded={!!expandedNewByCol[col.key]}
                   onExpand={() => setExpandedNewByCol(prev => ({ ...prev, [col.key]: true }))}
@@ -822,6 +823,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                     setNewDueByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewEndByCol(prev => ({ ...prev, [col.key]: '' }));
                     setNewDeliveryByCol(prev => ({ ...prev, [col.key]: false }));
+                    setNewCaptacaoByCol(prev => ({ ...prev, [col.key]: false }));
                     setNewFreelaByCol(prev => ({ ...prev, [col.key]: '' }));
                   }}
                   onNewTitle={(v) => setNewTitleByCol(prev => ({ ...prev, [col.key]: v }))}
@@ -829,6 +831,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onNewDue={(v) => setNewDueByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewEnd={(v) => setNewEndByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewDelivery={(v) => setNewDeliveryByCol(prev => ({ ...prev, [col.key]: v }))}
+                  onNewCaptacao={(v) => setNewCaptacaoByCol(prev => ({ ...prev, [col.key]: v }))}
                   onNewFreela={(v) => setNewFreelaByCol(prev => ({ ...prev, [col.key]: v }))}
                   onAdd={() => handleAdd(col.key)}
                   onDelete={handleDelete}
@@ -841,6 +844,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
                   onUpdateDue={handleUpdateDue}
                   onUpdateEnd={handleUpdateEnd}
                   onUpdateDelivery={handleUpdateDelivery}
+                  onUpdateCaptacao={handleUpdateCaptacao}
                   onUpdateFreela={handleUpdateFreela}
                 />
               ))}
@@ -1026,6 +1030,7 @@ function Column({
   newDue,
   newEnd,
   newDelivery,
+  newCaptacao,
   newFreela,
   expanded,
   onExpand,
@@ -1035,6 +1040,7 @@ function Column({
   onNewDue,
   onNewEnd,
   onNewDelivery,
+  onNewCaptacao,
   onNewFreela,
   onAdd,
   onDelete,
@@ -1047,6 +1053,7 @@ function Column({
   onUpdateDue,
   onUpdateEnd,
   onUpdateDelivery,
+  onUpdateCaptacao,
   onUpdateFreela,
 }: {
   col: { key: ActivityStatus; label: string; dotClass: string; chipClass: string; colBg: string; cardBg: string; cardBorder: string; addText: string };
@@ -1057,6 +1064,7 @@ function Column({
   newDue: string;
   newEnd: string;
   newDelivery: boolean;
+  newCaptacao: boolean;
   newFreela: string;
   expanded: boolean;
   onExpand: () => void;
@@ -1066,6 +1074,7 @@ function Column({
   onNewDue: (v: string) => void;
   onNewEnd: (v: string) => void;
   onNewDelivery: (v: boolean) => void;
+  onNewCaptacao: (v: boolean) => void;
   onNewFreela: (v: string) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
@@ -1078,6 +1087,7 @@ function Column({
   onUpdateDue: (id: string, due: string | null) => void;
   onUpdateEnd: (id: string, end: string | null) => void;
   onUpdateDelivery: (id: string, value: boolean) => void;
+  onUpdateCaptacao: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
