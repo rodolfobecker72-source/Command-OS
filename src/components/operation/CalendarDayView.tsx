@@ -61,10 +61,13 @@ export function CalendarDayView({
   const dayEvents = useMemo(() => getEventsForDay(currentDate, events), [currentDate, events]);
   const dayPending = useMemo(() => getEventsForDay(currentDate, pendingEvents), [currentDate, pendingEvents]);
   const dayDeliveries = useMemo(() => deliveryEvents.filter(ev => isSameDay(ev.date, currentDate)), [currentDate, deliveryEvents]);
-  const dayActivities = useMemo(() => activityEvents.filter(ev => isSameDay(ev.date, currentDate)), [currentDate, activityEvents]);
+  const allDayActivities = useMemo(() => activityEvents.filter(ev => isSameDay(ev.date, currentDate)), [currentDate, activityEvents]);
+  const captacaoActivities = useMemo(() => allDayActivities.filter(a => a.isCaptacao), [allDayActivities]);
+  const deliveryActivities = useMemo(() => allDayActivities.filter(a => !a.isCaptacao && a.isDelivery), [allDayActivities]);
+  const otherActivities = useMemo(() => allDayActivities.filter(a => !a.isCaptacao && !a.isDelivery), [allDayActivities]);
   const dayAppts = useMemo(() => appointments.filter(a => isSameDay(a.startAt, currentDate)), [currentDate, appointments]);
 
-  const total = dayEvents.length + dayPending.length + dayDeliveries.length + dayActivities.length + dayAppts.length;
+  const total = dayEvents.length + dayPending.length + dayDeliveries.length + allDayActivities.length + dayAppts.length;
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEndDay}>
