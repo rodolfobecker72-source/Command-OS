@@ -40,7 +40,8 @@ function hashString(str: string): number {
 
 // Overrides fixos por usuário (id -> chave da paleta).
 const MEMBER_COLOR_OVERRIDES: Record<string, string> = {
-  'f6b0c380-6af8-44e0-a28b-aee7cd24a6da': 'blue', // Luisinho
+  'f6b0c380-6af8-44e0-a28b-aee7cd24a6da': 'blue',   // Luisinho
+  'c6485b32-c85a-4115-8c79-7e9283e97b46': 'purple', // Gustavo
 };
 
 export function getMemberColor(userId: string | null | undefined): MemberColor {
