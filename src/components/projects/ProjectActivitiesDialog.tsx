@@ -131,11 +131,19 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   } | null>(null);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
+  const [reloadNonce, setReloadNonce] = useState(0);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  useRealtimeSync({
+    workspaceId: open ? workspaceId : null,
+    tables: ['project_activities', 'project_cards'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   useEffect(() => {
     if (!open || !projectCardId) return;
