@@ -173,6 +173,15 @@ export interface Client {
   leadOrigin: LeadOrigin;
   sector: string;
   score: number;
+  address?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  neighborhood?: string;
+  zipCode?: string;
+  city?: string;
+  state?: string;
+  stateRegistration?: string;
+  municipalRegistration?: string;
   createdAt: Date;
   updatedAt: Date;
 }
