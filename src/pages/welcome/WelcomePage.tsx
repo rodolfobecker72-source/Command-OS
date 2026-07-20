@@ -98,6 +98,13 @@ export function WelcomePage() {
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities', 'project_cards', 'prospection_leads', 'calendar_notes'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
