@@ -648,15 +648,26 @@ export function WelcomePage() {
                           )}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleMarkMentionRead(m.cardId, m.commentId)}
-                        className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-background hover:bg-success hover:text-success-foreground hover:border-success transition"
-                        title="Marcar como lido"
-                        aria-label="Marcar como lido"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
+                      <div className="shrink-0 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setActivityDialog({ projectCardId: m.cardId, projectName: m.projectName })}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition"
+                          title="Abrir painel de atividades do projeto"
+                          aria-label="Abrir painel de atividades do projeto"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMarkMentionRead(m.cardId, m.commentId)}
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-md border border-border bg-background hover:bg-success hover:text-success-foreground hover:border-success transition"
+                          title="Marcar como lido"
+                          aria-label="Marcar como lido"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
                     </li>
                   );
                 })}
