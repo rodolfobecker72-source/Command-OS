@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { toast } from '@/hooks/use-toast';
 
 interface BirthdayMember {
