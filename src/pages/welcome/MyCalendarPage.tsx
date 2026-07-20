@@ -38,6 +38,7 @@ interface PersonalEvent {
   budgetId?: string;
   leadId?: string;
   isDelivery?: boolean;
+  isCaptacao?: boolean;
   /** Raw id used to persist date updates when dragging. */
   sourceId: string;
 }
@@ -102,7 +103,7 @@ export function MyCalendarPage() {
         const [activitiesRes, leadsRes, notesRes] = await Promise.all([
           supabase
             .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, project_card_id, assigned_to_user_ids')
+            .select('id, title, status, due_date, end_date, is_delivery, is_captacao, project_card_id, assigned_to_user_ids')
             .eq('workspace_id', workspace.id)
             .contains('assigned_to_user_ids', [user.id])
             .not('due_date', 'is', null),
@@ -159,6 +160,7 @@ export function MyCalendarPage() {
               status: a.status,
               budgetId: card?.budgetId,
               isDelivery: !!a.is_delivery,
+              isCaptacao: !!a.is_captacao,
             });
             cur.setDate(cur.getDate() + 1);
           }
@@ -749,6 +751,7 @@ function DraggableEvent({ ev, userId, onOpen }: { ev: PersonalEvent; userId?: st
             : ev.kind === 'project'
               ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300 hover:bg-green-500/25'
               : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
+        ev.kind === 'project' && ev.isCaptacao && 'border-l-4 !border-l-red-500',
         isDragging && 'opacity-50',
       )}
       title={`${ev.title} — ${ev.subtitle}`}
