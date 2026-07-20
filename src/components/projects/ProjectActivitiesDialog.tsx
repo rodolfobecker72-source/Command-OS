@@ -59,6 +59,7 @@ interface Activity {
   dueDate: string | null;
   endDate: string | null;
   isDelivery: boolean;
+  isCaptacao: boolean;
   freelaName: string | null;
 }
 
