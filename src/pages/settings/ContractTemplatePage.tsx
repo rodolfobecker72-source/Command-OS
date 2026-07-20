@@ -13,6 +13,9 @@ const DEFAULT_TEMPLATE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
 CONTRATANTE: {{empresa_cliente}}
 CNPJ: {{cnpj}}
+Inscrição Estadual: {{inscricao_estadual}}
+Inscrição Municipal: {{inscricao_municipal}}
+Endereço: {{endereco_completo}}
 Representante Legal: {{representante_legal}}
 CPF: {{cpf_representante}}
 E-mail: {{email_cliente}}
@@ -48,9 +51,9 @@ CLÁUSULA 8 — DA RESCISÃO
 O presente contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de 15 dias. Em caso de rescisão após o início dos trabalhos, será devida a cobrança proporcional aos serviços já executados.
 
 CLÁUSULA 9 — DO FORO
-Fica eleito o foro da comarca de _________________ para dirimir quaisquer questões oriundas deste contrato.
+Fica eleito o foro da comarca de {{cidade}}/{{estado}} para dirimir quaisquer questões oriundas deste contrato.
 
-Local e data: _________________, {{data_aprovacao}}
+Local e data: {{cidade}}, {{data_aprovacao}}
 
 _______________________________
 CONTRATANTE: {{empresa_cliente}}
