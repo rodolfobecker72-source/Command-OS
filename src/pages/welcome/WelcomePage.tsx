@@ -235,7 +235,7 @@ export function WelcomePage() {
     };
     loadActivities();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -278,7 +278,7 @@ export function WelcomePage() {
     };
     loadLeadAlerts();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -312,7 +312,7 @@ export function WelcomePage() {
     };
     loadMentions();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -337,7 +337,7 @@ export function WelcomePage() {
     };
     loadNotes();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
 
   const handleMarkMentionRead = async (cardId: string, commentId: string) => {
