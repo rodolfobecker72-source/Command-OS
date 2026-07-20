@@ -425,6 +425,69 @@ export function EditClient() {
                   </div>
                 </div>
 
+                {/* Endereço */}
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 rounded-lg border bg-muted/30">
+                  <div className="space-y-2 md:col-span-6">
+                    <Label className="text-sm font-semibold">Endereço</Label>
+                  </div>
+                  <div className="space-y-2 md:col-span-4">
+                    <Label htmlFor="address">Endereço</Label>
+                    <Input id="address" placeholder="Rua / Avenida" value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="addressNumber">Número</Label>
+                    <Input id="addressNumber" placeholder="Nº" value={formData.addressNumber}
+                      onChange={(e) => setFormData({ ...formData, addressNumber: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="addressComplement">Complemento</Label>
+                    <Input id="addressComplement" placeholder="Sala, andar, etc." value={formData.addressComplement}
+                      onChange={(e) => setFormData({ ...formData, addressComplement: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="neighborhood">Bairro</Label>
+                    <Input id="neighborhood" placeholder="Bairro" value={formData.neighborhood}
+                      onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="zipCode">CEP</Label>
+                    <Input id="zipCode" placeholder="00000-000" value={formData.zipCode}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 8);
+                        const formatted = cleaned.length > 5 ? `${cleaned.slice(0, 5)}-${cleaned.slice(5)}` : cleaned;
+                        setFormData({ ...formData, zipCode: formatted });
+                      }} />
+                  </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input id="city" placeholder="Cidade" value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 md:col-span-1">
+                    <Label htmlFor="state">UF</Label>
+                    <Input id="state" placeholder="UF" maxLength={2} value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase().slice(0, 2) })} />
+                  </div>
+                </div>
+
+                {/* Inscrições */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border bg-muted/30">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-semibold">Inscrições Fiscais</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stateRegistration">Inscrição Estadual</Label>
+                    <Input id="stateRegistration" placeholder="Isenta ou número" value={formData.stateRegistration}
+                      onChange={(e) => setFormData({ ...formData, stateRegistration: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="municipalRegistration">Inscrição Municipal</Label>
+                    <Input id="municipalRegistration" placeholder="Isenta ou número" value={formData.municipalRegistration}
+                      onChange={(e) => setFormData({ ...formData, municipalRegistration: e.target.value })} />
+                  </div>
+                </div>
+
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">
                   <Button
