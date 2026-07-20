@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCRM } from '@/contexts/CRMContext';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { formatCurrency } from '@/types/crm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
