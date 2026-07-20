@@ -19,6 +19,7 @@ import { CalendarDayView } from '@/components/operation/CalendarDayView';
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { toast } from 'sonner';
 import { DragEndEvent } from '@dnd-kit/core';
 import { getMemberColor, MemberColor } from '@/utils/memberColors';
