@@ -269,7 +269,7 @@ export function TeamCalendarPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, selectedMemberIds, budgets, members]);
+  }, [workspace?.id, selectedMemberIds, budgets, members, reloadNonce]);
 
 
   const memberBudgets = useMemo(
