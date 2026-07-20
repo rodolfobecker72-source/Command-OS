@@ -155,6 +155,15 @@ export function EditClient() {
         email: formData.email.trim(),
         phone: formData.phone.replace(/\D/g, ''),
         leadOrigin: formData.leadOrigin as LeadOrigin,
+        address: formData.address,
+        addressNumber: formData.addressNumber,
+        addressComplement: formData.addressComplement,
+        neighborhood: formData.neighborhood,
+        zipCode: formData.zipCode.replace(/\D/g, ''),
+        city: formData.city,
+        state: formData.state,
+        stateRegistration: formData.stateRegistration,
+        municipalRegistration: formData.municipalRegistration,
       });
       console.log('[EditClient] updateClient concluído com sucesso');
       toast.success('Cliente atualizado com sucesso!');
