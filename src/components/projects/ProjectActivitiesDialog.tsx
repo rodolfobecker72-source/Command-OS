@@ -43,6 +43,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { syncActivityToGoogle } from '@/utils/googleCalendarSync';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
