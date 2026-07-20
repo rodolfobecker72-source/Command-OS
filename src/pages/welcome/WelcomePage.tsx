@@ -101,6 +101,7 @@ export function WelcomePage() {
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [activityDialog, setActivityDialog] = useState<{ projectCardId: string; projectName: string } | null>(null);
 
   useRealtimeSync({
     workspaceId: workspace?.id,
