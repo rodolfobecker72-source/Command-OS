@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarActivityEvent, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
-import { ChevronLeft, ChevronRight, CalendarDays, Package, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Package, Users, Check } from 'lucide-react';
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Budget } from '@/types/crm';
@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { CalendarDayView } from '@/components/operation/CalendarDayView';
@@ -19,6 +21,8 @@ import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DragEndEvent } from '@dnd-kit/core';
+import { getMemberColor, MemberColor } from '@/utils/memberColors';
+import { cn } from '@/lib/utils';
 
 interface Member { id: string; name: string }
 
