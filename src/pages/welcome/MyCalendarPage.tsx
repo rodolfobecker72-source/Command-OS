@@ -502,6 +502,7 @@ export function MyCalendarPage() {
                     <DraggableEvent
                       key={ev.id}
                       ev={ev}
+                      userId={user?.id}
                       onOpen={() => handleOpen(ev)}
                     />
                   ))}
