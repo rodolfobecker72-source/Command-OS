@@ -13,6 +13,9 @@ const DEFAULT_TEMPLATE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
 CONTRATANTE: {{empresa_cliente}}
 CNPJ: {{cnpj}}
+Inscrição Estadual: {{inscricao_estadual}}
+Inscrição Municipal: {{inscricao_municipal}}
+Endereço: {{endereco_completo}}
 Representante Legal: {{representante_legal}}
 CPF: {{cpf_representante}}
 E-mail: {{email_cliente}}
@@ -48,9 +51,9 @@ CLÁUSULA 8 — DA RESCISÃO
 O presente contrato poderá ser rescindido por qualquer das partes mediante aviso prévio de 15 dias. Em caso de rescisão após o início dos trabalhos, será devida a cobrança proporcional aos serviços já executados.
 
 CLÁUSULA 9 — DO FORO
-Fica eleito o foro da comarca de _________________ para dirimir quaisquer questões oriundas deste contrato.
+Fica eleito o foro da comarca de {{cidade}}/{{estado}} para dirimir quaisquer questões oriundas deste contrato.
 
-Local e data: _________________, {{data_aprovacao}}
+Local e data: {{cidade}}, {{data_aprovacao}}
 
 _______________________________
 CONTRATANTE: {{empresa_cliente}}
@@ -61,9 +64,19 @@ CONTRATADA: {{empresa_contratada}}`;
 const AVAILABLE_VARIABLES = [
   { key: '{{empresa_cliente}}', desc: 'Nome da empresa do cliente' },
   { key: '{{cnpj}}', desc: 'CNPJ do cliente' },
+  { key: '{{inscricao_estadual}}', desc: 'Inscrição Estadual do cliente' },
+  { key: '{{inscricao_municipal}}', desc: 'Inscrição Municipal do cliente' },
+  { key: '{{endereco}}', desc: 'Endereço (rua/avenida) do cliente' },
+  { key: '{{numero}}', desc: 'Número do endereço' },
+  { key: '{{complemento}}', desc: 'Complemento do endereço' },
+  { key: '{{bairro}}', desc: 'Bairro' },
+  { key: '{{cep}}', desc: 'CEP' },
+  { key: '{{cidade}}', desc: 'Cidade' },
+  { key: '{{estado}}', desc: 'UF / Estado' },
+  { key: '{{endereco_completo}}', desc: 'Endereço completo formatado em uma linha' },
   { key: '{{responsavel}}', desc: 'Responsável pelo cliente (usa representante legal se cadastrado)' },
-  { key: '{{representante_legal}}', desc: 'Nome do representante legal do cliente' },
-  { key: '{{cpf_representante}}', desc: 'CPF do representante legal do cliente' },
+  { key: '{{representante_legal}}', desc: 'Nome do representante legal do cliente (opcional)' },
+  { key: '{{cpf_representante}}', desc: 'CPF do representante legal do cliente (opcional)' },
   { key: '{{email_cliente}}', desc: 'E-mail do cliente' },
   { key: '{{telefone_cliente}}', desc: 'Telefone do cliente' },
   { key: '{{empresa_contratada}}', desc: 'Nome da sua empresa (do layout)' },

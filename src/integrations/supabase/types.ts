@@ -523,6 +523,10 @@ export type Database = {
       }
       clients: {
         Row: {
+          address: string | null
+          address_complement: string | null
+          address_number: string | null
+          city: string | null
           cnpj: string
           company_name: string
           created_at: string
@@ -531,14 +535,23 @@ export type Database = {
           lead_origin: string
           legal_representative_cpf: string
           legal_representative_name: string
+          municipal_registration: string | null
+          neighborhood: string | null
           phone: string
           responsible_person: string
           score: number
           sector: string
+          state: string | null
+          state_registration: string | null
           updated_at: string
           workspace_id: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          city?: string | null
           cnpj?: string
           company_name?: string
           created_at?: string
@@ -547,14 +560,23 @@ export type Database = {
           lead_origin?: string
           legal_representative_cpf?: string
           legal_representative_name?: string
+          municipal_registration?: string | null
+          neighborhood?: string | null
           phone?: string
           responsible_person?: string
           score?: number
           sector?: string
+          state?: string | null
+          state_registration?: string | null
           updated_at?: string
           workspace_id: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          city?: string | null
           cnpj?: string
           company_name?: string
           created_at?: string
@@ -563,12 +585,17 @@ export type Database = {
           lead_origin?: string
           legal_representative_cpf?: string
           legal_representative_name?: string
+          municipal_registration?: string | null
+          neighborhood?: string | null
           phone?: string
           responsible_person?: string
           score?: number
           sector?: string
+          state?: string | null
+          state_registration?: string | null
           updated_at?: string
           workspace_id?: string
+          zip_code?: string | null
         }
         Relationships: [
           {

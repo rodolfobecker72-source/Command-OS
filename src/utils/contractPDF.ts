@@ -152,6 +152,18 @@ export async function generateContractPDF(params: ContractPDFParams) {
   const { template, budget, version, client, layoutSettings, responsibleUser } = params;
 
   let text = template;
+  const cepFormatted = client.zipCode
+    ? client.zipCode.replace(/\D/g, '').replace(/^(\d{5})(\d{3}).*/, '$1-$2')
+    : '';
+  const enderecoLinha1Parts = [client.address, client.addressNumber].filter(Boolean).join(', ');
+  const enderecoLinha1 = client.addressComplement ? `${enderecoLinha1Parts} — ${client.addressComplement}` : enderecoLinha1Parts;
+  const enderecoLinha2Parts = [
+    client.neighborhood,
+    [client.city, client.state].filter(Boolean).join('/'),
+    cepFormatted ? `CEP ${cepFormatted}` : '',
+  ].filter(Boolean).join(' — ');
+  const enderecoCompleto = [enderecoLinha1, enderecoLinha2Parts].filter(Boolean).join(' — ');
+
   const replacements: Record<string, string> = {
     '{{empresa_cliente}}': client.companyName || '',
     '{{cnpj}}': client.cnpj ? formatCNPJ(client.cnpj) : '',
@@ -162,6 +174,16 @@ export async function generateContractPDF(params: ContractPDFParams) {
       : '',
     '{{email_cliente}}': client.email || '',
     '{{telefone_cliente}}': client.phone ? formatPhone(client.phone) : '',
+    '{{endereco}}': client.address || '',
+    '{{numero}}': client.addressNumber || '',
+    '{{complemento}}': client.addressComplement || '',
+    '{{bairro}}': client.neighborhood || '',
+    '{{cep}}': cepFormatted,
+    '{{cidade}}': client.city || '',
+    '{{estado}}': client.state || '',
+    '{{endereco_completo}}': enderecoCompleto,
+    '{{inscricao_estadual}}': client.stateRegistration || '',
+    '{{inscricao_municipal}}': client.municipalRegistration || '',
     '{{empresa_contratada}}': layoutSettings?.companyName || '',
     '{{website_contratada}}': layoutSettings?.website || '',
     '{{email_contratada}}': layoutSettings?.email || '',
