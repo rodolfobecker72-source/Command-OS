@@ -91,7 +91,7 @@ export function CalendarDayView({
               Nada agendado para este dia. Duplo clique para criar um compromisso.
             </div>
           )}
-          {[...captacaoActivities, ...deliveryActivities, ...otherActivities].map(ev => null)}
+          
           {captacaoActivities.map(ev => (
             <CalendarEventCard
               key={ev.id}
