@@ -29,11 +29,13 @@ export const MEMBER_COLOR_PALETTE: MemberColor[] = [
 ];
 
 function hashString(str: string): number {
-  let h = 0;
+  // FNV-1a 32-bit — spreads similar strings across buckets better than a simple *31 hash.
+  let h = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {
-    h = (h * 31 + str.charCodeAt(i)) | 0;
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
   }
-  return Math.abs(h);
+  return h >>> 0;
 }
 
 export function getMemberColor(userId: string | null | undefined): MemberColor {
