@@ -75,6 +75,13 @@ export function LayoutPage() {
     loadLayout();
   }, [workspace]);
 
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['workspace_layout'],
+    onChange: () => loadLayout(),
+  });
+
+
   const loadLayout = async () => {
     if (!workspace) return;
     setLoading(true);
