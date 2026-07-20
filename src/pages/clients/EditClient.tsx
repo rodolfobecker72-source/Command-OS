@@ -76,6 +76,17 @@ export function EditClient() {
         email: client.email || '',
         phone: formatPhoneInput(client.phone),
         leadOrigin: client.leadOrigin,
+        address: client.address || '',
+        addressNumber: client.addressNumber || '',
+        addressComplement: client.addressComplement || '',
+        neighborhood: client.neighborhood || '',
+        zipCode: client.zipCode
+          ? (client.zipCode.length > 5 ? `${client.zipCode.slice(0, 5)}-${client.zipCode.slice(5)}` : client.zipCode)
+          : '',
+        city: client.city || '',
+        state: client.state || '',
+        stateRegistration: client.stateRegistration || '',
+        municipalRegistration: client.municipalRegistration || '',
       });
     }
   }, [client]);
