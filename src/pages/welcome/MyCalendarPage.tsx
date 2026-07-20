@@ -93,108 +93,107 @@ export function MyCalendarPage() {
   const [noteContent, setNoteContent] = useState('');
   const [savingNote, setSavingNote] = useState(false);
 
-  useEffect(() => {
+  const loadEvents = useCallback(async () => {
     if (!user?.id || !workspace?.id) return;
-    let active = true;
+    setLoading(true);
+    try {
+      const [activitiesRes, leadsRes, notesRes] = await Promise.all([
+        supabase
+          .from('project_activities')
+          .select('id, title, status, due_date, end_date, is_delivery, is_captacao, project_card_id, assigned_to_user_ids')
+          .eq('workspace_id', workspace.id)
+          .contains('assigned_to_user_ids', [user.id])
+          .not('due_date', 'is', null),
+        hideProspection
+          ? Promise.resolve({ data: [] as any[], error: null })
+          : supabase
+              .from('prospection_leads')
+              .select('id, company_name, next_action, next_action_date')
+              .eq('workspace_id', workspace.id)
+              .eq('responsible_user_id', user.id)
+              .not('next_action_date', 'is', null)
+              .neq('next_action_date', ''),
+        supabase
+          .from('calendar_notes' as any)
+          .select('id, date, content')
+          .eq('user_id', user.id)
+          .eq('workspace_id', workspace.id),
+      ]);
 
-    (async () => {
-      setLoading(true);
-      try {
-        const [activitiesRes, leadsRes, notesRes] = await Promise.all([
-          supabase
-            .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, is_captacao, project_card_id, assigned_to_user_ids')
-            .eq('workspace_id', workspace.id)
-            .contains('assigned_to_user_ids', [user.id])
-            .not('due_date', 'is', null),
-          hideProspection
-            ? Promise.resolve({ data: [] as any[], error: null })
-            : supabase
-                .from('prospection_leads')
-                .select('id, company_name, next_action, next_action_date')
-                .eq('workspace_id', workspace.id)
-                .eq('responsible_user_id', user.id)
-                .not('next_action_date', 'is', null)
-                .neq('next_action_date', ''),
-          supabase
-            .from('calendar_notes' as any)
-            .select('id, date, content')
-            .eq('user_id', user.id)
-            .eq('workspace_id', workspace.id),
-        ]);
+      if (activitiesRes.error) throw activitiesRes.error;
+      if (leadsRes.error) throw leadsRes.error;
+      if (notesRes.error) throw notesRes.error;
 
-        if (activitiesRes.error) throw activitiesRes.error;
-        if (leadsRes.error) throw leadsRes.error;
-        if (notesRes.error) throw notesRes.error;
-
-        const cardIds = Array.from(new Set((activitiesRes.data || []).map((a: any) => a.project_card_id).filter(Boolean)));
-        const cardsMap = new Map<string, { proposalId: string; projectName: string; budgetId: string }>();
-        if (cardIds.length) {
-          const { data: cards } = await supabase
-            .from('project_cards')
-            .select('id, proposal_id, project_name, budget_id')
-            .in('id', cardIds);
-          (cards || []).forEach((c: any) =>
-            cardsMap.set(c.id, { proposalId: c.proposal_id, projectName: c.project_name, budgetId: c.budget_id }),
-          );
-        }
-
-        const list: PersonalEvent[] = [];
-
-        for (const a of activitiesRes.data || []) {
-          const d = parseDate(a.due_date as string);
-          if (!d) continue;
-          const endD = a.end_date ? parseDate(a.end_date as string) : null;
-          const card = cardsMap.get(a.project_card_id);
-          const cur = new Date(d);
-          const last = endD && endD.getTime() >= d.getTime() ? endD : d;
-          while (cur.getTime() <= last.getTime()) {
-            const iso = cur.toISOString().slice(0, 10);
-            list.push({
-              id: `proj-${a.id}-${iso}`,
-              sourceId: a.id,
-              date: new Date(cur),
-              kind: 'project',
-              title: a.title || '(sem título)',
-              subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
-              status: a.status,
-              budgetId: card?.budgetId,
-              isDelivery: !!a.is_delivery,
-              isCaptacao: !!a.is_captacao,
-            });
-            cur.setDate(cur.getDate() + 1);
-          }
-        }
-
-        for (const l of leadsRes.data || []) {
-          const d = parseDate(l.next_action_date as string);
-          if (!d) continue;
-          list.push({
-            id: `prosp-${l.id}`,
-            sourceId: l.id,
-            date: d,
-            kind: 'prospection',
-            title: l.next_action || 'Próxima ação',
-            subtitle: l.company_name || 'Lead',
-            leadId: l.id,
-          });
-        }
-
-
-        if (active) {
-          setEvents(list);
-          setNotes(((notesRes.data || []) as any[]).map(n => ({ id: n.id, date: n.date, content: n.content })));
-        }
-      } catch (e: any) {
-        console.error(e);
-        toast.error('Erro ao carregar calendário pessoal');
-      } finally {
-        if (active) setLoading(false);
+      const cardIds = Array.from(new Set((activitiesRes.data || []).map((a: any) => a.project_card_id).filter(Boolean)));
+      const cardsMap = new Map<string, { proposalId: string; projectName: string; budgetId: string }>();
+      if (cardIds.length) {
+        const { data: cards } = await supabase
+          .from('project_cards')
+          .select('id, proposal_id, project_name, budget_id')
+          .in('id', cardIds);
+        (cards || []).forEach((c: any) =>
+          cardsMap.set(c.id, { proposalId: c.proposal_id, projectName: c.project_name, budgetId: c.budget_id }),
+        );
       }
-    })();
 
-    return () => { active = false; };
+      const list: PersonalEvent[] = [];
+
+      for (const a of activitiesRes.data || []) {
+        const d = parseDate(a.due_date as string);
+        if (!d) continue;
+        const endD = a.end_date ? parseDate(a.end_date as string) : null;
+        const card = cardsMap.get(a.project_card_id);
+        const cur = new Date(d);
+        const last = endD && endD.getTime() >= d.getTime() ? endD : d;
+        while (cur.getTime() <= last.getTime()) {
+          const iso = cur.toISOString().slice(0, 10);
+          list.push({
+            id: `proj-${a.id}-${iso}`,
+            sourceId: a.id,
+            date: new Date(cur),
+            kind: 'project',
+            title: a.title || '(sem título)',
+            subtitle: card ? `${card.proposalId} — ${card.projectName}` : 'Projeto',
+            status: a.status,
+            budgetId: card?.budgetId,
+            isDelivery: !!a.is_delivery,
+            isCaptacao: !!a.is_captacao,
+          });
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
+
+      for (const l of leadsRes.data || []) {
+        const d = parseDate(l.next_action_date as string);
+        if (!d) continue;
+        list.push({
+          id: `prosp-${l.id}`,
+          sourceId: l.id,
+          date: d,
+          kind: 'prospection',
+          title: l.next_action || 'Próxima ação',
+          subtitle: l.company_name || 'Lead',
+          leadId: l.id,
+        });
+      }
+
+      setEvents(list);
+      setNotes(((notesRes.data || []) as any[]).map(n => ({ id: n.id, date: n.date, content: n.content })));
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao carregar calendário pessoal');
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id, workspace?.id, hideProspection]);
+
+  useEffect(() => { loadEvents(); }, [loadEvents]);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities', 'project_cards', 'prospection_leads', 'calendar_notes'],
+    onChange: () => { loadEvents(); },
+  });
 
   const visibleEvents = useMemo(
     () => events.filter(e => (e.kind === 'project' ? showProjects : showProspection)),
