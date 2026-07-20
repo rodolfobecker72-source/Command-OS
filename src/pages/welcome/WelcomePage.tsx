@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target, AtSign, Check, StickyNote, Sun, Moon } from 'lucide-react';
+import { Cake, Sparkles, AlertTriangle, Play, Calendar, Target, AtSign, Check, StickyNote, Sun, Moon, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { toast } from '@/hooks/use-toast';
+import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 
 interface BirthdayMember {
   id: string;
@@ -26,6 +27,7 @@ interface ActivityItem {
   title: string;
   dueDate: string | null;
   projectName: string;
+  projectCardId: string;
   isOverdue: boolean;
   freelaName: string | null;
 }
@@ -99,6 +101,7 @@ export function WelcomePage() {
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [activityDialog, setActivityDialog] = useState<{ projectCardId: string; projectName: string } | null>(null);
 
   useRealtimeSync({
     workspaceId: workspace?.id,
@@ -219,6 +222,7 @@ export function WelcomePage() {
           title: a.title,
           dueDate: a.due_date,
           projectName: cardMap.get(a.project_card_id) || 'Projeto',
+          projectCardId: a.project_card_id,
           isOverdue: !!a.due_date && a.due_date < today,
           freelaName: a.freela_name || null,
         };
@@ -589,6 +593,16 @@ export function WelcomePage() {
                             </p>
                           )}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 -mr-1 -mt-1 h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.projectName })}
+                          title="Abrir painel de atividades do projeto"
+                          aria-label="Abrir painel de atividades do projeto"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
                       </li>
                     );
                   })}
@@ -703,6 +717,13 @@ export function WelcomePage() {
           </Card>
         )}
       </div>
+
+      <ProjectActivitiesDialog
+        open={!!activityDialog}
+        onOpenChange={(o) => { if (!o) setActivityDialog(null); }}
+        projectCardId={activityDialog?.projectCardId || ''}
+        projectName={activityDialog?.projectName || ''}
+      />
     </div>
   );
 }
