@@ -1193,6 +1193,15 @@ function Column({
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
             <input
               type="checkbox"
+              checked={newCaptacao}
+              onChange={e => onNewCaptacao(e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-500"
+            />
+            <span className={cn(newCaptacao && 'text-red-600 font-medium')}>Marcar como captação</span>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
               checked={newDelivery}
               onChange={e => {
                 const checked = e.target.checked;
@@ -1303,6 +1312,7 @@ function SortableCard({
         col.cardBg,
         col.cardBorder,
         'hover:border-primary/40',
+        activity.isCaptacao && 'border-l-4 border-l-red-500',
         isDragging && 'ring-2 ring-primary/40 shadow-lg',
       )}
     >
@@ -1498,6 +1508,15 @@ function SortableCard({
           placeholder="Fim"
         />
       </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={activity.isCaptacao}
+          onChange={(e) => onUpdateCaptacao(activity.id, e.target.checked)}
+          className="h-3.5 w-3.5 accent-red-500"
+        />
+        <span className={cn(activity.isCaptacao && 'text-red-600 font-medium')}>Captação</span>
+      </label>
       <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
         <input
           type="checkbox"
