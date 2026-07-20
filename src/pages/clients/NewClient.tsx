@@ -109,6 +109,15 @@ export function NewClient() {
         leadOrigin: formData.leadOrigin as LeadOrigin,
         sector: formData.sector || '',
         score: 0,
+        address: formData.address,
+        addressNumber: formData.addressNumber,
+        addressComplement: formData.addressComplement,
+        neighborhood: formData.neighborhood,
+        zipCode: formData.zipCode.replace(/\D/g, ''),
+        city: formData.city,
+        state: formData.state,
+        stateRegistration: formData.stateRegistration,
+        municipalRegistration: formData.municipalRegistration,
       });
 
       if (result) {
