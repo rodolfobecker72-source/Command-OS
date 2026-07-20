@@ -84,6 +84,13 @@ export function TeamCalendarPage() {
   const [memberActivityEvents, setMemberActivityEvents] = useState<CalendarActivityEvent[]>([]);
   const [loadingMember, setLoadingMember] = useState(false);
   const [membersPopoverOpen, setMembersPopoverOpen] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities', 'project_cards'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   const storageKey = workspace?.id ? `team-calendar:selected-members:${workspace.id}` : null;
 
