@@ -109,6 +109,12 @@ export function ServiceItemsPage() {
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
+  useRealtimeSync({
+    workspaceId,
+    tables: ['service_items'],
+    onChange: () => loadItems(),
+  });
+
   const allCategories = useMemo(() => {
     return [...serviceCategories, ...SPECIAL_CATEGORIES].sort((a, b) => a.order - b.order);
   }, [serviceCategories]);
