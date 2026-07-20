@@ -1254,6 +1254,7 @@ function SortableCard({
   onUpdateDue,
   onUpdateEnd,
   onUpdateDelivery,
+  onUpdateCaptacao,
   onUpdateFreela,
 }: {
   activity: Activity;
@@ -1269,6 +1270,7 @@ function SortableCard({
   onUpdateDue: (id: string, due: string | null) => void;
   onUpdateEnd: (id: string, end: string | null) => void;
   onUpdateDelivery: (id: string, value: boolean) => void;
+  onUpdateCaptacao: (id: string, value: boolean) => void;
   onUpdateFreela: (id: string, name: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
