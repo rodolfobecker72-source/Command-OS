@@ -51,6 +51,15 @@ function clientFromDb(row: any): Client {
     leadOrigin: row.lead_origin as LeadOrigin,
     sector: row.sector || '',
     score: row.score,
+    address: row.address || '',
+    addressNumber: row.address_number || '',
+    addressComplement: row.address_complement || '',
+    neighborhood: row.neighborhood || '',
+    zipCode: row.zip_code || '',
+    city: row.city || '',
+    state: row.state || '',
+    stateRegistration: row.state_registration || '',
+    municipalRegistration: row.municipal_registration || '',
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -69,6 +78,15 @@ function clientToDb(c: Partial<Client>, workspaceId?: string): any {
   if (c.leadOrigin !== undefined) row.lead_origin = c.leadOrigin;
   if (c.sector !== undefined) row.sector = c.sector;
   if (c.score !== undefined) row.score = c.score;
+  if (c.address !== undefined) row.address = c.address;
+  if (c.addressNumber !== undefined) row.address_number = c.addressNumber;
+  if (c.addressComplement !== undefined) row.address_complement = c.addressComplement;
+  if (c.neighborhood !== undefined) row.neighborhood = c.neighborhood;
+  if (c.zipCode !== undefined) row.zip_code = c.zipCode;
+  if (c.city !== undefined) row.city = c.city;
+  if (c.state !== undefined) row.state = c.state;
+  if (c.stateRegistration !== undefined) row.state_registration = c.stateRegistration;
+  if (c.municipalRegistration !== undefined) row.municipal_registration = c.municipalRegistration;
   return row;
 }
 
