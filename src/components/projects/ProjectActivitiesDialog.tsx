@@ -1124,6 +1124,7 @@ function Column({
               onUpdateDue={onUpdateDue}
               onUpdateEnd={onUpdateEnd}
               onUpdateDelivery={onUpdateDelivery}
+              onUpdateCaptacao={onUpdateCaptacao}
               onUpdateFreela={onUpdateFreela}
             />
           ))}
