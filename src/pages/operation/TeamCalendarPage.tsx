@@ -78,10 +78,13 @@ export function TeamCalendarPage() {
   const [showDeliveries, setShowDeliveries] = useState(true);
 
   const [members, setMembers] = useState<Member[]>([]);
-  const [memberId, setMemberId] = useState<string>('');
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [memberBudgetIds, setMemberBudgetIds] = useState<Set<string>>(new Set());
   const [memberActivityEvents, setMemberActivityEvents] = useState<CalendarActivityEvent[]>([]);
   const [loadingMember, setLoadingMember] = useState(false);
+  const [membersPopoverOpen, setMembersPopoverOpen] = useState(false);
+
+  const storageKey = workspace?.id ? `team-calendar:selected-members:${workspace.id}` : null;
 
   // Load workspace members
   useEffect(() => {
@@ -102,15 +105,38 @@ export function TeamCalendarPage() {
         .filter(p => p.name)
         .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
       setMembers(list);
-    })();
-  }, [workspace?.id]);
 
-  // Load budget ids associated to selected member via:
-  // 1) project_activities.assigned_to_user_ids (array)
-  // 2) project_activities.assigned_to_user_id (legacy singular)
-  // 3) budgets whose any version has a service.executor matching the member name
+      // Restore persisted selection
+      if (storageKey) {
+        try {
+          const raw = sessionStorage.getItem(storageKey);
+          if (raw) {
+            const arr = JSON.parse(raw) as string[];
+            const valid = arr.filter(id => list.some(m => m.id === id));
+            if (valid.length) setSelectedMemberIds(new Set(valid));
+          }
+        } catch { /* ignore */ }
+      }
+    })();
+  }, [workspace?.id, storageKey]);
+
+  // Persist selection
   useEffect(() => {
-    if (!workspace?.id || !memberId) {
+    if (!storageKey) return;
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selectedMemberIds)));
+    } catch { /* ignore */ }
+  }, [selectedMemberIds, storageKey]);
+
+  const memberColorMap = useMemo(() => {
+    const m = new Map<string, MemberColor>();
+    for (const mem of members) m.set(mem.id, getMemberColor(mem.id));
+    return m;
+  }, [members]);
+
+  // Load budgets/activities for all selected members
+  useEffect(() => {
+    if (!workspace?.id || selectedMemberIds.size === 0) {
       setMemberBudgetIds(new Set());
       setMemberActivityEvents([]);
       return;
@@ -119,86 +145,110 @@ export function TeamCalendarPage() {
     (async () => {
       setLoadingMember(true);
       try {
-        const memberName = members.find(m => m.id === memberId)?.name?.trim().toLowerCase() || '';
-
-        const [actsArrRes, actsLegacyRes] = await Promise.all([
-          supabase
-            .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
-            .eq('workspace_id', workspace.id)
-            .contains('assigned_to_user_ids', [memberId]),
-          supabase
-            .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
-            .eq('workspace_id', workspace.id)
-            .eq('assigned_to_user_id', memberId),
-        ]);
-        const activitiesById = new Map<string, any>();
-        for (const a of [...((actsArrRes.data || []) as any[]), ...((actsLegacyRes.data || []) as any[])]) {
-          if (a?.id) activitiesById.set(a.id, a);
+        const selectedIds = Array.from(selectedMemberIds);
+        const memberNames = new Map<string, string>();
+        for (const id of selectedIds) {
+          const n = members.find(m => m.id === id)?.name?.trim().toLowerCase();
+          if (n) memberNames.set(id, n);
         }
-        const memberActivities = Array.from(activitiesById.values());
-        const cardIds = Array.from(new Set([
-          ...memberActivities.map(a => a.project_card_id),
-        ].filter(Boolean)));
+
+        // Fetch activities per member (kept per-member so we can attribute color)
+        const perMember = await Promise.all(
+          selectedIds.map(async (uid) => {
+            const [arrRes, legacyRes] = await Promise.all([
+              supabase
+                .from('project_activities')
+                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .eq('workspace_id', workspace.id)
+                .contains('assigned_to_user_ids', [uid]),
+              supabase
+                .from('project_activities')
+                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .eq('workspace_id', workspace.id)
+                .eq('assigned_to_user_id', uid),
+            ]);
+            const map = new Map<string, any>();
+            for (const a of [...((arrRes.data || []) as any[]), ...((legacyRes.data || []) as any[])]) {
+              if (a?.id) map.set(a.id, a);
+            }
+            return { uid, activities: Array.from(map.values()) };
+          }),
+        );
+
+        // Collect card ids to resolve budgets
+        const allCardIds = Array.from(new Set(
+          perMember.flatMap(p => p.activities.map((a: any) => a.project_card_id)).filter(Boolean),
+        ));
 
         const bids = new Set<string>();
         const cardBudgetMap = new Map<string, string>();
-        if (cardIds.length) {
+        if (allCardIds.length) {
           const { data: cards } = await supabase
             .from('project_cards')
             .select('id, budget_id')
-            .in('id', cardIds);
+            .in('id', allCardIds);
           for (const c of (cards || []) as any[]) {
             if (c.id && c.budget_id) cardBudgetMap.set(c.id, c.budget_id);
             if (c.budget_id) bids.add(c.budget_id);
           }
         }
 
-        const activityEvents: CalendarActivityEvent[] = memberActivities
-          .filter((a: any) => a.due_date && a.project_card_id)
-          .flatMap((a: any) => {
+        // Build events, one per (activity, member) so colors are attributed correctly
+        const seenEventIds = new Set<string>();
+        const activityEvents: CalendarActivityEvent[] = [];
+        for (const { uid, activities } of perMember) {
+          for (const a of activities) {
+            if (!a.due_date || !a.project_card_id) continue;
             const budgetId = cardBudgetMap.get(a.project_card_id);
             const budget = budgetId ? budgets.find(b => b.id === budgetId) : undefined;
-            if (!budget) return [];
+            if (!budget) continue;
             const start = new Date(`${a.due_date}T12:00:00`);
             const end = a.end_date ? new Date(`${a.end_date}T12:00:00`) : start;
-            const events: CalendarActivityEvent[] = [];
             const cur = new Date(start);
             while (cur.getTime() <= end.getTime()) {
-              events.push({
-                id: `${a.id}-${cur.toISOString().slice(0, 10)}`,
-                activityId: a.id,
-                date: new Date(cur),
-                title: a.title || 'Atividade',
-                status: a.status || 'nao_iniciado',
-                budget,
-                projectCardId: a.project_card_id,
-                isDelivery: !!a.is_delivery,
-              });
+              const iso = cur.toISOString().slice(0, 10);
+              const evId = `${a.id}-${uid}-${iso}`;
+              if (!seenEventIds.has(evId)) {
+                seenEventIds.add(evId);
+                activityEvents.push({
+                  id: evId,
+                  activityId: a.id,
+                  date: new Date(cur),
+                  title: a.title || 'Atividade',
+                  status: a.status || 'nao_iniciado',
+                  budget,
+                  projectCardId: a.project_card_id,
+                  isDelivery: !!a.is_delivery,
+                  assignedUserId: uid,
+                });
+              }
               cur.setDate(cur.getDate() + 1);
             }
-            return events;
-          });
-
-        // Also include budgets where the member is executor or a cost supplier
-        if (memberName) {
-          const matches = (raw?: string | null) => {
-            if (!raw) return false;
-            const name = raw.trim().toLowerCase().replace(/^freela:\s*/i, '');
-            return name === memberName;
-          };
-          for (const b of budgets) {
-            if (bids.has(b.id)) continue;
-            const exec = (b as any).execution;
-            const inExecutor = matches(exec?.executor);
-            const inCosts = !!exec && [
-              ...((exec.services || []) as any[]).flatMap(s => [...(s.costs || []), ...(s.extraCosts || [])]),
-              ...((exec.operationalCosts || []) as any[]),
-              ...((exec.extraOperationalCosts || []) as any[]),
-            ].some((c: any) => matches(c?.supplier));
-            if (inExecutor || inCosts) bids.add(b.id);
           }
+        }
+
+        // Also include budgets where any selected member is executor/cost supplier
+        const matches = (raw: string | null | undefined, name: string) => {
+          if (!raw) return false;
+          const n = raw.trim().toLowerCase().replace(/^freela:\s*/i, '');
+          return n === name;
+        };
+        for (const b of budgets) {
+          if (bids.has(b.id)) continue;
+          const exec = (b as any).execution;
+          if (!exec) continue;
+          const costsAll = [
+            ...((exec.services || []) as any[]).flatMap(s => [...(s.costs || []), ...(s.extraCosts || [])]),
+            ...((exec.operationalCosts || []) as any[]),
+            ...((exec.extraOperationalCosts || []) as any[]),
+          ];
+          let matched = false;
+          for (const name of memberNames.values()) {
+            if (matches(exec.executor, name) || costsAll.some((c: any) => matches(c?.supplier, name))) {
+              matched = true; break;
+            }
+          }
+          if (matched) bids.add(b.id);
         }
 
         if (!cancelled) {
@@ -210,7 +260,7 @@ export function TeamCalendarPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, memberId, budgets, members]);
+  }, [workspace?.id, selectedMemberIds, budgets, members]);
 
 
   const memberBudgets = useMemo(
