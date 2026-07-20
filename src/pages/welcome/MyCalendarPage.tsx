@@ -723,7 +723,7 @@ function DayCell({
   );
 }
 
-function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void }) {
+function DraggableEvent({ ev, userId, onOpen }: { ev: PersonalEvent; userId?: string; onOpen: () => void }) {
   const dragId = `ev-${ev.id}`;
   const dragData = ev.kind === 'project'
     ? { type: 'activity', eventId: ev.id }
@@ -732,6 +732,7 @@ function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void 
   const style: React.CSSProperties | undefined = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50, opacity: 0.85 }
     : undefined;
+  const color = ev.kind === 'project' && userId ? getMemberColor(userId) : null;
   return (
     <button
       ref={setNodeRef as any}
@@ -741,17 +742,23 @@ function DraggableEvent({ ev, onOpen }: { ev: PersonalEvent; onOpen: () => void 
       onClick={(e) => { if (!isDragging) onOpen(); e.stopPropagation(); }}
       className={cn(
         'w-full text-left rounded px-1.5 py-1 text-[10px] md:text-[11px] leading-tight truncate border transition-colors cursor-grab active:cursor-grabbing',
-        ev.kind === 'project' && ev.isDelivery
-          ? 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25'
-          : ev.kind === 'project'
-            ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300 hover:bg-green-500/25'
-            : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
+        color
+          ? cn(color.bg, color.border, color.text, 'hover:brightness-110')
+          : ev.kind === 'project' && ev.isDelivery
+            ? 'bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25'
+            : ev.kind === 'project'
+              ? 'bg-green-500/15 border-green-500/30 text-green-700 dark:text-green-300 hover:bg-green-500/25'
+              : 'bg-orange-500/10 border-orange-500/30 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20',
         isDragging && 'opacity-50',
       )}
       title={`${ev.title} — ${ev.subtitle}`}
     >
       <div className="font-semibold truncate flex items-center gap-1">
-        {ev.kind === 'project' ? <Briefcase className="w-3 h-3 shrink-0" /> : <Phone className="w-3 h-3 shrink-0" />}
+        {ev.kind === 'project' && ev.isDelivery
+          ? <Package className="w-3 h-3 shrink-0" />
+          : ev.kind === 'project'
+            ? <Briefcase className="w-3 h-3 shrink-0" />
+            : <Phone className="w-3 h-3 shrink-0" />}
         <span className="truncate">{ev.kind === 'project' ? ev.subtitle : ev.title}</span>
       </div>
       <div className="truncate opacity-80">{ev.kind === 'project' ? ev.title : ev.subtitle}</div>
