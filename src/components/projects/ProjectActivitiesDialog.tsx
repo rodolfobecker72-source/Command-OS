@@ -43,6 +43,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { syncActivityToGoogle } from '@/utils/googleCalendarSync';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -130,11 +131,19 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   } | null>(null);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
+  const [reloadNonce, setReloadNonce] = useState(0);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  useRealtimeSync({
+    workspaceId: open ? workspaceId : null,
+    tables: ['project_activities', 'project_cards'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   useEffect(() => {
     if (!open || !projectCardId) return;
@@ -257,7 +266,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [open, projectCardId, workspaceId]);
+  }, [open, projectCardId, workspaceId, reloadNonce]);
 
   const handlePostComment = async () => {
     const text = newComment.trim();

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,12 @@ export function GoalsPage() {
     if (!workspace) return;
     loadGoals();
   }, [workspace]);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['monthly_goals'],
+    onChange: () => loadGoals(),
+  });
 
   async function loadGoals() {
     if (!workspace) return;

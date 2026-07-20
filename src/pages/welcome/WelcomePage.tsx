@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { toast } from '@/hooks/use-toast';
 
 interface BirthdayMember {
@@ -97,6 +98,13 @@ export function WelcomePage() {
   const [leadAlerts, setLeadAlerts] = useState<LeadAlertItem[]>([]);
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [personalNotes, setPersonalNotes] = useState<PersonalNoteItem[]>([]);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities', 'project_cards', 'prospection_leads', 'calendar_notes'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   const now = new Date();
   const greeting = getGreeting(now.getHours());
@@ -227,7 +235,7 @@ export function WelcomePage() {
     };
     loadActivities();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -270,7 +278,7 @@ export function WelcomePage() {
     };
     loadLeadAlerts();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -304,7 +312,7 @@ export function WelcomePage() {
     };
     loadMentions();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -329,7 +337,7 @@ export function WelcomePage() {
     };
     loadNotes();
     return () => { cancelled = true; };
-  }, [workspace?.id, profile?.id]);
+  }, [workspace?.id, profile?.id, reloadNonce]);
 
 
   const handleMarkMentionRead = async (cardId: string, commentId: string) => {
