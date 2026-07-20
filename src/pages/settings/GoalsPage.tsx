@@ -41,6 +41,12 @@ export function GoalsPage() {
     loadGoals();
   }, [workspace]);
 
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['monthly_goals'],
+    onChange: () => loadGoals(),
+  });
+
   async function loadGoals() {
     if (!workspace) return;
     setLoading(true);
