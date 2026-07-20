@@ -59,6 +59,7 @@ export function CalendarEventCard({
   eventType = 'execution',
   deliveryLabel,
   disableDrag,
+  memberColor,
 }: CalendarEventCardProps) {
   const { clients } = useCRM();
   const client = budget ? clients.find(c => c.id === budget.clientId) : null;
@@ -77,8 +78,11 @@ export function CalendarEventCard({
   const apptColors = appointment ? APPOINTMENT_KIND_COLORS[appointment.kind] : null;
 
   const activityIsDelivery = isActivity && !!activity?.isDelivery;
+  const showDeliveryIcon = isDelivery || activityIsDelivery;
 
-  const statusStyle = isAppointment && apptColors
+  const statusStyle = memberColor && !isAppointment
+    ? cn(memberColor.bg, memberColor.border, memberColor.text)
+    : isAppointment && apptColors
     ? cn(apptColors.bg, apptColors.border, apptColors.text)
     : isDelivery || activityIsDelivery
       ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
@@ -88,7 +92,9 @@ export function CalendarEventCard({
         ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
         : 'bg-success/15 border-success/30 text-success';
 
-  const dotColor = isAppointment && apptColors
+  const dotColor = memberColor && !isAppointment
+    ? memberColor.dot
+    : isAppointment && apptColors
     ? apptColors.dot
     : isDelivery || activityIsDelivery ? 'bg-blue-500'
     : isActivity ? 'bg-green-500'
