@@ -1,42 +1,48 @@
-## Migrar Google Calendar para App User Connector
+## Objetivo
+No **Calendário do Time**, permitir selecionar múltiplos responsáveis (com opção "Todos"), atribuir uma cor única a cada pessoa e exibir uma legenda no rodapé. A mesma cor por pessoa também deve ser usada no **Meu Calendário** (individual). Eventos de entrega mantêm o ícone de entrega além da cor da pessoa.
 
-Substituir todo o OAuth próprio (client ID/secret, edge functions de callback, tabela `user_google_tokens`) pelo **App User Connector do Google Calendar** gerenciado pela Lovable. Cada usuário só clica em "Conectar Google Calendar", autoriza e pronto — sem tela de "app não verificado", sem cadastrar testadores, sem Google Cloud Console.
+## Mudanças
 
-### O que muda para o usuário final
-- Popup de consentimento oficial do Google (via gateway Lovable)
-- Sem erro `access_denied` mesmo com contas que não são "test users"
-- Refresh de token automático (não precisa reconectar)
+### 1. Paleta compartilhada de cores por pessoa
+Novo utilitário `src/utils/memberColors.ts`:
+- Paleta fixa de ~14 cores (tons distintos: violeta, âmbar, esmeralda, rosa, ciano, laranja, índigo, teal, rose, lime, sky, fuchsia, amber-dark, slate) — todas com bom contraste em light/dark.
+- Função `getMemberColor(userId: string)` → retorna `{ bg, border, text, dot, hex }` de forma determinística (hash do userId → índice na paleta), garantindo mesma cor em qualquer tela.
 
-### Passos
+### 2. `TeamCalendarPage.tsx` — seleção múltipla
+- Trocar `memberId: string` por `selectedMemberIds: Set<string>`.
+- Substituir o `<Select>` atual por um **Popover + Command** (multi-check) com:
+  - Checkbox "Selecionar todos" no topo (marca/desmarca todos).
+  - Lista de membros com checkbox.
+  - Trigger mostrando "N selecionados" ou nomes truncados.
+- Refatorar o `useEffect` de carregamento para iterar sobre cada `userId` selecionado (queries `contains` e `.eq` para o campo legado) e consolidar `bids` e `memberActivityEvents`, guardando em cada evento o `assignedUserId` (a pessoa a quem o evento pertence — quando a atividade tem múltiplos responsáveis, gerar um evento por responsável selecionado para colorir corretamente).
+- Passar `memberColorMap` para as views (Month/Week/Day) e para o `CalendarEventCard`.
 
-**1. Registrar o App User Connector**
-- Rodar `connector_app_user--connect_client` com `connector_id: "google_calendar"`. Abre um formulário onde o admin cola Client ID/Secret de um Google OAuth Web Client (pode reaproveitar o atual). O único redirect URI a cadastrar no Google agora é `https://connector-gateway.lovable.dev/api/v1/app-users/oauth2/callback`.
+### 3. Cor por pessoa no `CalendarEventCard.tsx`
+- Nova prop opcional `memberColor?: { bg; border; text; dot }`.
+- Quando presente, sobrescreve `statusStyle` e `dotColor` (mantendo o layout).
+- Para eventos de **entrega** (`isDelivery` ou `eventType === 'delivery'`): manter o **ícone de pacote** (`Package`) visível ao lado do título, junto da cor da pessoa — hoje a "entrega" é sinalizada apenas pelo fundo azul; passará a ser sinalizada pelo ícone.
 
-**2. Nova edge function `google-calendar-connect-init`**
-- Recebe o usuário autenticado, chama `connectAppUser` com escopos `userinfo.email`, `userinfo.profile`, `calendar.readonly` (ou `calendar` se precisar escrever), retorna a URL de consentimento para abrir no popup.
+### 4. Legenda no rodapé (Team Calendar)
+- Novo componente `MemberLegend` renderizado abaixo da área do calendário:
+  - Uma "pill" por pessoa selecionada: bolinha na cor + nome.
+  - Item extra explicativo: ícone `Package` + "Entrega".
+- Sticky/border-top, esconde quando nenhum membro está selecionado.
 
-**3. Nova edge function `google-calendar-api` (proxy autenticado)**
-- Substitui chamadas diretas ao Google. Usa `callAsAppUser` do helper `appUserConnector.ts` para chamar `/calendar/v3/...` via gateway. Cobre listar calendários, listar/criar/atualizar eventos — o que `google_calendar_sync_map` já usa hoje.
+### 5. `MyCalendarPage.tsx` — usar a mesma cor do usuário logado
+- Ao renderizar eventos (`project`, `activity`), aplicar `getMemberColor(user.id)` via a nova prop do `CalendarEventCard` / bloco de evento equivalente.
+- Eventos de entrega recebem o ícone `Package` junto ao título (mesma regra da Team).
+- Compromissos, notas, e leads continuam com sua cor atual (não estão vinculados a "pessoa" no sentido do time).
 
-**4. Refactor do front-end (`GoogleCalendarConnect.tsx`)**
-- Trocar o fluxo `google-calendar-oauth-start` → popup → callback pelo novo `google-calendar-connect-init`.
-- Status "conectado" passa a vir de `hasAppUserConnection('google_calendar')` em vez da tabela `user_google_tokens`.
-- Manter polling de 2s para detectar a conexão após o popup fechar.
+### 6. Views auxiliares (`CalendarMonthView`, `CalendarWeekView`, `CalendarDayView`)
+- Repassar `memberColorMap` para o `CalendarEventCard`.
+- Nenhuma mudança de layout além disso.
 
-**5. Migrar chamadas existentes ao Calendar**
-- Todo código que hoje lê `user_google_tokens` + chama Google direto → passa a invocar `google-calendar-api`. A tabela `google_calendar_sync_map` (mapeamento evento CRM ↔ evento Google) continua igual.
+## Detalhes técnicos
+- Nenhuma migração de banco — cor é derivada do `user.id` no cliente.
+- Persistência da seleção múltipla em `sessionStorage` (chave por workspace) para não perder ao trocar de aba.
+- Tokens semânticos: preferir classes Tailwind existentes (`bg-violet-500/15 border-violet-500/30 text-violet-700 dark:text-violet-300` etc.) mapeadas na paleta, para manter compatibilidade com dark mode.
+- Sem alterações em business logic (drag-and-drop, sync, RLS).
 
-**6. Limpar o legado**
-- Remover edge functions `google-calendar-oauth-start` e `google-calendar-oauth-callback`.
-- Remover secrets `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET` (não são mais usados no app; ficam só dentro do connector).
-- Migration para dropar `user_google_tokens` (só depois de confirmar que ninguém mais lê dela).
-
-### Detalhes técnicos
-- Helper `supabase/functions/_shared/appUserConnector.ts` conforme o padrão `tanstack-app-user-connector`, adaptado para Deno/Supabase Edge Functions.
-- Chave `GOOGLE_CALENDAR_APP_USER_CONNECTOR_CLIENT_API_KEY` é injetada automaticamente pelo `connect_client`.
-- Storage da conexão fica no connector gateway — não precisa de tabela nova no banco.
-
-### Pré-requisito
-Você (admin do workspace) precisa completar o formulário do passo 1 colando Client ID/Secret. Pode ser o mesmo par que já usa hoje.
-
-**Quer que eu prossiga?**
+## Fora de escopo
+- Permitir escolher/editar manualmente a cor de cada pessoa (fica automático).
+- Alteração no calendário público do cliente.

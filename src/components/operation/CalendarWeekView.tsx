@@ -13,6 +13,7 @@ import { Appointment } from '@/types/appointment';
 import { CalendarEventCard, CalendarActivityEvent, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 import { DndContext, DragEndEvent, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { MemberColor } from '@/utils/memberColors';
 
 interface CalendarWeekViewProps {
   currentDate: Date;
@@ -28,6 +29,7 @@ interface CalendarWeekViewProps {
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
   onDayClick?: (date: Date) => void;
+  memberColorMap?: Map<string, MemberColor>;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
@@ -68,6 +70,7 @@ function DroppableDay({ day, children, onCreate, ...rest }: { day: Date; childre
 export function CalendarWeekView({
   currentDate, events, pendingEvents = [], deliveryEvents, activityEvents = [], appointments = [],
   onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt, onDayClick,
+  memberColorMap,
 }: CalendarWeekViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -170,6 +173,7 @@ export function CalendarWeekView({
                     budget={ev.budget}
                     activity={ev}
                     eventType="activity"
+                    memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
                     onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
                   />
                 ))}

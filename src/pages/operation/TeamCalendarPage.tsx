@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, format, addDays, addBusinessDays, differenceInCalendarDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarActivityEvent, CalendarDeliveryEvent } from '@/components/operation/CalendarEventCard';
-import { ChevronLeft, ChevronRight, CalendarDays, Package, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, Package, Users, Check } from 'lucide-react';
 import { useCRM } from '@/contexts/CRMContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Budget } from '@/types/crm';
@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { CalendarMonthView } from '@/components/operation/CalendarMonthView';
 import { CalendarWeekView } from '@/components/operation/CalendarWeekView';
 import { CalendarDayView } from '@/components/operation/CalendarDayView';
@@ -19,6 +21,8 @@ import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DragEndEvent } from '@dnd-kit/core';
+import { getMemberColor, MemberColor } from '@/utils/memberColors';
+import { cn } from '@/lib/utils';
 
 interface Member { id: string; name: string }
 
@@ -74,10 +78,13 @@ export function TeamCalendarPage() {
   const [showDeliveries, setShowDeliveries] = useState(true);
 
   const [members, setMembers] = useState<Member[]>([]);
-  const [memberId, setMemberId] = useState<string>('');
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
   const [memberBudgetIds, setMemberBudgetIds] = useState<Set<string>>(new Set());
   const [memberActivityEvents, setMemberActivityEvents] = useState<CalendarActivityEvent[]>([]);
   const [loadingMember, setLoadingMember] = useState(false);
+  const [membersPopoverOpen, setMembersPopoverOpen] = useState(false);
+
+  const storageKey = workspace?.id ? `team-calendar:selected-members:${workspace.id}` : null;
 
   // Load workspace members
   useEffect(() => {
@@ -98,15 +105,38 @@ export function TeamCalendarPage() {
         .filter(p => p.name)
         .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
       setMembers(list);
-    })();
-  }, [workspace?.id]);
 
-  // Load budget ids associated to selected member via:
-  // 1) project_activities.assigned_to_user_ids (array)
-  // 2) project_activities.assigned_to_user_id (legacy singular)
-  // 3) budgets whose any version has a service.executor matching the member name
+      // Restore persisted selection
+      if (storageKey) {
+        try {
+          const raw = sessionStorage.getItem(storageKey);
+          if (raw) {
+            const arr = JSON.parse(raw) as string[];
+            const valid = arr.filter(id => list.some(m => m.id === id));
+            if (valid.length) setSelectedMemberIds(new Set(valid));
+          }
+        } catch { /* ignore */ }
+      }
+    })();
+  }, [workspace?.id, storageKey]);
+
+  // Persist selection
   useEffect(() => {
-    if (!workspace?.id || !memberId) {
+    if (!storageKey) return;
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(Array.from(selectedMemberIds)));
+    } catch { /* ignore */ }
+  }, [selectedMemberIds, storageKey]);
+
+  const memberColorMap = useMemo(() => {
+    const m = new Map<string, MemberColor>();
+    for (const mem of members) m.set(mem.id, getMemberColor(mem.id));
+    return m;
+  }, [members]);
+
+  // Load budgets/activities for all selected members
+  useEffect(() => {
+    if (!workspace?.id || selectedMemberIds.size === 0) {
       setMemberBudgetIds(new Set());
       setMemberActivityEvents([]);
       return;
@@ -115,86 +145,110 @@ export function TeamCalendarPage() {
     (async () => {
       setLoadingMember(true);
       try {
-        const memberName = members.find(m => m.id === memberId)?.name?.trim().toLowerCase() || '';
-
-        const [actsArrRes, actsLegacyRes] = await Promise.all([
-          supabase
-            .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
-            .eq('workspace_id', workspace.id)
-            .contains('assigned_to_user_ids', [memberId]),
-          supabase
-            .from('project_activities')
-            .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
-            .eq('workspace_id', workspace.id)
-            .eq('assigned_to_user_id', memberId),
-        ]);
-        const activitiesById = new Map<string, any>();
-        for (const a of [...((actsArrRes.data || []) as any[]), ...((actsLegacyRes.data || []) as any[])]) {
-          if (a?.id) activitiesById.set(a.id, a);
+        const selectedIds = Array.from(selectedMemberIds);
+        const memberNames = new Map<string, string>();
+        for (const id of selectedIds) {
+          const n = members.find(m => m.id === id)?.name?.trim().toLowerCase();
+          if (n) memberNames.set(id, n);
         }
-        const memberActivities = Array.from(activitiesById.values());
-        const cardIds = Array.from(new Set([
-          ...memberActivities.map(a => a.project_card_id),
-        ].filter(Boolean)));
+
+        // Fetch activities per member (kept per-member so we can attribute color)
+        const perMember = await Promise.all(
+          selectedIds.map(async (uid) => {
+            const [arrRes, legacyRes] = await Promise.all([
+              supabase
+                .from('project_activities')
+                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .eq('workspace_id', workspace.id)
+                .contains('assigned_to_user_ids', [uid]),
+              supabase
+                .from('project_activities')
+                .select('id, title, status, due_date, end_date, is_delivery, project_card_id')
+                .eq('workspace_id', workspace.id)
+                .eq('assigned_to_user_id', uid),
+            ]);
+            const map = new Map<string, any>();
+            for (const a of [...((arrRes.data || []) as any[]), ...((legacyRes.data || []) as any[])]) {
+              if (a?.id) map.set(a.id, a);
+            }
+            return { uid, activities: Array.from(map.values()) };
+          }),
+        );
+
+        // Collect card ids to resolve budgets
+        const allCardIds = Array.from(new Set(
+          perMember.flatMap(p => p.activities.map((a: any) => a.project_card_id)).filter(Boolean),
+        ));
 
         const bids = new Set<string>();
         const cardBudgetMap = new Map<string, string>();
-        if (cardIds.length) {
+        if (allCardIds.length) {
           const { data: cards } = await supabase
             .from('project_cards')
             .select('id, budget_id')
-            .in('id', cardIds);
+            .in('id', allCardIds);
           for (const c of (cards || []) as any[]) {
             if (c.id && c.budget_id) cardBudgetMap.set(c.id, c.budget_id);
             if (c.budget_id) bids.add(c.budget_id);
           }
         }
 
-        const activityEvents: CalendarActivityEvent[] = memberActivities
-          .filter((a: any) => a.due_date && a.project_card_id)
-          .flatMap((a: any) => {
+        // Build events, one per (activity, member) so colors are attributed correctly
+        const seenEventIds = new Set<string>();
+        const activityEvents: CalendarActivityEvent[] = [];
+        for (const { uid, activities } of perMember) {
+          for (const a of activities) {
+            if (!a.due_date || !a.project_card_id) continue;
             const budgetId = cardBudgetMap.get(a.project_card_id);
             const budget = budgetId ? budgets.find(b => b.id === budgetId) : undefined;
-            if (!budget) return [];
+            if (!budget) continue;
             const start = new Date(`${a.due_date}T12:00:00`);
             const end = a.end_date ? new Date(`${a.end_date}T12:00:00`) : start;
-            const events: CalendarActivityEvent[] = [];
             const cur = new Date(start);
             while (cur.getTime() <= end.getTime()) {
-              events.push({
-                id: `${a.id}-${cur.toISOString().slice(0, 10)}`,
-                activityId: a.id,
-                date: new Date(cur),
-                title: a.title || 'Atividade',
-                status: a.status || 'nao_iniciado',
-                budget,
-                projectCardId: a.project_card_id,
-                isDelivery: !!a.is_delivery,
-              });
+              const iso = cur.toISOString().slice(0, 10);
+              const evId = `${a.id}-${uid}-${iso}`;
+              if (!seenEventIds.has(evId)) {
+                seenEventIds.add(evId);
+                activityEvents.push({
+                  id: evId,
+                  activityId: a.id,
+                  date: new Date(cur),
+                  title: a.title || 'Atividade',
+                  status: a.status || 'nao_iniciado',
+                  budget,
+                  projectCardId: a.project_card_id,
+                  isDelivery: !!a.is_delivery,
+                  assignedUserId: uid,
+                });
+              }
               cur.setDate(cur.getDate() + 1);
             }
-            return events;
-          });
-
-        // Also include budgets where the member is executor or a cost supplier
-        if (memberName) {
-          const matches = (raw?: string | null) => {
-            if (!raw) return false;
-            const name = raw.trim().toLowerCase().replace(/^freela:\s*/i, '');
-            return name === memberName;
-          };
-          for (const b of budgets) {
-            if (bids.has(b.id)) continue;
-            const exec = (b as any).execution;
-            const inExecutor = matches(exec?.executor);
-            const inCosts = !!exec && [
-              ...((exec.services || []) as any[]).flatMap(s => [...(s.costs || []), ...(s.extraCosts || [])]),
-              ...((exec.operationalCosts || []) as any[]),
-              ...((exec.extraOperationalCosts || []) as any[]),
-            ].some((c: any) => matches(c?.supplier));
-            if (inExecutor || inCosts) bids.add(b.id);
           }
+        }
+
+        // Also include budgets where any selected member is executor/cost supplier
+        const matches = (raw: string | null | undefined, name: string) => {
+          if (!raw) return false;
+          const n = raw.trim().toLowerCase().replace(/^freela:\s*/i, '');
+          return n === name;
+        };
+        for (const b of budgets) {
+          if (bids.has(b.id)) continue;
+          const exec = (b as any).execution;
+          if (!exec) continue;
+          const costsAll = [
+            ...((exec.services || []) as any[]).flatMap(s => [...(s.costs || []), ...(s.extraCosts || [])]),
+            ...((exec.operationalCosts || []) as any[]),
+            ...((exec.extraOperationalCosts || []) as any[]),
+          ];
+          let matched = false;
+          for (const name of memberNames.values()) {
+            if (matches(exec.executor, name) || costsAll.some((c: any) => matches(c?.supplier, name))) {
+              matched = true; break;
+            }
+          }
+          if (matched) bids.add(b.id);
         }
 
         if (!cancelled) {
@@ -206,7 +260,7 @@ export function TeamCalendarPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, memberId, budgets, members]);
+  }, [workspace?.id, selectedMemberIds, budgets, members]);
 
 
   const memberBudgets = useMemo(
@@ -316,7 +370,28 @@ export function TeamCalendarPage() {
     }
   }, [budgets, updateBudget, updateBudgetVersion]);
 
-  const selectedMemberName = members.find(m => m.id === memberId)?.name;
+  const selectedMembers = useMemo(
+    () => members.filter(m => selectedMemberIds.has(m.id)),
+    [members, selectedMemberIds],
+  );
+  const allSelected = members.length > 0 && selectedMembers.length === members.length;
+
+  const toggleMember = (id: string) => {
+    setSelectedMemberIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setSelectedMemberIds(allSelected ? new Set() : new Set(members.map(m => m.id)));
+  };
+
+  const memberButtonLabel =
+    selectedMemberIds.size === 0 ? 'Selecione membros'
+    : allSelected ? 'Todos os membros'
+    : selectedMembers.length === 1 ? selectedMembers[0].name
+    : `${selectedMembers.length} membros selecionados`;
 
   return (
     <div className="flex flex-col h-full">
@@ -326,19 +401,50 @@ export function TeamCalendarPage() {
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
         <div className="flex items-center gap-2 min-w-[240px]">
           <Users className="w-4 h-4 text-muted-foreground" />
-          <Select value={memberId} onValueChange={setMemberId}>
-            <SelectTrigger className="h-8 w-[220px] text-xs">
-              <SelectValue placeholder="Selecione um membro do time" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              {members.length === 0 && (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum membro</div>
-              )}
-              {members.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={membersPopoverOpen} onOpenChange={setMembersPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 w-[260px] justify-between text-xs font-normal">
+                <span className="truncate flex items-center gap-1.5">
+                  {selectedMembers.length > 0 && selectedMembers.length <= 4 && (
+                    <span className="flex -space-x-1">
+                      {selectedMembers.map(m => (
+                        <span key={m.id} className={cn('w-2.5 h-2.5 rounded-full ring-1 ring-background', memberColorMap.get(m.id)?.dot || 'bg-muted-foreground')} />
+                      ))}
+                    </span>
+                  )}
+                  {memberButtonLabel}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0 z-[200]" align="start">
+              <div className="p-2 border-b border-border">
+                <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                  <span className="text-xs font-medium">Selecionar todos</span>
+                </label>
+              </div>
+              <ScrollArea className="max-h-[300px]">
+                <div className="p-1">
+                  {members.length === 0 && (
+                    <div className="px-2 py-2 text-xs text-muted-foreground">Nenhum membro</div>
+                  )}
+                  {members.map(m => {
+                    const color = memberColorMap.get(m.id);
+                    const checked = selectedMemberIds.has(m.id);
+                    return (
+                      <label key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleMember(m.id)} />
+                        <span className={cn('w-2.5 h-2.5 rounded-full', color?.dot || 'bg-muted-foreground')} />
+                        <span className="text-xs truncate flex-1">{m.name}</span>
+                        {checked && <Check className="w-3 h-3 text-primary" />}
+                      </label>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
@@ -367,69 +473,95 @@ export function TeamCalendarPage() {
       </div>
 
       <div className="px-4 md:px-6 py-1.5 text-[11px] text-muted-foreground bg-muted/40 border-b border-border">
-        {memberId
-          ? <>Mostrando projetos com atividades atribuídas a <strong>{selectedMemberName}</strong>. Arraste cards para reagendar — as datas são atualizadas no card do projeto.</>
-          : 'Selecione um membro acima para ver seus projetos.'}
+        {selectedMemberIds.size > 0
+          ? <>Mostrando projetos com atividades atribuídas a <strong>{selectedMembers.map(m => m.name).join(', ')}</strong>. Arraste cards para reagendar — as datas são atualizadas no card do projeto.</>
+          : 'Selecione um ou mais membros acima para ver seus projetos.'}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden bg-card">
-        {!memberId ? (
+      <div className="flex-1 min-h-0 overflow-hidden bg-card flex flex-col">
+        {selectedMemberIds.size === 0 ? (
           <div className="h-full flex items-center justify-center p-12 text-center text-muted-foreground text-sm">
             <div>
               <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              Selecione um membro do time para visualizar o calendário de projetos.
+              Selecione um ou mais membros do time para visualizar o calendário de projetos.
             </div>
           </div>
         ) : loadingMember ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Carregando…</div>
-        ) : memberBudgets.length === 0 ? (
+        ) : memberBudgets.length === 0 && memberActivityEvents.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm space-y-2">
-            <div>Nenhum projeto encontrado para <strong>{selectedMemberName}</strong>.</div>
+            <div>Nenhum projeto encontrado para os membros selecionados.</div>
             <div className="text-xs opacity-80">
               Um projeto aparece aqui quando o membro é responsável por alguma atividade do projeto ou executor/fornecedor de algum custo na execução do orçamento.
             </div>
           </div>
 
-        ) : view === 'month' ? (
-          <CalendarMonthView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
-          />
-        ) : view === 'week' ? (
-          <CalendarWeekView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
-          />
         ) : (
-          <CalendarDayView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-          />
+          <>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              {view === 'month' ? (
+                <CalendarMonthView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                  onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+                />
+              ) : view === 'week' ? (
+                <CalendarWeekView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                  onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+                />
+              ) : (
+                <CalendarDayView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                />
+              )}
+            </div>
+            {/* Legend footer */}
+            <div className="border-t border-border bg-muted/30 px-4 md:px-6 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Legenda:</span>
+              {selectedMembers.map(m => {
+                const c = memberColorMap.get(m.id);
+                return (
+                  <span key={m.id} className="flex items-center gap-1.5 text-xs">
+                    <span className={cn('w-3 h-3 rounded-sm', c?.dot || 'bg-muted-foreground')} />
+                    <span className="text-foreground/80">{m.name}</span>
+                  </span>
+                );
+              })}
+              <span className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
+                <Package className="w-3.5 h-3.5 text-blue-500" /> Entrega
+              </span>
+            </div>
+          </>
         )}
       </div>
+
 
       <ProjectActivitiesDialog
         open={!!activityDialog}

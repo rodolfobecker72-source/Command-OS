@@ -4,6 +4,8 @@ import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
+import { Package } from 'lucide-react';
+import type { MemberColor } from '@/utils/memberColors';
 
 export type CalendarEventType = 'execution' | 'delivery' | 'pending' | 'appointment' | 'activity';
 
@@ -25,6 +27,8 @@ export interface CalendarActivityEvent {
   budget: Budget;
   projectCardId: string;
   isDelivery?: boolean;
+  /** User id whose color should be used to render this event. */
+  assignedUserId?: string;
 }
 
 interface CalendarEventCardProps {
@@ -40,6 +44,8 @@ interface CalendarEventCardProps {
   eventType?: CalendarEventType;
   deliveryLabel?: string;
   disableDrag?: boolean;
+  /** Optional per-person color override (used by team/personal calendars). */
+  memberColor?: MemberColor | null;
 }
 
 export function CalendarEventCard({
@@ -53,6 +59,7 @@ export function CalendarEventCard({
   eventType = 'execution',
   deliveryLabel,
   disableDrag,
+  memberColor,
 }: CalendarEventCardProps) {
   const { clients } = useCRM();
   const client = budget ? clients.find(c => c.id === budget.clientId) : null;
@@ -71,8 +78,11 @@ export function CalendarEventCard({
   const apptColors = appointment ? APPOINTMENT_KIND_COLORS[appointment.kind] : null;
 
   const activityIsDelivery = isActivity && !!activity?.isDelivery;
+  const showDeliveryIcon = isDelivery || activityIsDelivery;
 
-  const statusStyle = isAppointment && apptColors
+  const statusStyle = memberColor && !isAppointment
+    ? cn(memberColor.bg, memberColor.border, memberColor.text)
+    : isAppointment && apptColors
     ? cn(apptColors.bg, apptColors.border, apptColors.text)
     : isDelivery || activityIsDelivery
       ? 'bg-blue-500/15 border-blue-500/30 text-blue-600'
@@ -82,7 +92,9 @@ export function CalendarEventCard({
         ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-600'
         : 'bg-success/15 border-success/30 text-success';
 
-  const dotColor = isAppointment && apptColors
+  const dotColor = memberColor && !isAppointment
+    ? memberColor.dot
+    : isAppointment && apptColors
     ? apptColors.dot
     : isDelivery || activityIsDelivery ? 'bg-blue-500'
     : isActivity ? 'bg-green-500'
@@ -135,6 +147,7 @@ export function CalendarEventCard({
           <>
             <div className="flex items-center gap-1 truncate">
               <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+              {showDeliveryIcon && <Package className="w-3 h-3 shrink-0" />}
               <span className="truncate text-foreground">{mainLabel}</span>
             </div>
             <div className="truncate text-foreground/80 pl-2.5 font-medium">{secondaryLabel}</div>
@@ -142,6 +155,7 @@ export function CalendarEventCard({
         ) : (
           <>
             <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+            {showDeliveryIcon && <Package className="w-3 h-3 shrink-0" />}
             {timeLabel && <span className="text-foreground/70 font-semibold shrink-0">{timeLabel}</span>}
             <span className="truncate text-foreground">{mainLabel}</span>
           </>
@@ -162,6 +176,7 @@ export function CalendarEventCard({
     >
       <div className="flex items-center gap-1.5">
         <span className={cn('w-2 h-2 rounded-full shrink-0', dotColor)} />
+        {showDeliveryIcon && <Package className="w-3.5 h-3.5 shrink-0" />}
         {timeLabel && <span className="text-foreground/70 text-[11px] font-semibold shrink-0">{timeLabel}</span>}
         <span className="text-xs font-semibold truncate text-foreground">{mainLabel}</span>
       </div>
