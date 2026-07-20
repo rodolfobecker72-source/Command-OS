@@ -717,6 +717,13 @@ export function WelcomePage() {
           </Card>
         )}
       </div>
+
+      <ProjectActivitiesDialog
+        open={!!activityDialog}
+        onOpenChange={(o) => { if (!o) setActivityDialog(null); }}
+        projectCardId={activityDialog?.projectCardId || ''}
+        projectName={activityDialog?.projectName || ''}
+      />
     </div>
   );
 }
