@@ -370,7 +370,28 @@ export function TeamCalendarPage() {
     }
   }, [budgets, updateBudget, updateBudgetVersion]);
 
-  const selectedMemberName = members.find(m => m.id === memberId)?.name;
+  const selectedMembers = useMemo(
+    () => members.filter(m => selectedMemberIds.has(m.id)),
+    [members, selectedMemberIds],
+  );
+  const allSelected = members.length > 0 && selectedMembers.length === members.length;
+
+  const toggleMember = (id: string) => {
+    setSelectedMemberIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setSelectedMemberIds(allSelected ? new Set() : new Set(members.map(m => m.id)));
+  };
+
+  const memberButtonLabel =
+    selectedMemberIds.size === 0 ? 'Selecione membros'
+    : allSelected ? 'Todos os membros'
+    : selectedMembers.length === 1 ? selectedMembers[0].name
+    : `${selectedMembers.length} membros selecionados`;
 
   return (
     <div className="flex flex-col h-full">
@@ -380,19 +401,50 @@ export function TeamCalendarPage() {
       <div className="px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 border-b border-border bg-card">
         <div className="flex items-center gap-2 min-w-[240px]">
           <Users className="w-4 h-4 text-muted-foreground" />
-          <Select value={memberId} onValueChange={setMemberId}>
-            <SelectTrigger className="h-8 w-[220px] text-xs">
-              <SelectValue placeholder="Selecione um membro do time" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              {members.length === 0 && (
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhum membro</div>
-              )}
-              {members.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={membersPopoverOpen} onOpenChange={setMembersPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 w-[260px] justify-between text-xs font-normal">
+                <span className="truncate flex items-center gap-1.5">
+                  {selectedMembers.length > 0 && selectedMembers.length <= 4 && (
+                    <span className="flex -space-x-1">
+                      {selectedMembers.map(m => (
+                        <span key={m.id} className={cn('w-2.5 h-2.5 rounded-full ring-1 ring-background', memberColorMap.get(m.id)?.dot || 'bg-muted-foreground')} />
+                      ))}
+                    </span>
+                  )}
+                  {memberButtonLabel}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0 z-[200]" align="start">
+              <div className="p-2 border-b border-border">
+                <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                  <span className="text-xs font-medium">Selecionar todos</span>
+                </label>
+              </div>
+              <ScrollArea className="max-h-[300px]">
+                <div className="p-1">
+                  {members.length === 0 && (
+                    <div className="px-2 py-2 text-xs text-muted-foreground">Nenhum membro</div>
+                  )}
+                  {members.map(m => {
+                    const color = memberColorMap.get(m.id);
+                    const checked = selectedMemberIds.has(m.id);
+                    return (
+                      <label key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleMember(m.id)} />
+                        <span className={cn('w-2.5 h-2.5 rounded-full', color?.dot || 'bg-muted-foreground')} />
+                        <span className="text-xs truncate flex-1">{m.name}</span>
+                        {checked && <Check className="w-3 h-3 text-primary" />}
+                      </label>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Tabs value={view} onValueChange={v => setView(v as 'month' | 'week' | 'day')}>
@@ -421,69 +473,95 @@ export function TeamCalendarPage() {
       </div>
 
       <div className="px-4 md:px-6 py-1.5 text-[11px] text-muted-foreground bg-muted/40 border-b border-border">
-        {memberId
-          ? <>Mostrando projetos com atividades atribuídas a <strong>{selectedMemberName}</strong>. Arraste cards para reagendar — as datas são atualizadas no card do projeto.</>
-          : 'Selecione um membro acima para ver seus projetos.'}
+        {selectedMemberIds.size > 0
+          ? <>Mostrando projetos com atividades atribuídas a <strong>{selectedMembers.map(m => m.name).join(', ')}</strong>. Arraste cards para reagendar — as datas são atualizadas no card do projeto.</>
+          : 'Selecione um ou mais membros acima para ver seus projetos.'}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden bg-card">
-        {!memberId ? (
+      <div className="flex-1 min-h-0 overflow-hidden bg-card flex flex-col">
+        {selectedMemberIds.size === 0 ? (
           <div className="h-full flex items-center justify-center p-12 text-center text-muted-foreground text-sm">
             <div>
               <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              Selecione um membro do time para visualizar o calendário de projetos.
+              Selecione um ou mais membros do time para visualizar o calendário de projetos.
             </div>
           </div>
         ) : loadingMember ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Carregando…</div>
-        ) : memberBudgets.length === 0 ? (
+        ) : memberBudgets.length === 0 && memberActivityEvents.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm space-y-2">
-            <div>Nenhum projeto encontrado para <strong>{selectedMemberName}</strong>.</div>
+            <div>Nenhum projeto encontrado para os membros selecionados.</div>
             <div className="text-xs opacity-80">
               Um projeto aparece aqui quando o membro é responsável por alguma atividade do projeto ou executor/fornecedor de algum custo na execução do orçamento.
             </div>
           </div>
 
-        ) : view === 'month' ? (
-          <CalendarMonthView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
-          />
-        ) : view === 'week' ? (
-          <CalendarWeekView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-            onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
-          />
         ) : (
-          <CalendarDayView
-            currentDate={currentDate}
-            events={[]}
-            pendingEvents={[]}
-            deliveryEvents={[]}
-            activityEvents={memberActivityEvents}
-            onEventClick={setSelectedBudget}
-            onDeliveryClick={(b) => setSelectedBudget(b)}
-            onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
-            onDragEndDay={handleDragEnd}
-          />
+          <>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              {view === 'month' ? (
+                <CalendarMonthView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                  onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+                />
+              ) : view === 'week' ? (
+                <CalendarWeekView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                  onDayClick={(d) => { setCurrentDate(d); setView('day'); }}
+                />
+              ) : (
+                <CalendarDayView
+                  currentDate={currentDate}
+                  events={[]}
+                  pendingEvents={[]}
+                  deliveryEvents={[]}
+                  activityEvents={memberActivityEvents}
+                  memberColorMap={memberColorMap}
+                  onEventClick={setSelectedBudget}
+                  onDeliveryClick={(b) => setSelectedBudget(b)}
+                  onActivityClick={(a) => setActivityDialog({ projectCardId: a.projectCardId, projectName: a.budget.projectName })}
+                  onDragEndDay={handleDragEnd}
+                />
+              )}
+            </div>
+            {/* Legend footer */}
+            <div className="border-t border-border bg-muted/30 px-4 md:px-6 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Legenda:</span>
+              {selectedMembers.map(m => {
+                const c = memberColorMap.get(m.id);
+                return (
+                  <span key={m.id} className="flex items-center gap-1.5 text-xs">
+                    <span className={cn('w-3 h-3 rounded-sm', c?.dot || 'bg-muted-foreground')} />
+                    <span className="text-foreground/80">{m.name}</span>
+                  </span>
+                );
+              })}
+              <span className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
+                <Package className="w-3.5 h-3.5 text-blue-500" /> Entrega
+              </span>
+            </div>
+          </>
         )}
       </div>
+
 
       <ProjectActivitiesDialog
         open={!!activityDialog}
