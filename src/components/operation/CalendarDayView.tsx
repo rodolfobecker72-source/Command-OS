@@ -91,6 +91,54 @@ export function CalendarDayView({
               Nada agendado para este dia. Duplo clique para criar um compromisso.
             </div>
           )}
+          {[...captacaoActivities, ...deliveryActivities, ...otherActivities].map(ev => null)}
+          {captacaoActivities.map(ev => (
+            <CalendarEventCard
+              key={ev.id}
+              dragId={`act-${ev.id}`}
+              dragData={{ type: 'activity', activityId: ev.activityId }}
+              budget={ev.budget}
+              activity={ev}
+              eventType="activity"
+              memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
+              onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
+            />
+          ))}
+          {dayDeliveries.map(ev => (
+            <CalendarEventCard
+              key={ev.id}
+              dragId={`del-${ev.id}`}
+              dragData={{ type: 'delivery', budgetId: ev.budget.id, serviceId: ev.serviceId }}
+              budget={ev.budget}
+              eventType="delivery"
+              deliveryLabel={ev.label}
+              onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
+            />
+          ))}
+          {deliveryActivities.map(ev => (
+            <CalendarEventCard
+              key={ev.id}
+              dragId={`act-${ev.id}`}
+              dragData={{ type: 'activity', activityId: ev.activityId }}
+              budget={ev.budget}
+              activity={ev}
+              eventType="activity"
+              memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
+              onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
+            />
+          ))}
+          {otherActivities.map(ev => (
+            <CalendarEventCard
+              key={ev.id}
+              dragId={`act-${ev.id}`}
+              dragData={{ type: 'activity', activityId: ev.activityId }}
+              budget={ev.budget}
+              activity={ev}
+              eventType="activity"
+              memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
+              onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
+            />
+          ))}
           {dayEvents.map(ev => (
             <CalendarEventCard
               key={ev.id}
@@ -108,29 +156,6 @@ export function CalendarDayView({
               budget={ev}
               eventType="pending"
               onClick={() => onEventClick(ev)}
-            />
-          ))}
-          {dayDeliveries.map(ev => (
-            <CalendarEventCard
-              key={ev.id}
-              dragId={`del-${ev.id}`}
-              dragData={{ type: 'delivery', budgetId: ev.budget.id, serviceId: ev.serviceId }}
-              budget={ev.budget}
-              eventType="delivery"
-              deliveryLabel={ev.label}
-              onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
-            />
-          ))}
-          {dayActivities.map(ev => (
-            <CalendarEventCard
-              key={ev.id}
-              dragId={`act-${ev.id}`}
-              dragData={{ type: 'activity', activityId: ev.activityId }}
-              budget={ev.budget}
-              activity={ev}
-              eventType="activity"
-              memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
-              onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
             />
           ))}
           {dayAppts.map(ap => (
