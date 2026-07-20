@@ -112,6 +112,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
   const [newDueByCol, setNewDueByCol] = useState<Record<string, string>>({});
   const [newEndByCol, setNewEndByCol] = useState<Record<string, string>>({});
   const [newDeliveryByCol, setNewDeliveryByCol] = useState<Record<string, boolean>>({});
+  const [newCaptacaoByCol, setNewCaptacaoByCol] = useState<Record<string, boolean>>({});
   const [newFreelaByCol, setNewFreelaByCol] = useState<Record<string, string>>({});
   const [expandedNewByCol, setExpandedNewByCol] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -249,6 +250,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
             dueDate: d.due_date ?? null,
             endDate: d.end_date ?? null,
             isDelivery: !!d.is_delivery,
+            isCaptacao: !!d.is_captacao,
             freelaName: d.freela_name ?? null,
           })));
         }
@@ -398,6 +400,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     const endRaw = newEndByCol[status] || null;
     const end = endRaw && due && endRaw >= due ? endRaw : null;
     const isDelivery = !!newDeliveryByCol[status];
+    const isCaptacao = !!newCaptacaoByCol[status];
     const freelaName = newAssigneeByCol[status] === '__freela__' ? (newFreelaByCol[status] || '').trim() : null;
     const { data, error } = await supabase
       .from('project_activities')
@@ -412,6 +415,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
         due_date: due,
         end_date: end,
         is_delivery: isDelivery,
+        is_captacao: isCaptacao,
         freela_name: freelaName || null,
       } as any)
       .select()
@@ -431,6 +435,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
       dueDate: (data as any).due_date ?? null,
       endDate: (data as any).end_date ?? null,
       isDelivery: !!(data as any).is_delivery,
+      isCaptacao: !!(data as any).is_captacao,
       freelaName: (data as any).freela_name ?? null,
     }]);
     setNewTitleByCol(prev => ({ ...prev, [status]: '' }));
@@ -438,6 +443,7 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     setNewDueByCol(prev => ({ ...prev, [status]: '' }));
     setNewEndByCol(prev => ({ ...prev, [status]: '' }));
     setNewDeliveryByCol(prev => ({ ...prev, [status]: false }));
+    setNewCaptacaoByCol(prev => ({ ...prev, [status]: false }));
     setNewFreelaByCol(prev => ({ ...prev, [status]: '' }));
     setExpandedNewByCol(prev => ({ ...prev, [status]: false }));
     syncActivityToGoogle(data.id, 'upsert');
@@ -528,6 +534,17 @@ export function ProjectActivitiesDialog({ open, onOpenChange, projectCardId, pro
     if (error) toast.error('Erro ao atualizar entrega');
     else syncActivityToGoogle(id, 'upsert');
   };
+
+  const handleUpdateCaptacao = async (id: string, value: boolean) => {
+    setActivities(prev => prev.map(a => a.id === id ? { ...a, isCaptacao: value } : a));
+    const { error } = await supabase
+      .from('project_activities')
+      .update({ is_captacao: value } as any)
+      .eq('id', id);
+    if (error) toast.error('Erro ao atualizar captação');
+    else syncActivityToGoogle(id, 'upsert');
+  };
+
 
 
   const handleUpdateFreela = async (id: string, name: string | null) => {
