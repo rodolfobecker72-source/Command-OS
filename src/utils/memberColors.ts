@@ -38,8 +38,18 @@ function hashString(str: string): number {
   return h >>> 0;
 }
 
+// Overrides fixos por usuário (id -> chave da paleta).
+const MEMBER_COLOR_OVERRIDES: Record<string, string> = {
+  'f6b0c380-6af8-44e0-a28b-aee7cd24a6da': 'blue', // Luisinho
+};
+
 export function getMemberColor(userId: string | null | undefined): MemberColor {
   if (!userId) return MEMBER_COLOR_PALETTE[MEMBER_COLOR_PALETTE.length - 1];
+  const overrideKey = MEMBER_COLOR_OVERRIDES[userId];
+  if (overrideKey) {
+    const forced = MEMBER_COLOR_PALETTE.find((c) => c.key === overrideKey);
+    if (forced) return forced;
+  }
   const idx = hashString(userId) % MEMBER_COLOR_PALETTE.length;
   return MEMBER_COLOR_PALETTE[idx];
 }
