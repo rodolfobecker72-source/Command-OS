@@ -43,6 +43,15 @@ export function NewClient() {
     phone: '',
     leadOrigin: '' as LeadOrigin | '',
     sector: '' as LeadSegment | '',
+    address: '',
+    addressNumber: '',
+    addressComplement: '',
+    neighborhood: '',
+    zipCode: '',
+    city: '',
+    state: '',
+    stateRegistration: '',
+    municipalRegistration: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
