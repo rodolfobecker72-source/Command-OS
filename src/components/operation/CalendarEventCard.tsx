@@ -4,6 +4,8 @@ import { useCRM } from '@/contexts/CRMContext';
 import { cn } from '@/lib/utils';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
+import { Package } from 'lucide-react';
+import type { MemberColor } from '@/utils/memberColors';
 
 export type CalendarEventType = 'execution' | 'delivery' | 'pending' | 'appointment' | 'activity';
 
@@ -25,6 +27,8 @@ export interface CalendarActivityEvent {
   budget: Budget;
   projectCardId: string;
   isDelivery?: boolean;
+  /** User id whose color should be used to render this event. */
+  assignedUserId?: string;
 }
 
 interface CalendarEventCardProps {
@@ -40,6 +44,8 @@ interface CalendarEventCardProps {
   eventType?: CalendarEventType;
   deliveryLabel?: string;
   disableDrag?: boolean;
+  /** Optional per-person color override (used by team/personal calendars). */
+  memberColor?: MemberColor | null;
 }
 
 export function CalendarEventCard({
