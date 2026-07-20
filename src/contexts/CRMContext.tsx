@@ -1129,9 +1129,34 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
       const { error } = await supabase.from('budget_versions').update(dbUpdates).eq('id', versionId);
       if (error) throw error;
+
+      // If updating the approved version's price, also sync budgets.final_value so dashboards reflect it
+      const budget = budgets.find(b => b.id === budgetId);
+      const editedVersion = budget?.versions.find(v => v.id === versionId);
+      let newFinalValue: number | undefined;
+      if (
+        budget &&
+        editedVersion &&
+        budget.approvedVersion === editedVersion.version &&
+        updates.fullPrice !== undefined &&
+        updates.fullPrice !== budget.finalValue
+      ) {
+        newFinalValue = updates.fullPrice;
+        const { error: bErr } = await supabase
+          .from('budgets')
+          .update({ final_value: newFinalValue })
+          .eq('id', budgetId);
+        if (bErr) console.error('[CRM] updateBudgetVersion: erro ao sincronizar final_value:', bErr.message);
+      }
+
       setBudgets(prev => prev.map(b => {
         if (b.id === budgetId) {
-          return { ...b, versions: b.versions.map(v => v.id === versionId ? { ...v, ...updates } : v), updatedAt: new Date() };
+          return {
+            ...b,
+            versions: b.versions.map(v => v.id === versionId ? { ...v, ...updates } : v),
+            finalValue: newFinalValue !== undefined ? newFinalValue : b.finalValue,
+            updatedAt: new Date(),
+          };
         }
         return b;
       }));
