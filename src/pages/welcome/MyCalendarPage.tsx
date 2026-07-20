@@ -6,7 +6,9 @@ import {
   eachDayOfInterval, isSameMonth, isSameDay, isToday,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Briefcase, Phone, ExternalLink, CalendarDays, StickyNote, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, Phone, ExternalLink, CalendarDays, StickyNote, Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { getMemberColor } from '@/utils/memberColors';
+import { useAuth as useAuthForColor } from '@/contexts/AuthContext';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
