@@ -110,8 +110,25 @@ export function CalendarMonthView({
             const dayEvents = getEventsForDay(day, events);
             const dayPending = getEventsForDay(day, pendingEvents);
             const dayDeliveries = getDeliveryEventsForDay(day, deliveryEvents);
-            const dayActivities = getActivityEventsForDay(day, activityEvents);
+            const allDayActivities = getActivityEventsForDay(day, activityEvents);
+            const captacaoActivities = allDayActivities.filter(a => a.isCaptacao);
+            const deliveryActivities = allDayActivities.filter(a => !a.isCaptacao && a.isDelivery);
+            const otherActivities = allDayActivities.filter(a => !a.isCaptacao && !a.isDelivery);
             const dayAppts = getAppointmentsForDay(day, appointments);
+
+            const renderActivity = (ev: CalendarActivityEvent) => (
+              <CalendarEventCard
+                key={ev.id}
+                dragId={`act-${ev.id}`}
+                dragData={{ type: 'activity', activityId: ev.activityId }}
+                budget={ev.budget}
+                activity={ev}
+                compact
+                eventType="activity"
+                memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
+                onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
+              />
+            );
 
             return (
               <DroppableDay
@@ -139,6 +156,21 @@ export function CalendarMonthView({
                   </button>
                 </div>
                 <div className="space-y-0.5 overflow-y-auto max-h-[52px] md:max-h-[76px] scrollbar-thin">
+                  {captacaoActivities.map(renderActivity)}
+                  {dayDeliveries.map(ev => (
+                    <CalendarEventCard
+                      key={ev.id}
+                      dragId={`del-${ev.id}`}
+                      dragData={{ type: 'delivery', budgetId: ev.budget.id, serviceId: ev.serviceId }}
+                      budget={ev.budget}
+                      compact
+                      eventType="delivery"
+                      deliveryLabel={ev.label}
+                      onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
+                    />
+                  ))}
+                  {deliveryActivities.map(renderActivity)}
+                  {otherActivities.map(renderActivity)}
                   {dayEvents.map(ev => (
                     <CalendarEventCard
                       key={ev.id}
@@ -158,31 +190,6 @@ export function CalendarMonthView({
                       compact
                       eventType="pending"
                       onClick={() => onEventClick(ev)}
-                    />
-                  ))}
-                  {dayDeliveries.map(ev => (
-                    <CalendarEventCard
-                      key={ev.id}
-                      dragId={`del-${ev.id}`}
-                      dragData={{ type: 'delivery', budgetId: ev.budget.id, serviceId: ev.serviceId }}
-                      budget={ev.budget}
-                      compact
-                      eventType="delivery"
-                      deliveryLabel={ev.label}
-                      onClick={() => onDeliveryClick ? onDeliveryClick(ev.budget, ev.serviceId) : onEventClick(ev.budget)}
-                    />
-                  ))}
-                  {dayActivities.map(ev => (
-                    <CalendarEventCard
-                      key={ev.id}
-                      dragId={`act-${ev.id}`}
-                      dragData={{ type: 'activity', activityId: ev.activityId }}
-                      budget={ev.budget}
-                      activity={ev}
-                      compact
-                      eventType="activity"
-                      memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
-                      onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
                     />
                   ))}
                   {dayAppts.map(ap => (

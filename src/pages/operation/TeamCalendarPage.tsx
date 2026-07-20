@@ -19,6 +19,7 @@ import { CalendarDayView } from '@/components/operation/CalendarDayView';
 import { ProjectActivitiesDialog } from '@/components/projects/ProjectActivitiesDialog';
 import { Header } from '@/components/layout/Header';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { toast } from 'sonner';
 import { DragEndEvent } from '@dnd-kit/core';
 import { getMemberColor, MemberColor } from '@/utils/memberColors';
@@ -83,6 +84,13 @@ export function TeamCalendarPage() {
   const [memberActivityEvents, setMemberActivityEvents] = useState<CalendarActivityEvent[]>([]);
   const [loadingMember, setLoadingMember] = useState(false);
   const [membersPopoverOpen, setMembersPopoverOpen] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
+
+  useRealtimeSync({
+    workspaceId: workspace?.id,
+    tables: ['project_activities', 'project_cards'],
+    onChange: () => setReloadNonce(n => n + 1),
+  });
 
   const storageKey = workspace?.id ? `team-calendar:selected-members:${workspace.id}` : null;
 
@@ -261,7 +269,7 @@ export function TeamCalendarPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [workspace?.id, selectedMemberIds, budgets, members]);
+  }, [workspace?.id, selectedMemberIds, budgets, members, reloadNonce]);
 
 
   const memberBudgets = useMemo(
