@@ -6,6 +6,7 @@ import { Appointment } from '@/types/appointment';
 import { CalendarEventCard, CalendarActivityEvent, CalendarDeliveryEvent } from './CalendarEventCard';
 import { cn } from '@/lib/utils';
 import { DndContext, DragEndEvent, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { MemberColor } from '@/utils/memberColors';
 
 interface CalendarDayViewProps {
   currentDate: Date;
@@ -20,6 +21,7 @@ interface CalendarDayViewProps {
   onAppointmentClick?: (appointment: Appointment) => void;
   onDragEndDay?: (event: DragEndEvent) => void;
   onCreateAppointmentAt?: (date: Date) => void;
+  memberColorMap?: Map<string, MemberColor>;
 }
 
 function getEventsForDay(day: Date, events: Budget[]): Budget[] {
@@ -52,6 +54,7 @@ function DroppableDay({ day, children, onCreate, className }: { day: Date; child
 export function CalendarDayView({
   currentDate, events, pendingEvents = [], deliveryEvents, activityEvents = [], appointments = [],
   onEventClick, onDeliveryClick, onActivityClick, onAppointmentClick, onDragEndDay, onCreateAppointmentAt,
+  memberColorMap,
 }: CalendarDayViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -123,6 +126,7 @@ export function CalendarDayView({
               budget={ev.budget}
               activity={ev}
               eventType="activity"
+              memberColor={ev.assignedUserId ? memberColorMap?.get(ev.assignedUserId) : undefined}
               onClick={() => onActivityClick ? onActivityClick(ev) : onEventClick(ev.budget)}
             />
           ))}
