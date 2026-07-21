@@ -34,6 +34,7 @@ import { CalendarPage } from "@/pages/operation/CalendarPage";
 import { TeamCalendarPage } from "@/pages/operation/TeamCalendarPage";
 import { MediaCenterPage } from "@/pages/operation/MediaCenterPage";
 import { ProjectManagementPage } from "@/pages/projects/ProjectManagementPage";
+import { ProjectHistoryPage } from "@/pages/projects/ProjectHistoryPage";
 import { FinancialPage } from '@/pages/admin/FinancialPage';
 import { PatrimonioPage } from '@/pages/admin/PatrimonioPage';
 import { ProspectionProvider } from "@/contexts/ProspectionContext";
