@@ -75,8 +75,8 @@ export function ProjectHistoryPage() {
                 key={`${p.year}-${p.id}-${p.name}`}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors"
               >
-                <span className="text-xs font-mono text-muted-foreground w-12 shrink-0 tabular-nums">
-                  #{p.id}
+                <span className="text-xs font-mono text-muted-foreground w-14 shrink-0 tabular-nums">
+                  ID {p.id}
                 </span>
                 <span className="flex-1 text-sm truncate">{p.name}</span>
                 {isValidLink(p.link) ? (
