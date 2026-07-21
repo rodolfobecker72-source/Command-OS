@@ -25,6 +25,7 @@ import {
   Building2,
   ShieldCheck,
   Sparkles,
+  History as HistoryIcon,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
