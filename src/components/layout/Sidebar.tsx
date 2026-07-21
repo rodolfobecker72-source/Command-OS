@@ -25,6 +25,7 @@ import {
   Building2,
   ShieldCheck,
   Sparkles,
+  History as HistoryIcon,
 } from 'lucide-react';
 import commandLogo from '@/assets/command-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +62,7 @@ const navGroups: NavGroup[] = [
       { name: 'Calendário de Projetos', href: '/calendario', icon: CalendarDays, pageKey: 'calendario' },
       { name: 'Calendário do Time', href: '/calendario-time', icon: Users, pageKey: 'calendario-time' },
       { name: 'Central de Mídias', href: '/central-midia', icon: HardDrive, pageKey: 'central-midia' },
+      { name: 'Histórico', href: '/projetos/historico', icon: HistoryIcon, pageKey: 'historico-projetos' },
     ],
   },
   {
