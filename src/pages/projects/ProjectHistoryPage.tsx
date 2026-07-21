@@ -13,7 +13,9 @@ export function ProjectHistoryPage() {
   const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = HISTORICAL_PROJECTS.filter(
-      (p) => !q || p.name.toLowerCase().includes(q) || p.year.toLowerCase().includes(q)
+      (p) =>
+        p.year !== 'Backlog' &&
+        (!q || p.name.toLowerCase().includes(q) || p.year.toLowerCase().includes(q))
     );
     const byYear = new Map<string, typeof HISTORICAL_PROJECTS>();
     for (const p of filtered) {
@@ -23,14 +25,16 @@ export function ProjectHistoryPage() {
     // sort each group ascending by id
     for (const arr of byYear.values()) arr.sort((a, b) => a.id - b.id);
 
-    // year ordering: numeric years desc, then others alpha
+    // requested order: 1º semestre 2026, 2025, Nativos do Futuro, 2024
+    const order = ['1º semestre 2026', '2025', 'Nativos do Futuro', '2024'];
+    const rank = new Map(order.map((y, i) => [y, i]));
     const entries = Array.from(byYear.entries());
     entries.sort(([a], [b]) => {
-      const na = /^\d{4}$/.test(a) ? parseInt(a) : null;
-      const nb = /^\d{4}$/.test(b) ? parseInt(b) : null;
-      if (na && nb) return nb - na;
-      if (na) return -1;
-      if (nb) return 1;
+      const ra = rank.get(a);
+      const rb = rank.get(b);
+      if (ra !== undefined && rb !== undefined) return ra - rb;
+      if (ra !== undefined) return -1;
+      if (rb !== undefined) return 1;
       return a.localeCompare(b, 'pt-BR');
     });
     return entries;

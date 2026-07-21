@@ -1211,37 +1211,37 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 449,
     "name": "449 - P.R. Dr. Drauzio JAN",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 449,
     "name": "449 - P.R. Dr. Drauzio FEV",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 449,
     "name": "449 - P.R. Dr. Drauzio MAR",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 449,
     "name": "449 - P.R. Dr. Drauzio ABR",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 449,
     "name": "449 - Content Flow (Dr. Drauzio) MAI",
     "link": "https://drive.google.com/drive/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 449,
     "name": "449 - Content Flow (Dr. Drauzio) JUN",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 450,
@@ -1391,7 +1391,7 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 516,
     "name": "516 - IronCup 2026",
     "link": "https://drive.google.com/drive/u/0/folders/1LPUGU_rS5v9-Nur2wpcTXIW3AHtdcWJ1",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 517,
@@ -1733,7 +1733,7 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 626,
     "name": "626 - Live Urso",
     "link": "https://clientes.hero.rec.br/lancamentodosabadasblocodourso2026/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 627,
@@ -1787,7 +1787,7 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 639,
     "name": "639 - Bela Vista",
     "link": "https://drive.google.com/drive/folders/1Dw8sCpA2KTVq-6NKYRqNjEM7QdVxo87m?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 645,
@@ -1823,13 +1823,13 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 652,
     "name": "652 - Creator Studio (Ana Julia Adv)",
     "link": "https://clientes.hero.rec.br/herocreatorstudio/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 654,
     "name": "654 - Creator Studio (Daniel)",
     "link": "https://clientes.hero.rec.br/creatorstudiodanielalbarello/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 657,
@@ -1841,451 +1841,451 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 660,
     "name": "660 - Oscar Fórmula",
     "link": "https://drive.google.com/drive/u/0/folders/1VTOxEIs5mZRfsXXmYVwbNapT3MrzUzBv",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 662,
     "name": "662 - FS Barão",
     "link": "https://clientes.hero.rec.br/foodsessionpousadadobarao/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - P.R. JCosta JAN",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - P.R. JCosta MAR",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - P.R. JCosta FEV",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - P.R. JCosta ABR",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - Content Flow (JCosta) MAI",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 665,
     "name": "665 - Content Flow (JCosta) JUN",
     "link": "https://drive.google.com/drive/u/0/folders/1fOURnoKV-QoZa3zl63Sf0KA51YGCZVTa",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 667,
     "name": "667 - VSL District Elite",
     "link": "https://drive.google.com/drive/u/0/folders/16VMJjdYNMxX73zgz-tJNq8BdowRvSpx2",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 668,
     "name": "668 - Cadin de Minas",
     "link": "https://drive.google.com/drive/u/0/folders/1-U33aMjzFJOaL4Ds-7S3XKnDoK50whgC",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 669,
     "name": "669 - Residencial Santa Isabel",
     "link": "https://drive.google.com/drive/folders/1KHI_bCdqRPwRyfeG1io7ommj5jNHiDT7?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 670,
     "name": "670 - Conteúdo Magnera",
     "link": "https://drive.google.com/drive/folders/1kIDiw3ORIMhop84sJc1vd3B1boCDNnqZ?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 671,
     "name": "671 - FS Cafetelier",
     "link": "https://clientes.hero.rec.br/foodsessioncafetelier/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 680,
     "name": "680 - Creator Studio (Ana Julia Psi)",
     "link": "https://clientes.hero.rec.br/creatorstudioanajuliapsicologa/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 681,
     "name": "681 - Youtube Dr. Drauzio",
     "link": "https://drive.google.com/drive/u/0/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 682,
     "name": "682 - VT Urso",
     "link": "https://drive.google.com/drive/u/0/folders/1dm8gXPfO73q59Ar51Mm5xmUibdKihehk",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 683,
     "name": "683 - FS Imperial",
     "link": "https://clientes.hero.rec.br/foodsessionimperialpizza/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 685,
     "name": "685 - Clínica Oppenheimer",
     "link": "https://drive.google.com/drive/folders/1RrYu97JREjL8TD2l_1yR4xRmvGmSVSX-?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 687,
     "name": "687 - Creator Studio (Paulinho)",
     "link": "https://clientes.hero.rec.br/creatorstudiopaulosergio/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 689,
     "name": "689 - Uniforme District Elite",
     "link": "https://clientes.hero.rec.br/uniformedistrictelite/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 690,
     "name": "690 - Resenha do Ted",
     "link": "https://clientes.hero.rec.br/resenhadoted2026/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 692,
     "name": "692 - Casa do Ted + Acasalamento",
     "link": "https://drive.google.com/drive/u/0/folders/1w3YSwUcbKnG06ZHMZ9c0BrefljGaBc_l",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 695,
     "name": "695 - Creator Studio (Cadu Personal)",
     "link": "https://clientes.hero.rec.br/creatorstudiocadupersonal/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 697,
     "name": "697 - Floydianos 2026",
     "link": "https://drive.google.com/drive/folders/1NW7rsJkrj_X3FUh-yFzQraotYScPkEVh",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 703,
     "name": "703 - Creator Studio Inatel",
     "link": "https://drive.google.com/drive/u/0/folders/1Wh3Xay7uh-jksiFlyXsz0oL6U-FEz5Oj",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 704,
     "name": "704 - Sicredi 45 anos coop",
     "link": "https://drive.google.com/drive/folders/1JpDcEMDQO47QC6DHrMjqM2K1hTRGD2ki",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 705,
     "name": "705 - VSL Marco Aurélio",
     "link": "https://drive.google.com/drive/u/0/folders/1quI4lzgt0Whe1wbc5NAstN9qsv8Df9dd",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 708,
     "name": "708 - Creator Studio (Douglas & Alexandro)",
     "link": "https://clientes.hero.rec.br/creatorstudiodouglasandalessandro/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 719,
     "name": "719 - Histórias que Conectam - Itapeva",
     "link": "Link do cliente",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 720,
     "name": "720 - Institucional Inatel 2026",
     "link": "https://drive.google.com/drive/u/0/folders/12Z6LQQo_phAdkE73ZQdsK5LxlwiMxRgc",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 721,
     "name": "721 - Inauguração Escola Sesi",
     "link": "https://drive.google.com/drive/folders/1vINiQj0U5bsOJ0tHZb7NvPDaSrNoTGAl?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 723,
     "name": "723 - Youtube Dr. Drauzio MAR",
     "link": "https://drive.google.com/drive/folders/1HeejzBZbaoPM04qU2yhtmvFT-AlxeMpA?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 725,
     "name": "725 - Creator Studio (Ana Caroline)",
     "link": "https://clientes.hero.rec.br/creatorstudioanacarolineneurologista/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 727,
     "name": "727 - Seminário Imobiliario",
     "link": "https://drive.google.com/drive/folders/1wfRFZITJq2WKwyElNoqOrSAM_U5Zl2uU?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 800,
     "name": "800 - Sicredi Reinauguração Agência PA",
     "link": "https://drive.google.com/drive/folders/1H9n_9C15LJfauOd6m0cRx5y2k5WJQKVG",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 801,
     "name": "801 - Sicredi Evento 45 anos Coop",
     "link": "https://drive.google.com/drive/folders/18w51eO0tkLu74l2dyZwbAnJPxuW3ioCN?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 804,
     "name": "804 - FS Pastelzinho",
     "link": "https://clientes.hero.rec.br/foodsessionpastelzinhocorporation/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 805,
     "name": "805 - FS 2 Imperial",
     "link": "https://drive.google.com/drive/folders/1iLsmtRdlGL5vn0ralP2wxLyoRzNu6FiK?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 807,
     "name": "807 - Conteúdos Prointec",
     "link": "https://drive.google.com/drive/u/0/folders/1rWYCSvzjA2x7Duu6wFla-vTBTfyo7nSg",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 903,
     "name": "903 - Fotos de produto TSDA",
     "link": "https://drive.google.com/drive/u/0/folders/1-nMO7RFkKeJ2A2UK8s-fmaUfi3RtXkLi",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 904,
     "name": "904 - Atualização VT",
     "link": "https://drive.google.com/drive/u/0/folders/1M8DXDckr-AUWXDsXBDoVvHTSAdcyZpBq",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 910,
     "name": "910 - Singer (Carlos DJ)",
     "link": "https://drive.google.com/drive/u/0/folders/1I729ftlyKyjMj81ri59LfJt_G2V4_VAp",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 912,
     "name": "912 - Singer (Ramon DJ)",
     "link": "https://drive.google.com/drive/u/0/folders/1N6A9GmRPQ3dtt3o-4VdVBE0sDE9-rScV",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 914,
     "name": "914 - Histórias que Conectam/Cambuí",
     "link": "https://drive.google.com/drive/folders/1Jyxh0qZ--aYy7CJ-8hrtIoRZ1bDm-big",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 916,
     "name": "916 - Cobertura wtm",
     "link": "https://drive.google.com/drive/u/0/folders/1d94y5CHj9G9wjA04zxX_ZH4qqWhlnkw5",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 924,
     "name": "924 - Conteúdos de mentoria EP01",
     "link": "https://drive.google.com/drive/u/0/folders/1AJrPSbZypWjQZxpW-MivsXA4vYcLxDpi",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 927,
     "name": "927 - Creator Studio (Mari)",
     "link": "https://clientes.hero.rec.br/creatorstudiomariananassar/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 930,
     "name": "930 - Creator Studio (Maria Carla) [Completo]",
     "link": "https://clientes.hero.rec.br/creatorstudiomariacarla/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 931,
     "name": "931 - Creator Studio (Flavia)",
     "link": "https://clientes.hero.rec.br/creatorstudioflaviacouto/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 932,
     "name": "932 - Corrida do Mandu 2026",
     "link": "https://drive.google.com/drive/folders/1YOnI9u6bPh8F0yjgd5S0WlwW686KZoZI",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 936,
     "name": "936 - Campanha Dia das mães Bebold",
     "link": "https://clientes.hero.rec.br/campanhadosdiasdasmaesbebold/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 937,
     "name": "937 - Histórias que Conectam - Bueno Brandão",
     "link": "https://drive.google.com/drive/folders/1avJO1AC1h7EVWDvzKjC8v_JXhKN1GSUI",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 938,
     "name": "938 - Evento de colaboradores Sicredi",
     "link": "https://drive.google.com/drive/folders/1XxJLIPWQrtwYqagWLjeZCADNpz7ZtS6o?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 941,
     "name": "941 - Creator Studio (Guilherme) [Completo-2]",
     "link": "https://clientes.hero.rec.br/creatorstudioguilherme/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 946,
     "name": "946 - Creator Studio (Cassinaider)",
     "link": "https://clientes.hero.rec.br/creatorstudiocassinaider/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 960,
     "name": "960 - Creator Studio (Fabi)",
     "link": "https://clientes.hero.rec.br/creatorstudiofabiopte/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 963,
     "name": "963 - Creator Studio (Patricia Rezende)",
     "link": "https://clientes.hero.rec.br/creatorstudiopatriciaandangelo/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 965,
     "name": "965 - Content Flow (Grape) MAI",
     "link": "https://drive.google.com/drive/u/0/folders/1eAKm5oGnJbCtk3Xh9gkner67vGRaGp88",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 965,
     "name": "965 - Content Flow (Grape) JUN",
     "link": "https://drive.google.com/drive/u/0/folders/1eAKm5oGnJbCtk3Xh9gkner67vGRaGp88",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 968,
     "name": "968 - Fórum UNA de Direito",
     "link": "https://drive.google.com/drive/folders/127Aq_KAZy45dONhJmUNo-bljfR76oZq7?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 970,
     "name": "970 - Season DEFC 2026",
     "link": "https://drive.google.com/drive/folders/1u70yrgsujihHzg3OKseqx5l6x5Otk5W8",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 971,
     "name": "971 - Creator Studio (Tio Robson)",
     "link": "https://clientes.hero.rec.br/creatorstudiotiorobson/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 972,
     "name": "972 - Creator Studio (Camila) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudiocamila/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 973,
     "name": "973 - Creator Studio (Adriele) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudioadriele/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 974,
     "name": "974 - Creator Studio (Edileia) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudioedileia/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 976,
     "name": "976 - Rodeio Heliodora",
     "link": "https://drive.google.com/drive/folders/1giutWQCLRmjXd0Z8y1eEcSMm_95hmmvS?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 978,
     "name": "978 - Conteúdo Terra Jump",
     "link": "https://drive.google.com/drive/u/0/folders/1nGvlY5nJA5Ubm3mlcsMyQFK-iw9xg1Kv",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 981,
     "name": "981 - Creator Studio (Milene) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudiomilene/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 982,
     "name": "982 - Creator Studio (Alice) [Completo]",
     "link": "https://clientes.hero.rec.br/creatorstudioalice/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 983,
     "name": "983 - HC Bom Repouso Sicredi",
     "link": "https://drive.google.com/drive/folders/1-D3mWGlV-pfjVDKf-9bhHz8eWyZk0z3n",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 985,
     "name": "985 - Visita na Fábrica Tamura",
     "link": "https://drive.google.com/drive/folders/1YzYQh14mVK-pe8qsotXX_K_K5wMGJ4Gw?usp=drive_link",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 987,
     "name": "987 - Conteúdo Grape",
     "link": "https://drive.google.com/drive/folders/1dRNSr_o6xVfgb6QT84emqkIBeQrFW2Sd?usp=sharing",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 993,
     "name": "993 - Creator Studio (Maristela) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudiomaristela/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 994,
     "name": "994 - Creator Studio (Taísa) [10 fotos]",
     "link": "https://clientes.hero.rec.br/creatorstudiotaisa/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 999,
     "name": "999 - Creator Studio (Nathy Bueno) [Completo]",
     "link": "https://clientes.hero.rec.br/creatorstudionathybueno/",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 999999,
@@ -2477,12 +2477,12 @@ export const HISTORICAL_PROJECTS: HistoricalProject[] = [
     "id": 999999,
     "name": "PI 015 - ShowReels 2026",
     "link": "https://drive.google.com/drive/u/0/folders/1kZmn0v6D5G26x38zafcN1RL80anMEZpI",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   },
   {
     "id": 999999,
     "name": "PI 018 - Creator Studio (Lucas)",
     "link": "https://drive.google.com/drive/u/0/folders/10IN438tXrkD7-MWXhdz5x9nhmxw_dRlB",
-    "year": "JAN-JUN/26"
+    "year": "1º semestre 2026"
   }
 ];
