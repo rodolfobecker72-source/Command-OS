@@ -109,6 +109,7 @@ const App = () => (
                   
                   {/* Operação */}
                   <Route path="/gestao-projetos" element={<PageGuard pageKey="gestao-projetos"><ProjectManagementPage /></PageGuard>} />
+                  <Route path="/projetos/historico" element={<PageGuard pageKey="historico-projetos"><ProjectHistoryPage /></PageGuard>} />
                   <Route path="/calendario" element={<PageGuard pageKey="calendario"><CalendarPage /></PageGuard>} />
                   <Route path="/calendario-time" element={<PageGuard pageKey="calendario-time"><TeamCalendarPage /></PageGuard>} />
                   <Route path="/central-midia" element={<PageGuard pageKey="central-midia"><MediaCenterPage /></PageGuard>} />
