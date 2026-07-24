@@ -2422,7 +2422,9 @@ export function BudgetDetail() {
                                                                   value: qty * (cost.unitValue || 0),
                                                                 });
                                                               }}
+                                                              className="h-8 w-20 px-2 text-sm"
                                                             />
+
                                                           </TableCell>
                                                           <TableCell>
                                                             <Input
