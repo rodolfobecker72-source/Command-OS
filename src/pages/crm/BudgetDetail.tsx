@@ -419,6 +419,15 @@ export function BudgetDetail() {
     }
   };
 
+  // Normalize legacy costs missing quantity/unitValue so Qtd column renders correctly
+  const normalizeCost = (c: any) => {
+    const quantity = c.quantity && c.quantity > 0 ? c.quantity : 1;
+    const unitValue = c.unitValue && c.unitValue > 0
+      ? c.unitValue
+      : (quantity > 0 ? (c.value || 0) / quantity : (c.value || 0));
+    return { ...c, quantity, unitValue, value: quantity * unitValue };
+  };
+
   // Initialize new version services from current version
   const initNewVersionServices = () => {
     if (currentVersionData?.services) {
@@ -426,15 +435,16 @@ export function BudgetDetail() {
         currentVersionData.services.map((s) => ({
           ...s,
           id: uuidv4(),
-          costs: s.costs.map((c) => ({ ...c, id: uuidv4() })),
+          costs: s.costs.map((c) => ({ ...normalizeCost(c), id: uuidv4() })),
         }))
       );
     } else {
       setNewVersionServices([]);
     }
     setNewVersionOperationalCosts(
-      (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
+      (currentVersionData?.operationalCosts || []).map(c => ({ ...normalizeCost(c), id: uuidv4() }))
     );
+
     setNewVersionFixedCostPct(0); // deprecated
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
