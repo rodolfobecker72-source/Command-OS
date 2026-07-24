@@ -1780,7 +1780,7 @@ export function BudgetDetail() {
                                                 const qty = parseInt(e.target.value) || 1;
                                                 updateEditCost(service.id, cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
                                               }}
-                                              className="h-8 w-16"
+                                              className="h-8 w-20 px-2 text-sm"
                                             />
                                           </TableCell>
                                           <TableCell className="text-right text-muted-foreground">
@@ -1934,7 +1934,7 @@ export function BudgetDetail() {
                                           const qty = parseInt(e.target.value) || 1;
                                           updateEditOperationalCost(cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
                                         }}
-                                        className="h-8 w-16"
+                                        className="h-8 w-20 px-2 text-sm"
                                       />
                                     </TableCell>
                                     <TableCell className="text-right text-muted-foreground">
@@ -2554,7 +2554,7 @@ export function BudgetDetail() {
                                                             c.id === cost.id ? { ...c, quantity: qty, value: qty * (c.unitValue || 0) } : c
                                                           ));
                                                         }}
-                                                        className="h-8 w-16"
+                                                        className="h-8 w-20 px-2 text-sm"
                                                       />
                                                     </TableCell>
                                                     <TableCell>
