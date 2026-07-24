@@ -663,9 +663,10 @@ export function BudgetDetail() {
       setEditVersionServices(currentVersionData.services.map(s => ({
         ...s,
         targetMargin: s.targetMargin && s.targetMargin > 0 ? s.targetMargin : fallbackMargin,
-        costs: s.costs.map(c => ({ ...c })),
+        costs: s.costs.map(c => normalizeCost(c)),
       })));
-      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => normalizeCost(c)));
+
       setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
       setEditVersionTargetMargin(
         currentVersionData.margin && currentVersionData.margin > 0
