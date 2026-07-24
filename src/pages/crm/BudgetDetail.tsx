@@ -419,6 +419,15 @@ export function BudgetDetail() {
     }
   };
 
+  // Normalize legacy costs missing quantity/unitValue so Qtd column renders correctly
+  const normalizeCost = (c: any) => {
+    const quantity = c.quantity && c.quantity > 0 ? c.quantity : 1;
+    const unitValue = c.unitValue && c.unitValue > 0
+      ? c.unitValue
+      : (quantity > 0 ? (c.value || 0) / quantity : (c.value || 0));
+    return { ...c, quantity, unitValue, value: quantity * unitValue };
+  };
+
   // Initialize new version services from current version
   const initNewVersionServices = () => {
     if (currentVersionData?.services) {
@@ -426,15 +435,16 @@ export function BudgetDetail() {
         currentVersionData.services.map((s) => ({
           ...s,
           id: uuidv4(),
-          costs: s.costs.map((c) => ({ ...c, id: uuidv4() })),
+          costs: s.costs.map((c) => ({ ...normalizeCost(c), id: uuidv4() })),
         }))
       );
     } else {
       setNewVersionServices([]);
     }
     setNewVersionOperationalCosts(
-      (currentVersionData?.operationalCosts || []).map(c => ({ ...c, id: uuidv4() }))
+      (currentVersionData?.operationalCosts || []).map(c => ({ ...normalizeCost(c), id: uuidv4() }))
     );
+
     setNewVersionFixedCostPct(0); // deprecated
     setNewVersionNfPct(currentVersionData?.nfCostPercentage ?? 13);
     setNewVersionTargetMargin(currentVersionData?.margin ?? 0);
@@ -653,9 +663,10 @@ export function BudgetDetail() {
       setEditVersionServices(currentVersionData.services.map(s => ({
         ...s,
         targetMargin: s.targetMargin && s.targetMargin > 0 ? s.targetMargin : fallbackMargin,
-        costs: s.costs.map(c => ({ ...c })),
+        costs: s.costs.map(c => normalizeCost(c)),
       })));
-      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => ({ ...c })));
+      setEditVersionOperationalCosts((currentVersionData.operationalCosts || []).map(c => normalizeCost(c)));
+
       setEditVersionNfPct(currentVersionData.nfCostPercentage ?? 13);
       setEditVersionTargetMargin(
         currentVersionData.margin && currentVersionData.margin > 0
@@ -1769,7 +1780,7 @@ export function BudgetDetail() {
                                                 const qty = parseInt(e.target.value) || 1;
                                                 updateEditCost(service.id, cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
                                               }}
-                                              className="h-8 w-16"
+                                              className="h-8 w-20 px-2 text-sm"
                                             />
                                           </TableCell>
                                           <TableCell className="text-right text-muted-foreground">
@@ -1923,7 +1934,7 @@ export function BudgetDetail() {
                                           const qty = parseInt(e.target.value) || 1;
                                           updateEditOperationalCost(cost.id, { quantity: qty, value: qty * (cost.unitValue || 0) });
                                         }}
-                                        className="h-8 w-16"
+                                        className="h-8 w-20 px-2 text-sm"
                                       />
                                     </TableCell>
                                     <TableCell className="text-right text-muted-foreground">
@@ -2411,7 +2422,9 @@ export function BudgetDetail() {
                                                                   value: qty * (cost.unitValue || 0),
                                                                 });
                                                               }}
+                                                              className="h-8 w-20 px-2 text-sm"
                                                             />
+
                                                           </TableCell>
                                                           <TableCell>
                                                             <Input
@@ -2541,7 +2554,7 @@ export function BudgetDetail() {
                                                             c.id === cost.id ? { ...c, quantity: qty, value: qty * (c.unitValue || 0) } : c
                                                           ));
                                                         }}
-                                                        className="h-8 w-16"
+                                                        className="h-8 w-20 px-2 text-sm"
                                                       />
                                                     </TableCell>
                                                     <TableCell>
